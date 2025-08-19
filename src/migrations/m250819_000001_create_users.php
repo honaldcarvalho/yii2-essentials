@@ -18,21 +18,6 @@ class m250819_000001_create_users extends \yii\db\Migration
         ]);
         $this->createIndex('idx_users_group', '{{%users}}', 'group_id');
 
-        // seed admin (senha: admin123)
-        $security = new \yii\base\DynamicModel([]);
-        $hash = Yii::$app->security->generatePasswordHash('admin123');
-        $auth = Yii::$app->security->generateRandomString();
-        $time = time();
-        $this->insert('{{%users}}', [
-            'username' => 'admin',
-            'email' => 'admin@example.com',
-            'password_hash' => $hash,
-            'auth_key' => $auth,
-            'status' => 1,
-            'group_id' => null,
-            'created_at' => $time,
-            'updated_at' => $time,
-        ]);
     }
     public function safeDown()
     {
