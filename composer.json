@@ -13,6 +13,7 @@
     "yiisoft/yii2": "dev-master#0749dca94af871c15f0cc4039dc25f2d2eb21dfb",
     "yiisoft/yii2-bootstrap5": "dev-master#bd19a9d413a5778f09ec6f8e2fe8105cd4bf11d6",
     "yiisoft/yii2-imagine": "2.3.1",
+    "yiisoft/yii2-symfonymailer": "2.0.4",
     "yiisoft/yii2-httpclient": "dev-master#0b4de012b25efc4d05bcf1ac6721716f881b03a8",
     "yiithings/yii2-dotenv": "dev-master#4a43ff88ad9eb1148ca597875ce4165816dc666d",
     "weebz/yii2export": "dev-master#d85257fd333fb80f9e02491a60b2ee5004c650b9",
