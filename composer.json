@@ -2,11 +2,18 @@
   "name": "croacworks/yii2-essentials",
   "description": "Essential set for Yii2: authorization by FQCN/action, typed settings, file storage, UI alerts and MetaHelper.",
   "type": "yii2-extension",
-  "keywords": ["yii2","extension","basics"],
+  "keywords": [
+    "yii2",
+    "extension",
+    "basics"
+  ],
   "license": "BSD-3-Clause",
   "homepage": "https://github.com/honaldcarvalho/yii2-essentials",
   "authors": [
-    { "name": "weebz", "email": "suporte@weebz.com.br" }
+    {
+      "name": "weebz",
+      "email": "suporte@weebz.com.br"
+    }
   ],
   "require": {
     "php": ">=8.0.0",
@@ -17,7 +24,7 @@
     "yiisoft/yii2-httpclient": "dev-master#0b4de012b25efc4d05bcf1ac6721716f881b03a8",
     "yiithings/yii2-dotenv": "dev-master#4a43ff88ad9eb1148ca597875ce4165816dc666d",
     "weebz/yii2export": "dev-master#d85257fd333fb80f9e02491a60b2ee5004c650b9",
-    "kartik-v/yii2-widget-select2": "dev-master#958ba374af39fbc88f1fd11209b22efe1055d567",  
+    "kartik-v/yii2-widget-select2": "dev-master#958ba374af39fbc88f1fd11209b22efe1055d567",
     "kartik-v/yii2-bootstrap5-dropdown": "dev-master#459e4c06c64e49f89ac372ce7c2cabb961f56ec9",
     "kartik-v/yii2-widget-datetimepicker": "dev-master#85b22d38553ca207f86be198f37e6531347e9a23",
     "kartik-v/yii2-editors": "dev-master#529cff31afda936ac5c98d7f9c53bb01c4452419",
@@ -27,6 +34,17 @@
     "yiisoft/yii2-redis": "dev-master#efe038dd6637cc538715489a660504d4721a38a8",
     "stichoza/google-translate-php": "5.3.0",
     "yiisoft/yii2-debug": "^2.1"
+  },
+  "require-dev": {
+    "yiisoft/yii2-gii": "~2.2.0",
+    "yiisoft/yii2-faker": "~2.0.0",
+    "codeception/codeception": "^5.0.0 || ^4.0",
+    "codeception/lib-innerbrowser": "^4.0 || ^3.0 || ^1.1",
+    "codeception/module-asserts": "^3.0 || ^1.1",
+    "codeception/module-yii2": "^1.1",
+    "codeception/module-filesystem": "^3.0 || ^2.0 || ^1.1",
+    "codeception/verify": "^3.0 || ^2.2",
+    "symfony/browser-kit": "^6.0 || >=2.7 <=4.2.4"
   },
   "autoload": {
     "psr-4": {
