@@ -1,6 +1,6 @@
 {
   "name": "croacworks/yii2-essentials",
-  "description": "Conjunto essencial para Yii2: autorização por FQCN/action, settings tipado, storage de arquivos, UI alerts e MetaHelper.",
+  "description": "Essential set for Yii2: authorization by FQCN/action, typed settings, file storage, UI alerts and MetaHelper.",
   "type": "yii2-extension",
   "license": "BSD-3-Clause",
   "require": {
