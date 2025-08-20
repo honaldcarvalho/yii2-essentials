@@ -6,7 +6,7 @@ use yii\base\Model;
 /**
  * Tabela: users
  */
-class ModelCommon extends Model
+class ModelCommon extends \yii\db\ActiveRecord
 {
 
 }
