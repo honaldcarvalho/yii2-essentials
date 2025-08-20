@@ -15,6 +15,18 @@ class m250819_000003_insert_default_user_and_roles extends Migration
     {
         $time = time();
 
+        $this->insert('groups', [
+            'id'=>1,
+            'name' => '*',
+            'status'=>true
+        ]);
+
+        $this->insert('groups', [
+            'id'=>2,
+            'name' => 'Adminstrators',
+            'status'=>true
+        ]);
+
         // Insert default admin user
         $this->insert('{{%users}}', [
             'group_id' => 1,
@@ -35,6 +47,52 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'status' => 1,
             'created_at' => $time,
             'updated_at' => $time,
+        ]);
+
+        $this->insert('languages', [
+            'code' => 'en-US',
+            'name' => 'English (EUA)',
+            'status'=> 1
+        ]);
+
+        $this->insert('languages', [
+            'code' => 'pt-BR',
+            'name' => 'Portugues (BR)',
+            'status'=> 1
+        ]);
+
+        $this->insert('languages', [
+            'code' => 'es',
+            'name' => 'Español (ES)',
+            'status'=> 0
+        ]);
+
+        $this->insert('folders', [
+            'id' => 1,
+            'name' => 'common',
+            'description' => 'Common',
+            'status'=>true
+        ]);
+
+        $this->insert('folders', [
+            'id' => 2,
+            'name' => 'images',
+            'description' => 'Images',
+            'status'=>true
+        ]);
+
+        $this->insert('folders', [
+            'id' => 3,
+            'name' => 'videos',
+            'description' => 'Videos',
+            'status'=>true
+        ]);
+
+        $this->insert('folders', [
+            'id' => 4,
+            'name' => 'documents',
+            'description' => 'Documents',
+            'status'=>true
         ]);
     }
 

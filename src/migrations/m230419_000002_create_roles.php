@@ -1,6 +1,8 @@
 <?php
 
-class m250819_000002_create_roles extends \yii\db\Migration
+use yii\db\Migration;
+
+class m230419_000002_create_roles extends Migration
 {
     public function safeUp()
     {

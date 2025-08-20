@@ -1,6 +1,8 @@
 <?php
 
-class m250819_000001_create_users extends \yii\db\Migration
+use yii\db\Migration;
+
+class m230419_000001_create_users extends Migration
 {
     public function safeUp()
     {
