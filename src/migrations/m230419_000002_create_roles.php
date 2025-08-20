@@ -19,7 +19,7 @@ class m230419_000002_create_roles extends Migration
         ]);
         $this->addForeignKey(
             'fk-roles-user_id',
-            'rules',
+            'roles',
             'user_id',
             'users',
             'id',
@@ -28,7 +28,7 @@ class m230419_000002_create_roles extends Migration
 
         $this->addForeignKey(
             'fk-roles-group_id',
-            'rules',
+            'roles',
             'group_id',
             'groups',
             'id',
