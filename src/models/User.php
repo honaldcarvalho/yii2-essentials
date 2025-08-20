@@ -1,65 +1,96 @@
 <?php
-namespace croacworks\essentials\models;
 
+namespace app\models;
+
+use croacworks\essentials\models\ModelCommon;
 use Yii;
-use yii\db\ActiveRecord;
-use yii\web\IdentityInterface;
 
 /**
- * Tabela: users
+ * This is the model class for table "users".
+ *
+ * @property int $id
+ * @property int|null $group_id
+ * @property string $username
+ * @property string $email
+ * @property string $password_hash
+ * @property string $auth_key
+ * @property string|null $password_reset_token
+ * @property int $created_at
+ * @property int $updated_at
+ * @property int $status
+ *
+ * @property Logs[] $logs
+ * @property UsersGroups[] $usersGroups
  */
-class User extends ActiveRecord implements IdentityInterface
+class User extends ModelCommon
 {
+
+
+    /**
+     * {@inheritdoc}
+     */
     public static function tableName()
     {
-        return '{{%users}}';
+        return 'users';
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function rules()
     {
         return [
-            [['username','email','password_hash','auth_key'], 'required'],
+            [['group_id', 'password_reset_token'], 'default', 'value' => null],
+            [['status'], 'default', 'value' => 1],
+            [['group_id', 'created_at', 'updated_at', 'status'], 'integer'],
+            [['username', 'email', 'password_hash', 'auth_key', 'created_at', 'updated_at'], 'required'],
             [['username'], 'string', 'max' => 64],
-            [['email'], 'string', 'max' => 190],
+            [['email', 'password_reset_token'], 'string', 'max' => 190],
+            [['password_hash'], 'string', 'max' => 255],
             [['auth_key'], 'string', 'max' => 32],
-            [['status','group_id','created_at','updated_at'], 'integer'],
-            [['username','email','password_reset_token'], 'unique'],
+            [['username'], 'unique'],
+            [['email'], 'unique'],
+            [['password_reset_token'], 'unique'],
         ];
     }
 
-    // ===== IdentityInterface =====
-    public static function findIdentity($id)
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
     {
-        return static::findOne(['id' => $id, 'status' => 1]);
-    }
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        return null;
-    }
-    public function getId()
-    {
-        return $this->id;
-    }
-    public function getAuthKey()
-    {
-        return $this->auth_key;
-    }
-    public function validateAuthKey($authKey)
-    {
-        return $this->auth_key === $authKey;
+        return [
+            'id' => Yii::t('app', 'ID'),
+            'group_id' => Yii::t('app', 'Group ID'),
+            'username' => Yii::t('app', 'Username'),
+            'email' => Yii::t('app', 'Email'),
+            'password_hash' => Yii::t('app', 'Password Hash'),
+            'auth_key' => Yii::t('app', 'Auth Key'),
+            'password_reset_token' => Yii::t('app', 'Password Reset Token'),
+            'created_at' => Yii::t('app', 'Created At'),
+            'updated_at' => Yii::t('app', 'Updated At'),
+            'status' => Yii::t('app', 'Status'),
+        ];
     }
 
-    // ===== Password Helpers =====
-    public function validatePassword(string $password): bool
+    /**
+     * Gets query for [[Logs]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getLogs()
     {
-        return Yii::$app->security->validatePassword($password, $this->password_hash);
+        return $this->hasMany(Logs::class, ['user_id' => 'id']);
     }
-    public function setPassword(string $password): void
+
+    /**
+     * Gets query for [[UsersGroups]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUsersGroups()
     {
-        $this->password_hash = Yii::$app->security->generatePasswordHash($password);
+        return $this->hasMany(UsersGroups::class, ['user_id' => 'id']);
     }
-    public function generateAuthKey(): void
-    {
-        $this->auth_key = Yii::$app->security->generateRandomString(32);
-    }
+
 }

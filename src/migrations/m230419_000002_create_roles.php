@@ -8,15 +8,32 @@ class m230419_000002_create_roles extends Migration
     {
         $this->createTable('{{%roles}}', [
             'id' => $this->primaryKey(),
+            'group_id' => $this->integer()->null(),
+            'user_id' => $this->integer()->null(),
             'name' => $this->string(120)->null(),
             'controller' => $this->string(255)->notNull(), // FQCN
             'action' => $this->string(64)->notNull(),      // ex.: index|view|* 
-            'group_id' => $this->integer()->null(),
             'status' => $this->tinyInteger()->notNull()->defaultValue(1),
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
         ]);
-        $this->createIndex('idx_roles_ctrl_act_grp', '{{%roles}}', ['controller','action','group_id','status']);
+        $this->addForeignKey(
+            'fk-roles-user_id',
+            'rules',
+            'user_id',
+            'users',
+            'id',
+            'CASCADE'
+        );
+
+        $this->addForeignKey(
+            'fk-roles-group_id',
+            'rules',
+            'group_id',
+            'groups',
+            'id',
+            'CASCADE'
+        );
     }
     public function safeDown()
     {
