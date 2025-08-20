@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%user_group}}`.
  */
-class m230425_124535_create_user_groups_table extends Migration
+class m230425_124535_create_users_groups_table extends Migration
 {
     /**
      * {@inheritdoc}
@@ -21,7 +21,7 @@ class m230425_124535_create_user_groups_table extends Migration
         // add foreign keys for table `user_group`
         $this->addForeignKey(
             'fk-users_groups-user_id',
-            'user_groups',
+            'users_groups',
             'user_id',
             'users',
             'id',
@@ -30,7 +30,7 @@ class m230425_124535_create_user_groups_table extends Migration
         
         $this->addForeignKey(
             'fk-users_groups-group_id',
-            'user_groups',
+            'users_groups',
             'group_id',
             'groups',
             'id',
