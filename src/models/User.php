@@ -37,7 +37,7 @@ class User extends Account
      */
     public static function tableName()
     {
-        return '{{%user}}';
+        return '{{%users}}';
     }
 
     /**
