@@ -84,9 +84,7 @@ class Account extends ModelCommon implements IdentityInterface
      */
     public static function findByUsername($username)
     {
-        print_r(static::findOne([['or',['username' => $username],['email' => $username]], 'status' => self::STATUS_ACTIVE]));
-        die();
-        return static::findOne([['ou',['username' => $username],['email' => $username]], 'status' => self::STATUS_ACTIVE]);
+        return static::find()->where(['username' => $username])->orWhere(['email' => $username])->andWhere(['status' => self::STATUS_ACTIVE]);
     }
 
     /**
