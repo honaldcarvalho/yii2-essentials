@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\models\User;
 use yii\db\Migration;
 
 /**
@@ -48,6 +49,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'access_token' => Yii::$app->security->generateRandomString(),
             'created_at' => $time,
             'updated_at' => $time,
+            'status' => User::STATUS_ACTIVE,
         ]);
 
         // Insert default admin role (wildcard access for group 1)
