@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 
-class m230419_000002_create_roles extends Migration
+class m230419_200002_create_roles extends Migration
 {
     public function safeUp()
     {
@@ -17,6 +17,7 @@ class m230419_000002_create_roles extends Migration
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
         ]);
+        
         $this->addForeignKey(
             'fk-roles-user_id',
             'roles',
