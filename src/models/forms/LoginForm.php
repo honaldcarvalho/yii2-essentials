@@ -1,7 +1,7 @@
 <?php
 namespace croacworks\essentials\models\forms;
 
-
+use croacworks\essentials\models\User;
 use Yii;
 use yii\base\Model;
 
