@@ -35,20 +35,6 @@ class m230911_192839_create_email_services_table extends Migration
             'port' => '465'
         ]);
 
-        $this->insert('menus', [
-            'id'=> 18,
-            'menu_id' => 1,
-            'label'   => 'Email Services',
-            'icon_style'=> 'fas',
-            'icon'    => 'fas fa-envelope',
-            'visible' => 'email-service;index',
-            'url'     => '/email-service/index',
-            'path'  => 'weebz/controllers',
-            'active'  => 'email-service',
-            'order'   => 8,
-            'status'  => true
-        ]);
-
     }
 
     /**

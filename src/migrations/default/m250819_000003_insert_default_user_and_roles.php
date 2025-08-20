@@ -15,6 +15,17 @@ class m250819_000003_insert_default_user_and_roles extends Migration
     {
         $time = time();
 
+        $this->insert('configurations', [
+            'slogan' => 'CroacWorks',
+            'title' => 'System Basic',
+            'description' => 'Basic Configuration',
+            'host' => 'http://localhost',
+            'title' => 'System Essential',
+            'bussiness_name' => 'CroacWorks',
+            'email' => 'suporte@croacworks.com.br',
+            'email_service_id'=>1
+        ]);
+
         $this->insert('groups', [
             'id'=>1,
             'name' => '*',

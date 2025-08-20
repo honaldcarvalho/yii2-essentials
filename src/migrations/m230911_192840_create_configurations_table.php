@@ -29,31 +29,6 @@ class m230911_192840_create_configurations_table extends Migration
             'status'=> $this->integer()->defaultValue(1),
             'logging'=> $this->integer()->defaultValue(1)
         ]);
-        
-        $this->insert('configurations', [
-            'slogan' => 'CroacWorks',
-            'title' => 'System Basic',
-            'description' => 'Basic Configuration',
-            'host' => 'http://localhost',
-            'title' => 'System Basic',
-            'bussiness_name' => 'Weebz',
-            'email' => 'honaldcarvalho@weebz.com.br',
-            'email_service_id'=>1
-        ]);
-
-        $this->insert('menus', [
-            'id'=> 19,
-            'menu_id' => 1,
-            'label'   => 'Configurations',
-            'icon_style'=> 'fas',
-            'icon'    => 'fas fa-clipboard-check',
-            'visible' => 'configuration;index',
-            'url'     => '/configuration/index',
-            'path'  => 'weebz/controllers',
-            'active'  => 'configuration',
-            'order'   => 2,
-            'status'  => true
-        ]);
 
     }
 
