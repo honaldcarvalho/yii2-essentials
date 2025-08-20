@@ -1,6 +1,6 @@
 <?php
 
-namespace weebz\yii2basics\models;
+namespace croacworks\essentials\models;
 
 use Yii;
 

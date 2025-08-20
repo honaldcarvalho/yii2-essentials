@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models;
+namespace croacworks\essentials\models;
 
 use croacworks\essentials\models\ModelCommon;
 use Yii;
