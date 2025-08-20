@@ -27,24 +27,10 @@ class m230425_130812_create_logs_table extends Migration
             'fk-logs-user_id',
             'logs',
             'user_id',
-            'user',
+            'users',
             'id',
             'CASCADE'
         );
-
-        $this->insert('menus', [
-            'id'=> 15,
-            'menu_id' => 1,
-            'label'   => 'Logs',
-            'icon_style'=> 'fas',
-            'icon'    => 'fas fa-keyboard',
-            'visible' => 'log;index',
-            'url'     => '/log/index',
-            'path'  => 'weebz/controllers',
-            'active'  => 'log',
-            'order'   => 1000,
-            'status'  => true
-        ]);
 
     }
 
