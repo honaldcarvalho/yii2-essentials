@@ -85,7 +85,6 @@ class Account extends ModelCommon implements IdentityInterface
     public static function findByUsername($username)
     {
         print_r(static::findOne([['ou',['username' => $username],['email' => $username]], 'status' => self::STATUS_ACTIVE]));
-        print_r(static::findAll());
         die();
         return static::findOne([['ou',['username' => $username],['email' => $username]], 'status' => self::STATUS_ACTIVE]);
     }
