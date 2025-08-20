@@ -19,12 +19,13 @@ use Yii;
  * @property int $updated_at
  * @property int $status
  *
- * @property Logs[] $logs
- * @property UsersGroups[] $usersGroups
+ * @property Log[] $logs
+ * @property Role[] $roles
+ * @property UsersGroup[] $usersGroups
  */
+
 class User extends ModelCommon
 {
-
 
     /**
      * {@inheritdoc}
@@ -80,7 +81,17 @@ class User extends ModelCommon
      */
     public function getLogs()
     {
-        return $this->hasMany(Logs::class, ['user_id' => 'id']);
+        return $this->hasMany(Log::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[Roles]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRoles()
+    {
+        return $this->hasMany(Role::class, ['user_id' => 'id']);
     }
 
     /**
@@ -90,7 +101,7 @@ class User extends ModelCommon
      */
     public function getUsersGroups()
     {
-        return $this->hasMany(UsersGroups::class, ['user_id' => 'id']);
+        return $this->hasMany(UsersGroup::class, ['user_id' => 'id']);
     }
 
 }
