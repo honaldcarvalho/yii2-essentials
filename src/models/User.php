@@ -8,23 +8,28 @@ use Yii;
 /**
  * This is the model class for table "users".
  *
- * @property int $id
- * @property int|null $group_id
+/**
+ * User model
+ *
+ * @property integer $id
  * @property string $username
- * @property string $email
  * @property string $password_hash
+ * @property string $password_reset_token
+ * @property string $verification_token
+ * @property string $email
  * @property string $auth_key
- * @property string|null $password_reset_token
- * @property int $created_at
- * @property int $updated_at
- * @property int $status
+ * @property integer $status
+ * @property integer $created_at
+ * @property integer $updated_at
+ * @property string $password write-only password
+
  *
  * @property Log[] $logs
  * @property Role[] $roles
  * @property UsersGroup[] $usersGroups
  */
 
-class User extends ModelCommon
+class User extends Account
 {
 
     /**
@@ -32,7 +37,7 @@ class User extends ModelCommon
      */
     public static function tableName()
     {
-        return 'users';
+        return '{{%user}}';
     }
 
     /**
@@ -103,5 +108,7 @@ class User extends ModelCommon
     {
         return $this->hasMany(UsersGroup::class, ['user_id' => 'id']);
     }
+
+    
 
 }

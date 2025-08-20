@@ -13,6 +13,8 @@ class m230419_000001_create_users extends Migration
             'email' => $this->string(190)->notNull()->unique(),
             'password_hash' => $this->string()->notNull(),
             'auth_key' => $this->string(32)->notNull(),
+            'access_token' => $this->string(32)->notNull(),
+            'token_validate' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
             'password_reset_token' => $this->string(190)->null()->unique(),
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
