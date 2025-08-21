@@ -13,13 +13,4 @@ use yii\web\Response;
 class ControllerCommon extends Controller
 {
     public $enableCsrfValidation = false;
-    public function behaviors()
-    {
-        $b = parent::behaviors();
-        $b['accessByRole'] = [
-            'class' => AccessByRoleFilter::class,
-            'public' => ['login', 'error'], // rotas públicas deste controller
-        ];
-        return $b;
-    }
 }
