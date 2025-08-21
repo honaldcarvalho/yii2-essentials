@@ -113,6 +113,14 @@ class User extends Account
         return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
     }
 
-    
+    /**
+     * Gets query for [[Language]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getLanguage()
+    {
+        return $this->hasOne(Language::class, ['id' => 'language_id']);
+    }
 
 }
