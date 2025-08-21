@@ -34,7 +34,7 @@ class CommonController extends \yii\web\Controller
     public  $free   = [];
     private $fixed  = [];
     public $access = [];
-    public $params = null;
+    public $config = null;
     public $configuration = null;
     static $assetsDir;
 
@@ -62,9 +62,9 @@ class CommonController extends \yii\web\Controller
         $behaviors = parent::behaviors();
         $language = null;
         $this->configuration = Configuration::get();
-        $this->params = Configuration::get();
+        $this->config = Configuration::get();
 
-        foreach ($this->params->attributes as $key => $param) {
+        foreach ($this->config->attributes as $key => $param) {
             Yii::setAlias("@{$key}", "$param");
         }
         $params = $this->configuration->getParameters()->all();
@@ -77,7 +77,7 @@ class CommonController extends \yii\web\Controller
         $post = Yii::$app->request->post();
 
         if (!\Yii::$app->user->isGuest) {
-            $language = \Yii::$app->user->identity->language->code;
+            $language = \Yii::$app->user->identity->profile->language->code;
         } else if (($cookie = $cookies->get('lang')) !== null && !isset($post['lang'])) {
             $language = $cookie->value;
         } else if (isset($post['lang'])) {
@@ -92,7 +92,7 @@ class CommonController extends \yii\web\Controller
                 'value' => 'pt-BR',
             ]));
         }
-        \Yii::$app->language = $language ?? $this->params->language->code;
+        \Yii::$app->language = $language ?? $this->config->language->code;
 
         return $behaviors;
     }
