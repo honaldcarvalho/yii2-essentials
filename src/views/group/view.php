@@ -74,20 +74,20 @@ $buttons[] =
                                                     'label' => Yii::t('app', 'Updated At'),
                                                 ],
                                                 'user.status:boolean',
-                                                // [
-                                                //     'class' =>'croacworks\essentials\components\gridview\ActionColumn',
-                                                //     'controller'=>'user',
-                                                //     'verGroup'=>false,
-                                                //     'template' => '{update} {delete}'  ,
-                                                //     'buttons' => [  
-                                                //         'update' => function ($url, $model, $key) {
-                                                //             return Html::a('<i class="fas fa-pen"></i>', yii\helpers\Url::to(['/user/update', 'id' => $model->user_id]),['class'=>'btn btn-default']);
-                                                //         },   
-                                                //         'delete' => function ($url, $model, $key) {
-                                                //             return Html::a('<i class="fas fa-unlink"></i>', yii\helpers\Url::to(['/user/remove-group', 'id' => $model->id]),['class'=>'btn btn-default']);
-                                                //         }    
-                                                //     ]
-                                                // ],
+                                                [
+                                                    'class' =>'croacworks\essentials\components\gridview\ActionColumnCustom',
+                                                    'controller'=>'user',
+                                                    'verGroup'=>false,
+                                                    'template' => '{update} {delete}'  ,
+                                                    'buttons' => [  
+                                                        'update' => function ($url, $model, $key) {
+                                                            return Html::a('<i class="fas fa-pen"></i>', yii\helpers\Url::to(['/user/update', 'id' => $model->user_id]),['class'=>'btn btn-default']);
+                                                        },   
+                                                        'delete' => function ($url, $model, $key) {
+                                                            return Html::a('<i class="fas fa-unlink"></i>', yii\helpers\Url::to(['/user/remove-group', 'id' => $model->id]),['class'=>'btn btn-default']);
+                                                        }    
+                                                    ]
+                                                ],
                                             ],
                                         ]); ?>
 
