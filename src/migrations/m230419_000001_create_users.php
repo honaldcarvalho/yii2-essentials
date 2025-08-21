@@ -8,6 +8,7 @@ class m230419_000001_create_users extends Migration
     {
         $this->createTable('{{%users}}', [
             'id' => $this->primaryKey(),
+            'file_id' => $this->integer()->null(),
             'group_id' => $this->integer()->null(),
             'language_id' => $this->integer()->defaultValue(1),//en-US
             'theme' => $this->string(10)->defaultValue('light'),
