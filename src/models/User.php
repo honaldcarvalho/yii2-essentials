@@ -2,47 +2,42 @@
 
 namespace croacworks\essentials\models;
 
-use croacworks\essentials\models\ModelCommon;
 use Yii;
 
 /**
  * This is the model class for table "users".
  *
-/**
- * User model
- *
- * @property integer $id
- * @property integer $group_id;
- * @property integer $language_id;
+ * @property int $id
+ * @property int|null $group_id
+ * @property int|null $language_id
+ * @property string|null $theme
  * @property string $username
- * @property string $theme;
- * @property string $password_hash
- * @property string $password_reset_token
- * @property string $verification_token
  * @property string $email
+ * @property string $password_hash
  * @property string $auth_key
- * @property integer $status
- * @property integer $created_at
- * @property integer $updated_at
- * @property string $password write-only password
-
- * @property Group $group
- * @property UserProfile $profile
- * @property Language $language
+ * @property string $access_token
+ * @property string|null $token_validate
+ * @property string|null $password_reset_token
+ * @property int $created_at
+ * @property int $updated_at
+ * @property int $status
+ *
  * @property Log[] $logs
+ * @property Notification[] $notifications
  * @property Role[] $roles
+ * @property UserProfile $profile
  * @property UsersGroup[] $usersGroups
  */
-
-class User extends Account
+class User extends \yii\db\ActiveRecord
 {
+
 
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return '{{%users}}';
+        return 'users';
     }
 
     /**
@@ -53,18 +48,18 @@ class User extends Account
         return [
             [['group_id', 'password_reset_token'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['group_id', 'created_at', 'updated_at', 'status'], 'integer'],
-            [['username', 'email', 'password_hash', 'auth_key', 'created_at', 'updated_at'], 'required'],
+            [['theme'], 'default', 'value' => 'light'],
+            [['group_id', 'language_id', 'created_at', 'updated_at', 'status'], 'integer'],
+            [['username', 'email', 'password_hash', 'auth_key', 'access_token', 'created_at', 'updated_at'], 'required'],
+            [['token_validate'], 'safe'],
+            [['theme'], 'string', 'max' => 10],
             [['username'], 'string', 'max' => 64],
             [['email', 'password_reset_token'], 'string', 'max' => 190],
             [['password_hash'], 'string', 'max' => 255],
-            [['auth_key'], 'string', 'max' => 32],
+            [['auth_key', 'access_token'], 'string', 'max' => 32],
             [['username'], 'unique'],
             [['email'], 'unique'],
             [['password_reset_token'], 'unique'],
-            [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
-            [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
-            [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
         ];
     }
 
@@ -76,10 +71,14 @@ class User extends Account
         return [
             'id' => Yii::t('app', 'ID'),
             'group_id' => Yii::t('app', 'Group ID'),
+            'language_id' => Yii::t('app', 'Language ID'),
+            'theme' => Yii::t('app', 'Theme'),
             'username' => Yii::t('app', 'Username'),
             'email' => Yii::t('app', 'Email'),
             'password_hash' => Yii::t('app', 'Password Hash'),
             'auth_key' => Yii::t('app', 'Auth Key'),
+            'access_token' => Yii::t('app', 'Access Token'),
+            'token_validate' => Yii::t('app', 'Token Validate'),
             'password_reset_token' => Yii::t('app', 'Password Reset Token'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
@@ -98,29 +97,13 @@ class User extends Account
     }
 
     /**
-     * Gets query for [[UserProfile]].
+     * Gets query for [[Notifications]].
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getProfile()
+    public function getNotifications()
     {
-        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[File]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getFile()
-    {
-        return $this->hasOne(File::class, ['id' => 'file_id']);
-    }
-
-    public function getGroups()
-    {
-        return $this->hasMany(Group::class, ['id' => 'group_id'])
-            ->viaTable('users_groups', ['user_id' => 'id']);
+        return $this->hasMany(Notification::class, ['user_id' => 'id']);
     }
 
     /**
@@ -134,6 +117,16 @@ class User extends Account
     }
 
     /**
+     * Gets query for [[UserProfiles]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserProfiles()
+    {
+        return $this->hasMany(UserProfile::class, ['user_id' => 'id']);
+    }
+
+    /**
      * Gets query for [[UsersGroups]].
      *
      * @return \yii\db\ActiveQuery
@@ -141,27 +134,6 @@ class User extends Account
     public function getUsersGroups()
     {
         return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[UserGroups]].
-     *
-     * @return array
-     */
-    public function getUserGroupsId()
-    {
-        $groupIds = $this->getGroups()->select('id')->column();
-        return Group::getAllDescendantIds($groupIds);
-    }
-
-    /**
-     * Gets query for [[Language]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getLanguage()
-    {
-        return $this->hasOne(Language::class, ['id' => 'language_id']);
     }
 
 }
