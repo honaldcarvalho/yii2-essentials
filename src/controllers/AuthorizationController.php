@@ -31,7 +31,7 @@ class AuthorizationController extends CommonController
     
     static function userGroup()
     {
-        $user_groups = [];
+        $users_groups = [];
 
         $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
         if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
@@ -41,9 +41,9 @@ class AuthorizationController extends CommonController
 
         $user = self::getUserByToken();
         if ($user)
-            $user_groups = $user->getUserGroupsId();
+            $users_groups = $user->getUserGroupsId();
 
-        return end($user_groups);
+        return end($users_groups);
     }
 
     public static function getUserGroups()

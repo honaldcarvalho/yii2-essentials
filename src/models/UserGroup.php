@@ -21,7 +21,7 @@ class UserGroup extends ModelCommon
      */
     public static function tableName()
     {
-        return 'user_groups';
+        return 'users_groups';
     }
 
     /**
