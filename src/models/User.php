@@ -28,7 +28,7 @@ use Yii;
  * @property UserProfile $profile
  * @property UsersGroup[] $usersGroups
  */
-class User extends \yii\db\ActiveRecord
+class User extends Account
 {
 
 
