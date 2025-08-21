@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model weebz\yii2basics\models\Group */
+/* @var $model croacworks\essentials\models\Group */
 
 $this->title = Yii::t('app', 'Update Group: {name}', [
     'name' => $model->name,

@@ -1,8 +1,8 @@
 <?php
 
-namespace weebz\yii2basics\models;
+namespace croacworks\essentials\models;
 
-use weebz\yii2basics\models\User;
+use croacworks\essentials\models\User;
 use yii\base\InvalidArgumentException;
 use yii\base\Model;
 

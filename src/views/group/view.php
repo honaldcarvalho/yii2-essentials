@@ -5,7 +5,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model weebz\yii2basics\models\Group */
+/* @var $model croacworks\essentials\models\Group */
 
 $this->title = Yii::t('app', 'View Group: {name}', [
     'name' => $model->name,
@@ -35,7 +35,7 @@ $buttons[] =
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?php //weebz\yii2basics\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model,'extras'=>$buttons,'verGroup'=>false]) ?>
+                        <?php //croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model,'extras'=>$buttons,'verGroup'=>false]) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,
@@ -75,7 +75,7 @@ $buttons[] =
                                                 ],
                                                 'user.status:boolean',
                                                 // [
-                                                //     'class' =>'weebz\yii2basics\components\gridview\ActionColumn',
+                                                //     'class' =>'croacworks\essentials\components\gridview\ActionColumn',
                                                 //     'controller'=>'user',
                                                 //     'verGroup'=>false,
                                                 //     'template' => '{update} {delete}'  ,

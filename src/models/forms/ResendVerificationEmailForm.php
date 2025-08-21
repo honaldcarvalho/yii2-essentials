@@ -1,9 +1,9 @@
 <?php
 
-namespace weebz\yii2basics\models;
+namespace croacworks\essentials\models;
 
 use Yii;
-use weebz\yii2basics\models\User;
+use croacworks\essentials\models\User;
 use yii\base\Model;
 
 class ResendVerificationEmailForm extends ModelCommon
@@ -24,7 +24,7 @@ class ResendVerificationEmailForm extends ModelCommon
             ['email', 'required'],
             ['email', 'email'],
             ['email', 'exist',
-                'targetClass' => '\weebz\yii2basics\models\User',
+                'targetClass' => '\croacworks\essentials\models\User',
                 'filter' => ['status' => User::STATUS_INACTIVE],
                 'message' => 'There is no user with this email address.'
             ],

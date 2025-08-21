@@ -1,11 +1,11 @@
 <?php
 
-namespace weebz\yii2basics\models;
+namespace croacworks\essentials\models;
 
 use yii\base\InvalidArgumentException;
 use yii\base\Model;
 use Yii;
-use weebz\yii2basics\models\User;
+use croacworks\essentials\models\User;
 
 /**
  * Password reset form
@@ -15,7 +15,7 @@ class ResetPasswordForm extends ModelCommon
     public $password;
 
     /**
-     * @var \weebz\yii2basics\models\User
+     * @var \croacworks\essentials\models\User
      */
     private $_user;
 

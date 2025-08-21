@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 /* @var $this yii\web\View */
-/* @var $searchModel weebz\yii2basics\models\GroupSearch */
+/* @var $searchModel croacworks\essentials\models\GroupSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = Yii::t('app', 'Groups');
@@ -33,7 +33,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'name',
                             'status:boolean',
 
-                           // ['class' => 'weebz\yii2basics\components\gridview\ActionColumn','verGroup'=>false],
+                           // ['class' => 'croacworks\essentials\components\gridview\ActionColumn','verGroup'=>false],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [

@@ -3,7 +3,7 @@
 namespace croacworks\essentials\models;
 
 use Yii;
-use croacworks\essentials\controllers\CommonController;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\User;
 
 /**
@@ -38,7 +38,7 @@ class PasswordResetRequestForm extends ModelCommon
     public function sendEmail()
     {
         $params = Configuration::get();
-        $mailer =  CommonController::mailer();
+        $mailer =  AuthorizationController::mailer();
         /* @var $user User */
         $user = User::findOne([
             'status' => User::STATUS_ACTIVE,

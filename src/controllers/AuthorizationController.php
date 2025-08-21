@@ -28,6 +28,23 @@ class AuthorizationController extends CommonController
     {
         return Yii::$app->user->identity;
     }
+    
+    static function userGroup()
+    {
+        $user_groups = [];
+
+        $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+        if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+            if (!self::isGuest())
+                return Yii::$app->session->get('group')->id;
+        }
+
+        $user = self::getUserByToken();
+        if ($user)
+            $user_groups = $user->getUserGroupsId();
+
+        return end($user_groups);
+    }
 
     public static function getUserGroups()
     {

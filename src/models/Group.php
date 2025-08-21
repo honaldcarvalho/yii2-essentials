@@ -58,9 +58,9 @@ class Group extends ModelCommon
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRules()
+    public function getRoles()
     {
-        return $this->hasMany(Rule::class, ['group_id' => 'id']);
+        return $this->hasMany(Role::class, ['group_id' => 'id']);
     }
 
     /**
@@ -130,7 +130,7 @@ class Group extends ModelCommon
 
             // Clona as regras do grupo original
             foreach ($originalGroup->rules as $rule) {
-                $newRule = new \croacworks\essentials\models\Rule();
+                $newRule = new \croacworks\essentials\models\Role();
                 $newRule->attributes = $rule->attributes;
                 $newRule->group_id = $newGroup->id;
 
