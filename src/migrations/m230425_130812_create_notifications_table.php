@@ -28,7 +28,7 @@ class m230425_130812_create_notifications_table extends Migration
             'fk-notifications-user_id',
             'notifications',
             'user_id',
-            'user',
+            'users',
             'id',
             'CASCADE'
         );
