@@ -56,7 +56,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'filter' =>Html::input('date',ucfirst(Yii::$app->controller->id).'Search[updated_at]',$searchModel->updated_at,['class'=>'form-control dateandtime'])
                             ],
                             'status:boolean',
-                            ['class'=>croacworks\essentials\components\gridview\ActionColumn::class,'verGroup'=>false],
+                            ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom']
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [
