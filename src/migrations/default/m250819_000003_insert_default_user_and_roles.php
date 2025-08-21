@@ -41,7 +41,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
 
         // Insert default admin user
         $this->insert('{{%users}}', [
-            'group_id' => 1,
+            'group_id' => 2,
             'username' => 'admin',
             'email' => 'admin@example.com',
             'password_hash' => Yii::$app->security->generatePasswordHash('admin123'),
