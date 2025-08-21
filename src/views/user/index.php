@@ -3,7 +3,7 @@
 use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\models\User;
 use yii\helpers\Html;
-usecroacworks\essentials\yii\grid\ActionColumn;
+use croacworks\essentials\yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 /** @var yii\web\View $this */
