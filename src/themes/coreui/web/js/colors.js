@@ -8,9 +8,9 @@
  */
 
 for (const element of document.querySelectorAll('.theme-color')) {
-  const color = getComputedStyle(element, null).getPropertyValue('background-color')
-  const table = document.createElement('table')
-  table.classList.add('w-100')
+  const color = getComputedStyle(element, null).getPropertyValue('background-color');
+  const table = document.createElement('table');
+  table.classList.add('w-100');
   table.innerHTML = `
       <table class="w-100">
         <tr>
@@ -22,6 +22,7 @@ for (const element of document.querySelectorAll('.theme-color')) {
           <td class="font-weight-bold">${color}</td>
         </tr>
       </table>
-    `
-  element.parentNode.append(table)
+    `;
+  element.parentNode.append(table);
 }
+//# sourceMappingURL=colors.js.map
