@@ -107,7 +107,7 @@ class AuthorizationController extends CommonController
             ],
         ];
 
-        if ($this->params->logging && $controller->id != 'log') {
+        if ($this->config->logging && $controller->id != 'log') {
             if (Yii::$app->user->identity !== null) {
                 $log = new Log();
                 $log->action = $action;
