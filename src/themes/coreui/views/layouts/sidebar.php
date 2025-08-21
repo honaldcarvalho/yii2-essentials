@@ -10,7 +10,7 @@ use croacworks\essentials\models\SysMenu;
 // Pré-existentes do seu código:
 $params     = Configuration::get();
 $assetDir   = CommonController::getAssetsDir(); // ajuste se seu tema definir outro helper
-$name_split = explode(' ', Yii::$app->user->identity->fullname);
+$name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 // ... allowedByVisible() e getNodes() iguais aos seus ...
