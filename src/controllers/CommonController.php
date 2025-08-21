@@ -2,18 +2,22 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\controllers\rest\StorageController;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use croacworks\essentials\helpers\ModelHelper;
-use croacworks\essentials\models\Configuration;
-use croacworks\essentials\models\ModelCommon;
 use Yii;
+
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\symfonymailer\Mailer;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\helpers\ModelHelper;
+use croacworks\essentials\models\Configuration;
+use croacworks\essentials\models\ModelCommon;
+use yii\helpers\Url;
 
 /**
  * Description of Controller
@@ -23,7 +27,7 @@ use yii\web\Response;
  * 
  */
 
-class ControllerCommon extends \yii\web\Controller
+class CommonController extends \yii\web\Controller
 {
 
     public  $guest  = [];
@@ -50,7 +54,7 @@ class ControllerCommon extends \yii\web\Controller
 
     public static function getAssetsDir()
     {
-        return Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/adminlte3/web/dist');
+        return Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web/dist');
     }
 
     public function behaviors()
@@ -95,7 +99,7 @@ class ControllerCommon extends \yii\web\Controller
 
     static function classExist($modelClass)
     {
-        $modelClassCommon = '\\croacworks\\yii2basics\\models\\' . $modelClass;
+        $modelClassCommon = '\\croacworks\\essentials\\models\\' . $modelClass;
         $modelClassApp = '\\app\\models\\' . $modelClass;
 
         if (class_exists($modelClassCommon)) {
