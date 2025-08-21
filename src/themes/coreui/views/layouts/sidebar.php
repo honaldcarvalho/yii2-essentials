@@ -145,8 +145,8 @@ $nodes[] = [
                 echo '<img class="sidebar-brand-full" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($params->title).'" height="32">';
                 echo '<img class="sidebar-brand-narrow" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($params->title).'" height="32">';
             } else {
-                echo '<img class="sidebar-brand-full" src="'.$assetDir.'/img/croacworks-logo-hq.png" alt="'.htmlspecialchars($params->title).'" height="32">';
-                echo '<img class="sidebar-brand-narrow" src="'.$assetDir.'/img/croacworks-logo-hq.png" alt="'.htmlspecialchars($params->title).'" height="32">';
+                echo '<img class="sidebar-brand-full" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($params->title).'" height="32">';
+                echo '<img class="sidebar-brand-narrow" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($params->title).'" height="32">';
             }
             ?>
         </div>
