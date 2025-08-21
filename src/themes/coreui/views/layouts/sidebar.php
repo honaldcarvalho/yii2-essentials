@@ -158,7 +158,7 @@ $nodes[] = ['divider' => true];
     <!-- (Opcional) bloco de usuário -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
         <div class="flex-shrink-0">
-            <?php if (Yii::$app->user->identity->file): ?>
+            <?php if (Yii::$app->user->identity->profile && Yii::$app->user->identity->profile->file): ?>
                 <img src="<?= Yii::$app->user->identity->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
             <?php else: ?>
                 <svg width="32" height="32">
