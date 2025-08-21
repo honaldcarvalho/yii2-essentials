@@ -2,7 +2,6 @@
 
 namespace croacworks\essentials\widgets;
 
-use croacworks\essentials\components\gridview\ActionColumn;
 use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\components\gridview\ResponsiveGridView;
 use Yii;

@@ -60,7 +60,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'uniqueId'=>'ParameterAppend',
         'controller'=>'configuration',
         'template' => '{edit}{remove}',
-        'attactClass'=>'weebz\\yii2basics\\models\\Parameter',
+        'attactClass'=>'croacworks\\essentials\\models\\Parameter',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getParameters(),
         ]),
@@ -101,7 +101,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'uniqueId'=>'MetaTagAppend',
         'controller'=>'configuration',
         'template' => '{edit}{remove}',
-        'attactClass'=>'weebz\\yii2basics\\models\\MetaTag',
+        'attactClass'=>'croacworks\\essentials\\models\\MetaTag',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getMetaTags(),
         ]),
