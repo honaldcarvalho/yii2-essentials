@@ -92,11 +92,11 @@ class User extends Account
     {
         return $this->hasMany(Log::class, ['user_id' => 'id']);
     }
-    
+
     public function getGroups()
     {
         return $this->hasMany(Group::class, ['id' => 'group_id'])
-            ->viaTable('user_groups', ['user_id' => 'id']);
+            ->viaTable('users_groups', ['user_id' => 'id']);
     }
 
     /**
