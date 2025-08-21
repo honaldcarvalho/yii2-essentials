@@ -18,7 +18,7 @@ $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-es
 if(Yii::$app->user->identity === null){
     return (new CommonController(0,0))->redirect(['site/login']); 
 }
-$theme = Yii::$app->user->identity->theme;
+$theme = Yii::$app->user->identity->profile->theme;
 
 ?>
 <?php $this->beginPage() ?>
