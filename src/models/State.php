@@ -39,7 +39,7 @@ class State extends ModelCommon
             [['name'], 'string', 'max' => 250],
             [['uf'], 'string', 'max' => 2],
             [['ddd'], 'string', 'max' => 255],
-            [['country_id'], 'exist', 'skipOnError' => true, 'targetClass' => Country::class, 'targetAttribute' => ['country_id' => 'id']],
+            //[['country_id'], 'exist', 'skipOnError' => true, 'targetClass' => Country::class, 'targetAttribute' => ['country_id' => 'id']],
         ];
     }
 
@@ -74,8 +74,8 @@ class State extends ModelCommon
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getCountry()
-    {
-        return $this->hasOne(Country::class, ['id' => 'country_id']);
-    }
+    // public function getCountry()
+    // {
+    //     return $this->hasOne(Country::class, ['id' => 'country_id']);
+    // }
 }
