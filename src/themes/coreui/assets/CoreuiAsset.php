@@ -12,6 +12,7 @@ class CoreuiAsset extends AssetBundle
         'vendors/simplebar/css/simplebar.css',
         'css/vendors/simplebar.css',
         'css/style.css',
+        'css/custom.css',
     ];
     
     public $js = [
