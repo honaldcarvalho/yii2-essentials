@@ -133,6 +133,12 @@ class User extends Account
     {
         return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
     }
+
+    public function getGroups()
+    {
+        return $this->hasMany(Group::class, ['id' => 'group_id'])
+            ->viaTable('users_groups', ['user_id' => 'id']);
+    }
     
     /**
      * Gets query for [[UserGroups]].
