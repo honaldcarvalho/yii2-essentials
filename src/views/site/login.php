@@ -37,7 +37,7 @@ $this->title = 'Login';
                             </div>
                             <div class="row">
                                 <div class="col-6">
-                                    <button class="btn btn-primary px-4" type="button">Login</button>
+                                    <?= Html::submitButton(Yii::t('app', 'Login'), ['class' => 'btn btn btn-primary px-4', 'name' => 'login-button']) ?>
                                 </div>
                                 <div class="col-6 text-end">
                                     <?= Yii::t('app', ' If you forgot your password you can ') . Html::a('reset it', ['site/request-password-reset']) ?>.
