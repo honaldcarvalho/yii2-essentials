@@ -139,7 +139,7 @@ class AuthorizationController extends CommonController
         if (!self::isGuest()) {
             $controllerFQCN = static::getClassPath(); // <- Corrigido aqui
             $request_action = Yii::$app->controller->action->id;
-            $groups = self::User()->getUserGroups();
+            $groups = self::User()->getUserGroupsId();
 
             $query = Role::find()
                 ->where([
@@ -172,7 +172,7 @@ class AuthorizationController extends CommonController
             return false;
         }
 
-        $groups = self::User()->getUserGroups();
+        $groups = self::User()->getUserGroupsId();
 
         if ($model && $model->verGroup) {
             if ($request_action === 'view' && $model->group_id == 1) {
@@ -225,7 +225,7 @@ class AuthorizationController extends CommonController
             $modelObj->verGroup &&
             !self::isAdmin()
         ) {
-            $groups = self::User()->getUserGroups();
+            $groups = self::User()->getUserGroupsId();
 
             if (Yii::$app->controller->action->id === 'view') {
                 $groups[] = 1;

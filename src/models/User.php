@@ -133,5 +133,15 @@ class User extends Account
     {
         return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
     }
-
+    
+    /**
+     * Gets query for [[UserGroups]].
+     *
+     * @return array
+     */
+    public function getUserGroupsId()
+    {
+        $groupIds = $this->getGroups()->select('id')->column();
+        return Group::getAllDescendantIds($groupIds);
+    }
 }
