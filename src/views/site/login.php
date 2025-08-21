@@ -24,7 +24,7 @@ $this->title = 'Login';
                                     <svg class="icon">
                                         <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                                     </svg></span>
-                                <?= $form->field($model, 'username')->textInput(['autofocus' => true]) ?>
+                                <?= $form->field($model, 'username')->textInput(['autofocus' => true])->label(false); ?>
                             </div>
                             <div class="input-group mb-4"><span class="input-group-text">
                                     <svg class="icon">
