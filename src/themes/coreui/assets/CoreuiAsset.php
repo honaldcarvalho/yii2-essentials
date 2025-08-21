@@ -9,8 +9,8 @@ class CoreuiAsset extends AssetBundle
     public $sourcePath = '@vendor/croacworks/yii2-essentials/src/themes/coreui/web';
 
     public $css = [
-        'css/bootstrap.min.css',
         'css/coreui.min.css',
+        'css/bootstrap.min.css',
     ];
     
     public $js = [
