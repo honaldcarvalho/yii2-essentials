@@ -33,7 +33,9 @@ class Group extends ModelCommon
     public function rules()
     {
         return [
-            [['name'], 'required'],
+            [['name'], 'required','on' => ['create','update']],
+            [['parent_id'], 'default', 'value' => null],
+            [['parent_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['parent_id' => 'id']],
             [['status','parent_id'], 'integer'],
             [['name'], 'string', 'max' => 255],
             ['name', 'unique', 'targetClass' => 'croacworks\essentials\models\Group'],
