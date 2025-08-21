@@ -24,13 +24,13 @@ $this->title = 'Login';
                                     <svg class="icon">
                                         <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                                     </svg></span>
-                                <?= $form->field($model, 'username')->textInput(['autofocus' => true])->label(false); ?>
+                                <input class="form-control" name="LoginForm[username]" type="text" placeholder="Username">
                             </div>
                             <div class="input-group mb-4"><span class="input-group-text">
                                     <svg class="icon">
                                         <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
                                     </svg></span>
-                                 <?= $form->field($model, 'password')->passwordInput() ?>
+                                <input class="form-control" name="LoginForm[password]" type="password" placeholder="Password">
                             </div>
                             <div class="input-group mb-4"><span class="input-group-text">
                                     <?= $form->field($model, 'rememberMe')->checkbox() ?>
