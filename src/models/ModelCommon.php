@@ -49,7 +49,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         }
 
         if ($verGroup && property_exists(static::class, 'verGroup')) {
-            $user = \croacworks\essentials\controllers\CommonController::User();
+            $user = \croacworks\essentials\controllers\AuthorizationController::User();
 
             if ($user) {
                 $groupIds = Group::getAllDescendantIds($user->getUserGroupsId());
@@ -111,7 +111,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         }
 
         if ($insert) {
-            $user = CommonController::User();
+            $user = AuthorizationController::User();
 
             if (CommonController::isAdmin()) {
                 if (!empty($this->group_id)) {
@@ -249,7 +249,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         $this->load($params);
 
         // grid filtering conditions
-        $user = CommonController::User();
+        $user = AuthorizationController::User();
 
         if ($this->verGroup && $user) {
             // IDs dos grupos do usuário
