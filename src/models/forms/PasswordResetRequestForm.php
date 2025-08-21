@@ -1,10 +1,13 @@
 <?php
 
-namespace croacworks\essentials\models;
+namespace croacworks\essentials\models\forms;
+
 
 use Yii;
 use croacworks\essentials\controllers\AuthorizationController;
+use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\User;
+use croacworks\essentials\models\ModelCommon;
 
 /**
  * Password reset request form

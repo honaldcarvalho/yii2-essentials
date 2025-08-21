@@ -1,10 +1,11 @@
 <?php
 
-namespace croacworks\essentials\models;
+namespace croacworks\essentials\models\forms;
+
 
 use Yii;
 use croacworks\essentials\models\User;
-use yii\base\Model;
+use croacworks\essentials\models\ModelCommon;
 
 class ResendVerificationEmailForm extends ModelCommon
 {

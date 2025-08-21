@@ -1,5 +1,5 @@
 <?php
-namespace croacworks\essentials\models;
+namespace croacworks\essentials\models\forms;
 
 use croacworks\essentials\models\User;
 use Yii;

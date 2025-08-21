@@ -1,9 +1,9 @@
 <?php
 
-namespace croacworks\essentials\models;
+namespace croacworks\essentials\models\forms;
 
 use yii\base\InvalidArgumentException;
-use yii\base\Model;
+use croacworks\essentials\models\ModelCommon;
 use Yii;
 use croacworks\essentials\models\User;
 
