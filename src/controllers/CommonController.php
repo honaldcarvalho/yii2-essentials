@@ -54,7 +54,7 @@ class CommonController extends \yii\web\Controller
 
     public static function getAssetsDir()
     {
-        return Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web/dist');
+        return Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
     }
 
     public function behaviors()
