@@ -91,7 +91,7 @@ class EmailServiceController extends AuthorizationController
             </tr>
         ";
         $subject = 'Test Email - '.$model->description;
-        $message = $mailer->compose('@vendor/weebz/yii2-basics/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
+        $message = $mailer->compose('@vendor/croacworks/yii2-essentials/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
         $response = $message->setFrom($model->username)->setTo($params->email)
         ->setSubject(Yii::t('app','Test Email - '.$model->description))
         ->send();

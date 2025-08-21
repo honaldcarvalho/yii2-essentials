@@ -101,7 +101,7 @@ class EmailService extends ModelCommon
         if(empty($from)){
             $from = $mailer->transport->getUsername();
         }
-        $mailer_email = $mailer->compose('@vendor/weebz/yii2-basics/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
+        $mailer_email = $mailer->compose('@vendor/croacworks/yii2-essentials/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
         $mailer_email->setFrom([$from=> $from_name])->setTo($to)
         ->setSubject($subject);
         if(!empty($cc)){
@@ -145,7 +145,7 @@ class EmailService extends ModelCommon
         ];
         
 
-        $message = $mailer->compose('@vendor/weebz/yii2-basics/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
+        $message = $mailer->compose('@vendor/croacworks/yii2-essentials/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
         $response = $message->setFrom($model->username)->setTo($to)
         ->setSubject(Yii::t('app', $subject))
         ->send();

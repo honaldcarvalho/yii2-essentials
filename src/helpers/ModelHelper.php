@@ -9,7 +9,7 @@ class ModelHelper
 
     public static $paths = [
         '@app/models',
-        '@vendor/weebz/yii2-basics/src/models'
+        '@vendor/croacworks/yii2-essentials/src/models'
     ];
 
     public static function getAllModelClasses(): array

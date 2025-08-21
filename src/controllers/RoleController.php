@@ -39,8 +39,8 @@ class RoleController extends AuthorizationController
         $paths = [
             Yii::getAlias('@app/controllers'),
             Yii::getAlias('@app/controllers/rest'),
-            Yii::getAlias('@vendor/weebz/yii2-basics/src/controllers'),
-            Yii::getAlias('@vendor/weebz/yii2-basics/src/controllers/rest'),
+            Yii::getAlias('@vendor/croacworks/yii2-essentials/src/controllers'),
+            Yii::getAlias('@vendor/croacworks/yii2-essentials/src/controllers/rest'),
         ];
 
         $controllers = [];
