@@ -3,6 +3,7 @@
 namespace croacworks\essentials\widgets;
 
 use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\components\gridview\ResponsiveGridView;
 use Yii;
 use yii\bootstrap5\ActiveForm;
@@ -170,7 +171,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         array_push(
             $columns,
             [
-                'class' => ActionColumn::class,
+                'class' => ActionColumnCustom::class,
                 'headerOptions' => ['style' => 'width:10%'],
                 'template' => $this->template,
                 'path' =>  $this->path,

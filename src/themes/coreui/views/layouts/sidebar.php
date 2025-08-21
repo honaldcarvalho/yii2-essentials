@@ -131,7 +131,7 @@ $nodes[] = [
 
 // (Opcional) header e divider de exemplo
 // array_unshift($nodes, ['label' => 'Theme', 'header' => true]);
-// $nodes[] = ['divider' => true];
+$nodes[] = ['divider' => true];
 ?>
 
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
