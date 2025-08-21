@@ -28,8 +28,6 @@ use Yii;
  */
 class User extends Account
 {
-    public $profile;
-
     /**
      * {@inheritdoc}
      */
