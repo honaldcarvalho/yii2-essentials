@@ -30,7 +30,7 @@ use Yii;
  */
 class User extends Account
 {
-
+    public $profile;
 
     /**
      * {@inheritdoc}
@@ -60,6 +60,7 @@ class User extends Account
             [['username'], 'unique'],
             [['email'], 'unique'],
             [['password_reset_token'], 'unique'],
+            [['profile'], 'exist', 'skipOnError' => true, 'targetClass' => UserProfile::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
