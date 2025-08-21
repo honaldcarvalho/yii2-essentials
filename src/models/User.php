@@ -114,6 +114,17 @@ class User extends Account
     }
 
     /**
+     * Gets query for [[UserGroups]].
+     *
+     * @return array
+     */
+    public function getUserGroupsId()
+    {
+        $groupIds = $this->getGroups()->select('id')->column();
+        return Group::getAllDescendantIds($groupIds);
+    }
+    
+    /**
      * Gets query for [[Language]].
      *
      * @return \yii\db\ActiveQuery
