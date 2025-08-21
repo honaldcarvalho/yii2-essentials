@@ -92,6 +92,12 @@ class User extends Account
     {
         return $this->hasMany(Log::class, ['user_id' => 'id']);
     }
+    
+    public function getGroups()
+    {
+        return $this->hasMany(Group::class, ['id' => 'group_id'])
+            ->viaTable('user_groups', ['user_id' => 'id']);
+    }
 
     /**
      * Gets query for [[Roles]].
@@ -123,7 +129,7 @@ class User extends Account
         $groupIds = $this->getGroups()->select('id')->column();
         return Group::getAllDescendantIds($groupIds);
     }
-    
+
     /**
      * Gets query for [[Language]].
      *
