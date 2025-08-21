@@ -1,5 +1,8 @@
 <?php
 
+/** @var yii\web\View $this */
+/** @var string $content */
+
 use croacworks\essentials\controllers\ControllerCommon;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
@@ -7,19 +10,20 @@ use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 
-FontAwesomeAsset::register($this);
 CoreuiAsset::register($this);
-PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
+FontAwesomeAsset::register($this);
+PluginAsset::register($this)->add(['jquery','fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
 $configuration = Configuration::get();
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/adminlte3/web');
 // if(Yii::$app->user->identity === null){
 //     return (new ControllerCommon(0,0))->redirect(['site/login']); 
 // }
-$theme = 'light';//Yii::$app->user->identity->theme;
+$theme = 'dark';//Yii::$app->user->identity->theme;
 
 ?>
-<!doctype html>
-<html lang="<?= Yii::$app->language ?>">
+<?php $this->beginPage() ?>
+<!doctype html >
+<html lang="<?= Yii::$app->language ?>" data-coreui-theme="dark">
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -64,6 +68,7 @@ $theme = 'light';//Yii::$app->user->identity->theme;
   <body>
     <?php $this->beginBody() ?>
 
+    <?= $this->render('sidebar', ['assetDir' => $assetDir,'theme'=>$theme,'configuration'=>$configuration]) ?>
     <?= $this->render('content', ['content' => $content, 'assetDir' => $assetDir,'theme'=>$theme,'configuration'=>$configuration]) ?>
 
     <?php $this->endBody() ?>

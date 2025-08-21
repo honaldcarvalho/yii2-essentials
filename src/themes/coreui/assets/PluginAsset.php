@@ -30,6 +30,9 @@ class PluginAsset extends AssetBundle
             'js' => 'inputmask/inputmask.min.js',
             'js' => 'inputmask/jquery.inputmask.min.js',
         ],
+        'jquery' => [
+            'js' => 'jquery/jquery-3.7.1.min.js',
+        ],
         'jquery-ui' => [
             'css' => 'jquery-ui/jquery-ui.min.css',
             'js' => 'jquery-ui/jquery-ui.min.js',
