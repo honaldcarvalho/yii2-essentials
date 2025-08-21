@@ -12,7 +12,7 @@ $this->title = \Yii::t('app',$name);
 $this->params['breadcrumbs'] = [['label' => $this->title]];
 
 if( AuthorizationController::isGuest())
-    $this->context->layout = '@vendor/weebz/yii2-basics/src/themes/adminlte3/views/layouts/main-blank'; // Use a specific layout for error pages
+    $this->context->layout = '@vendor/weebz/yii2-basics/src/themes/coreui/views/layouts/main-blank'; // Use a specific layout for error pages
 
 ?>
 
