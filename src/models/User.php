@@ -123,7 +123,7 @@ class User extends Account
      */
     public function getProfile()
     {
-        return UserProfile::findOne(['user_id' => 'id']);
+        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
     }
 
     /**
