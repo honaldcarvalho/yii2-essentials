@@ -9,6 +9,7 @@ class CoreuiAsset extends AssetBundle
     public $sourcePath = '@vendor/croacworks/yii2-essentials/src/themes/coreui/web';
 
     public $css = [
+        'css/simplebar.css',
         'css/coreui.min.css',
         'css/bootstrap.min.css',
     ];
@@ -20,6 +21,7 @@ class CoreuiAsset extends AssetBundle
         'js/color-modes.js',
         'js/utils.js',
         'js/t.js',
+        'js/simplebar.min.js',
     ];
 
     public $depends = [
