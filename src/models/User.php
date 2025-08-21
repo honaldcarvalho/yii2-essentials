@@ -121,9 +121,9 @@ class User extends Account
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUserProfiles()
+    public function getUserProfile()
     {
-        return $this->hasMany(UserProfile::class, ['user_id' => 'id']);
+        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
     }
 
     /**
