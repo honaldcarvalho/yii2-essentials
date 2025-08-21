@@ -27,6 +27,7 @@ use Yii;
  * @property string $password write-only password
 
  * @property Group $group
+ * @property UserProfile $profile
  * @property Language $language
  * @property Log[] $logs
  * @property Role[] $roles
@@ -94,6 +95,16 @@ class User extends Account
     public function getLogs()
     {
         return $this->hasMany(Log::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[UserProfile]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProfile()
+    {
+        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
     }
 
     /**

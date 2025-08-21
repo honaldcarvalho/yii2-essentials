@@ -1,0 +1,92 @@
+<?php
+
+namespace croacworks\essentials\models;
+
+use Yii;
+
+/**
+ * This is the model class for table "user_profiles".
+ *
+ * @property int $id
+ * @property int|null $user_id
+ * @property int|null $file_id
+ * @property string|null $fullname
+ * @property string|null $cpf_cnpj
+ * @property string $phone
+ * @property int $status
+ * @property int $created_at
+ * @property int $updated_at
+ *
+ * @property File $file
+ * @property User $user
+ */
+
+class UserProfile extends ModelCommon
+{
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'user_profiles';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['user_id', 'file_id', 'fullname', 'cpf_cnpj'], 'default', 'value' => null],
+            [['status'], 'default', 'value' => 10],
+            [['updated_at'], 'default', 'value' => 1755805973],
+            [['user_id', 'file_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['phone'], 'required'],
+            [['fullname', 'phone'], 'string', 'max' => 255],
+            [['cpf_cnpj'], 'string', 'max' => 18],
+            [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => Yii::t('app', 'ID'),
+            'user_id' => Yii::t('app', 'User ID'),
+            'file_id' => Yii::t('app', 'File ID'),
+            'fullname' => Yii::t('app', 'Fullname'),
+            'cpf_cnpj' => Yii::t('app', 'Cpf Cnpj'),
+            'phone' => Yii::t('app', 'Phone'),
+            'status' => Yii::t('app', 'Status'),
+            'created_at' => Yii::t('app', 'Created At'),
+            'updated_at' => Yii::t('app', 'Updated At'),
+        ];
+    }
+
+    /**
+     * Gets query for [[File]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFile()
+    {
+        return $this->hasOne(File::class, ['id' => 'file_id']);
+    }
+
+    /**
+     * Gets query for [[User]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUser()
+    {
+        return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+}
