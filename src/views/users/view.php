@@ -53,7 +53,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             [
                                 'attribute'=>'status',
                                 'value'=> function($model){
-                                    return $model->status == $model::STATUS_INACTIVE ? Yii::t('app','Inactive') : ( $model->status == $model::STATUS_NOSYSTEM ? Yii::t('app','No System User') : Yii::t('app','Active'));
+                                    return $model->status == $model::STATUS_INACTIVE ? Yii::t('app','Inactive') : ( $model->status == $model::STATUS_ACTIVE ? Yii::t('app','Active') : Yii::t('app','Deleted') );
                                 }
                             ]
                         ],

@@ -3,12 +3,11 @@
 use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\models\User;
 use yii\helpers\Html;
-use yii\helpers\Url;
-use yii\grid\ActionColumn;
+usecroacworks\essentials\yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 /** @var yii\web\View $this */
-/** @var app\models\UserSearch $searchModel */
+/** @var app\models\Ucroacworks\essentials\ */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = Yii::t('app', 'Users');
@@ -23,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
     </p>
 
     <?php Pjax::begin(); ?>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+    <?php // echo $thcroacworks\essentials\['model' => $searchModel]); ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -40,7 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute'=>'status',
                 'value'=> function($model){
-                    return $model->status == $model::STATUS_INACTIVE ? Yii::t('app','Inactive') : ( $model->status == $model::STATUS_NOSYSTEM ? Yii::t('app','No System User') : Yii::t('app','Active'));
+                    return $model->status == $model::STATUS_INACTIVE ? Yii::t('app','Inactive') : ( $model->status == $model::STATUS_ACTIVE ? Yii::t('app','Active') : Yii::t('app','Deleted') );
                 }
             ],
             [
@@ -52,3 +51,4 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php Pjax::end(); ?>
 
 </div>
+weebz\yii2basics\croacworks\essentials\
