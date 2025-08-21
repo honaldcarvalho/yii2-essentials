@@ -25,7 +25,7 @@ $theme = 'light';//Yii::$app->user->identity->theme;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title><?= $this->title != '' ? $params->title . ' - ' . Html::encode($this->title) : $params->title  ?></title>
+    <title><?= $this->title != '' ? $configuration->title . ' - ' . Html::encode($this->title) : $configuration->title  ?></title>
     <?php 
     $this->head(); 
     $script = <<< JS
@@ -64,7 +64,7 @@ $theme = 'light';//Yii::$app->user->identity->theme;
   <body>
     <?php $this->beginBody() ?>
 
-    <?= $this->render('content', ['content' => $content, 'assetDir' => $assetDir,'theme'=>$theme,'params'=>$configuration]) ?>
+    <?= $this->render('content', ['content' => $content, 'assetDir' => $assetDir,'theme'=>$theme,'configuration'=>$configuration]) ?>
 
     <?php $this->endBody() ?>
   </body>
