@@ -9,6 +9,8 @@ class m230419_000001_create_users extends Migration
         $this->createTable('{{%users}}', [
             'id' => $this->primaryKey(),
             'group_id' => $this->integer()->null(),
+            'language_id' => $this->integer()->defaultValue(1),//en-US
+            'theme' => $this->string(10)->defaultValue('light'),
             'username' => $this->string(64)->notNull()->unique(),
             'email' => $this->string(190)->notNull()->unique(),
             'password_hash' => $this->string()->notNull(),

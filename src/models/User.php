@@ -12,7 +12,10 @@ use Yii;
  * User model
  *
  * @property integer $id
+ * @property integer $group_id;
+ * @property integer $language_id;
  * @property string $username
+ * @property string $theme;
  * @property string $password_hash
  * @property string $password_reset_token
  * @property string $verification_token
@@ -23,7 +26,8 @@ use Yii;
  * @property integer $updated_at
  * @property string $password write-only password
 
- *
+ * @property Group $group
+ * @property Language $language
  * @property Log[] $logs
  * @property Role[] $roles
  * @property UsersGroup[] $usersGroups
@@ -106,7 +110,7 @@ class User extends Account
      */
     public function getUsersGroups()
     {
-        return $this->hasMany(UsersGroup::class, ['user_id' => 'id']);
+        return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
     }
 
     
