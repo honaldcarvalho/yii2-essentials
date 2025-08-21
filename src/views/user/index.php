@@ -51,4 +51,4 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php Pjax::end(); ?>
 
 </div>
-weebz\yii2basics\croacworks\essentials\
+croacworks\essentials\croacworks\essentials\

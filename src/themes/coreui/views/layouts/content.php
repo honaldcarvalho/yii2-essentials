@@ -1,6 +1,6 @@
 <?php
 
-use yii\bootstrap5\Alert;
+use croacworks\essentials\widgets\Alert;
 ?>
 
 <div class="wrapper d-flex flex-column min-vh-100">
