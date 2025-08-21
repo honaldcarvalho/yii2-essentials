@@ -26,6 +26,7 @@ use Yii;
  * @property Notification[] $notifications
  * @property Role[] $roles
  * @property UserProfile $profile
+ * @property Language $language
  * @property UsersGroup[] $usersGroups
  */
 class User extends Account
@@ -61,6 +62,7 @@ class User extends Account
             [['email'], 'unique'],
             [['password_reset_token'], 'unique'],
             [['profile'], 'exist', 'skipOnError' => true, 'targetClass' => UserProfile::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
         ];
     }
 
