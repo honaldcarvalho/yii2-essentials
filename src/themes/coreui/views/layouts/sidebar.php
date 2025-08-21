@@ -53,6 +53,7 @@ function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string 
 /** Monta recursivamente os nós do menu a partir de sys_menus */
 function getNodes($parentId = null): array
 {
+    dd(AuthorizationController::isAdmin());
     $items = SysMenu::find()
         ->where(['parent_id' => $parentId, 'status' => true])
         ->orderBy(['order' => SORT_ASC])
