@@ -55,7 +55,9 @@ class AuthorizationController extends CommonController
 
     public static function isAdmin(): bool
     {
-        return true;
+        return !self::isGuest() && UserGroup::find()
+            ->where(['user_id' => Yii::$app->user->id, 'group_id' => self::ADMIN_GROUP_ID])
+            ->exists();
     }
 
     public static function getUserByToken()
