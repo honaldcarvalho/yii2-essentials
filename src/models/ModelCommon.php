@@ -1,9 +1,9 @@
 <?php
 namespace croacworks\essentials\models;
 
-use yii\data\ActiveDataProvider;
-use croacworks\essentials\controllers\CommonController;
 use Yii;
+use yii\data\ActiveDataProvider;
+use croacworks\essentials\controllers\AuthorizationController;
 
 class ModelCommon extends \yii\db\ActiveRecord
 {
@@ -113,7 +113,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         if ($insert) {
             $user = AuthorizationController::User();
 
-            if (CommonController::isAdmin()) {
+            if (AuthorizationController::isAdmin()) {
                 if (!empty($this->group_id)) {
                     return true;
                 } else if (($admin_group = Parameter::findOne(['name' => 'admin-group'])?->value) !== null && $this->hasAttribute('group_id')) {
@@ -233,7 +233,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         }
 
         if (isset($options['groupModel'])) {
-            $field =  CommonController::addSlashUpperLower($className);
+            $field =  AuthorizationController::addSlashUpperLower($className);
             $query->leftJoin($options['groupModel']['table'], "{$table}.{$options['groupModel']['field']} = {$options['groupModel']['table']}.id");
         }
         // add conditions that should always apply here
