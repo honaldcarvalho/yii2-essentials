@@ -98,7 +98,7 @@ class UserProfile extends ModelCommon
      */
     public function getLanguage()
     {
-        return $this->hasOne(Language::class, ['language_id' => 'id']);
+        return $this->hasOne(Language::class, ['id'=>'language_id']);
     }
 
 }
