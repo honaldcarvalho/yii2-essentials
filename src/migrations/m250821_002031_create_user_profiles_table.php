@@ -35,7 +35,7 @@ class m250821_002031_create_user_profiles_table extends Migration
 
         $this->addForeignKey(
             'fk-user_profiles-file_id',
-            'ususer_profileser',
+            'user_profiles',
             'file_id',
             'files',
             'id',
