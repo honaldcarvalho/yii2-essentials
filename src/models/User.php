@@ -9,8 +9,6 @@ use Yii;
  *
  * @property int $id
  * @property int|null $group_id
- * @property int|null $language_id
- * @property string|null $theme
  * @property string $username
  * @property string $email
  * @property string $password_hash
@@ -26,7 +24,6 @@ use Yii;
  * @property Notification[] $notifications
  * @property Role[] $roles
  * @property UserProfile $profile
- * @property Language $language
  * @property UsersGroup[] $usersGroups
  */
 class User extends Account
@@ -127,16 +124,6 @@ class User extends Account
     public function getUserProfile()
     {
         return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[Language]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getLanguage()
-    {
-        return $this->hasOne(Language::class, ['language_id' => 'id']);
     }
 
     /**

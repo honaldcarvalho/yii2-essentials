@@ -10,6 +10,8 @@ use Yii;
  * @property int $id
  * @property int|null $user_id
  * @property int|null $file_id
+ * @property int|null $language_id
+ * @property string|null $theme
  * @property string|null $fullname
  * @property string|null $cpf_cnpj
  * @property string $phone
@@ -87,6 +89,16 @@ class UserProfile extends ModelCommon
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+    /**
+     * Gets query for [[Language]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getLanguage()
+    {
+        return $this->hasOne(Language::class, ['language_id' => 'id']);
     }
 
 }

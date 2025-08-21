@@ -15,6 +15,8 @@ class m250821_002031_create_user_profiles_table extends Migration
         $this->createTable('{{%user_profiles}}', [
             'id' => $this->primaryKey(),
             'user_id' => $this->integer(),
+            'language_id' => $this->integer()->defaultValue(1),//en-US
+            'theme' => $this->string(10)->defaultValue('light'),
             'file_id' => $this->integer(),
             'fullname' => $this->string(),
             'cpf_cnpj' => $this->string(18),
@@ -38,6 +40,14 @@ class m250821_002031_create_user_profiles_table extends Migration
             'user_profiles',
             'file_id',
             'files',
+            'id',
+            'RESTRICT'
+        );
+        $this->addForeignKey(
+            'fk-user_profiles-language_id',
+            'user_profiles',
+            'language_id',
+            'languages',
             'id',
             'RESTRICT'
         );

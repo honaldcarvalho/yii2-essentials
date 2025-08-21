@@ -16,6 +16,24 @@ class m250819_000003_insert_default_user_and_roles extends Migration
     {
         $time = time();
 
+        $this->insert('languages', [
+            'code' => 'en-US',
+            'name' => 'English (EUA)',
+            'status'=> 1
+        ]);
+
+        $this->insert('languages', [
+            'code' => 'pt-BR',
+            'name' => 'Portugues (BR)',
+            'status'=> 1
+        ]);
+
+        $this->insert('languages', [
+            'code' => 'es',
+            'name' => 'Español (ES)',
+            'status'=> 0
+        ]);
+
         $this->insert('configurations', [
             'slogan' => 'CroacWorks',
             'title' => 'System Basic',
@@ -52,6 +70,16 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'status' => User::STATUS_ACTIVE,
         ]);
 
+        $this->insert('{{%user_profiles}}', [
+            'user_id' => 1,
+            'language_id' => 1,//en-US
+            'theme' => 'dark',
+            'file_id' => null,
+            'fullname' => "System Administrator",
+            'cpf_cnpj' => null,
+            'phone' => null,
+            'status' => 10
+        ]);
 
         $this->insert('users_groups', [
             'user_id' => 1,
@@ -67,24 +95,6 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'status' => 1,
             'created_at' => $time,
             'updated_at' => $time,
-        ]);
-
-        $this->insert('languages', [
-            'code' => 'en-US',
-            'name' => 'English (EUA)',
-            'status'=> 1
-        ]);
-
-        $this->insert('languages', [
-            'code' => 'pt-BR',
-            'name' => 'Portugues (BR)',
-            'status'=> 1
-        ]);
-
-        $this->insert('languages', [
-            'code' => 'es',
-            'name' => 'Español (ES)',
-            'status'=> 0
         ]);
 
         $this->insert('folders', [
