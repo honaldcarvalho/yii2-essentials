@@ -121,7 +121,7 @@ class User extends Account
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUserProfile()
+    public function getProfile()
     {
         return UserProfile::findOne(['user_id' => 'id']);
     }
