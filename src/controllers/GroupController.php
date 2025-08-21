@@ -4,6 +4,7 @@ namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\models\Group;
 use croacworks\essentials\models\UserGroup;
+use Mpdf\Tag\A;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -11,7 +12,7 @@ use yii\web\NotFoundHttpException;
 /**
  * GroupController implements the CRUD actions for Group model.
  */
-class GroupController extends Controller
+class GroupController extends AuthorizationController
 {
 
     /**
