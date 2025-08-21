@@ -12,9 +12,9 @@ CoreuiAsset::register($this);
 PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
 $configuration = Configuration::get();
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/adminlte3/web');
-if(Yii::$app->user->identity === null){
-    return (new ControllerCommon(0,0))->redirect(['site/login']); 
-}
+// if(Yii::$app->user->identity === null){
+//     return (new ControllerCommon(0,0))->redirect(['site/login']); 
+// }
 $theme = Yii::$app->user->identity->theme;
 
 ?>
