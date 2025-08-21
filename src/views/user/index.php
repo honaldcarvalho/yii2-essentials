@@ -1,67 +1,54 @@
 <?php
 
-use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\models\User;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use yii\grid\ActionColumn;
 use yii\grid\GridView;
-
+use yii\widgets\Pjax;
 /** @var yii\web\View $this */
-/** @var croacworks\essentials\models\UserSearch $searchModel */
+/** @var app\models\UserSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = Yii::t('app', 'Users');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<div class="user-index">
 
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'User','show'=>['create'],'buttons_name'=>['create'=>'Create User']]) ?>
-                    </p>
-                    
-                    <?= GridView::widget([
-                        'dataProvider' => $dataProvider,
-                        'filterModel' => $searchModel,
-                        'columns' => [
-                            'id',
-                            'fullname',
-                            'username',
-                            'email:email',
-                            //'password',
-                            //'access_token',
-                            //'token_expires',
-                            //'auth_key',
-                            //'reset_token',
-                            [
-                                'attribute'=>'created_at',
-                                'format' => 'date',
-                                'label' => Yii::t('app', 'Created At'),
-                                'filter' =>Html::input('date', ucfirst(Yii::$app->controller->id).'Search[created_at]',$searchModel->created_at,['class'=>'form-control dateandtime'])
-                            ],
-                            [
-                                'attribute'=>'updated_at',
-                                'format' => 'date',
-                                'label' => Yii::t('app', 'Updated At'),
-                                'filter' =>Html::input('date',ucfirst(Yii::$app->controller->id).'Search[updated_at]',$searchModel->updated_at,['class'=>'form-control dateandtime'])
-                            ],
-                            'status:boolean',
-                            [
-                                'class' =>'croacworks\essentials\components\gridview\ActionColumn',
-                /*                 'urlCreator' => function ($action, User $model, $key, $index, $column) {
-                                    return Url::toRoute([$action, 'id' => $model->id]);
-                                 } */
-                            ],
-                        ],
-                    ]); ?>
+    <h1><?= Html::encode($this->title) ?></h1>
 
-                </div>
-            </div>
-        </div>
-        <!--.card-body-->
-    </div>
-    <!--.card-->
+    <p>
+        <?= Html::a(Yii::t('app', 'Create User'), ['create'], ['class' => 'btn btn-success']) ?>
+    </p>
+
+    <?php Pjax::begin(); ?>
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
+        'columns' => [
+            'id',
+            'group.name:text:'.Yii::t('app', 'Group'),
+            'language.name:text:'.Yii::t('app', 'Language'),
+            'theme',
+            'username',
+            'email:email',
+            'created_at:datetime',
+            'updated_at:datetime',
+            [
+                'attribute'=>'status',
+                'value'=> function($model){
+                    return $model->status == $model::STATUS_INACTIVE ? Yii::t('app','Inactive') : ( $model->status == $model::STATUS_NOSYSTEM ? Yii::t('app','No System User') : Yii::t('app','Active'));
+                }
+            ],
+            [
+                'class' => ActionColumnCustom::class
+            ],
+        ],
+    ]); ?>
+
+    <?php Pjax::end(); ?>
+
 </div>

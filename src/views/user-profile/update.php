@@ -3,16 +3,16 @@
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
-/** @var croacworks\essentials\models\User $model */
+/** @var croacworks\essentials\models\UserProfile $model */
 
-$this->title = Yii::t('app', 'Update User: {name}', [
+$this->title = Yii::t('app', 'Update User Profile: {name}', [
     'name' => $model->id,
 ]);
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'User Profiles'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 ?>
-<div class="user-update">
+<div class="user-profile-update">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
