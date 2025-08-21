@@ -37,7 +37,7 @@ $theme = 'dark';//Yii::$app->user->identity->theme;
   <body>
     <?php $this->beginBody() ?>
 
-    <?= $this->render('content', ['content' => $content, 'assetDir' => $assetDir,'theme'=>$theme,'configuration'=>$configuration]) ?>
+    <?= $content; ?>
 
     <?php $this->endBody() ?>
   </body>
