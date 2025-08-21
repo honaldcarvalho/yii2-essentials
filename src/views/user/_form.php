@@ -19,14 +19,6 @@ use yii\widgets\ActiveForm;
     
     <?= $form->field($model, 'email')->textInput() ?>
 
-    <?= $form->field($model, 'theme')->dropDownList(['light'=>'Light','dark'=>'Dark']) ?>
-
-    <?= $form->field($model, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
-        Language::find()
-            ->select('id,name')->asArray()->all(),
-        'id',
-        'name'
-    )) ?>
     <?= $form->field($model, 'password')->passwordInput() ?>
     <?= $form->field($model, 'password_confirm')->passwordInput() ?>
 

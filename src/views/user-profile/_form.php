@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\models\Language;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
@@ -15,6 +16,15 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'id')->textInput() ?>
 
     <?= $form->field($model, 'user_id')->textInput() ?>
+    
+    <?= $form->field($model, 'theme')->dropDownList(['light'=>'Light','dark'=>'Dark']) ?>
+
+    <?= $form->field($model, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
+        Language::find()
+            ->select('id,name')->asArray()->all(),
+        'id',
+        'name'
+    )) ?>
 
     <?= $form->field($model, 'file_id')->textInput() ?>
 
