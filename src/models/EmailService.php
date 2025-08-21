@@ -2,7 +2,7 @@
 
 namespace croacworks\essentials\models;
 
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\CommonController;
 use Yii;
 use yii\symfonymailer\Mailer;
 
@@ -97,7 +97,7 @@ class EmailService extends ModelCommon
 
         $message_str = '';
         $response = false;
-        $mailer =  AuthController::mailer();
+        $mailer =  CommonController::mailer();
         if(empty($from)){
             $from = $mailer->transport->getUsername();
         }

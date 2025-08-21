@@ -11,7 +11,7 @@ use yii\web\NotFoundHttpException;
 /**
  * GroupController implements the CRUD actions for Group model.
  */
-class GroupController extends ControllerCommon
+class GroupController extends CommonController
 {
 
     /**

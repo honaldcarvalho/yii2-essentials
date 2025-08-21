@@ -10,7 +10,7 @@ use yii\web\Response;
  * Simple health check controller.
  * Exposed at /essentials/health/index when the module is enabled.
  */
-class ControllerCommon extends Controller
+class CommonController extends Controller
 {
     public $enableCsrfValidation = false;
 }

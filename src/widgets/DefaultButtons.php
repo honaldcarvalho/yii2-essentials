@@ -3,7 +3,7 @@
 namespace croacworks\essentials\widgets;
 
 use Yii;
-use weebz\yii2basics\controllers\AuthController;
+use weebz\yii2basics\controllers\CommonController;
 use yii\base\Widget;
 use yii\helpers\Html;
 
@@ -42,33 +42,33 @@ class DefaultButtons extends Widget
         $controller_parts = explode('Controller',end($controller_parts));
         $this->controller = strtolower($controller_parts[0]);
 
-        if(($tranformed =  AuthController::addSlashUpperLower($controller_parts[0])) != false){
+        if(($tranformed =  CommonController::addSlashUpperLower($controller_parts[0])) != false){
             $this->controller = $tranformed;
         }
         
         $show = true;
         if($this->verGroup){
-            if($this->model != null && !in_array($this->model->group_id, AuthController::getUserGroups())){
+            if($this->model != null && !in_array($this->model->group_id, CommonController::getUserGroups())){
                 $show = false;
             }
         }
 
         $this->buttons .= '<div class="btn-group">';
-        if(in_array('index',$this->show) &&  AuthController::verAuthorization($this->controller,'index',null,$this->path) && $show){
+        if(in_array('index',$this->show) &&  CommonController::verAuthorization($this->controller,'index',null,$this->path) && $show){
             $this->buttons .= Html::a(
                     '<i class="fas fa-list-ol"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['index']).'</span>' ?? Yii::t('app', 'index'),
                     ['index'], 
                     ['class' => 'btn btn-primary']);
         }
         
-        if(in_array('create',$this->show) &&  AuthController::verAuthorization($this->controller,'create',null,$this->path) && $show){
+        if(in_array('create',$this->show) &&  CommonController::verAuthorization($this->controller,'create',null,$this->path) && $show){
             $this->buttons .= Html::a( 
                     '<i class="fas fa-plus-square"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['create']).'</span>' ?? Yii::t('app', 'create'), 
                     ['create'], 
                     ['class' => 'btn btn-success']);                       
         }
 
-        if(in_array('update',$this->show) &&  AuthController::verAuthorization($this->controller,'update',$this->model,$this->path) && $this->model && $show){
+        if(in_array('update',$this->show) &&  CommonController::verAuthorization($this->controller,'update',$this->model,$this->path) && $this->model && $show){
             if(!is_array($this->model->primaryKey)){
                 $link = ['update', 'id' =>  $this->model->id];
             }else{
@@ -80,7 +80,7 @@ class DefaultButtons extends Widget
                     ['class' => 'btn btn-warning']);
         }
         
-        if(in_array('delete',$this->show) &&  AuthController::verAuthorization($this->controller,'delete',$this->model,$this->path) && $this->model && $show){
+        if(in_array('delete',$this->show) &&  CommonController::verAuthorization($this->controller,'delete',$this->model,$this->path) && $this->model && $show){
             if(!is_array($this->model->primaryKey)){
                 $link = ['delete', 'id' =>  $this->model->id];
             }else{
@@ -98,7 +98,7 @@ class DefaultButtons extends Widget
     
         }
 
-        if(in_array('clone',$this->show) &&  AuthController::verAuthorization($this->controller,'clone',$this->model,$this->path) && $show){
+        if(in_array('clone',$this->show) &&  CommonController::verAuthorization($this->controller,'clone',$this->model,$this->path) && $show){
             $this->buttons .= Html::a( 
                 '<i class="fas fa-clone"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['clone'].'</span>' ?? 'clone'), 
                 ['clone', 'id' =>  $this->model->id], 
@@ -110,7 +110,7 @@ class DefaultButtons extends Widget
             if(isset($extra['visible'])){
                 $visible = $extra['visible'];
             }
-            if( AuthController::verAuthorization($extra['controller'],$extra['action'],$this->model,$this->path) && $visible){
+            if( CommonController::verAuthorization($extra['controller'],$extra['action'],$this->model,$this->path) && $visible){
                 $this->buttons .= Html::a(
                         $extra['icon'] . '<span class="btn-text">'.Yii::t('app', $extra['text']).'</span>',
                         $extra['link'], 

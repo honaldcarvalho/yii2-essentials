@@ -3,7 +3,7 @@
 /** @var yii\web\View $this */
 /** @var string $content */
 
-use croacworks\essentials\controllers\ControllerCommon;
+use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
@@ -16,7 +16,7 @@ PluginAsset::register($this)->add(['jquery','fontawesome', 'icheck-bootstrap','f
 $configuration = Configuration::get();
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
 // if(Yii::$app->user->identity === null){
-//     return (new ControllerCommon(0,0))->redirect(['site/login']); 
+//     return (new CommonController(0,0))->redirect(['site/login']); 
 // }
 $theme = 'dark';//Yii::$app->user->identity->theme;
 

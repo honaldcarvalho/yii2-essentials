@@ -2,7 +2,7 @@
 
 namespace croacworks\essentials\models;
 
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\CommonController;
 use Yii;
 use yii\symfonymailer\Mailer;
 
@@ -131,7 +131,7 @@ class Configuration extends ModelCommon
 
         // Se não encontrar, busca pelo grupo do usuário
         // if (!$model) {
-        //     $model = self::find(false)->where(['id' => AuthController::userGroup()])->one();
+        //     $model = self::find(false)->where(['id' => CommonController::userGroup()])->one();
         // }
 
         // Se ainda não encontrar, tenta buscar o id 1
