@@ -39,11 +39,6 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'status'=>true
         ]);
 
-        $this->insert('users_groups', [
-            'user_id' => 1,
-            'group_id' => 2,
-        ]);
-
         // Insert default admin user
         $this->insert('{{%users}}', [
             'group_id' => 2,
@@ -57,6 +52,12 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'status' => User::STATUS_ACTIVE,
         ]);
 
+
+        $this->insert('users_groups', [
+            'user_id' => 1,
+            'group_id' => 2,
+        ]);
+        
         // Insert default admin role (wildcard access for group 1)
         $this->insert('{{%roles}}', [
             'name' => 'Administrator',
