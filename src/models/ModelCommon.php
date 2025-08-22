@@ -13,6 +13,8 @@ class ModelCommon extends \yii\db\ActiveRecord
     public $created_atFDTsod;
     public $created_atFDTeod;
 
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
     const SCENARIO_STATUS = 'status';
     const SCENARIO_SEARCH = 'search';
     const SCENARIO_FILE = 'file';
