@@ -6,11 +6,12 @@ use yii\base\InvalidArgumentException;
 use croacworks\essentials\models\ModelCommon;
 use Yii;
 use croacworks\essentials\models\User;
+use yii\base\Model;
 
 /**
  * Password reset form
  */
-class ResetPasswordForm extends ModelCommon
+class ResetPasswordForm extends Model
 {
     public $password;
 

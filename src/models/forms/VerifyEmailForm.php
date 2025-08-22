@@ -7,7 +7,7 @@ use croacworks\essentials\models\User;
 use yii\base\InvalidArgumentException;
 use yii\base\Model;
 
-class VerifyEmailForm extends ModelCommon
+class VerifyEmailForm extends Model 
 {
     /**
      * @var string

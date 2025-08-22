@@ -10,22 +10,34 @@ use yii\bootstrap5\ActiveForm;
 $this->title = 'Resend verification email';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="site-resend-verification-email">
-    <h3><?= Html::encode($this->title) ?></h3>
 
-    <p>Please fill out your email. A verification email will be sent there.</p>
+<div class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card-group d-block d-md-flex row">
+                    <div class="card col-md-7 p-4 mb-0">
+                        <div class="card-body">
+                            <h3><?= Html::encode($this->title) ?></h3>
 
+                            <p><?= Yii::t('app', 'Please fill out your email. A verification email will be sent there.'); ?></p>
 
-        <div class="col-lg-12">
-            <?php $form = ActiveForm::begin(['id' => 'resend-verification-email-form']); ?>
+                            <div class="col-lg-12">
+                                <?php $form = ActiveForm::begin(['id' => 'resend-verification-email-form']); ?>
 
-            <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
+                                <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
 
-            <div class="form-group">
-                <?= Html::submitButton('Send', ['class' => 'btn btn-primary']) ?>
+                                <div class="form-group">
+                                    <?= Html::submitButton('Send', ['class' => 'btn btn-primary']) ?>
+                                </div>
+
+                                <?php ActiveForm::end(); ?>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-
-            <?php ActiveForm::end(); ?>
         </div>
-
+    </div>
 </div>

@@ -6,8 +6,9 @@ namespace croacworks\essentials\models\forms;
 use Yii;
 use croacworks\essentials\models\User;
 use croacworks\essentials\models\ModelCommon;
+use yii\base\Model;
 
-class ResendVerificationEmailForm extends ModelCommon
+class ResendVerificationEmailForm extends Model
 {
     /**
      * @var string

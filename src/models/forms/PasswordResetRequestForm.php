@@ -7,12 +7,12 @@ use Yii;
 use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\User;
-use croacworks\essentials\models\ModelCommon;
+use yii\base\Model;
 
 /**
  * Password reset request form
  */
-class PasswordResetRequestForm extends ModelCommon
+class PasswordResetRequestForm extends Model
 {
     public $email;
 
