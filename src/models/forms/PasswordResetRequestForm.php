@@ -63,7 +63,7 @@ class PasswordResetRequestForm extends Model
         $content = " 
             <tr>
                 <td>
-                <p>".Yii::t('app','Hello, {name}',['name'=>$user->fullname])."</p>
+                <p>".Yii::t('app','Hello, {name}',['name'=>$user->profile->fullname])."</p>
                 <p>".Yii::t('app','Follow the link below to reset your password:')."</b></p>
                     
                 <table role='presentation' border='0' cellpadding='0' cellspacing='0' class='btn btn-primary'>
