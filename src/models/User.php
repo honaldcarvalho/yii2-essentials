@@ -26,19 +26,18 @@ use Yii;
  * @property UserProfile $profile
  * @property UsersGroup[] $usersGroups
  */
+
 class User extends Account
 {
-    /**
-     * {@inheritdoc}
-     */
+    /** Virtuals (não existem na tabela) */
+    public $password;
+    public $password_confirm;
+
     public static function tableName()
     {
         return 'users';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
@@ -46,7 +45,11 @@ class User extends Account
             [['status'], 'default', 'value' => 1],
             [['theme'], 'default', 'value' => 'light'],
             [['group_id', 'language_id', 'created_at', 'updated_at', 'status'], 'integer'],
-            [['username', 'email', 'password_hash', 'auth_key', 'access_token', 'created_at', 'updated_at'], 'required'],
+
+            // IMPORTANTE: não exigir password_hash diretamente
+            // Remover 'password_hash' do required aqui:
+            [['username', 'email', 'auth_key', 'access_token', 'created_at', 'updated_at'], 'required'],
+
             [['token_validate'], 'safe'],
             [['theme'], 'string', 'max' => 10],
             [['username'], 'string', 'max' => 64],
@@ -56,14 +59,19 @@ class User extends Account
             [['username'], 'unique'],
             [['email'], 'unique'],
             [['password_reset_token'], 'unique'],
-            [['profile'], 'exist', 'skipOnError' => true, 'targetClass' => UserProfile::class, 'targetAttribute' => ['user_id' => 'id']],
+
+            // Regras de senha por cenário
+            [['password', 'password_confirm'], 'required', 'on' => 'create'],
+            [['password'], 'string', 'min' => 6],
+            ['password_confirm', 'compare', 'compareAttribute' => 'password', 'message' => Yii::t('app', 'Passwords do not match.')],
+
+            // Regras de FK já existentes
+            // OBS: 'profile' não é coluna; evite 'exist' com atributo virtual
+            // [['profile'], 'exist', ...]  --> REMOVER
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
@@ -73,6 +81,8 @@ class User extends Account
             'theme' => Yii::t('app', 'Theme'),
             'username' => Yii::t('app', 'Username'),
             'email' => Yii::t('app', 'Email'),
+            'password' => Yii::t('app', 'Password'),
+            'password_confirm' => Yii::t('app', 'Confirm Password'),
             'password_hash' => Yii::t('app', 'Password Hash'),
             'auth_key' => Yii::t('app', 'Auth Key'),
             'access_token' => Yii::t('app', 'Access Token'),
@@ -84,70 +94,55 @@ class User extends Account
         ];
     }
 
-    /**
-     * Gets query for [[Logs]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getLogs()
-    {
-        return $this->hasMany(Log::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[Notifications]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getNotifications()
-    {
-        return $this->hasMany(Notification::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[Roles]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRoles()
-    {
-        return $this->hasMany(Role::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[UserProfiles]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getProfile()
-    {
-        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[UsersGroups]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getUsersGroups()
-    {
-        return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
-    }
+    public function getLogs()      { return $this->hasMany(Log::class, ['user_id' => 'id']); }
+    public function getNotifications(){ return $this->hasMany(Notification::class, ['user_id' => 'id']); }
+    public function getRoles()     { return $this->hasMany(Role::class, ['user_id' => 'id']); }
+    public function getProfile()   { return $this->hasOne(UserProfile::class, ['user_id' => 'id']); }
+    public function getUsersGroups(){ return $this->hasMany(UserGroup::class, ['user_id' => 'id']); }
 
     public function getGroups()
     {
         return $this->hasMany(Group::class, ['id' => 'group_id'])
             ->viaTable('users_groups', ['user_id' => 'id']);
     }
-    
-    /**
-     * Gets query for [[UserGroups]].
-     *
-     * @return array
-     */
+
     public function getUserGroupsId()
     {
         $groupIds = $this->getGroups()->select('id')->column();
         return Group::getAllDescendantIds($groupIds);
+    }
+
+    /**
+     * Gera hash de senha somente se $this->password vier preenchida.
+     * Mantém a senha atual no update quando os campos ficam vazios.
+     */
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        // Garantir chaves obrigatórias
+        if (empty($this->auth_key)) {
+            $this->auth_key = Yii::$app->security->generateRandomString(32);
+        }
+        if (empty($this->access_token)) {
+            $this->access_token = Yii::$app->security->generateRandomString(32);
+        }
+
+        // Se o usuário informou uma nova senha, gerar hash
+        if (!empty($this->password)) {
+            $this->password_hash = Yii::$app->security->generatePasswordHash($this->password);
+        } else {
+            // No create, exigir que password_hash exista (por segurança)
+            if ($insert && empty($this->password_hash)) {
+                // Falha explícita se tentou criar sem senha
+                $this->addError('password', Yii::t('app', 'Password is required.'));
+                return false;
+            }
+            // No update e senha vazia: não mexe em password_hash (mantém)
+        }
+
+        return true;
     }
 }

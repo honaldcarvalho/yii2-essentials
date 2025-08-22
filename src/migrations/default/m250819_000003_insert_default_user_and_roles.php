@@ -38,7 +38,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'slogan' => 'CroacWorks',
             'title' => 'System Basic',
             'description' => 'Basic Configuration',
-            'host' => 'http://localhost',
+            'host' => 'https://localhost',
             'title' => 'System Essential',
             'bussiness_name' => 'CroacWorks',
             'email' => 'suporte@croacworks.com.br',
@@ -61,7 +61,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
         $this->insert('{{%users}}', [
             'group_id' => 2,
             'username' => 'admin',
-            'email' => 'admin@example.com',
+            'email' => 'suporte@croacworks.com.br',
             'password_hash' => Yii::$app->security->generatePasswordHash('admin123'),
             'auth_key' => Yii::$app->security->generateRandomString(),
             'access_token' => Yii::$app->security->generateRandomString(),
