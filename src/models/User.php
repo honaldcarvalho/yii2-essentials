@@ -43,7 +43,6 @@ class User extends Account
         return [
             [['group_id', 'password_reset_token'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['theme'], 'default', 'value' => 'light'],
             [['group_id', 'language_id', 'created_at', 'updated_at', 'status'], 'integer'],
 
             // IMPORTANTE: não exigir password_hash diretamente
@@ -51,7 +50,6 @@ class User extends Account
             [['username', 'email', 'auth_key', 'access_token', 'created_at', 'updated_at'], 'required'],
 
             [['token_validate'], 'safe'],
-            [['theme'], 'string', 'max' => 10],
             [['username'], 'string', 'max' => 64],
             [['email', 'password_reset_token'], 'string', 'max' => 190],
             [['password_hash'], 'string', 'max' => 255],
