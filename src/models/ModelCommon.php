@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\models;
 
 use Yii;
@@ -12,8 +13,6 @@ class ModelCommon extends \yii\db\ActiveRecord
     public $created_atFDTsod;
     public $created_atFDTeod;
 
-    const SCENARIO_CREATE = 'create';
-    const SCENARIO_UPDATE = 'update';
     const SCENARIO_STATUS = 'status';
     const SCENARIO_SEARCH = 'search';
     const SCENARIO_FILE = 'file';
@@ -21,14 +20,41 @@ class ModelCommon extends \yii\db\ActiveRecord
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        foreach ($this->getAttributes() as $key => $value) {
-            $scenarios[self::SCENARIO_DEFAULT][] = $key;
-            $scenarios[self::SCENARIO_SEARCH][] = $key;
+
+        // Lista de atributos deste model (chaves)
+        $attrs = array_keys($this->getAttributes());
+
+        // Garante que existam os índices
+        foreach ([self::SCENARIO_DEFAULT, self::SCENARIO_SEARCH, 'create', 'update'] as $scene) {
+            if (!isset($scenarios[$scene]) || !is_array($scenarios[$scene])) {
+                $scenarios[$scene] = [];
+            }
         }
-        $scenarios[self::SCENARIO_CREATE][] = 'create';
-        $scenarios[self::SCENARIO_UPDATE][] = 'update';
-        $scenarios[self::SCENARIO_STATUS][] = 'status';
+
+        // Popular cenários com todos os atributos do model
+        foreach ($attrs as $attr) {
+            $scenarios[self::SCENARIO_DEFAULT][] = $attr;
+            $scenarios[self::SCENARIO_SEARCH][]  = $attr;
+            $scenarios['create'][]               = $attr;
+            $scenarios['update'][]               = $attr;
+        }
+
+        // Cenários específicos já existentes no seu código
+        if (!isset($scenarios[self::SCENARIO_STATUS]) || !is_array($scenarios[self::SCENARIO_STATUS])) {
+            $scenarios[self::SCENARIO_STATUS] = [];
+        }
+        $scenarios[self::SCENARIO_STATUS] = array_unique(array_merge($scenarios[self::SCENARIO_STATUS], ['status']));
+
+        // Cenário de arquivo
         $scenarios[self::SCENARIO_FILE] = ['file_id'];
+
+        // Remove duplicados por segurança
+        foreach ($scenarios as $k => $list) {
+            if (is_array($list)) {
+                $scenarios[$k] = array_values(array_unique($list));
+            }
+        }
+
         return $scenarios;
     }
 
