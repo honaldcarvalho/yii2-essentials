@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?php croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'User','model'=>$model]) ?>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'User','model'=>$model]) ?>
     </p>
 
     <?= DetailView::widget([
