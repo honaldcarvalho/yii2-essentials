@@ -54,21 +54,21 @@ class DefaultButtons extends Widget
         }
 
         $this->buttons .= '<div class="btn-group">';
-        if(in_array('index',$this->show) &&  AuthorizationController::verAuthorization($this->controller,'index',null,$this->path) && $show){
+        if(in_array('index',$this->show) && (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($this->controller,'index',null,$this->path)) && $show){
             $this->buttons .= Html::a(
                     '<i class="fas fa-list-ol"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['index']).'</span>' ?? Yii::t('app', 'index'),
                     ['index'], 
                     ['class' => 'btn btn-primary']);
         }
         
-        if(in_array('create',$this->show) &&  AuthorizationController::verAuthorization($this->controller,'create',null,$this->path) && $show){
+        if(in_array('create',$this->show) && (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($this->controller,'create',null,$this->path)) && $show){
             $this->buttons .= Html::a( 
                     '<i class="fas fa-plus-square"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['create']).'</span>' ?? Yii::t('app', 'create'), 
                     ['create'], 
                     ['class' => 'btn btn-success']);                       
         }
 
-        if(in_array('update',$this->show) &&  AuthorizationController::verAuthorization($this->controller,'update',$this->model,$this->path) && $this->model && $show){
+        if(in_array('update',$this->show) && (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($this->controller,'update',$this->model,$this->path)) && $this->model && $show){
             if(!is_array($this->model->primaryKey)){
                 $link = ['update', 'id' =>  $this->model->id];
             }else{
@@ -80,7 +80,7 @@ class DefaultButtons extends Widget
                     ['class' => 'btn btn-warning']);
         }
         
-        if(in_array('delete',$this->show) &&  AuthorizationController::verAuthorization($this->controller,'delete',$this->model,$this->path) && $this->model && $show){
+        if(in_array('delete',$this->show) && (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($this->controller,'delete',$this->model,$this->path)) && $this->model && $show){
             if(!is_array($this->model->primaryKey)){
                 $link = ['delete', 'id' =>  $this->model->id];
             }else{
@@ -98,7 +98,7 @@ class DefaultButtons extends Widget
     
         }
 
-        if(in_array('clone',$this->show) &&  AuthorizationController::verAuthorization($this->controller,'clone',$this->model,$this->path) && $show){
+        if(in_array('clone',$this->show) && (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($this->controller,'clone',$this->model,$this->path)) && $show){
             $this->buttons .= Html::a( 
                 '<i class="fas fa-clone"></i>&nbsp;<span class="btn-text">'.Yii::t('app', $this->buttons_name['clone'].'</span>' ?? 'clone'), 
                 ['clone', 'id' =>  $this->model->id], 
@@ -110,7 +110,7 @@ class DefaultButtons extends Widget
             if(isset($extra['visible'])){
                 $visible = $extra['visible'];
             }
-            if( AuthorizationController::verAuthorization($extra['controller'],$extra['action'],$this->model,$this->path) && $visible){
+            if( (AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($extra['controller'],$extra['action'],$this->model,$this->path)) && $visible){
                 $this->buttons .= Html::a(
                         $extra['icon'] . '<span class="btn-text">'.Yii::t('app', $extra['text']).'</span>',
                         $extra['link'], 
