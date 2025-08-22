@@ -90,7 +90,7 @@ class PasswordResetRequestForm extends Model
             </tr>
         ";
         return $mailer
-            ->compose('layouts/template',
+            ->compose('@vendor/croacworks/src/mail/layouts/template',
                 ['user' => $user,'subject'=>$mailer->transport->getUsername(),'content'=>$content]
             )
             ->setFrom([$mailer->transport->getUsername()=> $params->title . ' robot'])
