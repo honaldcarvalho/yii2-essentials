@@ -26,7 +26,7 @@ class DefaultButtons extends Widget
         'clone' => 'Clone'
     ];
     
-    public $show = ['index','create', 'update','delete','clone'];
+    public $show = ['index','create', 'update','delete'];
 
     public function init(): void
     {
