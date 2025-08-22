@@ -63,11 +63,7 @@ class User extends Account
             [['password'], 'string', 'min' => 6],
             ['password_confirm', 'compare', 'compareAttribute' => 'password', 'message' => Yii::t('app', 'Passwords do not match.')],
 
-            // Regras de FK já existentes
-            // OBS: 'profile' não é coluna; evite 'exist' com atributo virtual
-            // [['profile'], 'exist', ...]  --> REMOVER
-            [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
-        ];
+       ];
     }
 
     public function attributeLabels()
