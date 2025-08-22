@@ -43,7 +43,7 @@ class User extends Account
         return [
             [['group_id', 'password_reset_token'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['group_id', 'language_id', 'created_at', 'updated_at', 'status'], 'integer'],
+            [['group_id','created_at', 'updated_at', 'status'], 'integer'],
 
             // IMPORTANTE: não exigir password_hash diretamente
             // Remover 'password_hash' do required aqui:
