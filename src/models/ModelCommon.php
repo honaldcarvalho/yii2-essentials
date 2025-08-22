@@ -12,6 +12,8 @@ class ModelCommon extends \yii\db\ActiveRecord
     public $created_atFDTsod;
     public $created_atFDTeod;
 
+    const SCENARIO_CREATE = 'create';
+    const SCENARIO_UPDATE = 'update';
     const SCENARIO_STATUS = 'status';
     const SCENARIO_SEARCH = 'search';
     const SCENARIO_FILE = 'file';
@@ -23,6 +25,8 @@ class ModelCommon extends \yii\db\ActiveRecord
             $scenarios[self::SCENARIO_DEFAULT][] = $key;
             $scenarios[self::SCENARIO_SEARCH][] = $key;
         }
+        $scenarios[self::SCENARIO_CREATE][] = 'create';
+        $scenarios[self::SCENARIO_UPDATE][] = 'update';
         $scenarios[self::SCENARIO_STATUS][] = 'status';
         $scenarios[self::SCENARIO_FILE] = ['file_id'];
         return $scenarios;
