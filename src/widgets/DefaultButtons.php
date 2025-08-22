@@ -30,7 +30,7 @@ class DefaultButtons extends Widget
 
     public function init(): void
     {
-        dd(AuthorizationController::isAdmin());
+
         parent::init();
 
         $controller_parts = explode('\\',get_class(Yii::$app->controller));
