@@ -71,8 +71,6 @@ class User extends Account
         return [
             'id' => Yii::t('app', 'ID'),
             'group_id' => Yii::t('app', 'Group ID'),
-            'language_id' => Yii::t('app', 'Language ID'),
-            'theme' => Yii::t('app', 'Theme'),
             'username' => Yii::t('app', 'Username'),
             'email' => Yii::t('app', 'Email'),
             'password' => Yii::t('app', 'Password'),
