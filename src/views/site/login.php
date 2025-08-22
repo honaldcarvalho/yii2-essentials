@@ -20,16 +20,16 @@ $this->title = 'Login';
                             <h1>Login</h1>
                             <p class="text-body-secondary">Sign In to your account</p>
                             <?php $form = ActiveForm::begin(['id' => 'login-form']); ?>
-                            <div class="input-group mb-3"><span class="input-group-text">
-                                    <svg class="icon">
-                                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                                    </svg></span>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user icon"></i>
+                                </span>
                                 <input class="form-control" name="LoginForm[username]" type="text" placeholder="Username">
                             </div>
-                            <div class="input-group mb-4"><span class="input-group-text">
-                                    <svg class="icon">
-                                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
-                                    </svg></span>
+                            <div class="input-group mb-4">
+                                <span class="input-group-text">
+                                    <i class="fas fa-key icon"></i>
+                                </span>
                                 <input class="form-control" name="LoginForm[password]" type="password" placeholder="Password">
                             </div>
                             <div class="input-group mb-4"><span class="input-group-text">
