@@ -34,7 +34,8 @@
     "yiisoft/yii2-redis": "dev-master#efe038dd6637cc538715489a660504d4721a38a8",
     "stichoza/google-translate-php": "5.3.0",
     "yiisoft/yii2-debug": "^2.1",
-    "yiisoft/yii2-gii": "~2.2.0"
+    "yiisoft/yii2-gii": "~2.2.0",
+    "yiisoft/yii2-queue":"*"
   },
   "require-dev": {
     "yiisoft/yii2-faker": "~2.0.0",
