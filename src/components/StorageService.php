@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\components;
 
 use Yii;
@@ -103,7 +104,6 @@ class StorageService extends Component
                 $dto->pathThumb = $this->relFromAbs($thumbAbs);
                 $dto->urlThumb  = $this->publicUrlFromAbs($thumbAbs);
                 $created['thumbAbs'] = $thumbAbs;
-
             } elseif ($dto->type === 'video') {
                 // transcode se necessário
                 if ($opts->convertVideo && strtolower($dto->extension) !== 'mp4') {
@@ -155,7 +155,7 @@ class StorageService extends Component
                         'group_id'   => $this->resolveGroupId((int)($opts->groupId ?? 1)),
                         'folder_id'  => $dto->folderId,
                         'name'       => $dto->name,
-                        'description'=> $dto->description,
+                        'description' => $dto->description,
                         'path'       => $dto->path,
                         'url'        => $dto->url,
                         'pathThumb'  => $dto->pathThumb,
@@ -203,7 +203,6 @@ class StorageService extends Component
 
                     $tx->commit();
                     return $model;
-
                 } catch (\Throwable $e) {
                     $tx->rollBack();
                     $cleanup();
@@ -214,7 +213,6 @@ class StorageService extends Component
 
             // sem persistir, retorna DTO
             return $dto;
-
         } catch (\Throwable $e) {
             $cleanup();
             Yii::error("Storage upload error: {$e->getMessage()}", __METHOD__);
@@ -311,7 +309,7 @@ class StorageService extends Component
             $y = (int)(($h - $newH) / 2);
         }
 
-        ImagineImage::crop($srcAbs, $newW, $newH, [$x,$y])
+        ImagineImage::crop($srcAbs, $newW, $newH, [$x, $y])
             ->resize(new \Imagine\Image\Box($tw, $th))
             ->save($destAbs, ['quality' => 100]);
     }
@@ -345,11 +343,14 @@ class StorageService extends Component
     private function resolveGroupId(int $fallback): int
     {
         try {
-            if (class_exists('\croacworks\essentials\controllers\AuthorizationController')
-                && !\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+            if (
+                class_exists('\croacworks\essentials\controllers\AuthorizationController')
+                && !\croacworks\essentials\controllers\AuthorizationController::isAdmin()
+            ) {
                 return (int)\croacworks\essentials\controllers\AuthorizationController::userGroup();
             }
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+        }
         return $fallback;
     }
 
@@ -373,8 +374,32 @@ class StorageService extends Component
         FileHelper::createDirectory(\dirname($thumbAbs));
         return [$thumbRel, $thumbAbs];
     }
-    
-    public static function rules(){
+
+    public function deleteById(int $id): bool
+    {
+        /** @var \croacworks\essentials\models\File $model */
+        $model = \croacworks\essentials\models\File::findOne($id);
+        if (!$model) return false;
+
+        $fileAbs  = Yii::getAlias('@webroot') . $model->path;
+        $thumbAbs = $model->pathThumb ? Yii::getAlias('@webroot') . $model->pathThumb : null;
+
+        // remove do DB primeiro (ou depois; aqui priorizo DB)
+        $okDb = (bool)$model->delete();
+
+        // limpar disco (não falhar se arquivo não existe)
+        if (is_file($fileAbs)) {
+            @unlink($fileAbs);
+        }
+        if ($thumbAbs && is_file($thumbAbs)) {
+            @unlink($thumbAbs);
+        }
+
+        return $okDb;
+    }
+
+    public static function rules()
+    {
         return [
             'GET storage/list'               => 'storage/list',
             'GET storage/info'               => 'storage/info',

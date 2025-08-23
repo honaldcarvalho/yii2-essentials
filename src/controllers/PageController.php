@@ -4,7 +4,6 @@ namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\models\Page;
-use croacworks\essentials\models\PageSearch;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -157,7 +156,7 @@ class PageController extends AuthorizationController
         $model = $this->findModel($id);
         $files = $model->getFiles()->all();
         foreach($files as $file){
-            StorageController::removeFile($file->id);
+            $ok = Yii::$app->storage->deleteById($id);
         }
         $this->findModel($id)->delete();
         return $this->redirect(['index']);

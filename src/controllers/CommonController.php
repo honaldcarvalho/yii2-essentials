@@ -13,10 +13,13 @@ use yii\web\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\helpers\ModelHelper;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\ModelCommon;
+
+use croacworks\essentials\components\StorageService;
+use croacworks\essentials\components\dto\StorageOptions;
+
 use yii\helpers\Url;
 
 /**
@@ -211,9 +214,12 @@ class CommonController extends \yii\web\Controller
 
             $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
             if (!empty($file) && $file !== null) {
-                $file = StorageController::uploadFile($file, ['save' => true]);
-                if ($file['success'] === true) {
-                    $model->file_id = $file['data']['id'];
+                /** @var StorageService $storage */
+                $storage = \Yii::$app->storage;
+                $opts = new StorageOptions(['saveModel' => true, 'thumbAspect' => 1]);
+                $res = $storage->upload($file, $opts);
+                if ($res instanceof \yii\db\BaseActiveRecord && !$res->hasErrors()) {
+                    $model->file_id = (int)$res->id;
                     $changed = true;
                 }
             } else if (isset($post['remove']) && $post['remove'] == 1) {
