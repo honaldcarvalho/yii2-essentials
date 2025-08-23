@@ -2,14 +2,9 @@
 
 use yii\db\Migration;
 
-/**
- * Handles the creation of table `{{%email_services}}`.
- */
 class m250821_270309_add_email_template_to_configurations_table extends Migration
 {
-    /**
-     * {@inheritdoc}
-     */
+
     public function safeUp()
     {
         $message_noreply = Yii::t('app', 'Please do not reply to this email. This mailbox is not monitored and you will not receive a response.');

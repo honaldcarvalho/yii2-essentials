@@ -138,7 +138,7 @@ class EmailService extends ModelCommon
             '{{company_slogan}}' => (string)($cfg->slogan ?? ''),
             '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''), // seu campo tem 2 "s" mesmo
             '{{company_email}}'  => (string)($cfg->email ?? ''),
-            '{{company_host}}'   => (string)($cfg->host ?? (Yii::$app->request->hostName ?? '')),
+            '{{company_host}}'   => (string)($cfg->homepage ?? (Yii::$app->request->hostName ?? '')),
         ];
 
         // 3) Placeholders dinâmicos

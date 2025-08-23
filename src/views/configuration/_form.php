@@ -34,6 +34,7 @@ if(!empty($model->file_id && $model->file != null)){
         <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name')) ?>
         <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description'),['prompt'=>'-- NÃO SELECIONADO --']) ?>
         <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
+        <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
     </div> 
 
     <div class="col-md-6">

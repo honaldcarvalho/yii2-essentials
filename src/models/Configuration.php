@@ -16,6 +16,7 @@ use yii\symfonymailer\Mailer;
  * @property int|null $group_id
  * @property int|null $email_service_id
  * @property string $host
+ * @property string $homepage
  * @property string $title
  * @property string $slogan
  * @property string $bussiness_name
@@ -77,6 +78,7 @@ class Configuration extends ModelCommon
             'group_id' => Yii::t('app', 'Client\'s Group'),
             'email_service_id' => Yii::t('app', 'Email Service'),
             'host' => Yii::t('app', 'Host'),
+            'homepage' => Yii::t('app', 'Homepage'),
             'title' => Yii::t('app', 'Title'),
             'slogan' => Yii::t('app', 'Slogan'),
             'bussiness_name' => Yii::t('app', 'Bussines Name'),
