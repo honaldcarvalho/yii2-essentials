@@ -12,7 +12,7 @@ use yii\web\UploadedFile;
 use croacworks\essentials\components\dto\StorageOptions;
 use croacworks\essentials\components\dto\FileDTO;
 use croacworks\essentials\components\storage\StorageDriverInterface;
-
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\jobs\TranscodeVideoJob;
 use croacworks\essentials\jobs\GenerateThumbJob;
 use croacworks\essentials\jobs\VideoProbeDurationJob;
@@ -150,9 +150,15 @@ class StorageService extends Component
             // 3) persistência opcional
             if ($opts->saveModel) {
                 $tx = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);
+                $group_id = $this->resolveGroupId((int)($opts->groupId ?? 1));
+                if (!AuthorizationController::isAdmin()) {
+                    $group_id = AuthorizationController::userGroup();
+                }
+
                 try {
                     $model = new File([
-                        'group_id'   => $this->resolveGroupId((int)($opts->groupId ?? 1)),
+                        'file'=>'file',
+                        'group_id'   => $group_id,
                         'folder_id'  => $dto->folderId,
                         'name'       => $dto->name,
                         'description' => $dto->description,

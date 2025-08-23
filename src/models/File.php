@@ -73,9 +73,9 @@ class File extends ModelCommon
                 return $model->file !== 'ajax' && $model->isNewRecord;
             }],
                     
-            ['file', 'required','when'=> function($model){
-                return $model->isNewRecord;
-            }],
+            // ['file', 'required','when'=> function($model){
+            //     return $model->isNewRecord;
+            // }],
                     
             [['folder_id'], 'exist', 'skipOnError' => true, 'targetClass' => Folder::class, 'targetAttribute' => ['folder_id' => 'id']],
 
