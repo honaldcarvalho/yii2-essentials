@@ -9,7 +9,7 @@ class m250821_260309_add_homepage_to_configurations_table extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn('configurations', 'homepage', $this->sting(255)->defaultValue('https://croacworks.com.br')->after('host'));
+        $this->addColumn('configurations', 'homepage', $this->string(255)->defaultValue('https://croacworks.com.br')->after('host'));
     }
 
     /**
