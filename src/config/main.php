@@ -39,6 +39,11 @@ $config = [
         ]
     ],
     'components' => [
+        'mutex' => [
+            'class' => \yii\mutex\MysqlMutex::class,
+            // 'db' => 'db',           // opcional (default 'db')
+            'keyPrefix' => 'app_mutex_', // opcional
+        ],
         'storage' => [
             'class' => \croacworks\essentials\components\StorageService::class,
             'driver' => [
