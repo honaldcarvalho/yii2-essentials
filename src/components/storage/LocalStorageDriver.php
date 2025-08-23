@@ -9,8 +9,8 @@ use croacworks\essentials\components\dto\StorageOptions;
 
 class LocalStorageDriver implements StorageDriverInterface
 {
-    public string $basePath = '@webroot/uploads'; // config
-    public string $baseUrl  = '@web/uploads';     // config
+    public string $basePath = '@webroot/files'; // config
+    public string $baseUrl  = '@web/files';     // config
 
     public function save(UploadedFile $file, StorageOptions $opts): FileDTO
     {
@@ -39,7 +39,7 @@ class LocalStorageDriver implements StorageDriverInterface
         $dto->folderId    = $this->normalizeFolderId($file->type, $opts->folderId);
         $dto->name        = $name;
         $dto->description = $opts->description ?? $file->name;
-        $dto->path        = '/uploads' . $relativePath;          // relativo webroot
+        $dto->path        = '/files' . $relativePath;          // relativo webroot
         $dto->url         = $baseUrl . $relativePath;            // url pública
         $dto->extension   = $ext;
         $dto->type        = $this->detectType($file->type);
