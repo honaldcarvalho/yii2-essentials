@@ -30,7 +30,7 @@ if(!empty($model->file_id && $model->file != null)){
 
         <?= UploadImageInstant::widget([
             'mode'        => 'defer',                // <- importante
-            'hideSaveButton' => false,                // não exige “Salvar” no modal
+            'hideSaveButton' => true,                // não exige “Salvar” no modal
             'model'       => $model,                 // o widget descobre name/id do input
             'attribute'   => 'file_id',
             'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
