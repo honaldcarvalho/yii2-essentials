@@ -52,7 +52,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'title'=>'Folders',
         'attactModel'=>'Folder',
         'controller'=>'folder',
-        'attactClass'=>'weebz\\yii2basics\\models\\Folder',
+        'attactClass'=>'croacworks\\essentials\\models\\Folder',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getFolders(),
         ]),
