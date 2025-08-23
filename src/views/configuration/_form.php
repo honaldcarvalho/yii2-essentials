@@ -4,6 +4,7 @@ use croacworks\essentials\models\EmailService;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\Group;;
 use croacworks\essentials\models\Language;
+use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
@@ -20,12 +21,22 @@ if(!empty($model->file_id && $model->file != null)){
 <div class="row">
 
     <div class="col-sm-12">
-        <?= $form->field($model, 'file_id')->fileInput() ?>
-        <?= \croacworks\essentials\widgets\UploadFoto::widget([
-            'imagem'=> $image,
-            'fileField'=>'configuration-file_id',
-            'aspectRatio'=>'1'
-        ])?>
+        <?= $form->field($model, 'file_id')
+            ->fileInput([
+                'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+                'accept' => 'image/*',
+                'style' => 'display:none'
+            ])->label(false) ?>
+
+        <?= UploadImageInstant::widget([
+            'mode'        => 'defer',                // <- importante
+            'hideSaveButton' => false,                // não exige “Salvar” no modal
+            'model'       => $model,                 // o widget descobre name/id do input
+            'attribute'   => 'file_id',
+            'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+            'imageUrl'    => $model->file->url ?? '',
+            'aspectRatio' => '1',
+        ]) ?>
     </div>
 
     <div class="col-md-6">

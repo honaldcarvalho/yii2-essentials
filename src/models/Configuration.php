@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\behaviors\AttachFileBehavior;
 use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 use yii\symfonymailer\Mailer;
@@ -42,6 +43,20 @@ class Configuration extends ModelCommon
         return 'configurations';
     }
 
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            [
+                'class' => AttachFileBehavior::class,
+                'attribute' => 'file_id',
+                'removeFlagParam' => 'remove',
+                'deleteOldOnReplace' => true,
+                'deleteOnOwnerDelete' => false,
+                'debug' => true, // ligue por enquanto
+            ],
+        ]);
+    }
+    
     public function scenarios()
     {
         $scenarios = parent::scenarios();

@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\behaviors\AttachFileBehavior;
 use Yii;
 
 /**

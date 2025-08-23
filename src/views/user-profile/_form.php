@@ -1,6 +1,7 @@
 <?php
 
 use croacworks\essentials\models\Language;
+use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
@@ -16,8 +17,8 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'id')->textInput() ?>
 
     <?= $form->field($model, 'user_id')->textInput() ?>
-    
-    <?= $form->field($model, 'theme')->dropDownList(['light'=>'Light','dark'=>'Dark']) ?>
+
+    <?= $form->field($model, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark']) ?>
 
     <?= $form->field($model, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
         Language::find()
@@ -26,7 +27,22 @@ use yii\widgets\ActiveForm;
         'name'
     )) ?>
 
-    <?= $form->field($model, 'file_id')->textInput() ?>
+    <?= $form->field($model, 'file_id')
+        ->fileInput([
+            'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+            'accept' => 'image/*',
+            'style' => 'display:none'
+        ])->label(false) ?>
+
+    <?= UploadImageInstant::widget([
+        'mode'        => 'defer',                // <- importante
+        'hideSaveButton' => false,                // não exige “Salvar” no modal
+        'model'       => $model,                 // o widget descobre name/id do input
+        'attribute'   => 'file_id',
+        'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+        'imageUrl'    => $model->file->url ?? '',
+        'aspectRatio' => '1',
+    ]) ?>
 
     <?= $form->field($model, 'fullname')->textInput(['maxlength' => true]) ?>
 
