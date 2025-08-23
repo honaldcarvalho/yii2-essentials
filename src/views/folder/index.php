@@ -49,7 +49,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             'status:boolean',
 
-                            ['class' =>'croacworks\essentials\components\ActionColumn',],
+                            ['class' =>'croacworks\essentials\components\ActionColumnCustom',],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [
