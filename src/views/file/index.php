@@ -9,6 +9,8 @@ use croacworks\essentials\models\Folder;
 use yii\helpers\Url;
 use yii\web\View;
 use yii\widgets\ActiveForm;
+use yii\widgets\Pjax;
+
 /* @var $this yii\web\View */
 /* @var $searchModel croacworks\essentials\models\FileSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
@@ -44,27 +46,132 @@ $script = <<< JS
         return false;
     });
 
-    $('#delete-files').click(function(e){
+// Requer SweetAlert2 já carregado na página
+(function(){
+  const csrf = $('meta[name="csrf-token"]').attr('content');
 
-        var items = $('.file-item:checked');
-        if(items.length > 0){     
-            var form = document.createElement('form');
-            form.setAttribute('action','/file/delete-files');
-            form.setAttribute('method','post');
-            form.setAttribute('id','form-move');
-            document.body.appendChild(form);
-            
-            $('.file-item:checked').each(function(i){
-                $(this).clone().appendTo('#form-move');
-            });
-            form.submit(); 
-        }
-        return false;
+  function getSelectedIds() {
+    const ids = [];
+    $('.file-item:checked').each(function(){ ids.push($(this).val()); });
+    return ids;
+  }
+
+  // Delete múltiplo (AJAX)
+  $('#delete-files').off('click').on('click', async function(e){
+    e.preventDefault();
+    const ids = getSelectedIds();
+    if (!ids.length) {
+      Swal.fire('Atenção', 'Nenhum arquivo selecionado.', 'info');
+      return false;
+    }
+
+    const ok = await Swal.fire({
+      title: 'Confirmar',
+      text: `Excluir \${ids.length} arquivo(s)? Esta ação não pode ser desfeita.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
     });
+
+    if (!ok.isConfirmed) return false;
+
+    $.ajax({
+      url: '/file/delete-files',
+      method: 'POST',
+      dataType: 'json',
+      data: { 'file_selected': ids, _csrf: csrf }
+    }).done(function(res){
+      if (!res || res.success !== true) {
+        Swal.fire('Erro', (res && res.error) ? res.error : 'Falha desconhecida.', 'error');
+        return;
+      }
+
+      let html = `
+        <div style="text-align:left">
+          <p><b>Deletados:</b> \${res.summary.deleted}</p>
+          <p><b>Bloqueados (em uso):</b> \${res.summary.blocked}</p>
+          <p><b>Falhas:</b> \${res.summary.failed}</p>
+      `;
+
+      if (res.blocked && res.blocked.length) {
+        html += `<hr><b>Detalhes bloqueados:</b><ul>`;
+        res.blocked.forEach(b=>{
+          const refs = (b.refs||[]).map(r=>`\${r.table}.\${r.column}`).join(', ');
+          html += `<li>#\${b.id}: \${refs}</li>`;
+        });
+        html += `</ul>`;
+      }
+
+      if (res.failed && res.failed.length) {
+        html += `<hr><b>Falhas:</b><ul>`;
+        res.failed.forEach(f=>{
+          html += `<li>#\${f.id}: \${f.error||'erro'}</li>`;
+        });
+        html += `</ul>`;
+      }
+
+      html += `</div>`;
+
+      Swal.fire({
+        title: 'Resultado',
+        html: html,
+        icon: 'info'
+      });
+
+      // Recarrega a grid
+      if ($.support.pjax && $('#grid-pjax').length) {
+        $.pjax.reload({container:'#grid-pjax', async:false});
+      } else {
+        // fallback
+        location.reload();
+      }
+    }).fail(function(xhr){
+      Swal.fire('Erro', xhr.responseJSON?.error || 'Falha na requisição.', 'error');
+    });
+
+    return false;
+  });
+
+  // (Opcional) Delete individual via AJAX: data-action="/file/delete?id=123"
+  $(document).on('click', '[data-action="file-delete"]', async function(e){
+    e.preventDefault();
+    const url = $(this).attr('href') || $(this).data('url');
+    const ok = await Swal.fire({
+      title: 'Confirmar',
+      text: 'Excluir este arquivo?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!ok.isConfirmed) return false;
+
+    $.post(url, {_csrf: csrf})
+      .done(function(res){
+        if (res?.success) {
+          Swal.fire('OK', 'Arquivo excluído.', 'success');
+          if ($.support.pjax && $('#grid-pjax').length) {
+            $.pjax.reload({container:'#grid-pjax', async:false});
+          } else {
+            location.reload();
+          }
+        } else {
+          const msg = res?.blocked ? 'Arquivo em uso, não pode ser removido.' : (res?.result?.message || res?.error || 'Falha.');
+          Swal.fire('Atenção', msg, 'warning');
+        }
+      })
+      .fail(function(){
+        Swal.fire('Erro', 'Falha na requisição.', 'error');
+      });
+  });
+
+})();
 
 JS;
 
 $this->registerJs($script, View::POS_END);
+
 $delete_files_button[] = 
 [
     'controller'=>'file',
@@ -110,6 +217,8 @@ $delete_files_button[] =
                     </div>
 
                     <?php // echo $this->render('_search', ['model' => $searchModel]); 
+                    Pjax::begin(['id'=>'grid-pjax', 'timeout'=>8000]);
+
                     ?>
 
                     <?= GridView::widget([
@@ -183,7 +292,9 @@ $delete_files_button[] =
                                 'class'=>croacworks\essentials\components\gridview\ActionColumnCustom::class,
                             ],
                         ],
-                    ]); ?>
+                    ]); 
+                    Pjax::end();
+                    ?>
 
                 </div>
                 <!--.card-body-->
