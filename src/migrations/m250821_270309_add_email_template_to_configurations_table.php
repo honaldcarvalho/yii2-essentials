@@ -12,6 +12,7 @@ class m250821_270309_add_email_template_to_configurations_table extends Migratio
      */
     public function safeUp()
     {
+        $message_noreply = Yii::t('app', 'Please do not reply to this email. This mailbox is not monitored and you will not receive a response.');
         $html = <<< HTML
         <!doctype html>
         <html>
@@ -61,7 +62,7 @@ class m250821_270309_add_email_template_to_configurations_table extends Migratio
                     </table>
                     <div class="footer">
                     <p><strong>{{company_title}}</strong> — {{company_slogan}}<br/>{{company_name}} · <a href="mailto:{{company_email}}" style="color:#6b7785">{{company_email}}</a> · {{company_host}}</p>
-                    <p><small>Mensagem automática do sistema — não responda.</small></p>
+                    <p><small>{$message_noreply}</small></p>
                     </div>
                 </div>
                 </td>
