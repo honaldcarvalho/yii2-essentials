@@ -104,16 +104,16 @@ class ConfigurationController extends AuthorizationController
 
         if ($model->load(Yii::$app->request->post())) {
 
-            $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
+            // $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
 
-            if (!empty($file) && $file !== null) {
+            // if (!empty($file) && $file !== null) {
 
-                $arquivo = StorageController::uploadFile($file, ['save' => true]);
+            //     $arquivo = StorageController::uploadFile($file, ['save' => true]);
 
-                if ($arquivo['success'] === true) {
-                    $model->file_id = $arquivo['data']['id'];
-                }
-            }
+            //     if ($arquivo['success'] === true) {
+            //         $model->file_id = $arquivo['data']['id'];
+            //     }
+            // }
 
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
@@ -142,26 +142,26 @@ class ConfigurationController extends AuthorizationController
 
         if ($model->validate() && $model->load($post)) {
 
-            $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
-            if (!empty($file) && $file !== null) {
-                $file = StorageController::uploadFile($file, ['save' => true]);
-                if ($file['success'] === true) {
-                    $model->file_id = $file['data']['id'];
-                    $changed = true;
-                }
-            } else if (isset($post['remove']) && $post['remove'] == 1) {
-                $model->file_id = null;
-                $changed = true;
-            }
+            // $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
+            // if (!empty($file) && $file !== null) {
+            //     $file = StorageController::uploadFile($file, ['save' => true]);
+            //     if ($file['success'] === true) {
+            //         $model->file_id = $file['data']['id'];
+            //         $changed = true;
+            //     }
+            // } else if (isset($post['remove']) && $post['remove'] == 1) {
+            //     $model->file_id = null;
+            //     $changed = true;
+            // }
 
-            if (!$changed) {
-                $model->file_id = $old;
-            }
+            // if (!$changed) {
+            //     $model->file_id = $old;
+            // }
 
             if ($model->save()) {
-                if ($changed) {
-                    StorageController::removeFile($old);
-                }
+                // if ($changed) {
+                //     StorageController::removeFile($old);
+                // }
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
