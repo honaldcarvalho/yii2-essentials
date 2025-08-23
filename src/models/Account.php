@@ -49,7 +49,7 @@ class Account extends ModelCommon implements IdentityInterface
     public static function findIdentityByAccessToken($auth_key, $type = null)
     {
         //return static::findOne(['auth_key' => $token]);
-        return static::find()->where(['status'=>STATUS_ACTIVE])->andWhere(['access_token' => $auth_key])->one();
+        return static::find()->where(['status'=>Account::STATUS_ACTIVE])->andWhere(['access_token' => $auth_key])->one();
     }
 
     public static function findByRequestToken(): ?self
