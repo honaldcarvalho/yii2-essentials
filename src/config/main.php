@@ -43,6 +43,8 @@ $config = [
             'class' => \yii\mutex\MysqlMutex::class,
             // 'db' => 'db',           // opcional (default 'db')
             'keyPrefix' => 'app_mutex_', // opcional
+            'mutexPath' => '@runtime/mutex', // garanta permissão de escrita
+
         ],
         'storage' => [
             'class' => \croacworks\essentials\components\StorageService::class,
