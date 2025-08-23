@@ -62,8 +62,9 @@ class AttachFileBehavior extends Behavior
             $result = StorageController::uploadFile($this->uploadedFile, ['save' => true]);
 
             if ($result['success'] === true && isset($result['data']['id'])) {
-                $file_id = $this->owner->getOldAttribute($attr) ?? $this->owner->{$attr};
-                StorageController::removeFile($file_id);
+                $file_id = $this->owner->{$attr};
+                if($file_id)
+                    StorageController::removeFile($file_id);
                 $owner->$attr = $result['data']['id'];
             } else {
                 // In case upload fails, add model error
