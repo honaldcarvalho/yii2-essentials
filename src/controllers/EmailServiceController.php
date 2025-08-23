@@ -40,6 +40,20 @@ class EmailServiceController extends AuthorizationController
             'model' => $this->findModel($id),
         ]);
     }
+    
+    public function actionPreview($id)
+    {
+        $this->layout = false; // sem layout da aplicação
+        $model = $this->findModel($id);
+
+        // Renderiza direto o template substituindo placeholders fakes
+        $html = $model->renderTemplate([
+            'subject' => 'Exemplo de Assunto',
+            'content' => '<p>Este é um preview do template de email.</p>',
+        ]);
+
+        return $html;
+    }
 
     public function actionTest($id)
     {
@@ -55,13 +69,13 @@ class EmailServiceController extends AuthorizationController
             'username' => $model->username,
             'password' => $model->password,
             'port' => $model->port,
-            'enableMailerLogging'=>true
+            'enableMailerLogging' => true
             //'dsn' => "{$model->scheme}://{$model->username}:{$model->password}@{$model->host}:{$model->port}"
         ];
         //$mailer->transport['dsn'] = "{$model->scheme}://{$model->username}:{$model->password}@{$model->host}:{$model->port}";
-        
+
         $scheme = $_SERVER['REQUEST_SCHEME'];
-        $url = $_SERVER['HTTP_HOST'];  
+        $url = $_SERVER['HTTP_HOST'];
         $uri = $_SERVER['REQUEST_URI'];
         $content = " 
             <tr>
@@ -86,25 +100,24 @@ class EmailServiceController extends AuthorizationController
                     </tr>
                     </tbody>
                 </table>
-                <p><small>".Yii::t('app','This message was sent automatically by the system')." {$params->title}, don't answer.</small></p>
+                <p><small>" . Yii::t('app', 'This message was sent automatically by the system') . " {$params->title}, don't answer.</small></p>
                 </td>
             </tr>
         ";
-        $subject = 'Test Email - '.$model->description;
+        $subject = 'Test Email - ' . $model->description;
         $message = $mailer->compose('@vendor/croacworks/yii2-essentials/src/mail/layouts/template', ['subject' => $subject, 'content' => $content]);
         $response = $message->setFrom($model->username)->setTo($params->email)
-        ->setSubject(Yii::t('app','Test Email - '.$model->description))
-        ->send();
+            ->setSubject(Yii::t('app', 'Test Email - ' . $model->description))
+            ->send();
 
-        if($response) {
+        if ($response) {
             \Yii::$app->session->setFlash('success', "Email sended to {$params->email}.  See you email.");
-        }else{
+        } else {
             foreach (Yii::getLogger()->messages as $key => $message) {
-                if($message[2] == 'yii\symfonymailer\Mailer::sendMessage'){
-                    \Yii::$app->session->setFlash('error', 'Occoured some error: '.$message[0]);
+                if ($message[2] == 'yii\symfonymailer\Mailer::sendMessage') {
+                    \Yii::$app->session->setFlash('error', 'Occoured some error: ' . $message[0]);
                 }
             }
-
         }
 
         return $this->redirect(['view', 'id' => $model->id]);

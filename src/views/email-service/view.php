@@ -25,6 +25,16 @@ $this->params['breadcrumbs'][] = $this->title;
                             'verGroup' => false
                         ]) ?>
                         <?= Html::a(Yii::t('app', 'Test'), ['test', 'id' => $model->id], ['class' => 'btn btn-default']) ?>
+                        <?= Html::a(
+                            Yii::t('app', 'Visualizar Template'),
+                            ['preview', 'id' => $model->id],
+                            [
+                                'class' => 'btn btn-info',
+                                'data-fancybox' => 'iframe',
+                                'data-type' => 'iframe',
+                                'data-options' => '{"iframe" : {"css" : {"width" : "100%","height" : "100%"}}}',
+                            ]
+                        ) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,
