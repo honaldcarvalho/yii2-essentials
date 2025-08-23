@@ -56,7 +56,7 @@ $buttons[] =
                     'uniqueId' => 'UserAppend',
                     'controller' => 'configuration',
                     'template' => '{edit}{remove}',
-                    'attactClass' => 'croacworks\\essentials\\models\\MetaTag',
+                    'attactClass' => 'croacworks\\essentials\\models\\UserGroup',
                     'dataProvider' => new \yii\data\ActiveDataProvider([
                         'query' => $model->getUserGroups(),
                     ]),
