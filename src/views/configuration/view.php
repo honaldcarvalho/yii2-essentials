@@ -75,6 +75,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <!--.card-->
 
     <?= AppendModel::widget([
+        'title'=> Yii::t('app', 'Parameters'),
         'attactModel'=>'Parameter',
         'uniqueId'=>'ParameterAppend',
         'controller'=>'configuration',
@@ -116,6 +117,7 @@ $this->params['breadcrumbs'][] = $this->title;
     ]); ?>
 
     <?= AppendModel::widget([
+        'title'=> Yii::t('app', 'Meta Tags'),
         'attactModel'=>'MetaTag',
         'uniqueId'=>'MetaTagAppend',
         'controller'=>'configuration',
