@@ -35,20 +35,30 @@ class UserProfile extends ModelCommon
     {
         return 'user_profiles';
     }
-
     public function behaviors()
     {
-        return array_merge(parent::behaviors(), [
+        return [
             [
-                'class' => AttachFileBehavior::class,
+                'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
                 'attribute' => 'file_id',
-                'removeFlagParam' => 'remove',
-                'deleteOldOnReplace' => true,
-                'deleteOnOwnerDelete' => false,
-                'debug' => true, // ligue por enquanto
+                'removeFlagParam' => 'remove_file_id', // opcional (ex.: checkbox no form)
+                'deleteOldOnReplace' => true,          // apaga antigo ao substituir
             ],
-        ]);
+        ];
     }
+    // public function behaviors()
+    // {
+    //     return array_merge(parent::behaviors(), [
+    //         [
+    //             'class' => AttachFileBehavior::class,
+    //             'attribute' => 'file_id',
+    //             'removeFlagParam' => 'remove',
+    //             'deleteOldOnReplace' => true,
+    //             'deleteOnOwnerDelete' => false,
+    //             'debug' => true, // ligue por enquanto
+    //         ],
+    //     ]);
+    // }
     
     /**
      * {@inheritdoc}
