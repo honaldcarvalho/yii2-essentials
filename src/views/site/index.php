@@ -14,7 +14,7 @@ if (!empty($config->file_id) && $config->file !== null) {
     $url = Yii::getAlias('@web') . $config->file->urlThumb;
     $logo_image = "<img alt='{$config->title}' width='150px' class='brand-image img-circle elevation-3' src='{$url}' style='opacity: .8' />";
 } else {
-    $logo_image = "<img src='{$assetsDir}/image/croacworks-logo-hq.png' width='150px' alt='{$config->title}' class='brand-image elevation-3' style='opacity: .8'>";
+    $logo_image = "<img src='{$assetsDir}/images/croacworks-logo-hq.png' width='150px' alt='{$config->title}' class='brand-image elevation-3' style='opacity: .8'>";
 }
 $this->title = '';
 
