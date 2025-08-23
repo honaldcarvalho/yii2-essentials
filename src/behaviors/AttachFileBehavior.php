@@ -1,199 +1,201 @@
 <?php
+
 namespace croacworks\essentials\behaviors;
 
 use Yii;
 use yii\base\Behavior;
-use yii\db\ActiveRecord;
+use yii\base\Model;
+use yii\base\ModelEvent;
+use yii\base\Event;
+use yii\db\BaseActiveRecord;
+use yii\db\AfterSaveEvent;
 use yii\web\UploadedFile;
-
-use croacworks\essentials\components\StorageService;
-use croacworks\essentials\components\dto\StorageOptions;
+use croacworks\essentials\controllers\rest\StorageController;
 
 /**
  * AttachFileBehavior
+ * ------------------
+ * Mantém e troca o arquivo relacionado (ex.: campo `file_id`) sem “apagar sem querer”.
  *
- * - Faz upload do arquivo vindo do form e atualiza o atributo do AR com o ID do File salvo.
- * - Opcionalmente apaga o arquivo antigo ao substituir.
- * - Opcionalmente apaga o arquivo quando o dono é excluído.
+ * Regras:
+ * 1) Upload síncrono (modo defer — <input type="file" name="Model[file_id]">):
+ *    - Se vier arquivo, faz o upload via StorageController::uploadFile(save=1) e seta o novo id.
+ *    - Se `deleteOldOnReplace=true`, remove o arquivo antigo no AFTER_SAVE.
  *
- * Uso (no modelo dono):
-    public function behaviors()
-    {
-        return [
-            [
-                'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
-                'attribute'           => 'file_id',
-                'deleteOnOwnerDelete' => true,
-                'deleteOldOnReplace'  => true,
-                'thumbAspect'         => 1,
-                'folderId'            => 1,
-                'groupId'             => 1,
-                'saveModel'           => true,
-                'removeFlagParam'     => 'remove',
-                'removeFlagScoped'    => true, // se o hidden vier como Model[remove]
-            ],
-        ];
-    }
+ * 2) ID vindo por hidden (modo instant ou outro fluxo):
+ *    - Se for inteiro válido diferente do antigo, troca e marca o antigo para remoção.
+ *    - Se vier string vazia '', **NÃO remove**: apenas mantém o antigo.
+ *    - Se vier '0' ou 'null', **só remove** se `removeFlagParam`=1 (ou se `emptyMeansRemove=true`).
+ *
+ * 3) Flag de remoção isolada (`removeFlagParam`=1) sem ID: zera o atributo e marca o antigo para remoção.
+ *
+ * 4) Caso nada tenha mudado, mantém o valor antigo.
+ *
+ * Dicas:
+ * - Garanta que o form NÃO tenha um hidden `Model[file_id]` vazio por padrão.
+ * - O widget deve mandar um hidden `remove=1` apenas quando o usuário clicar em “Remover”.
  */
-
 class AttachFileBehavior extends Behavior
 {
-    /** Campo no AR que guarda o ID do arquivo (ex.: "file_id") */
+    /** atributo que guarda o id do File (ex.: file_id) */
     public string $attribute = 'file_id';
 
-    /** Apaga o arquivo vinculado quando o dono é deletado */
-    public bool $deleteOnOwnerDelete = true;
-
-    /** Apaga o arquivo antigo quando um novo upload substitui */
-    public bool $deleteOldOnReplace = true;
-
-    /** 1 (quadrada) ou "LARGURA/ALTURA" para thumbs */
-    public int|string $thumbAspect = 1;
-
-    /** 1=auto; 2=img; 3=video; 4=doc */
-    public int $folderId = 1;
-
-    public ?int $groupId = 1;
-
-    /** Se deve persistir na tabela `file` */
-    public bool $saveModel = true;
-
-    /** 🔽 NOVO: nome do hidden que marca remoção no submit (ex.: "remove") */
+    /** nome da flag de remoção no POST (pode ser global ou aninhado em Model[remove]) */
     public string $removeFlagParam = 'remove';
 
-    /** 🔽 NOVO: se true, flag vem escopada como Model[remove] */
-    public bool $removeFlagScoped = false;
+    /** apaga o arquivo antigo ao trocar */
+    public bool $deleteOldOnReplace = true;
 
-    /** Guarda o ID antigo para limpeza em substituição */
-    private ?int $oldId = null;
+    /** apaga o arquivo ao deletar o dono */
+    public bool $deleteOnOwnerDelete = false;
+
+    /** ligar logs (Yii::info) */
+    public bool $debug = false;
+
+    /** por padrão, vazio NÃO remove; se true, '' passa a significar remover (não recomendado) */
+    public bool $emptyMeansRemove = false;
+
+    private $oldId;
+    private $toDeleteId = null;
 
     public function events(): array
     {
         return [
-            ActiveRecord::EVENT_AFTER_FIND      => 'captureOldId',
-            ActiveRecord::EVENT_BEFORE_VALIDATE => 'handleUploadBeforeValidate',
-            ActiveRecord::EVENT_AFTER_DELETE    => 'onOwnerAfterDelete',
+            Model::EVENT_BEFORE_VALIDATE          => 'rememberOld',
+            BaseActiveRecord::EVENT_BEFORE_INSERT => 'handleUploadOrKeep',
+            BaseActiveRecord::EVENT_BEFORE_UPDATE => 'handleUploadOrKeep',
+            BaseActiveRecord::EVENT_AFTER_INSERT  => 'deleteOldIfNeeded',
+            BaseActiveRecord::EVENT_AFTER_UPDATE  => 'deleteOldIfNeeded',
+            BaseActiveRecord::EVENT_AFTER_DELETE  => 'deleteOnDelete',
         ];
     }
 
-    public function captureOldId(): void
+    private function log($msg, $data = []): void
     {
-        $attr = $this->attribute;
-        $this->oldId = (int)($this->owner->{$attr} ?? 0) ?: null;
+        if ($this->debug) {
+            Yii::info(['attachFile' => $msg, 'data' => $data], 'attach.file');
+        }
     }
 
-    /**
-     * - Se veio hidden de remoção e NÃO há novo upload: apaga e zera o atributo.
-     * - Se há novo upload: faz upload, seta novo ID e (opcional) apaga o antigo.
-     */
-    public function handleUploadBeforeValidate(): void
+    public function rememberOld(ModelEvent $event): void
+    {
+        $attr = $this->attribute;
+        $this->oldId = $this->owner->getOldAttribute($attr) ?? $this->owner->{$attr};
+        $this->log('rememberOld', ['oldId' => $this->oldId]);
+    }
+
+    public function handleUploadOrKeep(ModelEvent $event): void
     {
         $owner = $this->owner;
         $attr  = $this->attribute;
+        $req   = Yii::$app->request;
 
+        // POST aninhado/flat
+        $postedModel  = $req->post($owner->formName(), []);
+        $hasPostedKey = array_key_exists($attr, $postedModel) || $req->post($attr, null) !== null;
+        $postedId     = $hasPostedKey ? ($postedModel[$attr] ?? $req->post($attr, null)) : null;
+
+        // Flag de remoção (global ou aninhada)
+        $removeFlag = (int)($req->post($this->removeFlagParam, $postedModel[$this->removeFlagParam] ?? 0));
+
+        // 1) Upload síncrono
         $uploaded = UploadedFile::getInstance($owner, $attr);
-        $removeAsked = $this->isRemoveRequested();
-
-        /** @var StorageService $storage */
-        $storage = Yii::$app->storage;
-
-        // 1) Somente remoção (sem novo arquivo)
-        if (!$uploaded && $removeAsked) {
-            $id = (int)($owner->{$attr} ?? 0);
-            if ($id > 0) {
-                try { $storage->deleteById($id); }
-                catch (\Throwable $e) { Yii::warning(['attach_behavior_remove' => $e->getMessage()], __METHOD__); }
+        if ($uploaded instanceof UploadedFile) {
+            try {
+                $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => 1]);
+                if (!empty($resp['success'])) {
+                    $newId = (int)$resp['data']['id'];
+                    $owner->{$attr} = $newId;
+                    if ($this->deleteOldOnReplace && $this->oldId && $this->oldId != $newId) {
+                        $this->toDeleteId = $this->oldId;
+                    }
+                    return;
+                }
+                $owner->addError($attr, Yii::t('app', 'Falha ao enviar imagem.'));
+                $event->isValid = false;
+                return;
+            } catch (\Throwable $e) {
+                $owner->addError($attr, Yii::t('app', 'Falha ao enviar imagem.'));
+                $event->isValid = false;
+                return;
             }
-            $owner->{$attr} = null;      // ou 0, conforme seu schema
-            $this->oldId    = null;
+        }
+
+        // 2) ***PRIORIDADE PARA REMOÇÃO EXPLÍCITA***
+        // Se usuário clicou "Remover", removemos independentemente do postedId estar vazio
+        if ($removeFlag === 1) {
+            if ($this->oldId) {
+                $this->toDeleteId = $this->oldId;
+            }
+            $owner->{$attr} = null;
             return;
         }
 
-        // 2) Novo upload (substituição ou inclusão)
-        if (!$uploaded instanceof UploadedFile) {
-            return; // nada a fazer
-        }
+        // 3) ID vindo por hidden (instant/defer)
+        if ($hasPostedKey) {
+            $raw = trim((string)$postedId);
 
-        try {
-            $opts = new StorageOptions([
-                'fileName'     => null,
-                'description'  => $uploaded->name,
-                'folderId'     => $this->folderId,
-                'groupId'      => $this->groupId ?? 1,
-                'saveModel'    => $this->saveModel,
-                'convertVideo' => true,
-                'thumbAspect'  => $this->thumbAspect,
-                'quality'      => 85,
-            ]);
-
-            $res = $storage->upload($uploaded, $opts);
-
-            if ($res instanceof \yii\db\BaseActiveRecord) {
-                if ($res->hasErrors()) {
-                    $owner->addError($attr, 'Falha ao salvar arquivo: ' . json_encode($res->getErrors(), JSON_UNESCAPED_UNICODE));
-                    return;
-                }
-                $newId = (int)$res->id;
-                $owner->{$attr} = $newId;
-            } else {
-                // sem persistir não temos ID -> não altera atributo
+            // vazio SEM flag de remoção -> mantém
+            if ($raw === '') {
+                $owner->{$attr} = $this->oldId;
                 return;
             }
 
-            // limpar antigo se habilitado e houve troca
-            if ($this->deleteOldOnReplace && $this->oldId && $this->oldId !== (int)$owner->{$attr}) {
-                try { $storage->deleteById($this->oldId); }
-                catch (\Throwable $e) { Yii::warning(['attach_behavior_replace_cleanup' => $e->getMessage()], __METHOD__); }
+            // '0'/'null' só remove se explicitado via emptyMeansRemove (opcional)
+            if ($raw === '0' || strtolower($raw) === 'null') {
+                if ($this->emptyMeansRemove) {
+                    if ($this->oldId) $this->toDeleteId = $this->oldId;
+                    $owner->{$attr} = null;
+                } else {
+                    $owner->{$attr} = $this->oldId;
+                }
+                return;
             }
 
-            $this->oldId = (int)$owner->{$attr};
-
-        } catch (\Throwable $e) {
-            Yii::error("AttachFileBehavior upload exception: {$e->getMessage()}", __METHOD__);
-            $owner->addError($attr, 'Não foi possível processar o upload do arquivo.');
-        }
-    }
-
-    public function onOwnerAfterDelete(): void
-    {
-        if (!$this->deleteOnOwnerDelete) {
+            // novo id válido
+            $newId = (int)$raw;
+            if ($newId !== (int)$this->oldId) {
+                if ($this->deleteOldOnReplace && $this->oldId) {
+                    $this->toDeleteId = $this->oldId;
+                }
+                $owner->{$attr} = $newId;
+            } else {
+                $owner->{$attr} = $this->oldId;
+            }
             return;
         }
-        $attr = $this->attribute;
-        $id   = (int)($this->owner->{$attr} ?? 0);
-        if ($id > 0) {
-            try {
-                /** @var StorageService $storage */
-                $storage = Yii::$app->storage;
-                $storage->deleteById($id);
-            } catch (\Throwable $e) {
-                Yii::warning(['attach_behavior_delete' => $e->getMessage()], __METHOD__);
-            }
-        }
+
+        // 4) Nada mudou → mantém
+        $owner->{$attr} = $this->oldId;
     }
 
-    /**
-     * Lê a flag de remoção do POST:
-     * - se `$removeFlagScoped = true`, lê `$_POST[ModelFormName][removeFlagParam]`
-     * - senão, lê `$_POST[removeFlagParam]`
-     */
-    private function isRemoveRequested(): bool
+    public function deleteOldIfNeeded(AfterSaveEvent $event): void
     {
-        $request = Yii::$app->getRequest();
-        if (!method_exists($request, 'post')) {
-            return false; // console/sem web request
+        // Segurança: não remover o id atual por engano
+        $currentId = (int)$this->owner->{$this->attribute};
+        if ($this->toDeleteId && (int)$this->toDeleteId !== $currentId) {
+            $this->log('delete old', ['id' => $this->toDeleteId]);
+            try {
+                StorageController::removeFile($this->toDeleteId);
+            } catch (\Throwable $e) {
+                $this->log('delete old exception', ['err' => $e->getMessage()]);
+            }
         }
-        $params = $request->post();
-        if ($this->removeFlagScoped) {
-            $form = $this->owner->formName();
-            $val  = $params[$form][$this->removeFlagParam] ?? null;
-        } else {
-            $val  = $params[$this->removeFlagParam] ?? null;
+        $this->toDeleteId = null;
+    }
+
+    public function deleteOnDelete(Event $event): void
+    {
+        if ($this->deleteOnOwnerDelete) {
+            $id = (int)$this->owner->{$this->attribute};
+            if ($id) {
+                $this->log('delete on owner delete', ['id' => $id]);
+                try {
+                    StorageController::removeFile($id);
+                } catch (\Throwable $e) {
+                    $this->log('delete on owner delete exception', ['err' => $e->getMessage()]);
+                }
+            }
         }
-        if ($val === null) return false;
-        // aceita 1, "1", true, "true", "on"
-        if (is_bool($val)) return $val;
-        $s = is_string($val) ? strtolower($val) : (string)$val;
-        return $s === '1' || $s === 'true' || $s === 'on';
     }
 }
