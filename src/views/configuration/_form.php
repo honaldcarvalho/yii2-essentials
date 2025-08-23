@@ -4,6 +4,7 @@ use croacworks\essentials\models\EmailService;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\Group;;
 use croacworks\essentials\models\Language;
+use croacworks\essentials\widgets\StorageImage;
 use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
@@ -28,7 +29,7 @@ if(!empty($model->file_id && $model->file != null)){
                 'style' => 'display:none'
             ])->label(false) ?>
 
-        <?= UploadImageInstant::widget([
+        <?= StorageImage::widget([
             'mode'        => 'defer',                // <- importante
             'hideSaveButton' => true,                // não exige “Salvar” no modal
             'model'       => $model,                 // o widget descobre name/id do input

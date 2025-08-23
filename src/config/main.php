@@ -44,16 +44,16 @@ $config = [
             // 'db' => 'db',           // opcional (default 'db')
             'keyPrefix' => 'app_mutex_', // opcional
         ],
-        // 'storage' => [
-        //     'class' => \croacworks\essentials\components\StorageService::class,
-        //     'driver' => [
-        //         'class'   => \croacworks\essentials\components\storage\LocalStorageDriver::class,
-        //         'basePath' => '@webroot/uploads',
-        //         'baseUrl' => '@web/uploads',
-        //     ],
-        //     'defaultThumbSize' => 300,
-        //     'enableQueue'      => true, // usa jobs se existir queue
-        // ],
+        'storage' => [
+            'class' => \croacworks\essentials\components\StorageService::class,
+            'driver' => [
+                'class'   => \croacworks\essentials\components\storage\LocalStorageDriver::class,
+                'basePath' => '@webroot/uploads',
+                'baseUrl' => '@web/uploads',
+            ],
+            'defaultThumbSize' => 300,
+            'enableQueue'      => true, // usa jobs se existir queue
+        ],
         'queue' => [
             'class' => \yii\queue\db\Queue::class,
             'db' => 'db',
@@ -71,7 +71,7 @@ $config = [
                     'bsDependencyEnabled' => false // do not load bootstrap assets for a specific asset bundle
                 ],
             ],
-            'forceCopy' => false
+            'forceCopy' => true
         ],
         'httpclient' => [
             'class' => 'yii\httpclient\Client',
