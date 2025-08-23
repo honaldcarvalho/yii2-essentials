@@ -70,7 +70,7 @@ class AttachFileBehavior extends Behavior
             return;
         }
 
-        $result = \croacworks\essentials\controllers\StorageController::uploadFile($file, ['save' => true]);
+        $result = StorageController::uploadFile($file, ['save' => true]);
 
         if (is_array($result) && ($result['success'] ?? false) === true && isset($result['data']['id'])) {
             // seta o novo ID no atributo (ainda não apaga o antigo!)
