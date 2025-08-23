@@ -41,8 +41,6 @@ class UserProfile extends ModelCommon
             [
                 'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
                 'attribute' => 'file_id',
-                'removeFlagParam' => 'remove_file_id', // opcional (ex.: checkbox no form)
-                'deleteOldOnReplace' => true,          // apaga antigo ao substituir
             ],
         ];
     }
