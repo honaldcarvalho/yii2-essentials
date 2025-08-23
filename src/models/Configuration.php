@@ -73,15 +73,17 @@ class Configuration extends ModelCommon
     //         ],
     //     ]);
     // }
+    
     public function behaviors()
     {
-        return [
+        return array_merge(parent::behaviors(), [
             [
                 'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
                 'attribute' => 'file_id',
             ],
-        ];
+        ]);
     }
+
     public function scenarios()
     {
         $scenarios = parent::scenarios();
