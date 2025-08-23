@@ -9,7 +9,7 @@ $config = [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'app\commands',
-    
+    'runtimePath' => '@app/runtime',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
@@ -19,6 +19,7 @@ $config = [
         'db' => $db,
         'cache' => [
             'class' => 'yii\caching\FileCache',
+            'cachePath' => '@app/runtime/cache',
         ],
         'log' => [
             'targets' => [
