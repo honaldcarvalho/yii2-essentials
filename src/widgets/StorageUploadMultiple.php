@@ -10,7 +10,7 @@ use yii\web\View;
 use yii\bootstrap5\Widget;
 
 /** @var yii\web\View $this */
-/** @varcroacworks\essentials\models\File $model */
+/** @var croacworks\essentials\models\File $model */
 /** @var yii\widgets\ActiveForm $form */
 
 /**
