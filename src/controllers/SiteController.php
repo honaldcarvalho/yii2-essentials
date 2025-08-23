@@ -47,7 +47,7 @@ class SiteController extends CommonController
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        return $this->render('@croacworks/essentials/views/site/index');
     }
 
     public function actionExport($format = 'csv', $filename = 'export')

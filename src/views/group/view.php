@@ -49,51 +49,51 @@ $buttons[] =
                         ],
                     ]) ?>
                 </div>
-
-                <?= AppendModel::widget([
-                    'title' => Yii::t('app', 'Meta Tags'),
-                    'attactModel' => 'UserGroup',
-                    'uniqueId' => 'UserAppend',
-                    'controller' => 'configuration',
-                    'template' => '{edit}{remove}',
-                    'attactClass' => 'croacworks\\essentials\\models\\UserGroup',
-                    'dataProvider' => new \yii\data\ActiveDataProvider([
-                        'query' => $model->getUserGroups(),
-                    ]),
-                    'showFields' => [
-                        'user.fullname',
-                        'user.email',
-                        [
-                            'attribute' => 'user.created_at',
-                            'format' => 'date',
-                            'label' => Yii::t('app', 'Created At'),
-                        ],
-                        [
-                            'attribute' => 'user.updated_at',
-                            'format' => 'date',
-                            'label' => Yii::t('app', 'Updated At'),
-                        ],
-                        'user.status:boolean',
-                    ],
-                    'fields' =>
-                    [
-                        [
-                            'name' => 'group_id',
-                            'type' => 'hidden',
-                            'value' => $model->id
-                        ],
-                        [
-                            'name' => 'user_id',
-                            'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->where(['status' => 1])->asArray()->all(),
-                            'type' => 'select2'
-                        ],
-    
-                    ]
-                ]); ?>
             </div>
             <!--.row-->
         </div>
         <!--.card-body-->
     </div>
     <!--.card-->
+
+    <?= AppendModel::widget([
+        'title' => Yii::t('app', 'Users'),
+        'attactModel' => 'UserGroup',
+        'uniqueId' => 'UserAppend',
+        'controller' => 'configuration',
+        'template' => '{edit}{remove}',
+        'attactClass' => 'croacworks\\essentials\\models\\UserGroup',
+        'dataProvider' => new \yii\data\ActiveDataProvider([
+            'query' => $model->getUserGroups(),
+        ]),
+        'showFields' => [
+            'user.fullname',
+            'user.email',
+            [
+                'attribute' => 'user.created_at',
+                'format' => 'date',
+                'label' => Yii::t('app', 'Created At'),
+            ],
+            [
+                'attribute' => 'user.updated_at',
+                'format' => 'date',
+                'label' => Yii::t('app', 'Updated At'),
+            ],
+            'user.status:boolean',
+        ],
+        'fields' =>
+        [
+            [
+                'name' => 'group_id',
+                'type' => 'hidden',
+                'value' => $model->id
+            ],
+            [
+                'name' => 'user_id',
+                'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->where(['status' => 1])->asArray()->all(),
+                'type' => 'select2'
+            ],
+
+        ]
+    ]); ?>
 </div>
