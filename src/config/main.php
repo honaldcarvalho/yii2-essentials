@@ -19,6 +19,7 @@ $config = [
         'queue',
         'log'
     ],
+    'runtimePath' => '@app/runtime',
     'modules' => [],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
