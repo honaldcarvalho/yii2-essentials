@@ -2,7 +2,7 @@
 
 namespace croacworks\essentials\models\forms;
 
-
+use croacworks\essentials\models\Configuration;
 use Yii;
 use croacworks\essentials\models\User;
 use croacworks\essentials\models\ModelCommon;
@@ -25,7 +25,9 @@ class ResendVerificationEmailForm extends Model
             ['email', 'trim'],
             ['email', 'required'],
             ['email', 'email'],
-            ['email', 'exist',
+            [
+                'email',
+                'exist',
                 'targetClass' => '\croacworks\essentials\models\User',
                 'filter' => ['status' => User::STATUS_INACTIVE],
                 'message' => 'There is no user with this email address.'
@@ -33,31 +35,49 @@ class ResendVerificationEmailForm extends Model
         ];
     }
 
-    /**
-     * Sends confirmation email to user
-     *
-     * @return bool whether the email was sent
-     */
     public function sendEmail()
     {
+        // Pega config e serviço de e-mail vinculado
+        $cfg     = Configuration::get();
+        /** @var \croacworks\essentials\models\EmailService $service */
+        $service = $cfg->emailService;
+
+        /* @var $user User */
         $user = User::findOne([
+            'status' => User::STATUS_ACTIVE,
             'email' => $this->email,
-            'status' => User::STATUS_INACTIVE
         ]);
 
-        if ($user === null) {
+        if (!$user) {
             return false;
         }
 
-        return Yii::$app
-            ->mailer
-            ->compose(
-                ['html' => 'emailVerify-html', 'text' => 'emailVerify-text'],
-                ['user' => $user]
-            )
-            ->setFrom([Yii::$app->params['supportEmail'] => Yii::$app->name . ' robot'])
-            ->setTo($this->email)
-            ->setSubject('Account registration at ' . Yii::$app->name)
-            ->send();
+        if (!User::isPasswordResetTokenValid($user->password_reset_token)) {
+            $user->generatePasswordResetToken();
+            if (!$user->save()) {
+                return false;
+            }
+        }
+        $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $user->password_reset_token]);
+
+        // Conteúdo do corpo do e-mail (HTML parcial que vai no {{content}})
+        $content = " 
+            <p>" . Yii::t('app', 'Hello, {name}', ['name' => $user->profile->fullname]) . "</p>
+            <p>" . Yii::t('app', 'Follow the link below to reset your password:') . "</p>
+            <table role='presentation' border='0' cellpadding='0' cellspacing='0' class='btn'>
+                <tr><td align='center'>
+                    <a href='{$resetLink}' target='_blank' rel='noopener'>" . Yii::t('app', 'Reset Password') . "</a>
+                </td></tr>
+            </table>
+            <p><small>" . Yii::t("backend", "This message was sent automatically by the {title}, do not respond.", ['title' => $cfg->title]) . "</small></p>
+        ";
+
+        // Usa o método novo (template do banco)
+        return $service->sendUsingTemplate(
+            $this->email,
+            'Reset Password - ' . $cfg->title,
+            $content,
+            ['fromName' => $cfg->title . ' robot']
+        );
     }
 }

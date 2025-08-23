@@ -25,7 +25,9 @@ class PasswordResetRequestForm extends Model
             ['email', 'trim'],
             ['email', 'required'],
             ['email', 'email'],
-            ['email', 'exist',
+            [
+                'email',
+                'exist',
                 'targetClass' => '\croacworks\essentials\models\User',
                 'filter' => ['status' => User::STATUS_ACTIVE],
                 'message' => 'There is no user with this email address.'
@@ -40,8 +42,11 @@ class PasswordResetRequestForm extends Model
      */
     public function sendEmail()
     {
-        $params = Configuration::get();
-        $mailer =  AuthorizationController::mailer();
+        // Pega config e serviço de e-mail vinculado
+        $cfg     = Configuration::get();
+        /** @var \croacworks\essentials\models\EmailService $service */
+        $service = $cfg->emailService;
+        
         /* @var $user User */
         $user = User::findOne([
             'status' => User::STATUS_ACTIVE,
@@ -60,42 +65,24 @@ class PasswordResetRequestForm extends Model
         }
         $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $user->password_reset_token]);
         
+        // Conteúdo do corpo do e-mail (HTML parcial que vai no {{content}})
         $content = " 
-            <tr>
-                <td>
-                <p>".Yii::t('app','Hello, {name}',['name'=>$user->profile->fullname])."</p>
-                <p>".Yii::t('app','Follow the link below to reset your password:')."</b></p>
-                    
-                <table role='presentation' border='0' cellpadding='0' cellspacing='0' class='btn btn-primary'>
-                    <tbody>
-                    <tr>
-                        <td align='center'>
-                        <table border='0' cellpadding='0' cellspacing='0' role='presentation' style='box-sizing:border-box'>
-                            <tbody>
-                                <tr>
-                                    <td style='box-sizing:border-box'>
-                                        <a href='{$resetLink}' target='_blank' rel='noopener noreferrer' data-auth='NotApplicable' class='x_button x_button-primary' style='box-sizing:border-box; border-radius:4px; color:#fff; display:inline-block; overflow:hidden; text-decoration:none; background-color:#2d3748; border-bottom:8px solid #2d3748; border-left:18px solid #2d3748; border-right:18px solid #2d3748; border-top:8px solid #2d3748' data-safelink='true' data-linkindex='1'>
-                                        ".Yii::t('app','Reset Password')."
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <p><small>".Yii::t("backend","This message was sent automatically by the {title}, do not respond.",['title'=>$params->title])."</small></p>
-                </td>
-            </tr>
+            <p>" . Yii::t('app', 'Hello, {name}', ['name' => $user->profile->fullname]) . "</p>
+            <p>" . Yii::t('app', 'Follow the link below to reset your password:') . "</p>
+            <table role='presentation' border='0' cellpadding='0' cellspacing='0' class='btn'>
+                <tr><td align='center'>
+                    <a href='{$resetLink}' target='_blank' rel='noopener'>" . Yii::t('app', 'Reset Password') . "</a>
+                </td></tr>
+            </table>
+            <p><small>" . Yii::t("backend", "This message was sent automatically by the {title}, do not respond.", ['title' => $cfg->title]) . "</small></p>
         ";
-        return $mailer
-            ->compose('@vendor/croacworks/yii2-essentials/src/mail/layouts/template',
-                ['user' => $user,'subject'=>$mailer->transport->getUsername(),'content'=>$content]
-            )
-            ->setFrom([$mailer->transport->getUsername()=> $params->title . ' robot'])
-            ->setTo($this->email)
-            ->setSubject('Reset Password - ' . $params->title)
-            ->send();
+
+        // Usa o método novo (template do banco)
+        return $service->sendUsingTemplate(
+            $this->email,
+            'Reset Password - ' . $cfg->title,
+            $content,
+            ['fromName' => $cfg->title . ' robot']
+        );
     }
 }
