@@ -60,19 +60,19 @@ class Configuration extends ModelCommon
     //         ],
     //     ];
     // }
-    public function behaviors()
-    {
-        return array_merge(parent::behaviors(), [
-            [
-                'class' => AttachFileBehavior::class,
-                'attribute' => 'file_id',
-                'removeFlagParam' => 'remove',
-                'deleteOldOnReplace' => true,
-                'deleteOnOwnerDelete' => false,
-                'debug' => true, // ligue por enquanto
-            ],
-        ]);
-    }
+    // public function behaviors()
+    // {
+    //     return array_merge(parent::behaviors(), [
+    //         [
+    //             'class' => AttachFileBehavior::class,
+    //             'attribute' => 'file_id',
+    //             'removeFlagParam' => 'remove',
+    //             'deleteOldOnReplace' => true,
+    //             'deleteOnOwnerDelete' => false,
+    //             'debug' => true, // ligue por enquanto
+    //         ],
+    //     ]);
+    // }
     public function scenarios()
     {
         $scenarios = parent::scenarios();

@@ -104,6 +104,17 @@ class ConfigurationController extends AuthorizationController
 
         if ($model->load(Yii::$app->request->post())) {
 
+            $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
+
+            if (!empty($file) && $file !== null) {
+
+                $arquivo = StorageController::uploadFile($file, ['save' => true]);
+
+                if ($arquivo['success'] === true) {
+                    $model->file_id = $arquivo['data']['id'];
+                }
+            }
+
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
             }
