@@ -1,6 +1,5 @@
 <?php
 
-
 require __DIR__ . '/enviroments.php';
 require __DIR__ . '/urls_custom.php';
 $params = require __DIR__ . '/params.php';
