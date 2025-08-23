@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%email_services}}`.
  */
-class m230911_192839_create_email_services_table extends Migration
+class m250821_270309_add_template_email_services_table extends Migration
 {
     /**
      * {@inheritdoc}
