@@ -21,6 +21,25 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="col-md-12">
                     <p>
                         <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Configuration','model'=>$model,'verGroup'=>false]) ?>
+                        <?= Html::a(
+                            Yii::t('app', 'Preview Email Template'),
+                            [
+                                'preview',
+                                'id' => $model->id,
+                                'subject' => 'Reset Password — ' . Yii::$app->name,
+                                'content' => '<p>Olá, Usuário</p><p>Siga o link abaixo para redefinir sua senha.</p>',
+                            ],
+                            [
+                                'class' => 'btn btn-secondary',
+                                'data-fancybox' => 'preview-template',
+                                'data-type' => 'iframe',
+                                'data-options' => json_encode([
+                                    'iframe' => ['css' => ['width' => '100%', 'height' => '100%']],
+                                    'toolbar' => true,
+                                    'smallBtn' => true,
+                                ]),
+                            ]
+                        ) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,

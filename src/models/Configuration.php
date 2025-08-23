@@ -20,6 +20,7 @@ use yii\symfonymailer\Mailer;
  * @property string $slogan
  * @property string $bussiness_name
  * @property string $email
+ * @property string $email_template
  * @property string|null $created_at
  * @property string|null $updated_at
  * @property int|null $status
@@ -83,6 +84,7 @@ class Configuration extends ModelCommon
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
             'status' => Yii::t('app', 'Status'),
+            'email_template' => Yii::t('app', 'Email Template'),
             'logging' => Yii::t('app', 'Logging'),
         ];
     }

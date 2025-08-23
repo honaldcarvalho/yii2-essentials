@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%email_services}}`.
  */
-class m250821_270309_add_template_email_services_table extends Migration
+class m250821_270309_add_email_template_to_configurations_table extends Migration
 {
     /**
      * {@inheritdoc}
@@ -71,7 +71,7 @@ class m250821_270309_add_template_email_services_table extends Migration
         </body>
         </html>
         HTML;
-        $this->addColumn('email_services', 'template', $this->text()->defaultValue($html));
+        $this->addColumn('configurations', 'email_template', $this->text()->defaultValue($html));
     }
 
     /**
@@ -79,6 +79,6 @@ class m250821_270309_add_template_email_services_table extends Migration
      */
     public function safeDown()
     {
-        $this->dropColumn('email_services', 'template');
+        $this->dropColumn('configurations', 'email_template');
     }
 }

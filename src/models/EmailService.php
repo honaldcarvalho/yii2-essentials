@@ -3,7 +3,6 @@
 namespace croacworks\essentials\models;
 
 use Yii;
-use croacworks\essentials\controllers\AuthorizationController;
 use yii\helpers\Url;
 use yii\symfonymailer\Mailer;
 
@@ -18,7 +17,6 @@ use yii\symfonymailer\Mailer;
  * @property string $host
  * @property string $username
  * @property string $password
- * @property string $template
  * @property int $port
  */
 class EmailService extends ModelCommon
@@ -61,7 +59,6 @@ class EmailService extends ModelCommon
             'username' => Yii::t('app', 'Username'),
             'password' => Yii::t('app', 'Password'),
             'port' => Yii::t('app', 'Port'),
-            'template' => Yii::t('app', 'Template'),
         ];
     }
 
@@ -122,29 +119,35 @@ class EmailService extends ModelCommon
     {
         $cfg = Configuration::get();
 
-        // 1) Usa o template salvo no registro; 2) se vazio, usa default do DB; 3) se ainda vazio, string mínima
-        $templateHtml = trim((string)$this->template);
+        $templateHtml = trim((string) $cfg->email_template);
         if ($templateHtml === '') {
-            $templateHtml = static::getDbDefaultTemplate();
+            $templateHtml = static::getDbDefaultTemplate(); // se você tem esse helper; senão, deixe em branco
         }
         if ($templateHtml === '') {
             $templateHtml = '<html><body>{{content}}</body></html>';
         }
 
+        // 1) Normaliza tokens com crase para o formato {{token}}
+        //    Ex.: `company_title` -> {{company_title}}
+        $templateHtml = preg_replace('/`([a-z0-9_]+)`/i', '{{$1}}', $templateHtml);
+
+        // 2) Mapa de placeholders fixos (company + logo)
         $builtins = [
             '{{logo_url}}'       => self::resolveLogoUrl($cfg),
             '{{company_title}}'  => (string)($cfg->title ?? ''),
             '{{company_slogan}}' => (string)($cfg->slogan ?? ''),
-            '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''),
+            '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''), // seu campo tem 2 "s" mesmo
             '{{company_email}}'  => (string)($cfg->email ?? ''),
             '{{company_host}}'   => (string)($cfg->host ?? (Yii::$app->request->hostName ?? '')),
         ];
 
+        // 3) Placeholders dinâmicos
         $dynamic = [
             '{{subject}}' => (string)($vars['subject'] ?? ''),
             '{{content}}' => (string)($vars['content'] ?? ''),
         ];
 
+        // 4) Substitui de uma vez
         return strtr($templateHtml, array_merge($builtins, $dynamic));
     }
 

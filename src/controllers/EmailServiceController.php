@@ -41,50 +41,6 @@ class EmailServiceController extends AuthorizationController
         ]);
     }
 
-    public function actionPreview($id)
-    {
-        // Renderiza SOMENTE o HTML do e-mail (sem layout do site)
-        $this->layout = false;
-
-        /** @var \croacworks\essentials\models\EmailService $model */
-        $model = $this->findModel($id);
-        $cfg   = \croacworks\essentials\models\Configuration::get();
-
-        // Suporta /preview?id=1&subject=...&content=...
-        $subject = Yii::$app->request->get('subject');
-        $content = Yii::$app->request->get('content');
-
-        if ($subject === null || $subject === '') {
-            $subject = 'Pré‑visualização — ' . ($cfg->title ?? Yii::$app->name);
-        }
-
-        if ($content === null || $content === '') {
-            // HTML simples de exemplo (entra no {{content}})
-            $resetUrl = Yii::$app->urlManager->createAbsoluteUrl(['site/index']);
-            $content = "
-            <p>Este é um preview do template de e‑mail usando os dados reais de configuração.</p>
-            <table class='btn' role='presentation' border='0' cellpadding='0' cellspacing='0'>
-                <tr><td align='center'>
-                    <a href='{$resetUrl}' target='_blank' rel='noopener'>Ação de Exemplo</a>
-                </td></tr>
-            </table>
-            <p style='opacity:.8'><small>Host: <strong>{$cfg->host}</strong> · Empresa: <strong>{$cfg->bussiness_name}</strong> · E‑mail: <a href='mailto:{$cfg->email}'>{$cfg->email}</a></small></p>
-        ";
-        }
-
-        // Monta HTML final com placeholders reais (logo, título, etc.)
-        $html = $model->renderTemplate([
-            'subject' => $subject,
-            'content' => $content,
-        ]);
-
-        // Força Content-Type HTML e evita download
-        Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
-        Yii::$app->response->headers->set('Content-Type', 'text/html; charset=UTF-8');
-
-        return $html;
-    }
-
     public function actionTest($id)
     {
 
