@@ -112,7 +112,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'rowOptions'=>['class'=>'grabbable'],
                         'columns' => [
                             'group.name',
-                            ['class' => \croacworks\essentials\components\gridview\ActionColumn::className(),
+                            ['class' => \croacworks\essentials\components\gridview\ActionColumnCustom::className(),
                                 'template' => '{delete}'  ,
                                 'buttons' => [  
                                     'delete' => function ($url, $model, $key) {

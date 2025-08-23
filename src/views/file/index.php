@@ -180,7 +180,7 @@ $delete_files_button[] =
                             ],
 
                             [
-                                'class'=>croacworks\essentials\components\gridview\ActionColumn::class,
+                                'class'=>croacworks\essentials\components\gridview\ActionColumnCustom::class,
                             ],
                         ],
                     ]); ?>
