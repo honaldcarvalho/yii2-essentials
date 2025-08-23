@@ -38,7 +38,7 @@ class EmailService extends ModelCommon
     {
         return [
             [['enable_encryption', 'port'], 'integer'],
-            [['host', 'username', 'password', 'port'], 'required'],
+            [['host', 'username', 'password', 'port'], 'required', 'on' => ['create', 'update']],
             [['description', 'scheme', 'encryption', 'host', 'username', 'password'], 'string', 'max' => 255],
         ];
     }

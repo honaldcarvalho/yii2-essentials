@@ -52,7 +52,8 @@ class Configuration extends ModelCommon
     public function rules()
     {
         return [
-            [['description', 'host', 'title', 'slogan', 'bussiness_name', 'email'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            [['description', 'host', 'title', 'slogan', 'bussiness_name', 'email'], 'required', 'on' => ['create', 'update']],
+            [['file_id'], 'default', 'value' => null],
             [['language_id', 'group_id', 'email_service_id', 'status', 'logging'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['description', 'host', 'title', 'bussiness_name', 'email'], 'string', 'max' => 255],
