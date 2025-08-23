@@ -41,35 +41,59 @@ class AttachFileBehavior extends Behavior
     /**
      * Events
      */
+
+    private $oldFileId = null;
+
     public function events(): array
     {
         return [
-            ActiveRecord::EVENT_BEFORE_VALIDATE => 'handleUpload',
+            \yii\base\Model::EVENT_BEFORE_VALIDATE   => 'handleUpload',
+            \yii\db\ActiveRecord::EVENT_AFTER_INSERT => 'afterSaveHandle',
+            \yii\db\ActiveRecord::EVENT_AFTER_UPDATE => 'afterSaveHandle',
         ];
     }
 
     /**
      * Handles file upload before validation
      */
-    public function handleUpload()
+    public function handleUpload(): void
     {
+        /** @var \yii\db\ActiveRecord $owner */
         $owner = $this->owner;
-        $attr = $this->attribute;
+        $attr  = $this->attribute;
 
-        $this->uploadedFile = UploadedFile::getInstance($owner, $attr);
+        // guarda o antigo de forma confiável
+        $this->oldFileId = $owner->getOldAttribute($attr);
 
-        if ($this->uploadedFile instanceof UploadedFile) {
-            $result = StorageController::uploadFile($this->uploadedFile, ['save' => true]);
-
-            if ($result['success'] === true && isset($result['data']['id'])) {
-                $file_id = $this->owner->{$attr};
-                if($file_id)
-                    StorageController::removeFile($file_id);
-                $owner->$attr = $result['data']['id'];
-            } else {
-                // In case upload fails, add model error
-                $owner->addError($attr, Yii::t('app', 'Failed to upload file.'));
-            }
+        $file = \yii\web\UploadedFile::getInstance($owner, $attr);
+        if (!$file instanceof \yii\web\UploadedFile) {
+            return;
         }
+
+        $result = \croacworks\essentials\controllers\StorageController::uploadFile($file, ['save' => true]);
+
+        if (is_array($result) && ($result['success'] ?? false) === true && isset($result['data']['id'])) {
+            // seta o novo ID no atributo (ainda não apaga o antigo!)
+            $owner->$attr = $result['data']['id'];
+        } else {
+            $owner->addError($attr, Yii::t('app', 'Failed to upload file.'));
+        }
+    }
+
+    public function afterSaveHandle(): void
+    {
+        /** @var \yii\db\ActiveRecord $owner */
+        $owner = $this->owner;
+        $attr  = $this->attribute;
+
+        $newId = $owner->$attr;
+        $oldId = $this->oldFileId;
+
+        // só apaga se trocou de fato e houve save com sucesso
+        if ($oldId && $newId && (string)$oldId !== (string)$newId) {
+            StorageController::removeFile($oldId);
+        }
+
+        $this->oldFileId = null;
     }
 }
