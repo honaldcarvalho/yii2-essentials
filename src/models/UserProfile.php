@@ -38,16 +38,20 @@ class UserProfile extends ModelCommon
 
     public function behaviors()
     {
-        return array_merge(parent::behaviors(), [
+        return [
             [
-                'class' => AttachFileBehavior::class,
-                'attribute' => 'file_id',
-                'removeFlagParam' => 'remove',
-                'deleteOldOnReplace' => true,
-                'deleteOnOwnerDelete' => false,
-                'debug' => true, // ligue por enquanto
+                'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
+                'attribute'           => 'file_id',
+                'deleteOnOwnerDelete' => true,
+                'deleteOldOnReplace'  => true,
+                'thumbAspect'         => 1,
+                'folderId'            => 1,
+                'groupId'             => 1,
+                'saveModel'           => true,
+                'removeFlagParam'     => 'remove',
+                'removeFlagScoped'    => true, // se o hidden vier como Model[remove]
             ],
-        ]);
+        ];
     }
     
     /**
