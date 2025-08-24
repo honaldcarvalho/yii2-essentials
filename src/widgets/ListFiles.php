@@ -32,7 +32,7 @@ public function init(): void
 
     $token =  AuthorizationController::User()->access_token;
 
-$this->registerJs(<<<JS
+Yii::$app->view->registerJs(<<<JS
 onPjaxReady((root) => {
         $(document).on('click', '.copy-url-btn', function () {
             const url = $(this).data('url');
