@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="container-fluid">
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title"><?= $model->name; ?></h3>
+            <h3 class="card-title"><?= Yii::t('app', 'Folder') .": " . $model->name; ?></h3>
         </div>
 
         <div class="card-body">
