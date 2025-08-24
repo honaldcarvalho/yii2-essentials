@@ -62,7 +62,7 @@ class StorageUploadMultiple extends Widget
         $this->attact_model = json_encode($this->attact_model);
         $this->token =  AuthorizationController::User()->access_token;
         $this->random =  CommonController::generateRandomString(6);
-        PluginAsset::register(Yii::$app->view)->add(['axios','jquery-cropper']);
+        PluginAsset::register(Yii::$app->view)->add(['axios', 'jquery-cropper']);
     }
 
     public function run()
@@ -142,378 +142,252 @@ class StorageUploadMultiple extends Widget
 
         \Yii::$app->view->registerCss($css);
         Yii::$app->view->registerJs(<<<JS
-        onPjaxReady((root) => {
+(function boot_{$this->random}(){
+    // Garante re-execução após PJAX
+    document.addEventListener('pjax:end', boot_{$this->random}, { once: true });
 
+    // Evita dupla inicialização
+    if (window['__init_storage_{$this->random}']) return;
+    window['__init_storage_{$this->random}'] = true;
 
-        
-            var id_{$this->random} = 0;
-
-            function generateRandomString(length) {
-                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                let result = '';
-                for (let i = 0; i < length; i++) {
-                    const randomIndex = Math.floor(Math.random() * characters.length);
-                    result += characters[randomIndex];
-                }
-                return result;
-            }
-
-            function el(id){
-                return document.getElementById(id);
-            }
-
-            var count = 0;
-            var uploading = 0;
-            var total_files;
-            let temp_image;
-            let file_input = el("file-input-{$this->random}");
-            let table_files = el('table-files-{$this->random}');
-            let input_container = el('input-{$this->random}');
-            let upload_button = el('upload-button-{$this->random}');
-            let removeList = [];
-            let filesArray = new Map();
-
-            /**
-             * Compress an image to be smaller than the max file size using Canvas API.
-             * @param {File} file - The image file to compress.
-             * @param {number} maxSize - The maximum file size in bytes.
-             * @param {number} minSize - The maximum file size in bytes.
-             * @returns {Promise<File>} A promise that resolves with the compressed image file.
-             */
-            function compressImage(file, index) {
-                return new Promise((resolve, reject) => {
-
-                    if (file.size <= {$this->minSize} * 1024 * 1024) {
-                        console.log("Not compressed!");
-                        resolve(file); // If the file is smaller than or equal to 1MB, return the original file
-                        return;
-                    }
-                    console.log("Compressed!");
-                    const reader = new FileReader();
-
-                    // Load the image file
-                    reader.readAsDataURL(file);
-                    reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-
-                        // Set canvas dimensions to the image dimensions
-                        let width = img.width;
-                        let height = img.height;
-
-                        // Scale down the image dimensions if needed
-                        const maxDimension = {$this->maxWidth}; // Max dimension (width or height) after scaling
-                        if (width > maxDimension || height > maxDimension) {
-                        if (width > height) {
-                            height = Math.floor((height * maxDimension) / width);
-                            width = maxDimension;
-                        } else {
-                            width = Math.floor((width * maxDimension) / height);
-                            height = maxDimension;
-                        }
-                        }
-
-                        // Set the canvas size and draw the scaled image
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Get the compressed image data
-                        canvas.toBlob((blob) => {
-
-                        if (blob.size > {$this->maxSize} * 1024 * 1024) {
-                            reject(new Error('Image exceeds 5MB limit even after compression.'));
-                        } else {
-                            // Ensure the compressed image size is below the maxSize
-                            const compressedFile = new File([blob], file.name, {
-                                type: file.type,
-                                lastModified: Date.now()
-                            });
-                            resolve(compressedFile); // Return the compressed file
-                        }
-
-                        }, file.type, 0.8); // Adjust the quality (0.8 is 80%)
-                    };
-
-                    img.onerror = (error) => {
-                        reject('Error loading image');
-                    };
-                    };
-
-                    reader.onerror = (error) => {
-                        reject('Error reading file' );
-                    };
-                });
-            }
-
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                var k = 1024; // Define the constant for kilobyte
-                var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB']; // Units
-                var i = Math.floor(Math.log(bytes) / Math.log(k)); // Determine the unit index
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-            }
-
-            function isImage(file){
-                var fileType = file.type;
-                var validImageTypes = ["image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"];
-                if (validImageTypes.includes(fileType)) {
-                    return true;
-                }
-                return false;
-            }
-
-            async function encodeImageFileAsURL(file,preview) {
-                return new Promise((resolve, reject) => {
-                    var reader = new FileReader();            
-                    reader.onloadend = function () {
-                        preview.src = reader.result;
-                        resolve(); // Resolving the promise when the encoding is complete
-                    };
-                    reader.onerror = reject; // Rejecting the promise in case of an error
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            function removeFile(index) {
-                filesArray.delete(index);
-                if(el("row_" + index) != null)
-                    el("row_" + index).remove();
-            }
-
-            function upload(index,multiple){
-
-                var i = index;
-                var file = filesArray.get(index);
-                var progressBar = el(`progress-bar-\${index}-{$this->random}`);
-                progressBar.style.width = '0%';
-                var uploadButton = el(`btn-upload-\${index}-{$this->random}`);
-                var removeButton = el(`btn-remove-\${index}-{$this->random}`);
-
-                var formData = new FormData();
-                var descriptionInput = el(`row_\${index}`).querySelector(`input[name="description-\${index}"]`);
-                var description = descriptionInput ? descriptionInput.value : '';
-
-                formData.append('description', description);
-                formData.append('file', file);
-                formData.append('folder_id', $this->folder_id);
-                formData.append('group_id', $this->group_id);
-                formData.append('attact_model',JSON.stringify($this->attact_model));
-                formData.append('thumb_aspect', "{$this->thumb_aspect}");
-                formData.append('save', 1);
-
-                let button = $(`#btn-upload-\${index}-{$this->random}`);
-                let old_class = button.children("i").attr('class');
-                button.prop('disabled',true);
-                removeButton.disabled = true;
-                object = button.children("i");
-                object.removeClass(old_class);
-                object.addClass('fas fa-sync fa-spin m-2');
-
-                axios.post('/rest/storage/send', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': `Bearer {$this->token}`
-                    },
-                    onUploadProgress: (progressEvent) => {
-                        var percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        progressBar.style.width = `\${percentCompleted}%`;
-                        if(percentCompleted == 100){
-                            progressBar.textContent  = 'processing... await...';                        
-                        } else {
-                            progressBar.textContent  = progressBar.style.width;                        
-                        }
-                        
-                    }
-                })
-                .then((response) => {
-                    if(response.data.success){
-                        toastr.success(`File \${response.data.data.description} sended!`);
-                        if(!multiple){
-                            el("row_" + i).remove();
-                        } else {
-                            count++;
-                            if(count == total_files){
-                                file_input.value = '';
-                            }
-                            el("row_" + i).remove();
-                        }
-                        
-                    }else{
-                        
-                        var send_error = response.data.data;
-                        var erros = '';
-                        if(send_error.file) {
-                            Object.keys(send_error.file).forEach(key => {
-                                erros += send_error.file[key];
-                            });
-                        } else {
-                            erros = 'unknown error';
-                        }
-                        progressBar.style.width = `0%`;
-                        progressBar.textContent  = `0%`;   
-                        toastr.error(`Error on send file: \${erros}! `); 
-                        uploadButton.disabled = false;
-                        removeButton.disabled = false;
-                    }
-
-                    if({$this->grid_reload} == 1){
-                        $.pjax.reload({container: "{$this->grid_reload_id}", async: true,timeout : false});
-                    }
-                })
-                .catch(error => {
-                    toastr.error("Error on page! " + error);
-                    progressBar.style.width = 0;
-                })
-                .finally((response) => {
-                    
-                    if(uploading > 0){
-                        uploading--;
-                    }
-                    if(uploading == 0){
-                        input_container.style.display = 'block';
-                    }
-                        
-                    progressBar.textContent = 0;
-                    button.prop('disabled',false);
-                    removeButton.disabled = false;
-                    object.removeClass('fas fa-sync fa-spin m-2');
-                    object.attr('class',old_class);
-                });
-            }
-
-            file_input.addEventListener('change', async function(event) {
-
-                var files = event.target.files;
-                total_files = files.length;
-                filesArray = new Map();
-                
-                if (files.length > 0) {
-                    
-                    upload_button.disabled = false;
-                    table_files.innerHTML = '';
-
-                    Array.from(file_input.files).forEach(async (file, index) => {
-
-                        index = generateRandomString(8);
-                        let upload_button = document.createElement("button");
-                        upload_button.id = `btn-upload-\${index}-{$this->random}`;
-                        upload_button.classList.add('btn', 'btn-warning');
-                        upload_button.innerHTML = '<i class="fas fa-upload m-2"></i>';
-
-                        upload_button.onclick = function() {
-                            upload(index,false);
-                        };
-
-                        var remove_button = document.createElement('button');
-                        remove_button.id = `btn-remove-\${index}-{$this->random}`;
-                        remove_button.classList.add('btn', 'btn-danger');
-                        remove_button.innerHTML = '<i class="fas fa-trash m-2"></i>';
-                        remove_button.onclick = function() {
-                            removeFile(index);
-                        };
-
-                        let progress_container = document.createElement("div");
-                        progress_container.classList.add('progress');
-                        progress_container.style.width = '300px';
-                        
-                        let progress_bar = document.createElement("div");
-                        progress_bar.id = `progress-bar-\${index}-{$this->random}`;
-                        progress_bar.classList.add('progress-bar', 'progress-bar-striped', 'bg-success', 'progress-bar-animated');
-                        progress_container.append(progress_bar);
-
-                        let preview = document.createElement("img");
-                        preview.style.width = '100px';
-
-                        if(isImage(file)){
-                            await encodeImageFileAsURL(file,preview);
-                        }else{
-                            preview.src = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO PREVIEW';
-                        }
-
-                        var row = table_files.insertRow();
-                        var cellImage =    row.insertCell(0);
-                        var cellName =     row.insertCell(1);
-                        var cellProgress = row.insertCell(2);
-                        var cellSize =     row.insertCell(3);
-                        var cellType =     row.insertCell(4);
-                        var cellDescription = row.insertCell(5);
-                        var cellActions = row.insertCell(6);
-
-                        let descInput = document.createElement('input');
-                        descInput.type = 'text';
-                        descInput.classList.add('form-control');
-                        descInput.placeholder = 'Descrição do arquivo';
-                        descInput.name = `description-\${index}`;
-                        cellDescription.appendChild(descInput);
-
-                        row.id = "row_" + index;
-
-                        cellProgress.append(progress_container);
-
-                        cellImage.append(preview);
-                        cellName.textContent = file.name;
-                        cellName.classList.add('align-middle');
-                        cellSize.textContent = formatFileSize(file.size); // Convert size to KB
-                        cellType.textContent = file.type || 'N/A'; // Handle cases where type is unavailable
-                        cellActions.append(upload_button);
-                        cellActions.append(remove_button);
-
-
-                        if(isImage(file)){
-                            await compressImage(file,index).then((blob) => {
-                                var file_compressed = new File([blob], file.name , { type: file.type, lastModified: new Date().getTime() });
-                                let container = new DataTransfer();
-                                container.items.add(file_compressed);
-                                filesArray.set(index, container.files[0]);
-                            }).catch((error) => {
-                                filesArray.set(index, null);
-                                removeFile(index);
-                                toastr.error("Imagem Inválida! " + file.name);
-                            });
-                        }else{
-                            filesArray.set(index,file);
-                        }
-                        
-                    });
-                    table_files.classList.remove('d-none');
-                    file_input.value = '';
-                }
-                
-            });
-
-            el('upload-button-{$this->random}').addEventListener('click', (e) => {
-                count = 0;
-                el('upload-button-{$this->random}').disabled = true;
-                input_container.style.display = 'none';
-                uploading = filesArray.size;
-                filesArray.forEach((file, index) => {
-                    
-                    if(isImage(file)){
-                        compressImage(file,index).then((blob) => {
-                    
-                            var file_compressed = new File([blob], file.name , { type: file.type, lastModified: new Date().getTime() });
-                            let container = new DataTransfer();
-                            container.items.add(file_compressed);
-                            upload(index,false);
-                            return true;
-
-                        }).catch((error) => {
-                            alert(error);
-                            return false;
-                        });
-                    }else{
-                        upload(index,false);
-                    }
-                });
-
-            });
+    function generateRandomString(length){
+        const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let out=''; for(let i=0;i<length;i++) out+=chars[Math.floor(Math.random()*chars.length)];
+        return out;
+    }
+    function el(id){ return document.getElementById(id); }
+    function isImage(file){
+        return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file?.type||"");
+    }
+    function formatFileSize(bytes){
+        if (!bytes) return '0 Bytes';
+        const k=1024, sizes=['Bytes','KB','MB','GB','TB']; 
+        const i=Math.floor(Math.log(bytes)/Math.log(k));
+        return (bytes/Math.pow(k,i)).toFixed(2)+' '+sizes[i];
+    }
+    async function encodeImageFileAsURL(file,preview){
+        return new Promise((res,rej)=>{
+            const r=new FileReader();
+            r.onloadend=()=>{ preview.src=r.result; res(); };
+            r.onerror=rej; r.readAsDataURL(file);
         });
-        JS);
+    }
+
+    // ---- variáveis do widget ----
+    let count = 0, uploading = 0, total_files = 0;
+    const file_input = el("file-input-{$this->random}");
+    const table_files = el("table-files-{$this->random}");
+    const input_container = el("input-{$this->random}");
+    const upload_button = el("upload-button-{$this->random}");
+    const filesArray = new Map();
+
+    async function compressImage(file, index){
+        return new Promise((resolve,reject)=>{
+            const minBytes = {$this->minSize} * 1024 * 1024;
+            const maxBytes = {$this->maxSize} * 1024 * 1024;
+            const maxDimension = {$this->maxWidth};
+
+            if (file.size <= minBytes) return resolve(file);
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    let w = img.width, h = img.height;
+                    if (w>maxDimension || h>maxDimension){
+                        if (w>h){ h = Math.floor(h*maxDimension/w); w = maxDimension; }
+                        else    { w = Math.floor(w*maxDimension/h); h = maxDimension; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+                    canvas.toBlob(blob=>{
+                        if(!blob) return reject(new Error('Falha ao comprimir.'));
+                        if (blob.size > maxBytes) return reject(new Error('Imagem excede o limite após compressão.'));
+                        resolve(new File([blob], file.name, { type: file.type, lastModified: Date.now() }));
+                    }, file.type, 0.8);
+                };
+                img.onerror = ()=>reject(new Error('Erro carregando imagem.'));
+                img.src = e.target.result;
+            };
+            reader.onerror = ()=>reject(new Error('Erro lendo arquivo.'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeFile(index){
+        filesArray.delete(index);
+        const row = el("row_"+index);
+        if (row) row.remove();
+    }
+
+    function upload(index, multiple){
+        const file = filesArray.get(index);
+        if (!file) return;
+        const bar = el(`progress-bar-\${index}-{$this->random}`);
+        const $btn = $(`#btn-upload-\${index}-{$this->random}`);
+        const removeBtn = el(`btn-remove-\${index}-{$this->random}`);
+
+        let oldClass = $btn.children("i").attr("class");
+        $btn.prop("disabled", true);
+        removeBtn.disabled = true;
+        let $icon = $btn.children("i").removeClass(oldClass).addClass("fas fa-sync fa-spin m-2");
+
+        const fd = new FormData();
+        const descInput = el(`row_\${index}`)?.querySelector(`input[name="description-\${index}"]`);
+        fd.append('description', descInput ? descInput.value : '');
+        fd.append('file', file);
+        fd.append('folder_id', {$this->folder_id});
+        fd.append('group_id', {$this->group_id});
+        // já vem json_encode do PHP → NÃO usar JSON.stringify aqui!
+        fd.append('attact_model', {$this->attact_model});
+        fd.append('thumb_aspect', "{$this->thumb_aspect}");
+        fd.append('save', 1);
+
+        bar.style.width = '0%'; bar.textContent = '';
+
+        axios.post('/rest/storage/send', fd, {
+            headers: { 'Content-Type': 'multipart/form-data', 'Authorization': 'Bearer {$this->token}' },
+            onUploadProgress: (e)=>{
+                const total = e.total || 0;
+                if (!total) return; // evita NaN%
+                const pct = Math.round((e.loaded*100)/total);
+                bar.style.width = pct+'%';
+                bar.textContent = (pct===100? 'processando...' : pct+'%');
+            }
+        }).then((resp)=>{
+            if (resp.data?.success){
+                toastr.success(`Arquivo \${resp.data.data?.description||''} enviado!`);
+                if (!multiple) removeFile(index);
+                else {
+                    count++; if (count===total_files) file_input.value = '';
+                    removeFile(index);
+                }
+                if ({$this->grid_reload}==1){
+                    $.pjax?.reload?.({ container: "{$this->grid_reload_id}", async: true, timeout: false });
+                }
+            } else {
+                const send_error = resp.data?.data || {};
+                let erros = '';
+                if (send_error.file){
+                    Object.keys(send_error.file).forEach(k=>erros += send_error.file[k]);
+                } else { erros = 'erro desconhecido'; }
+                bar.style.width = '0%'; bar.textContent = '0%';
+                toastr.error(`Erro ao enviar: \${erros}`);
+                $btn.prop("disabled", false); removeBtn.disabled = false;
+            }
+        }).catch((err)=>{
+            toastr.error("Erro na página: " + err);
+            bar.style.width = '0%'; bar.textContent = '';
+        }).finally(()=>{
+            if (uploading>0) uploading--;
+            if (uploading===0) input_container.style.display = 'block';
+            $btn.prop("disabled", false);
+            removeBtn.disabled = false;
+            $icon.removeClass('fas fa-sync fa-spin m-2').attr('class', oldClass);
+        });
+    }
+
+    // input change
+    file_input?.addEventListener('change', async (ev)=>{
+        const files = Array.from(ev.target.files||[]);
+        total_files = files.length;
+        filesArray.clear();
+
+        if (!files.length) return;
+        upload_button.disabled = false;
+        const tbody = table_files.tBodies[0] || table_files.createTBody();
+        tbody.innerHTML = '';
+
+        for (const originalFile of files){
+            const index = generateRandomString(8);
+
+            // preview
+            const preview = document.createElement('img');
+            preview.style.width = '100px';
+
+            if (isImage(originalFile)){
+                try{ await encodeImageFileAsURL(originalFile, preview); }
+                catch{ preview.src = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO PREVIEW'; }
+            } else {
+                preview.src = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO PREVIEW';
+            }
+
+            // linha
+            const row = tbody.insertRow();
+            row.id = "row_"+index;
+            const cImg = row.insertCell();
+            const cName = row.insertCell();
+            const cProg = row.insertCell();
+            const cSize = row.insertCell();
+            const cType = row.insertCell();
+            const cDesc = row.insertCell();
+            const cAct  = row.insertCell();
+
+            cImg.append(preview);
+            cName.textContent = originalFile.name; cName.classList.add('align-middle');
+
+            const progWrap = document.createElement('div'); progWrap.className='progress'; progWrap.style.width='300px';
+            const progBar  = document.createElement('div');
+            progBar.id = `progress-bar-\${index}-{$this->random}`;
+            progBar.className='progress-bar progress-bar-striped bg-success progress-bar-animated';
+            progWrap.append(progBar);
+            cProg.append(progWrap);
+
+            cSize.textContent = formatFileSize(originalFile.size);
+            cType.textContent = originalFile.type || 'N/A';
+
+            const desc = document.createElement('input');
+            desc.type='text'; desc.className='form-control';
+            desc.placeholder='Descrição do arquivo'; desc.name=`description-\${index}`;
+            cDesc.append(desc);
+
+            const btnUp = document.createElement('button');
+            btnUp.id = `btn-upload-\${index}-{$this->random}`;
+            btnUp.className = 'btn btn-warning'; btnUp.innerHTML = '<i class="fas fa-upload m-2"></i>';
+            btnUp.addEventListener('click', ()=>upload(index,false));
+
+            const btnRm = document.createElement('button');
+            btnRm.id = `btn-remove-\${index}-{$this->random}`;
+            btnRm.className = 'btn btn-danger'; btnRm.innerHTML = '<i class="fas fa-trash m-2"></i>';
+            btnRm.addEventListener('click', ()=>removeFile(index));
+
+            cAct.append(btnUp); cAct.append(btnRm);
+
+            if (isImage(originalFile)){
+                try{
+                    const compressed = await compressImage(originalFile, index);
+                    // DataTransfer para manter tipo File
+                    const dt = new DataTransfer(); dt.items.add(compressed);
+                    filesArray.set(index, dt.files[0]);
+                }catch(e){
+                    filesArray.set(index, null); removeFile(index);
+                    toastr.error("Imagem inválida: " + originalFile.name);
+                }
+            } else {
+                filesArray.set(index, originalFile);
+            }
+        }
+        table_files.classList.remove('d-none');
+        file_input.value = ''; // limpa para permitir mesma seleção novamente
+    });
+
+    upload_button?.addEventListener('click', ()=>{
+        count = 0; upload_button.disabled = true;
+        input_container.style.display = 'none';
+        uploading = filesArray.size;
+        filesArray.forEach((file, index)=>{
+            if (isImage(file)){
+                // já comprimido no add; não recomprimir aqui
+                upload(index,false);
+            } else {
+                upload(index,false);
+            }
+        });
+    });
+})(); // fim boot
+JS);
+
 
         $select_file_text = Yii::t('app', 'Select file(s) to upload');
         $form_upload = <<< HTML

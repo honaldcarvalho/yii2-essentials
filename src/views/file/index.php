@@ -141,8 +141,7 @@ $delete_files_button[] =
             <div class="col">
               <?= croacworks\essentials\widgets\DefaultButtons::widget([
                   'controller' => 'File',
-                  'show' => ['create'],
-                  'buttons_name' => ['create' => 'Create File'],
+                  'show' => [],
                   'extras'=> $delete_files_button
               ]) ?>
             </div>
