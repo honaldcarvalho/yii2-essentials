@@ -15,162 +15,107 @@ $moveUrl   = Url::to(['/file/move']); // sua action de mover
 $csrfParam = Yii::$app->request->csrfParam;
 $csrfToken = Yii::$app->request->csrfToken;
 
-$script = <<<JS
-// -------- Helpers ----------
-function getSelectedIds() {
-  const ids = [];
-  $('input[name="file_selected[]"]:checked').each(function(){
-    ids.push($(this).val());
-  });
-  return ids;
-}
-function pjaxReload(){ $.pjax.reload({container:'#grid-pjax', async:false}); }
+$this->registerJs(<<<JS
+// ------- Inicializadores genéricos --------
+onPjaxReady(($root) => {
+  // Fancybox (já rebind automático no PjaxBootstrap, mas se quiser algo extra):
+  if (window.Fancybox) Fancybox.bind($root.find('[data-fancybox]').get());
 
-// Rebinda Fancybox após render inicial e toda vez que o PJAX terminar
-function bindEnhancements(){
-  if (window.Fancybox) Fancybox.bind("[data-fancybox]");
-}
-bindEnhancements();
-$(document).on('pjax:end', bindEnhancements);
-
-// -------- Move (AJAX) ----------
-$(document).on('click', '#move-folder', async function(e){
-  e.preventDefault();
-  const ids = getSelectedIds();
-  if (!ids.length) { 
-    Swal.fire('Atenção', 'Nenhum arquivo selecionado.', 'info');
-    return false; 
+  // Helpers locais
+  function getSelectedIds() {
+    return $root.find('input[name="file_selected[]"]:checked')
+      .map(function(){ return $(this).val(); }).get();
   }
-  const folderId = $('#folder_id').val();
-  if (!folderId) {
-    Swal.fire('Atenção', 'Selecione uma pasta destino.', 'info');
-    return false;
-  }
-  // Confirmação
-  const ok = await Swal.fire({
-    title: 'Confirmar',
-    text: `Mover \${ids.length} arquivo(s) para a pasta selecionada?`,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Sim, mover',
-    cancelButtonText: 'Cancelar'
-  });
-  if (!ok.isConfirmed) return false;
+  function pjaxReload(){ $.pjax.reload({container:'#grid-pjax', async:false}); }
 
-  $.ajax({
-    url: '$moveUrl',
-    type: 'POST',
-    dataType: 'json',
-    data: {
+  // -------- Move (AJAX) ----------
+  PjaxBootstrap.delegate('click', '#move-folder', async function(e){
+    e.preventDefault();
+    const ids = getSelectedIds();
+    if (!ids.length) { Swal.fire('Atenção', 'Nenhum arquivo selecionado.', 'info'); return; }
+    const folderId = $('#folder_id').val();
+    if (!folderId) { Swal.fire('Atenção', 'Selecione uma pasta destino.', 'info'); return; }
+
+    const ok = await Swal.fire({
+      title: 'Confirmar',
+      text: `Mover \${ids.length} arquivo(s) para a pasta selecionada?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, mover',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!ok.isConfirmed) return;
+
+    $.post('$moveUrl', {
       'file_selected[]': ids,
       folder_id: folderId,
       '$csrfParam': '$csrfToken'
-    }
-  }).done(function(res){
-    if (res && res.success) {
-      Swal.fire('OK', 'Arquivos movidos com sucesso.', 'success');
-      pjaxReload();
-    } else {
-      Swal.fire('Erro', res?.error || 'Falha ao mover.', 'error');
-    }
-  }).fail(function(xhr){
-    Swal.fire('Erro', xhr.responseJSON?.error || 'Falha na requisição.', 'error');
-  });
-  return false;
-});
+    }).done(res => {
+      if (res?.success) {
+        Swal.fire('OK', 'Arquivos movidos.', 'success');
+        pjaxReload();
+      } else {
+        Swal.fire('Erro', res?.error || 'Falha.', 'error');
+      }
+    }).fail(xhr=>{
+      Swal.fire('Erro', xhr.responseJSON?.error || 'Falha.', 'error');
+    });
+  }, 'files-move');
 
-// -------- Delete múltiplo (AJAX) ----------
-$(document).on('click', '#delete-files', async function(e){
-  e.preventDefault();
-  const ids = getSelectedIds();
-  if (!ids.length) {
-    Swal.fire('Atenção', 'Nenhum arquivo selecionado.', 'info');
-    return false;
-  }
+  // -------- Delete múltiplo ----------
+  PjaxBootstrap.delegate('click', '#delete-files', async function(e){
+    e.preventDefault();
+    const ids = getSelectedIds();
+    if (!ids.length) { Swal.fire('Atenção', 'Nenhum arquivo selecionado.', 'info'); return; }
 
-  const ok = await Swal.fire({
-    title: 'Confirmar',
-    text: `Excluir \${ids.length} arquivo(s)? Esta ação não pode ser desfeita.`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sim, excluir',
-    cancelButtonText: 'Cancelar'
-  });
-  if (!ok.isConfirmed) return false;
+    const ok = await Swal.fire({
+      title: 'Confirmar',
+      text: `Excluir \${ids.length} arquivo(s)? Esta ação não pode ser desfeita.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!ok.isConfirmed) return;
 
-  $.ajax({
-    url: '$deleteUrl',
-    method: 'POST',
-    dataType: 'json',
-    data: { 'file_selected[]': ids, '$csrfParam': '$csrfToken' }
-  }).done(function(res){
-    if (!res || res.success !== true) {
-      Swal.fire('Erro', (res && res.error) ? res.error : 'Falha desconhecida.', 'error');
-      return;
-    }
-    let html = `
-      <div style="text-align:left">
-        <p><b>Deletados:</b> \${res.summary.deleted}</p>
-        <p><b>Bloqueados (em uso):</b> \${res.summary.blocked}</p>
-        <p><b>Falhas:</b> \${res.summary.failed}</p>
-    `;
-    if (res.blocked?.length) {
-      html += `<hr><b>Detalhes bloqueados:</b><ul>`;
-      res.blocked.forEach(b=>{
-        const refs = (b.refs||[]).map(r=>`\${r.table}.\${r.column}`).join(', ');
-        html += `<li>#\${b.id}: \${refs}</li>`;
+    $.post('$deleteUrl', {'file_selected[]': ids, '$csrfParam':'$csrfToken'})
+      .done(res=>{
+        if (res?.success) {
+          Swal.fire('OK', 'Arquivos excluídos.', 'success');
+          pjaxReload();
+        } else {
+          Swal.fire('Erro', res?.error || 'Falha.', 'error');
+        }
+      }).fail(xhr=>{
+        Swal.fire('Erro', xhr.responseJSON?.error || 'Falha.', 'error');
       });
-      html += `</ul>`;
-    }
-    if (res.failed?.length) {
-      html += `<hr><b>Falhas:</b><ul>`;
-      res.failed.forEach(f=>{
-        html += `<li>#\${f.id}: \${f.error||'erro'}</li>`;
-      });
-      html += `</ul>`;
-    }
-    html += `</div>`;
+  }, 'files-delete');
 
-    Swal.fire({ title: 'Resultado', html, icon: 'info' });
-    pjaxReload();
-  }).fail(function(xhr){
-    Swal.fire('Erro', xhr.responseJSON?.error || 'Falha na requisição.', 'error');
-  });
+  // -------- Delete individual ----------
+  PjaxBootstrap.delegate('click', '[data-action="file-delete"]', async function(e){
+    e.preventDefault();
+    const url = $(this).attr('href') || $(this).data('url');
+    const ok = await Swal.fire({
+      title: 'Confirmar',
+      text: 'Excluir este arquivo?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!ok.isConfirmed) return;
 
-  return false;
-});
-
-// -------- Delete individual (AJAX) opcional --------
-$(document).on('click', '[data-action="file-delete"]', async function(e){
-  e.preventDefault();
-  const url = $(this).attr('href') || $(this).data('url');
-  const ok = await Swal.fire({
-    title: 'Confirmar',
-    text: 'Excluir este arquivo?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: 'Sim, excluir',
-    cancelButtonText: 'Cancelar'
-  });
-  if (!ok.isConfirmed) return false;
-
-  $.post(url, {'$csrfParam': '$csrfToken'})
-    .done(function(res){
+    $.post(url, {'$csrfParam':'$csrfToken'}).done(res=>{
       if (res?.success) {
         Swal.fire('OK', 'Arquivo excluído.', 'success');
         pjaxReload();
       } else {
-        const msg = res?.blocked ? 'Arquivo em uso, não pode ser removido.' : (res?.result?.message || res?.error || 'Falha.');
-        Swal.fire('Atenção', msg, 'warning');
+        Swal.fire('Atenção', res?.error || 'Falha.', 'warning');
       }
-    })
-    .fail(function(){
-      Swal.fire('Erro', 'Falha na requisição.', 'error');
-    });
+    }).fail(()=> Swal.fire('Erro','Falha na requisição.','error'));
+  }, 'file-delete');
 });
-JS;
-
-$this->registerJs($script, View::POS_END);
+JS, View::POS_END);
 
 // Botão extra (apenas render, ação é AJAX acima)
 $delete_files_button[] =

@@ -3,6 +3,7 @@
 /** @var yii\web\View $this */
 /** @var string $content */
 
+use croacworks\essentials\assets\PjaxHelperAsset;
 use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
@@ -10,6 +11,7 @@ use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 
+PjaxHelperAsset::register($this);
 CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
 PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
@@ -32,37 +34,29 @@ $theme = Yii::$app->user->identity->profile->theme;
     <title><?= $this->title != '' ? $configuration->title . ' - ' . Html::encode($this->title) : $configuration->title  ?></title>
     <?php 
     $this->head(); 
-    $script = <<< JS
-        Fancybox.bind("[data-fancybox]");
-        $(document).on('click', '[data-fancybox]', function () {
-            if($.fancybox === undefined || $.fancybox === null) {
-                console.log('Fancybox is not defined. Please ensure the Fancybox plugin is loaded.');
-            } else {
-                $.fancybox.showLoading = function () {
-                    if ($('#custom-loading').length === 0) {
-                        $('body').append('<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>');
-                    }
-                };
+    $this->registerJs(<<<JS
+    onPjaxReady(($root) => {
+    // Fancybox bindings
+    if (window.Fancybox) {
+        Fancybox.bind($root.find('[data-fancybox]').get());
+    }
 
-                $.fancybox.hideLoading = function () {
-                    $('#custom-loading').remove();
-                };
+    // Overlay custom enquanto abre
+    $(document).off('click.fbx','[data-fancybox]').on('click.fbx','[data-fancybox]', function(){
+        if ($.fancybox == null) return;
+        $.fancybox.showLoading = function () {
+        if ($('#custom-loading').length === 0) {
+            $('body').append('<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>');
+        }
+        };
+        $.fancybox.hideLoading = function () { $('#custom-loading').remove(); };
+        $.fancybox.showLoading();
+    });
 
-                $.fancybox.showLoading();
-            }
-        });
-
-        // Esconde após abrir o fancybox
-        $(document).on('afterShow.fb', function () {
-            $.fancybox.hideLoading();
-        });
-
-        // Também remove ao fechar (garantia extra)
-        $(document).on('afterClose.fb', function () {
-            $.fancybox.hideLoading();
-        });
-    JS;
-    $this->registerJs($script);
+    $(document).off('afterShow.fb.pjax').on('afterShow.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
+    $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
+    });
+    JS);
     ?>
   </head>
   <body>
