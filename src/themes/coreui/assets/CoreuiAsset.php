@@ -29,7 +29,7 @@ class CoreuiAsset extends AssetBundle
         'js/colors.js',
         //'js/widgets.js',
         'js/tooltips.js',
-        'js/main.js',
+        //'js/main.js',
     ];
 
     public $depends = [
