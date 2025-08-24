@@ -245,7 +245,7 @@ public function init(): void
                     ]);
 
     $head = <<< HTML
-      <div class="card" id="list-files">
+      <div class="card mt-3" id="list-files">
 
           <div class="card-header">
               <h3 class="card-title">{$this->title}</h3>
