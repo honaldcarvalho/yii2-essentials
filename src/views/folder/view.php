@@ -21,6 +21,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="container-fluid">
     <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><?= $model->name; ?></h3>
+        </div>
+
         <div class="card-body">
             <div class="row">
                 <div class="col-md-12">
