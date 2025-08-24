@@ -229,8 +229,8 @@ class AppendModel extends \yii\bootstrap5\Widget
                 )
             ]
         );
-        
-        $this->registerJs(<<<JS
+
+        Yii::$app->view->registerJs(<<<JS
         onPjaxReady((root) => {
             let modal_{$this->attactModel} = null;
 

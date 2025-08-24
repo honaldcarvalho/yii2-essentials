@@ -141,7 +141,7 @@ class StorageUploadMultiple extends Widget
         CSS;
 
         \Yii::$app->view->registerCss($css);
-        $this->registerJs(<<<JS
+        Yii::$app->view->registerJs(<<<JS
         onPjaxReady((root) => {
 
 

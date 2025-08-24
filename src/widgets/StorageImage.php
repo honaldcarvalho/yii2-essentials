@@ -230,7 +230,7 @@ class StorageImage extends \yii\bootstrap5\Widget
 CSS;
 
     // ===== JS =====
-    $this->registerJs(<<<JS
+    Yii::$app->view->registerJs(<<<JS
       onPjaxReady((root) => {
       (function(){
         const wrap    = document.getElementById('$wrapId');

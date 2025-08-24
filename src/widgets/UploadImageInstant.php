@@ -300,7 +300,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
 .btn-group .btn, .btn-group label.btn { padding-top: .5rem; padding-bottom: .5rem; }
 CSS;
     // ===== JS =====
-    $this->registerJs(<<<JS
+    Yii::$app->view->registerJs(<<<JS
     onPjaxReady((root) => {
     (function(){
       // ---- AUTH HELPERS (modo 'instant') ----

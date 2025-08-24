@@ -57,7 +57,7 @@ class AceEditor extends InputWidget
         $var = 'ace_' . str_replace(['-', '.'], '_', $id);
         $escapedValue = json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 
-        $this->registerJs(<<<JS
+        Yii::$app->view->registerJs(<<<JS
         onPjaxReady((root) => {
             var {$var} = ace.edit("{$editorId}", {$options});
             {$var}.session.setValue({$escapedValue});
