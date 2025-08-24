@@ -27,7 +27,6 @@ use Yii;
 class UserProfile extends ModelCommon
 {
 
-
     /**
      * {@inheritdoc}
      */
@@ -40,8 +39,12 @@ class UserProfile extends ModelCommon
     {
         return array_merge(parent::behaviors(), [
             [
-                'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
+                'class' => AttachFileBehavior::class,
                 'attribute' => 'file_id',
+                'removeFlagParam' => 'remove',
+                'deleteOldOnReplace' => true,
+                'deleteOnOwnerDelete' => false,
+                'debug' => true, // ligue por enquanto
             ],
         ]);
     }

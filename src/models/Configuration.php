@@ -43,43 +43,16 @@ class Configuration extends ModelCommon
         return 'configurations';
     }
 
-    // public function behaviors()
-    // {
-    //     return [
-    //         [
-    //             'class' => \croacworks\essentials\behaviors\FileBehavior::class,
-    //             'attribute'           => 'file_id',
-    //             'deleteOnOwnerDelete' => true,
-    //             'deleteOldOnReplace'  => true,
-    //             'thumbAspect'         => 1,
-    //             'folderId'            => 1,
-    //             'groupId'             => 1,
-    //             'saveModel'           => true,
-    //             'removeFlagParam'     => 'remove',
-    //             'removeFlagScoped'    => true, // se o hidden vier como Model[remove]
-    //         ],
-    //     ];
-    // }
-    // public function behaviors()
-    // {
-    //     return array_merge(parent::behaviors(), [
-    //         [
-    //             'class' => AttachFileBehavior::class,
-    //             'attribute' => 'file_id',
-    //             'removeFlagParam' => 'remove',
-    //             'deleteOldOnReplace' => true,
-    //             'deleteOnOwnerDelete' => false,
-    //             'debug' => true, // ligue por enquanto
-    //         ],
-    //     ]);
-    // }
-    
     public function behaviors()
     {
         return array_merge(parent::behaviors(), [
             [
-                'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
+                'class' => AttachFileBehavior::class,
                 'attribute' => 'file_id',
+                'removeFlagParam' => 'remove',
+                'deleteOldOnReplace' => true,
+                'deleteOnOwnerDelete' => false,
+                'debug' => true, // ligue por enquanto
             ],
         ]);
     }
