@@ -17,12 +17,12 @@ class CoreuiAsset extends AssetBundle
     ];
     
     public $js = [
-        'js/config.js',
-        'js/color-modes.js',
-        'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/simplebar/js/simplebar.min.js',
         'vendors/@coreui/chartjs/js/coreui-chartjs.js',
+        'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/@coreui/utils/js/index.js',
+        'js/config.js',
+        'js/color-modes.js',
         'js/charts.js',
         'js/popovers.js',
         'js/colors.js',
