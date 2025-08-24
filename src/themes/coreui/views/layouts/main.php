@@ -12,7 +12,7 @@ use yii\helpers\Html;
 
 CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
-PluginAsset::register($this)->add(['jquery','fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
+PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
 $configuration = Configuration::get();
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
 if(Yii::$app->user->identity === null){
