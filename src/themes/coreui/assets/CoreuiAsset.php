@@ -35,6 +35,6 @@ class CoreuiAsset extends AssetBundle
     public $depends = [
         'croacworks\essentials\themes\coreui\assets\BaseAsset',
         'croacworks\essentials\themes\coreui\assets\PluginAsset',
-        '\yii\web\JqueryAsset'
+        //'\yii\web\JqueryAsset'
     ];
 }
