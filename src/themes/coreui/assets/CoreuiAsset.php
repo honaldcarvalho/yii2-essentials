@@ -11,6 +11,7 @@ class CoreuiAsset extends AssetBundle
     public $css = [
         'vendors/simplebar/css/simplebar.css',
         'css/vendors/simplebar.css',
+        'vendors/@coreui/chartjs/css/coreui-chartjs.css',
         'css/style.css',
         'css/custom.css',
     ];
@@ -20,6 +21,7 @@ class CoreuiAsset extends AssetBundle
         'js/color-modes.js',
         'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/simplebar/js/simplebar.min.js',
+        'vendors/@coreui/chartjs/js/chart.umd.js',
         'vendors/@coreui/utils/js/index.js',
         'js/charts.js',
         'js/popovers.js',
