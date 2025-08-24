@@ -11,20 +11,20 @@ class CoreuiAsset extends AssetBundle
     public $css = [
         'vendors/simplebar/css/simplebar.css',
         'css/vendors/simplebar.css',
-        'vendors/@coreui/chartjs/css/coreui-chartjs.css',
+        //'vendors/@coreui/chartjs/css/coreui-chartjs.css',
         'css/style.css',
         'css/custom.css',
     ];
     
     public $js = [
         'vendors/simplebar/js/simplebar.min.js',
-        'vendors/chart.js/js/chart.umd.js',
-        'vendors/@coreui/chartjs/js/coreui-chartjs.js',
+        // 'vendors/chart.js/js/chart.umd.js',
+        // 'vendors/@coreui/chartjs/js/coreui-chartjs.js',
         'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/@coreui/utils/js/index.js',
         'js/config.js',
         'js/color-modes.js',
-        'js/charts.js',
+        //'js/charts.js',
         'js/popovers.js',
         'js/colors.js',
         'js/widgets.js',
