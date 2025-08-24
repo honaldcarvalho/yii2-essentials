@@ -131,7 +131,42 @@ class ListFiles extends \yii\bootstrap5\Widget
             ]
         );
 
-        $gridView = ResponsiveGridView::widget([
+        $head = <<< HTML
+      <div class="card mt-3" id="list-files">
+
+          <div class="card-header">
+              <h3 class="card-title">{$this->title}</h3>
+          </div>
+
+          <div class="card-body">
+              <p>
+                $button
+              </p>
+              <div class="row">
+                  <div class="col-md-12">
+
+                      <div id='overlay-files' class='overlay' style='display:none;height: 100%;position: absolute;width: 100%;z-index: 3000;top: 0;left: 0;background: #0000004f;'>
+                          <div class='d-flex align-items-center'>
+                              <strong> <?= Yii::t('app', 'Loading...') ?></strong>
+                              <div class='spinner-border ms-auto' role='status' aria-hidden='true'></div>
+                          </div>
+                      </div>
+
+    HTML;
+
+        $footer = <<< HTML
+                  </div>
+                  <!--.col-md-12-->
+              </div>
+              <!--.row-->
+          </div>
+
+      </div>
+    HTML;
+
+        echo $head;
+        Pjax::begin(['id' => 'list-files-grid']);
+        echo         ResponsiveGridView::widget([
             'id' => 'grid-files',
             'dataProvider' =>  $this->dataProvider,
             'columns' => [
@@ -242,44 +277,8 @@ class ListFiles extends \yii\bootstrap5\Widget
                 ],
             ],
         ]);
-
-        $head = <<< HTML
-      <div class="card mt-3" id="list-files">
-
-          <div class="card-header">
-              <h3 class="card-title">{$this->title}</h3>
-          </div>
-
-          <div class="card-body">
-              <p>
-                $button
-              </p>
-              <div class="row">
-                  <div class="col-md-12">
-
-                      <div id='overlay-files' class='overlay' style='display:none;height: 100%;position: absolute;width: 100%;z-index: 3000;top: 0;left: 0;background: #0000004f;'>
-                          <div class='d-flex align-items-center'>
-                              <strong> <?= Yii::t('app', 'Loading...') ?></strong>
-                              <div class='spinner-border ms-auto' role='status' aria-hidden='true'></div>
-                          </div>
-                      </div>
-
-    HTML;
-
-        $footer = <<< HTML
-                  </div>
-                  <!--.col-md-12-->
-              </div>
-              <!--.row-->
-          </div>
-
-      </div>
-    HTML;
-
-        echo $head;
-        Pjax::begin(['id' => 'list-files-grid']);
-        echo $gridView;
         Pjax::end();
         echo $footer;
+        
     }
 }
