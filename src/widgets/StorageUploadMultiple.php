@@ -225,13 +225,13 @@ class StorageUploadMultiple extends Widget
         const file = filesArray.get(index);
         if (!file) return;
         const bar = el(`progress-bar-\${index}-{$this->random}`);
-        const $btn = $(`#btn-upload-\${index}-{$this->random}`);
+        const btn = $(`#btn-upload-\${index}-{$this->random}`);
         const removeBtn = el(`btn-remove-\${index}-{$this->random}`);
 
-        let oldClass = $btn.children("i").attr("class");
-        $btn.prop("disabled", true);
+        let oldClass = btn.children("i").attr("class");
+        btn.prop("disabled", true);
         removeBtn.disabled = true;
-        let $icon = $btn.children("i").removeClass(oldClass).addClass("fas fa-sync fa-spin m-2");
+        let icon = btn.children("i").removeClass(oldClass).addClass("fas fa-sync fa-spin m-2");
 
         const fd = new FormData();
         const descInput = el(`row_\${index}`)?.querySelector(`input[name="description-\${index}"]`);
@@ -274,7 +274,7 @@ class StorageUploadMultiple extends Widget
                 } else { erros = 'erro desconhecido'; }
                 bar.style.width = '0%'; bar.textContent = '0%';
                 toastr.error(`Erro ao enviar: \${erros}`);
-                $btn.prop("disabled", false); removeBtn.disabled = false;
+                btn.prop("disabled", false); removeBtn.disabled = false;
             }
         }).catch((err)=>{
             toastr.error("Erro na página: " + err);
@@ -282,9 +282,9 @@ class StorageUploadMultiple extends Widget
         }).finally(()=>{
             if (uploading>0) uploading--;
             if (uploading===0) input_container.style.display = 'block';
-            $btn.prop("disabled", false);
+            btn.prop("disabled", false);
             removeBtn.disabled = false;
-            $icon.removeClass('fas fa-sync fa-spin m-2').attr('class', oldClass);
+            icon.removeClass('fas fa-sync fa-spin m-2').attr('class', oldClass);
         });
     }
 
