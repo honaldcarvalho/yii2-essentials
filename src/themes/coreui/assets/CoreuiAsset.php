@@ -21,7 +21,7 @@ class CoreuiAsset extends AssetBundle
         'js/color-modes.js',
         'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/simplebar/js/simplebar.min.js',
-        'vendors/@coreui/chartjs/js/chart.umd.js',
+        'vendors/@coreui/chartjs/js/coreui-chartjs.js',
         'vendors/@coreui/utils/js/index.js',
         'js/charts.js',
         'js/popovers.js',
