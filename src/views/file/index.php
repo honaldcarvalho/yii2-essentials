@@ -17,13 +17,13 @@ $csrfToken = Yii::$app->request->csrfToken;
 
 $this->registerJs(<<<JS
 // ------- Inicializadores genéricos --------
-onPjaxReady(($root) => {
+onPjaxReady((root) => {
   // Fancybox (já rebind automático no PjaxBootstrap, mas se quiser algo extra):
-  if (window.Fancybox) Fancybox.bind($root.find('[data-fancybox]').get());
+  if (window.Fancybox) Fancybox.bind(root.find('[data-fancybox]').get());
 
   // Helpers locais
   function getSelectedIds() {
-    return $root.find('input[name="file_selected[]"]:checked')
+    return root.find('input[name="file_selected[]"]:checked')
       .map(function(){ return $(this).val(); }).get();
   }
   function pjaxReload(){ $.pjax.reload({container:'#grid-pjax', async:false}); }
