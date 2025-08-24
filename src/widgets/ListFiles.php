@@ -14,35 +14,25 @@ use croacworks\essentials\controllers\AuthorizationController;
 
 class ListFiles extends \yii\bootstrap5\Widget
 {
-  public $dataProvider;
-  public $title;
+    public $dataProvider;
+    public $title;
 
-public function init(): void
-  {
-    if(empty($this->title)){
-        $this->title = Yii::t('app', 'List Files');
+    public function init(): void
+    {
+        if (empty($this->title)) {
+            $this->title = Yii::t('app', 'List Files');
+        }
     }
-  }
 
-  /**$
-   * {@inheritdoc}
-   */
-  public function run()
-  {
+    /**$
+     * {@inheritdoc}
+     */
+    public function run()
+    {
 
-    $token =  AuthorizationController::User()->access_token;
+        $token =  AuthorizationController::User()->access_token;
 
-Yii::$app->view->registerJs(<<<JS
-onPjaxReady((root) => {
-        $(document).on('click', '.copy-url-btn', function () {
-            const url = $(this).data('url');
-            navigator.clipboard.writeText(url).then(function() {
-                toastr.success("URL copied to clipboard!");
-            }, function(err) {
-                toastr.error("Failed to copy URL.");
-            });
-        });
-
+        Yii::$app->view->registerJs(<<<JS
         function removeFiles(e) {
     
             let el = $(e);
@@ -102,149 +92,158 @@ onPjaxReady((root) => {
             return false;
         }
     
-        $(function(){
-    
-            $(document).on('pjax:start', function() {
-                $('#overlay-files').show();
-            });
-            $(document).on('pjax:complete', function() {
-                $('#overlay-files').hide();
-            });
-    
+        onPjaxReady((root) => {
+                $(document).on('click', '.copy-url-btn', function () {
+                    const url = $(this).data('url');
+                    navigator.clipboard.writeText(url).then(function() {
+                        toastr.success("URL copied to clipboard!");
+                    }, function(err) {
+                        toastr.error("Failed to copy URL.");
+                    });
+                });
+                $(function(){
+            
+                    $(document).on('pjax:start', function() {
+                        $('#overlay-files').show();
+                    });
+                    $(document).on('pjax:complete', function() {
+                        $('#overlay-files').hide();
+                    });
+            
+                });
         });
-});
-JS, View::POS_END);
+        JS, View::POS_END);
 
-    $css = <<< CSS
+        $css = <<< CSS
     CSS;
 
-    \Yii::$app->view->registerCss($css);
+        \Yii::$app->view->registerCss($css);
 
-    $button = Html::button(
-                '<i class="fas fa-trash mr-2"></i>' . \Yii::t('app', 'Remove Files'),
+        $button = Html::button(
+            '<i class="fas fa-trash mr-2"></i>' . \Yii::t('app', 'Remove Files'),
+            [
+                'onclick' => 'removeFiles(this)',
+                'class' => 'btn btn-danger',
+                'id' => 'remove-files',
+                "data-toggle" => "tooltip",
+                "data-placement" => "top",
+                "title" => \Yii::t('app', 'Remove Files')
+            ]
+        );
+
+        $gridView = ResponsiveGridView::widget([
+            'id' => 'grid-files',
+            'dataProvider' =>  $this->dataProvider,
+            'columns' => [
                 [
-                    'onclick' => 'removeFiles(this)',
-                    'class' => 'btn btn-danger',
-                    'id' => 'remove-files',
-                    "data-toggle" => "tooltip",
-                    "data-placement" => "top",
-                    "title" => \Yii::t('app', 'Remove Files')
-                ]
-            );
+                    'class' => 'yii\grid\CheckboxColumn',
+                    // you may configure additional properties here
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:4%'],
+                    'attribute' => 'folder_id',
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        if ($data->folder_id != null)
+                            return Html::a($data->folder->name, Url::toRoute([Yii::getAlias('@web/folder/view'), 'id' => $data->folder_id]));
+                    }
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:20%'],
+                    'attribute' => 'description',
+                    'label' => Yii::t('app', 'Description'),
+                ],
+                'type:text:' . Yii::t('app', 'Type'),
+                [
+                    'headerOptions' => ['style' => 'width:10%'],
+                    'header' => 'Preview',
+                    'format' => 'raw',
+                    'value' => function ($data) {
+                        $url = $data->url;
+                        $type = '';
+                        if ($data->type == 'doc') {
+                            if ($data->extension != 'pdf') {
+                                $url = 'https://docs.google.com/viewer?url=' . Yii::getAlias('@host') . $data->url;
+                            }
+                            $type = 'iframe';
+                        }
 
-    $gridView = ResponsiveGridView::widget([
-                        'id' => 'grid-files',
-                        'dataProvider' =>  $this->dataProvider,
-                        'columns' => [
+                        return Html::a(
+                            "<img class='brand-image img-circle elevation-3' width='50' src='{$data->urlThumb}' />",
+                            $url,
                             [
-                                'class' => 'yii\grid\CheckboxColumn',
-                                // you may configure additional properties here
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:4%'],
-                                'attribute' => 'folder_id',
-                                'format' => 'raw',
-                                'value' => function ($data) {
-                                    if ($data->folder_id != null)
-                                        return Html::a($data->folder->name, Url::toRoute([Yii::getAlias('@web/folder/view'), 'id' => $data->folder_id]));
-                                }
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:20%'],
-                                'attribute' => 'description',
-                                'label' => Yii::t('app', 'Description'),
-                            ],
-                            'type:text:'.Yii::t('app', 'Type'),
-                            [
-                                'headerOptions' => ['style' => 'width:10%'],
-                                'header' => 'Preview',
-                                'format' => 'raw',
-                                'value' => function ($data) {
-                                    $url = $data->url;
-                                    $type = '';
-                                    if($data->type == 'doc'){
-                                        if($data->extension != 'pdf'){
-                                            $url = 'https://docs.google.com/viewer?url=' .Yii::getAlias('@host') . $data->url;
-                                        }
-                                        $type = 'iframe';
-                                    }
-                                    
-                                    return Html::a(
-                                        "<img class='brand-image img-circle elevation-3' width='50' src='{$data->urlThumb}' />",
-                                        $url,
-                                        [
-                                            'class' => 'btn btn-outline-secondary', 
-                                            "data-fancybox" => "", 
-                                            "data-type"=>"{$type}", 
-                                            "title" => \Yii::t('app', 'View')
-                                        ]
-                                    );
-                                }
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:10%'],
-                                'attribute' => 'extension',
-                                'label' => Yii::t('app', 'Extension'),
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:10%'],
-                                'attribute' => 'size',
-                                'label' => Yii::t('app', 'Size'),
-                                'format' => 'bytes',
-                                'label' => Yii::t('app', 'Size'),
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:10%'],
-                                'attribute' => 'duration',
-                                'format' => 'duration',
-                                'label' => Yii::t('app', 'Duration'),
-                            ],
-                            [
-                                'headerOptions' => ['style' => 'width:25%'],
-                                'attribute' => 'created_at',
-                                'format' => 'date',
-                                'label' => Yii::t('app', 'Created At'),
-                            ],
-                            [
-                                'class'=> ActionColumnCustom::class,
-                                'headerOptions' => ['style' => 'width:10%'],
-                                'template' => '{copy}{view}{remove}{delete}',
-                                'path' => 'app',
-                                'controller' => 'file',
-                                'buttons' => [
-                                    'remove' => function ($url, $model, $key) {
-                                        return AuthorizationController::verAuthorization('file', 'remove-file', $model) ?
-                                            Html::a(
-                                                '<i class="fas fa-unlink"></i>',
-                                                yii\helpers\Url::to(['file/remove-file', 'id' => $model->id, 'folder' => $model->folder_id]),
-                                                ['class' => 'btn btn-outline-secondary', "data-toggle" => "tooltip", "data-placement" => "top", "title" => \Yii::t('app', 'Remove from folder')]
-                                            ) : '';
-                                    },
-                                    'delete' => function ($url, $model, $key) {
-                                        return
-                                            Html::button(
-                                                '<i class="fas fa-trash"></i>',
-                                                ['onclick' => 'removeFiles(this)', 'class' => 'btn btn-outline-secondary', "data-id" => $model->id, "data-toggle" => "tooltip", "data-placement" => "top", "title" => \Yii::t('app', 'Remove')]
-                                            );
-                                    },
-                                    'copy' => function ($url, $model, $key) {
-                                        return Html::button(
-                                            '<i class="fas fa-copy"></i>',
-                                            [
-                                                'class' => 'btn btn-outline-secondary copy-url-btn',
-                                                'data-url' => Yii::getAlias('@host') . $model->url,
-                                                'data-toggle' => 'tooltip',
-                                                'data-placement' => 'top',
-                                                'title' => Yii::t('app', 'Copy URL')
-                                            ]
-                                        );
-                                    },
+                                'class' => 'btn btn-outline-secondary',
+                                "data-fancybox" => "",
+                                "data-type" => "{$type}",
+                                "title" => \Yii::t('app', 'View')
+                            ]
+                        );
+                    }
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:10%'],
+                    'attribute' => 'extension',
+                    'label' => Yii::t('app', 'Extension'),
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:10%'],
+                    'attribute' => 'size',
+                    'label' => Yii::t('app', 'Size'),
+                    'format' => 'bytes',
+                    'label' => Yii::t('app', 'Size'),
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:10%'],
+                    'attribute' => 'duration',
+                    'format' => 'duration',
+                    'label' => Yii::t('app', 'Duration'),
+                ],
+                [
+                    'headerOptions' => ['style' => 'width:25%'],
+                    'attribute' => 'created_at',
+                    'format' => 'date',
+                    'label' => Yii::t('app', 'Created At'),
+                ],
+                [
+                    'class' => ActionColumnCustom::class,
+                    'headerOptions' => ['style' => 'width:10%'],
+                    'template' => '{copy}{view}{remove}{delete}',
+                    'path' => 'app',
+                    'controller' => 'file',
+                    'buttons' => [
+                        'remove' => function ($url, $model, $key) {
+                            return AuthorizationController::verAuthorization('file', 'remove-file', $model) ?
+                                Html::a(
+                                    '<i class="fas fa-unlink"></i>',
+                                    yii\helpers\Url::to(['file/remove-file', 'id' => $model->id, 'folder' => $model->folder_id]),
+                                    ['class' => 'btn btn-outline-secondary', "data-toggle" => "tooltip", "data-placement" => "top", "title" => \Yii::t('app', 'Remove from folder')]
+                                ) : '';
+                        },
+                        'delete' => function ($url, $model, $key) {
+                            return
+                                Html::button(
+                                    '<i class="fas fa-trash"></i>',
+                                    ['onclick' => 'removeFiles(this)', 'class' => 'btn btn-outline-secondary', "data-id" => $model->id, "data-toggle" => "tooltip", "data-placement" => "top", "title" => \Yii::t('app', 'Remove')]
+                                );
+                        },
+                        'copy' => function ($url, $model, $key) {
+                            return Html::button(
+                                '<i class="fas fa-copy"></i>',
+                                [
+                                    'class' => 'btn btn-outline-secondary copy-url-btn',
+                                    'data-url' => Yii::getAlias('@host') . $model->url,
+                                    'data-toggle' => 'tooltip',
+                                    'data-placement' => 'top',
+                                    'title' => Yii::t('app', 'Copy URL')
                                 ]
-                            ],
-                        ],
-                    ]);
+                            );
+                        },
+                    ]
+                ],
+            ],
+        ]);
 
-    $head = <<< HTML
+        $head = <<< HTML
       <div class="card mt-3" id="list-files">
 
           <div class="card-header">
@@ -267,7 +266,7 @@ JS, View::POS_END);
 
     HTML;
 
-    $footer = <<< HTML
+        $footer = <<< HTML
                   </div>
                   <!--.col-md-12-->
               </div>
@@ -277,11 +276,10 @@ JS, View::POS_END);
       </div>
     HTML;
 
-    echo $head;
-    Pjax::begin(['id' => 'list-files-grid']);
-      echo $gridView;
-    Pjax::end();
-    echo $footer;
- 
-  }
+        echo $head;
+        Pjax::begin(['id' => 'list-files-grid']);
+        echo $gridView;
+        Pjax::end();
+        echo $footer;
+    }
 }
