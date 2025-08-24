@@ -18,6 +18,7 @@ class CoreuiAsset extends AssetBundle
     
     public $js = [
         'vendors/simplebar/js/simplebar.min.js',
+        'vendors/chart.js/js/chart.umd.js',
         'vendors/@coreui/chartjs/js/coreui-chartjs.js',
         'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/@coreui/utils/js/index.js',
