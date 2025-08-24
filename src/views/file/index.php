@@ -16,7 +16,6 @@ $csrfParam = Yii::$app->request->csrfParam;
 $csrfToken = Yii::$app->request->csrfToken;
 
 $this->registerJs(<<<JS
-// ------- Inicializadores genéricos --------
 onPjaxReady((root) => {
   // Fancybox (já rebind automático no PjaxBootstrap, mas se quiser algo extra):
   if (window.Fancybox) Fancybox.bind(root.find('[data-fancybox]').get());

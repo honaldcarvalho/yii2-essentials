@@ -32,8 +32,8 @@ public function init(): void
 
     $token =  AuthorizationController::User()->access_token;
 
-    $script = <<< JS
-    
+$this->registerJs(<<<JS
+onPjaxReady((root) => {
         $(document).on('click', '.copy-url-btn', function () {
             const url = $(this).data('url');
             navigator.clipboard.writeText(url).then(function() {
@@ -112,13 +112,13 @@ public function init(): void
             });
     
         });
-    JS;
+});
+JS, View::POS_END);
 
     $css = <<< CSS
     CSS;
 
     \Yii::$app->view->registerCss($css);
-    \Yii::$app->view->registerJs($script,View::POS_END);
 
     $button = Html::button(
                 '<i class="fas fa-trash mr-2"></i>' . \Yii::t('app', 'Remove Files'),
