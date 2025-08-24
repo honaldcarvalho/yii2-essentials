@@ -1,6 +1,8 @@
 <?php
 
 use yii\bootstrap5\Breadcrumbs;
+$name_split = explode(' ', Yii::$app->user->identity->username);
+$name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 $js = <<< JS
       const header = document.querySelector('header.header');
@@ -12,6 +14,13 @@ $js = <<< JS
       });
 JS;
 $this->registerJs($js);
+
+if (!empty($config->file_id) && $config->file !== null) {
+    $avatar = Yii::getAlias('@web') . $config->file->urlThumb;
+} else {
+    $avatar =  $assetDir . '/images/croacworks-logo-hq.png';
+}
+
 ?>
 
 
@@ -79,7 +88,7 @@ $this->registerJs($js);
                 <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
             <li class="nav-item dropdown"><a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                    <div class="avatar avatar-md"><img class="avatar-img" src="assets/img/avatars/8.jpg" alt="user@email.com"></div>
+                    <div class="avatar avatar-md"><img class="avatar-img" src="<?= $avatar; ?>" alt="<?= $name_user; ?>"></div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
                     <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div><a class="dropdown-item" href="#">
@@ -122,12 +131,12 @@ $this->registerJs($js);
         </ul>
     </div>
     <div class="container-fluid px-4">
-                    <?php
-                    echo Breadcrumbs::widget([
-                        'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
-                        'options' => [
-                            'class' => 'breadcrumb float-sm-right'
-                        ]
-                    ]);?>
+        <?php
+        echo Breadcrumbs::widget([
+            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
+            'options' => [
+                'class' => 'breadcrumb float-sm-right'
+            ]
+        ]); ?>
     </div>
 </header>
