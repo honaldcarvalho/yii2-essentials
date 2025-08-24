@@ -35,10 +35,10 @@ $theme = Yii::$app->user->identity->profile->theme;
     <?php 
     $this->head(); 
     $this->registerJs(<<<JS
-    onPjaxReady(($root) => {
+    onPjaxReady((root) => {
     // Fancybox bindings
     if (window.Fancybox) {
-        Fancybox.bind($root.find('[data-fancybox]').get());
+        Fancybox.bind(root.find('[data-fancybox]').get());
     }
 
     // Overlay custom enquanto abre
