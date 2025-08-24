@@ -229,8 +229,9 @@ class AppendModel extends \yii\bootstrap5\Widget
                 )
             ]
         );
-
-        $script = <<< JS
+        
+        $this->registerJs(<<<JS
+        onPjaxReady((root) => {
             let modal_{$this->attactModel} = null;
 
             $(function(){
@@ -413,9 +414,8 @@ class AppendModel extends \yii\bootstrap5\Widget
                 });
                 Fancybox.bind("[data-fancybox]");
             });
-        JS;
-
-        \Yii::$app->view->registerJs($script, View::POS_END);
+        });
+        JS);
         $field_str = '';
 
         $button = Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]);

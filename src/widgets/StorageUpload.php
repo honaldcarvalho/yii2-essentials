@@ -120,8 +120,8 @@ class StorageUpload extends Widget
         CSS;
 
         \Yii::$app->view->registerCss($css);
-
-        $script = <<< JS
+        $this->registerJs(<<<JS
+        onPjaxReady((root) => {
 
             function el(id){
                 return document.getElementById(id);
@@ -331,10 +331,9 @@ class StorageUpload extends Widget
                 });
 
             });
-        JS;
-
-        \Yii::$app->view->registerJs($script, View::POS_END);
-
+        });
+        JS);
+        
         $cut_label = Yii::t('app', 'Cut');
         $cancel_label = Yii::t('app', 'Cancel');
         $upload_label = Yii::t('app', 'Upload');

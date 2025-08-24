@@ -4,16 +4,16 @@ use yii\bootstrap5\Breadcrumbs;
 $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
-$js = <<< JS
-      const header = document.querySelector('header.header');
-
-      document.addEventListener('scroll', () => {
-        if (header) {
-          header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
-        }
-      });
-JS;
-$this->registerJs($js);
+$this->registerJs(<<<JS
+onPjaxReady((root) => {
+    const header = document.querySelector('header.header');
+    document.addEventListener('scroll', () => {
+    if (header) {
+        header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
+    }
+    });
+});
+JS);
 
 if (!empty($config->file_id) && $config->file !== null) {
     $avatar = Yii::getAlias('@web') . $config->file->urlThumb;

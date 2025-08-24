@@ -57,20 +57,21 @@ class AceEditor extends InputWidget
         $var = 'ace_' . str_replace(['-', '.'], '_', $id);
         $escapedValue = json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 
-        $js = <<<JS
-var {$var} = ace.edit("{$editorId}", {$options});
-{$var}.session.setValue({$escapedValue});
-{$var}.session.on('change', function(){
-    $("#{$inputId}").val({$var}.getValue());
-});
-{$var}.resize();
+        $this->registerJs(<<<JS
+        onPjaxReady((root) => {
+            var {$var} = ace.edit("{$editorId}", {$options});
+            {$var}.session.setValue({$escapedValue});
+            {$var}.session.on('change', function(){
+                $("#{$inputId}").val({$var}.getValue());
+            });
+            {$var}.resize();
 
-setTimeout(() => { {$var}.resize(); }, 300);
-$('#{$editorId}').closest('.modal').on('shown.bs.modal', function () {
-    {$var}.resize();
-});
-JS;
+            setTimeout(() => { {$var}.resize(); }, 300);
+            $('#{$editorId}').closest('.modal').on('shown.bs.modal', function () {
+                {$var}.resize();
+            });
+        });
+        JS);
 
-        $view->registerJs($js);
     }
 }

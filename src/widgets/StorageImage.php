@@ -230,351 +230,352 @@ class StorageImage extends \yii\bootstrap5\Widget
 CSS;
 
     // ===== JS =====
-    $script = <<<JS
-(function(){
-  const wrap    = document.getElementById('$wrapId');
-  const photo   = document.getElementById('$photoId');
-  const imageEl = document.getElementById('$imgId');
-  const input   = document.getElementById('$inputId');
-  const overlay = document.getElementById('$overlayId');
+    $this->registerJs(<<<JS
+      onPjaxReady((root) => {
+      (function(){
+        const wrap    = document.getElementById('$wrapId');
+        const photo   = document.getElementById('$photoId');
+        const imageEl = document.getElementById('$imgId');
+        const input   = document.getElementById('$inputId');
+        const overlay = document.getElementById('$overlayId');
 
-  const btnCrop   = document.getElementById('$cropId');
-  const btnSave   = document.getElementById('$saveId'); btnSave.style.display='none';
-  const btnCancel = document.getElementById('$cancelId');
-  const btnRemove = document.getElementById('$removeBtn');
+        const btnCrop   = document.getElementById('$cropId');
+        const btnSave   = document.getElementById('$saveId'); btnSave.style.display='none';
+        const btnCancel = document.getElementById('$cancelId');
+        const btnRemove = document.getElementById('$removeBtn');
 
-  const removeHidden = document.getElementById('$removeHiddenId');
-  function setRemoveFlag(v){ if (removeHidden) removeHidden.value = String(v); }
+        const removeHidden = document.getElementById('$removeHiddenId');
+        function setRemoveFlag(v){ if (removeHidden) removeHidden.value = String(v); }
 
-  const modalEl = document.getElementById('$modalId');
-  const modal = new bootstrap.Modal(modalEl, {backdrop:'static', keyboard:false});
+        const modalEl = document.getElementById('$modalId');
+        const modal = new bootstrap.Modal(modalEl, {backdrop:'static', keyboard:false});
 
-  const MODE = '{$mode}';
-  const HIDE_SAVE_BTN = {$hideSaveButton};
+        const MODE = '{$mode}';
+        const HIDE_SAVE_BTN = {$hideSaveButton};
 
-  const MODEL_CLASS = '{$modelClass}';
-  const MODEL_ID    = '{$modelId}';
-  const LINK_ON_SEND= {$linkOnSend};
-  const DELETE_OLD  = {$deleteOld};
+        const MODEL_CLASS = '{$modelClass}';
+        const MODEL_ID    = '{$modelId}';
+        const LINK_ON_SEND= {$linkOnSend};
+        const DELETE_OLD  = {$deleteOld};
 
-  const MODEL_INPUT_ID   = '{$inputIdPhp}';
-  const MODEL_INPUT_NAME = '{$inputName}';
+        const MODEL_INPUT_ID   = '{$inputIdPhp}';
+        const MODEL_INPUT_NAME = '{$inputName}';
 
-  const CSRF_PARAM = '{$csrfParam}';
-  const CSRF_TOKEN = '{$csrfToken}';
+        const CSRF_PARAM = '{$csrfParam}';
+        const CSRF_TOKEN = '{$csrfToken}';
 
-  const MAX_W = {$maxW};
-  const MAX_MB = {$maxMB};
-  const MAX_BYTES = MAX_MB * 1024 * 1024;
-  const ASPECT = (function(){ try { return eval('{$aspect}'); } catch(e){ return NaN; }})();
+        const MAX_W = {$maxW};
+        const MAX_MB = {$maxMB};
+        const MAX_BYTES = MAX_MB * 1024 * 1024;
+        const ASPECT = (function(){ try { return eval('{$aspect}'); } catch(e){ return NaN; }})();
 
-  const SEND_URL   = '{$sendUrl}';
-  const DELETE_URL = '{$deleteUrl}';
-  const ATTACH_URL = '{$attachUrl}';
+        const SEND_URL   = '{$sendUrl}';
+        const DELETE_URL = '{$deleteUrl}';
+        const ATTACH_URL = '{$attachUrl}';
 
-  const FOLDER_ID    = {$folder};
-  const GROUP_ID     = {$group};
-  const THUMB_ASPECT = {$thumb};
-  const QUALITY      = {$quality};
+        const FOLDER_ID    = {$folder};
+        const GROUP_ID     = {$group};
+        const THUMB_ASPECT = {$thumb};
+        const QUALITY      = {$quality};
 
-  const attactClass  = '{$attactClass}';
-  const attactFields = JSON.parse('{$this->jsonSafe($attactFields)}');
+        const attactClass  = '{$attactClass}';
+        const attactFields = JSON.parse('{$this->jsonSafe($attactFields)}');
 
-  function showOverlay(){ overlay.style.display='flex'; }
-  function hideOverlay(){ overlay.style.display='none'; }
+        function showOverlay(){ overlay.style.display='flex'; }
+        function hideOverlay(){ overlay.style.display='none'; }
 
-  function ensureModelFileInput() {
-    let el = document.getElementById(MODEL_INPUT_ID);
-    if (el && el.type === 'file') return el;
+        function ensureModelFileInput() {
+          let el = document.getElementById(MODEL_INPUT_ID);
+          if (el && el.type === 'file') return el;
 
-    el = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-    if (el) return el;
+          el = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+          if (el) return el;
 
-    const form = wrap.closest('form');
-    if (!form) return null;
-    el = document.createElement('input');
-    el.type = 'file';
-    el.name = MODEL_INPUT_NAME;
-    el.id = MODEL_INPUT_ID;
-    el.style.display = 'none';
-    form.appendChild(el);
-    return el;
-  }
-  const modelFileInput = (MODE === 'defer') ? ensureModelFileInput() : null;
+          const form = wrap.closest('form');
+          if (!form) return null;
+          el = document.createElement('input');
+          el.type = 'file';
+          el.name = MODEL_INPUT_NAME;
+          el.id = MODEL_INPUT_ID;
+          el.style.display = 'none';
+          form.appendChild(el);
+          return el;
+        }
+        const modelFileInput = (MODE === 'defer') ? ensureModelFileInput() : null;
 
-  // No instant, mantemos um hidden com o mesmo name do atributo
-  let hidden = null;
-  if (MODE === 'instant') {
-    hidden = document.querySelector(`input[type="hidden"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-    if (!hidden) {
-      const form = wrap.closest('form');
-      if (form) {
-        hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = MODEL_INPUT_NAME;
-        hidden.value = '';
-        form.appendChild(hidden);
-      }
-    }
-    // evita colisão com um input file existente de mesmo name
-    const fileSameName = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-    if (fileSameName) { fileSameName.name = MODEL_INPUT_NAME + '__ignore'; }
-  }
-
-  function isImage(file){ return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file.type); }
-
-  function compressImage(file){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          let w = img.width, h = img.height;
-          if (w > MAX_W || h > MAX_W) {
-            if (w > h) { h = Math.floor(h * MAX_W / w); w = MAX_W; }
-            else { w = Math.floor(w * MAX_W / h); h = MAX_W; }
+        // No instant, mantemos um hidden com o mesmo name do atributo
+        let hidden = null;
+        if (MODE === 'instant') {
+          hidden = document.querySelector(`input[type="hidden"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+          if (!hidden) {
+            const form = wrap.closest('form');
+            if (form) {
+              hidden = document.createElement('input');
+              hidden.type = 'hidden';
+              hidden.name = MODEL_INPUT_NAME;
+              hidden.value = '';
+              form.appendChild(hidden);
+            }
           }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img,0,0,w,h);
-          canvas.toBlob((blob) => {
-            if (!blob) return reject('Falha ao comprimir.');
-            if (blob.size > MAX_BYTES) return reject('Imagem excede ' + MAX_MB + 'MB mesmo após compressão.');
-            resolve(new File([blob], file.name, {type: file.type, lastModified: Date.now()}));
-          }, file.type, 0.85);
-        };
-        img.onerror = () => reject('Erro ao carregar a imagem.');
-        img.src = e.target.result;
-      };
-      reader.onerror = () => reject('Erro ao ler o arquivo.');
-      reader.readAsDataURL(file);
+          // evita colisão com um input file existente de mesmo name
+          const fileSameName = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+          if (fileSameName) { fileSameName.name = MODEL_INPUT_NAME + '__ignore'; }
+        }
+
+        function isImage(file){ return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file.type); }
+
+        function compressImage(file){
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+              const img = new Image();
+              img.onload = () => {
+                let w = img.width, h = img.height;
+                if (w > MAX_W || h > MAX_W) {
+                  if (w > h) { h = Math.floor(h * MAX_W / w); w = MAX_W; }
+                  else { w = Math.floor(w * MAX_W / h); h = MAX_W; }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img,0,0,w,h);
+                canvas.toBlob((blob) => {
+                  if (!blob) return reject('Falha ao comprimir.');
+                  if (blob.size > MAX_BYTES) return reject('Imagem excede ' + MAX_MB + 'MB mesmo após compressão.');
+                  resolve(new File([blob], file.name, {type: file.type, lastModified: Date.now()}));
+                }, file.type, 0.85);
+              };
+              img.onerror = () => reject('Erro ao carregar a imagem.');
+              img.src = e.target.result;
+            };
+            reader.onerror = () => reject('Erro ao ler o arquivo.');
+            reader.readAsDataURL(file);
+          });
+        }
+
+        let tmpFile = null;
+        let cropper = null;
+        let lastSavedFileId = hidden?.value || null;
+
+        function fitAndCenter() {
+          if (!cropper) return;
+          const cont = cropper.getContainerData();
+          let w, h;
+          if (Number.isFinite(ASPECT)) {
+            w = Math.min(cont.width * 0.92, cont.height * 0.92 * ASPECT);
+            h = w / ASPECT;
+          } else {
+            w = cont.width * 0.92;
+            h = cont.height * 0.92;
+          }
+          cropper.setCropBoxData({ width:w, height:h, left:(cont.width-w)/2, top:(cont.height-h)/2 });
+        }
+
+        function assignFileToModelInput(file) {
+          if (!modelFileInput) return false;
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          modelFileInput.files = dt.files;
+          return true;
+        }
+
+        async function uploadFinalFile(blobOrFile){
+          const fd = new FormData();
+          const fileName = (tmpFile?.name || 'image.jpg');
+          const file = (blobOrFile instanceof File) ? blobOrFile : new File([blobOrFile], fileName, {type: blobOrFile.type || 'image/jpeg', lastModified: Date.now()});
+          fd.append('file', file);
+          fd.append('save', '1');
+          fd.append('folder_id', String(FOLDER_ID));
+          fd.append('group_id', String(GROUP_ID));
+          fd.append('thumb_aspect', String(THUMB_ASPECT));
+          fd.append('quality', String(QUALITY));
+          fd.append(CSRF_PARAM, CSRF_TOKEN);
+
+          const res = await fetch(SEND_URL, { method:'POST', body: fd, credentials:'same-origin' });
+          if(!res.ok) throw new Error('Falha no upload ('+res.status+').');
+          const json = await res.json();
+          if (!json || json.ok !== true || !json.data) {
+            const msg = (json && (json.error || json.errors || json.data)) ? JSON.stringify(json.error || json.errors || json.data) : 'Resposta inválida.';
+            throw new Error('Upload não aceito: ' + msg);
+          }
+          return json.data; // modelo File (attrs)
+        }
+
+        async function deleteOldOnServer(oldId){
+          const fd = new FormData();
+          fd.append(CSRF_PARAM, CSRF_TOKEN);
+          const res = await fetch(DELETE_URL + '?id=' + encodeURIComponent(oldId), { method:'POST', body: fd, credentials:'same-origin' });
+          // ignore falhas silenciosamente
+          return true;
+        }
+
+        async function attachPivotIfRequested(fileId){
+          if (!attactClass || !Array.isArray(attactFields) || attactFields.length !== 2 || !MODEL_ID) return;
+          const fd = new FormData();
+          fd.append('class_name', attactClass);
+          fd.append('model_id', String(MODEL_ID));
+          fd.append('file_id', String(fileId));
+          fd.append('field_model_id', attactFields[0]);
+          fd.append('field_file_id', attactFields[1]);
+          fd.append(CSRF_PARAM, CSRF_TOKEN);
+          try {
+            await fetch(ATTACH_URL, { method:'POST', body: fd, credentials:'same-origin' });
+          } catch(e) { /* silencioso */ }
+        }
+
+        // ---- Eventos ----
+        input.addEventListener('change', async (e) => {
+          const files = e.target.files;
+          if(!files || !files.length) return;
+          tmpFile = files[0];
+          if (!isImage(tmpFile)) { alert('Arquivo inválido.'); return; }
+
+          try{
+            showOverlay();
+            let toPreview;
+            if (tmpFile.type !== 'image/png') {
+              const compressed = await compressImage(tmpFile);
+              toPreview = URL.createObjectURL(compressed);
+              tmpFile = compressed;
+            } else {
+              toPreview = URL.createObjectURL(tmpFile);
+            }
+            imageEl.src = toPreview;
+            btnSave.style.display = 'block';
+            setRemoveFlag(0);
+            modal.show();
+          } catch(err){
+            alert(err);
+          } finally {
+            hideOverlay();
+          }
+        });
+
+        modalEl.addEventListener('shown.bs.modal', () => {
+          if (cropper) { cropper.destroy(); cropper = null; }
+          cropper = new Cropper(imageEl, {
+            viewMode: 2,
+            aspectRatio: ASPECT,
+            initialAspectRatio: ASPECT,
+            autoCropArea: 1,
+            responsive: true,
+            background: false,
+            dragMode: 'move',
+            zoomOnWheel: true,
+            ready() { setTimeout(fitAndCenter, 0); }
+          });
+          if (HIDE_SAVE_BTN) btnSave?.classList.add('d-none');
+        });
+
+        window.addEventListener('resize', () => {
+          if (modalEl.classList.contains('show')) setTimeout(fitAndCenter, 100);
+        });
+
+        btnCancel.addEventListener('click', () => modal.hide());
+
+        // CORTAR
+        btnCrop.addEventListener('click', async () => {
+          if (!cropper) return;
+          try{
+            showOverlay();
+            const canvas = cropper.getCroppedCanvas();
+            const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
+            if (!blob) throw new Error('Falha ao gerar recorte.');
+
+            let finalFile = (tmpFile?.type === 'image/png')
+              ? new File([blob], tmpFile.name, {type: blob.type})
+              : await (async () => {
+                  const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
+                  return await compressImage(f);
+                })();
+
+            // preview sempre
+            photo.src = URL.createObjectURL(finalFile);
+
+            if (MODE === 'defer') {
+              assignFileToModelInput(finalFile);
+              setRemoveFlag(0);
+              document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '$id' }}));
+            }
+            btnSave.style.display = 'block';
+            modal.hide();
+          } catch (err){
+            alert(err.message || err);
+          } finally {
+            hideOverlay();
+          }
+        });
+
+        // SALVAR
+        btnSave.addEventListener('click', async () => {
+          if (!cropper) return;
+          try{
+            showOverlay();
+            const canvas = cropper.getCroppedCanvas();
+            const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
+            if(!blob) throw new Error('Falha ao gerar recorte.');
+
+            let finalFile = (tmpFile?.type === 'image/png')
+              ? new File([blob], tmpFile.name, {type: blob.type})
+              : await (async () => {
+                  const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
+                  return await compressImage(f);
+                })();
+
+            if (MODE === 'defer') {
+              photo.src = URL.createObjectURL(finalFile);
+              assignFileToModelInput(finalFile);
+              setRemoveFlag(0);
+              modal.hide();
+              return;
+            }
+
+            // instant → envia para /storage/upload
+            const saved = await uploadFinalFile(finalFile);
+            const newId = saved.id || null;
+
+            // preview
+            if (saved.url) photo.src = saved.url + '?v=' + Date.now();
+
+            // sincroniza hidden [Model][file_id]
+            if (hidden) hidden.value = String(newId ?? '');
+
+            // se solicitado, deleta o antigo no servidor
+            if (DELETE_OLD && lastSavedFileId && Number(lastSavedFileId) !== Number(newId)) {
+              try { await deleteOldOnServer(lastSavedFileId); } catch(e){}
+            }
+            lastSavedFileId = newId;
+
+            // pivot opcional
+            await attachPivotIfRequested(newId);
+
+            setRemoveFlag(0);
+            document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '$id' }}));
+            modal.hide();
+          } catch(err){
+            console.error(err);
+            alert(err.message || err);
+          } finally {
+            hideOverlay();
+          }
+        });
+
+        // REMOVER — marca intenção no submit; não apaga servidor aqui
+        btnRemove.addEventListener('click', () => {
+          try{
+            showOverlay();
+            photo.src = '{$this->placeholder}';
+            btnSave.style.display = 'none';
+            if (modelFileInput) modelFileInput.value = '';
+            if (hidden) hidden.value = '';
+            setRemoveFlag(1);
+          } finally { hideOverlay(); }
+        });
+
+      })();
     });
-  }
-
-  let tmpFile = null;
-  let cropper = null;
-  let lastSavedFileId = hidden?.value || null;
-
-  function fitAndCenter() {
-    if (!cropper) return;
-    const cont = cropper.getContainerData();
-    let w, h;
-    if (Number.isFinite(ASPECT)) {
-      w = Math.min(cont.width * 0.92, cont.height * 0.92 * ASPECT);
-      h = w / ASPECT;
-    } else {
-      w = cont.width * 0.92;
-      h = cont.height * 0.92;
-    }
-    cropper.setCropBoxData({ width:w, height:h, left:(cont.width-w)/2, top:(cont.height-h)/2 });
-  }
-
-  function assignFileToModelInput(file) {
-    if (!modelFileInput) return false;
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    modelFileInput.files = dt.files;
-    return true;
-  }
-
-  async function uploadFinalFile(blobOrFile){
-    const fd = new FormData();
-    const fileName = (tmpFile?.name || 'image.jpg');
-    const file = (blobOrFile instanceof File) ? blobOrFile : new File([blobOrFile], fileName, {type: blobOrFile.type || 'image/jpeg', lastModified: Date.now()});
-    fd.append('file', file);
-    fd.append('save', '1');
-    fd.append('folder_id', String(FOLDER_ID));
-    fd.append('group_id', String(GROUP_ID));
-    fd.append('thumb_aspect', String(THUMB_ASPECT));
-    fd.append('quality', String(QUALITY));
-    fd.append(CSRF_PARAM, CSRF_TOKEN);
-
-    const res = await fetch(SEND_URL, { method:'POST', body: fd, credentials:'same-origin' });
-    if(!res.ok) throw new Error('Falha no upload ('+res.status+').');
-    const json = await res.json();
-    if (!json || json.ok !== true || !json.data) {
-      const msg = (json && (json.error || json.errors || json.data)) ? JSON.stringify(json.error || json.errors || json.data) : 'Resposta inválida.';
-      throw new Error('Upload não aceito: ' + msg);
-    }
-    return json.data; // modelo File (attrs)
-  }
-
-  async function deleteOldOnServer(oldId){
-    const fd = new FormData();
-    fd.append(CSRF_PARAM, CSRF_TOKEN);
-    const res = await fetch(DELETE_URL + '?id=' + encodeURIComponent(oldId), { method:'POST', body: fd, credentials:'same-origin' });
-    // ignore falhas silenciosamente
-    return true;
-  }
-
-  async function attachPivotIfRequested(fileId){
-    if (!attactClass || !Array.isArray(attactFields) || attactFields.length !== 2 || !MODEL_ID) return;
-    const fd = new FormData();
-    fd.append('class_name', attactClass);
-    fd.append('model_id', String(MODEL_ID));
-    fd.append('file_id', String(fileId));
-    fd.append('field_model_id', attactFields[0]);
-    fd.append('field_file_id', attactFields[1]);
-    fd.append(CSRF_PARAM, CSRF_TOKEN);
-    try {
-      await fetch(ATTACH_URL, { method:'POST', body: fd, credentials:'same-origin' });
-    } catch(e) { /* silencioso */ }
-  }
-
-  // ---- Eventos ----
-  input.addEventListener('change', async (e) => {
-    const files = e.target.files;
-    if(!files || !files.length) return;
-    tmpFile = files[0];
-    if (!isImage(tmpFile)) { alert('Arquivo inválido.'); return; }
-
-    try{
-      showOverlay();
-      let toPreview;
-      if (tmpFile.type !== 'image/png') {
-        const compressed = await compressImage(tmpFile);
-        toPreview = URL.createObjectURL(compressed);
-        tmpFile = compressed;
-      } else {
-        toPreview = URL.createObjectURL(tmpFile);
-      }
-      imageEl.src = toPreview;
-      btnSave.style.display = 'block';
-      setRemoveFlag(0);
-      modal.show();
-    } catch(err){
-      alert(err);
-    } finally {
-      hideOverlay();
-    }
-  });
-
-  modalEl.addEventListener('shown.bs.modal', () => {
-    if (cropper) { cropper.destroy(); cropper = null; }
-    cropper = new Cropper(imageEl, {
-      viewMode: 2,
-      aspectRatio: ASPECT,
-      initialAspectRatio: ASPECT,
-      autoCropArea: 1,
-      responsive: true,
-      background: false,
-      dragMode: 'move',
-      zoomOnWheel: true,
-      ready() { setTimeout(fitAndCenter, 0); }
-    });
-    if (HIDE_SAVE_BTN) btnSave?.classList.add('d-none');
-  });
-
-  window.addEventListener('resize', () => {
-    if (modalEl.classList.contains('show')) setTimeout(fitAndCenter, 100);
-  });
-
-  btnCancel.addEventListener('click', () => modal.hide());
-
-  // CORTAR
-  btnCrop.addEventListener('click', async () => {
-    if (!cropper) return;
-    try{
-      showOverlay();
-      const canvas = cropper.getCroppedCanvas();
-      const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-      if (!blob) throw new Error('Falha ao gerar recorte.');
-
-      let finalFile = (tmpFile?.type === 'image/png')
-        ? new File([blob], tmpFile.name, {type: blob.type})
-        : await (async () => {
-            const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
-            return await compressImage(f);
-          })();
-
-      // preview sempre
-      photo.src = URL.createObjectURL(finalFile);
-
-      if (MODE === 'defer') {
-        assignFileToModelInput(finalFile);
-        setRemoveFlag(0);
-        document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '$id' }}));
-      }
-      btnSave.style.display = 'block';
-      modal.hide();
-    } catch (err){
-      alert(err.message || err);
-    } finally {
-      hideOverlay();
-    }
-  });
-
-  // SALVAR
-  btnSave.addEventListener('click', async () => {
-    if (!cropper) return;
-    try{
-      showOverlay();
-      const canvas = cropper.getCroppedCanvas();
-      const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-      if(!blob) throw new Error('Falha ao gerar recorte.');
-
-      let finalFile = (tmpFile?.type === 'image/png')
-        ? new File([blob], tmpFile.name, {type: blob.type})
-        : await (async () => {
-            const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
-            return await compressImage(f);
-          })();
-
-      if (MODE === 'defer') {
-        photo.src = URL.createObjectURL(finalFile);
-        assignFileToModelInput(finalFile);
-        setRemoveFlag(0);
-        modal.hide();
-        return;
-      }
-
-      // instant → envia para /storage/upload
-      const saved = await uploadFinalFile(finalFile);
-      const newId = saved.id || null;
-
-      // preview
-      if (saved.url) photo.src = saved.url + '?v=' + Date.now();
-
-      // sincroniza hidden [Model][file_id]
-      if (hidden) hidden.value = String(newId ?? '');
-
-      // se solicitado, deleta o antigo no servidor
-      if (DELETE_OLD && lastSavedFileId && Number(lastSavedFileId) !== Number(newId)) {
-        try { await deleteOldOnServer(lastSavedFileId); } catch(e){}
-      }
-      lastSavedFileId = newId;
-
-      // pivot opcional
-      await attachPivotIfRequested(newId);
-
-      setRemoveFlag(0);
-      document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '$id' }}));
-      modal.hide();
-    } catch(err){
-      console.error(err);
-      alert(err.message || err);
-    } finally {
-      hideOverlay();
-    }
-  });
-
-  // REMOVER — marca intenção no submit; não apaga servidor aqui
-  btnRemove.addEventListener('click', () => {
-    try{
-      showOverlay();
-      photo.src = '{$this->placeholder}';
-      btnSave.style.display = 'none';
-      if (modelFileInput) modelFileInput.value = '';
-      if (hidden) hidden.value = '';
-      setRemoveFlag(1);
-    } finally { hideOverlay(); }
-  });
-
-})();
-JS;
+    JS);
 
     $view->registerCss($css);
-    $view->registerJs($script, \yii\web\View::POS_END);
 
     $showRemove = ($this->imageUrl !== '') ? '' : 'd-none';
 

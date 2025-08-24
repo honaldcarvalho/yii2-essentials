@@ -141,8 +141,10 @@ class StorageUploadMultiple extends Widget
         CSS;
 
         \Yii::$app->view->registerCss($css);
+        $this->registerJs(<<<JS
+        onPjaxReady((root) => {
 
-        $script = <<< JS
+
         
             var id_{$this->random} = 0;
 
@@ -510,9 +512,9 @@ class StorageUploadMultiple extends Widget
                 });
 
             });
-        JS;
+        });
+        JS);
 
-        \Yii::$app->view->registerJs($script, View::POS_END);
         $select_file_text = Yii::t('app', 'Select file(s) to upload');
         $form_upload = <<< HTML
 

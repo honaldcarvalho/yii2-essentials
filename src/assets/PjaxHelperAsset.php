@@ -2,7 +2,15 @@
 namespace croacworks\essentials\assets;
 
 use yii\web\AssetBundle;
+/**
+ USAGE:
 
+$this->registerJs(<<<JS
+onPjaxReady((root) => {
+
+});
+JS);
+ */
 class PjaxHelperAsset extends AssetBundle
 {
     public $sourcePath = '@vendor/croacworks/yii2-essentials/src/assets/pjax-helper';
