@@ -58,6 +58,7 @@ class FileController extends AuthorizationController
     {   
         $moved = '';
         $noMoved = '';
+        \Yii::$app->response->format = Response::FORMAT_JSON;
 
         if(Yii::$app->request->isPost){
 
@@ -236,6 +237,7 @@ class FileController extends AuthorizationController
     /** BULK delete (JSON) - expects file_selected[] in POST */
     public function actionDeleteFiles()
     {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
         if (!Yii::$app->request->isPost) {
             return ['success'=>false, 'error'=>'Bad Request'];
         }
