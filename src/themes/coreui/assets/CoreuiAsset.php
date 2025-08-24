@@ -27,7 +27,7 @@ class CoreuiAsset extends AssetBundle
         //'js/charts.js',
         'js/popovers.js',
         'js/colors.js',
-        'js/widgets.js',
+        //'js/widgets.js',
         'js/tooltips.js',
         'js/main.js',
     ];
