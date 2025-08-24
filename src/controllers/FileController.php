@@ -55,40 +55,38 @@ class FileController extends AuthorizationController
     }
 
     public function actionMove()
-    {   
+    {
         $moved = '';
         $noMoved = '';
-        \Yii::$app->response->format = Response::FORMAT_JSON;
 
-        if(Yii::$app->request->isPost){
+        if (Yii::$app->request->isPost) {
 
             $files_id = Yii::$app->request->post()['file_selected'] ?? [];
             $folder_id = Yii::$app->request->post()['folder_id'] ?? null;
-            if($folder_id !== null && !empty($files_id)){
-                foreach($files_id as $file_id){
+            if ($folder_id !== null && !empty($files_id)) {
+                foreach ($files_id as $file_id) {
                     try {
-                        
-                        if($this::isAdmin()){
-                            $model = File::find()->where(['id'=>$file_id])->one();
-                        }else{
-                            $model = $model = File::find()->where(['id'=>$file_id])->andWhere(['or',['in','group_id',$this::getUserGroups()]])->one();
-                        }
-                        
-                        $model->folder_id = $folder_id;
-                        if($model->save()){
-                            $moved .= "({$model->name}) ";
-                        }else{
-                            $noMoved .= "({$model->name}) ";
+
+                        if ($this::isAdmin()) {
+                            $model = File::find()->where(['id' => $file_id])->one();
+                        } else {
+                            $model = $model = File::find()->where(['id' => $file_id])->andWhere(['or', ['in', 'group_id', $this::getUserGroups()]])->one();
                         }
 
+                        $model->folder_id = $folder_id;
+                        if ($model->save()) {
+                            $moved .= "({$model->name}) ";
+                        } else {
+                            $noMoved .= "({$model->name}) ";
+                        }
                     } catch (\Throwable $th) {
                         $noMoved .= "(File #{$file_id}) ";
-                    }      
-                }    
-                if(!empty($moved))      
-                    Yii::$app->session->setFlash("success", Yii::t('app', 'Files moved: ').$moved);
-                if(!empty($noMoved))
-                    Yii::$app->session->setFlash("danger", Yii::t('app', 'Files not moved')).$noMoved;
+                    }
+                }
+                if (!empty($moved))
+                    Yii::$app->session->setFlash("success", Yii::t('app', 'Files moved: ') . $moved);
+                if (!empty($noMoved))
+                    Yii::$app->session->setFlash("danger", Yii::t('app', 'Files not moved')) . $noMoved;
             }
         }
         return $this->redirect(['file/index']);
@@ -97,18 +95,18 @@ class FileController extends AuthorizationController
     public function actionRemoveFile($id)
     {
         $folder_id = Yii::$app->request->get('folder');
-        if($this::isAdmin()){
-            $model = File::find()->where(['id'=>$id])->one();
-        }else{
-            $model = File::find()->where(['id'=>$id])->andWhere(['or',['in','group_id',$this::getUserGroups()]])->one();
+        if ($this::isAdmin()) {
+            $model = File::find()->where(['id' => $id])->one();
+        } else {
+            $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $this::getUserGroups()]])->one();
         }
         try {
             $model->folder_id = null;
-            $model->save();        
+            $model->save();
             Yii::$app->session->setFlash("success", Yii::t('app', 'File removed'));
         } catch (\Throwable $th) {
             Yii::$app->session->setFlash("error", Yii::t('app', 'File not removed'));
-        }         
+        }
 
         return $this->redirect(['folder/view', 'id' => $folder_id]);
     }
@@ -123,24 +121,23 @@ class FileController extends AuthorizationController
     {
         $thumb = false;
         $file = false;
-        
-        $model = File::find()->where(['id'=>$id])->andWhere(['or',['in','group_id',$this::getUserGroups()]])->one();
+
+        $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $this::getUserGroups()]])->one();
         $folder_id = $model->folder_id;
 
-        if($model->delete()){
+        if ($model->delete()) {
             $file = @unlink($model->path);
 
-            if($model->pathThumb){
+            if ($model->pathThumb) {
                 $thumb = @unlink($model->pathThumb);
             }
         }
 
         return [
-            'file'=>$file,
-            'thumb'=>$thumb,
-            'folder_id'=>$folder_id,
+            'file' => $file,
+            'thumb' => $thumb,
+            'folder_id' => $folder_id,
         ];
-
     }
 
     /** Check if a file is referenced anywhere (FKs + heuristic file_id). */
@@ -166,7 +163,7 @@ class FileController extends AuthorizationController
                                 ->where([$local => $fileId])
                                 ->limit(1)->count('*', $db);
                             if ($count > 0) {
-                                $refs[] = ['table'=>$tbl->name, 'column'=>$local, 'count'=>(int)$count];
+                                $refs[] = ['table' => $tbl->name, 'column' => $local, 'count' => (int)$count];
                             }
                         }
                     }
@@ -181,13 +178,13 @@ class FileController extends AuthorizationController
                     ->from($tbl->name)
                     ->where(['file_id' => $fileId])
                     ->limit(1)->count('*', $db);
-                if ($count > 0 && !array_filter($refs, fn($r)=>$r['table']===$tbl->name && $r['column']==='file_id')) {
-                    $refs[] = ['table'=>$tbl->name, 'column'=>'file_id', 'count'=>(int)$count];
+                if ($count > 0 && !array_filter($refs, fn($r) => $r['table'] === $tbl->name && $r['column'] === 'file_id')) {
+                    $refs[] = ['table' => $tbl->name, 'column' => 'file_id', 'count' => (int)$count];
                 }
             }
         }
 
-        return ['allowed'=>empty($refs), 'refs'=>$refs];
+        return ['allowed' => empty($refs), 'refs' => $refs];
     }
 
     /** Group-aware loader (same logic from StorageController). */
@@ -196,55 +193,72 @@ class FileController extends AuthorizationController
         $users_groups = AuthorizationController::getUserGroups();
 
         if (!AuthorizationController::isAdmin()) {
-            return File::find()->where(['id'=>$id])
-                ->andWhere(['or', ['in','group_id',$users_groups]])->one();
+            return File::find()->where(['id' => $id])
+                ->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
         }
-        return File::find()->where(['id'=>$id])
-            ->andWhere(['or', ['in','group_id',$users_groups], ['in','group_id',[null,1]]])->one();
+        return File::find()->where(['id' => $id])
+            ->andWhere(['or', ['in', 'group_id', $users_groups], ['in', 'group_id', [null, 1]]])->one();
     }
 
     /** DELETE single (JSON) */
     public function actionDelete($id)
     {
-        if (!Yii::$app->request->isPost) {
-            return ['success'=>false, 'error'=>'Bad Request'];
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $req = Yii::$app->request;
+
+        if (!$req->isPost) {
+            Yii::$app->response->statusCode = 405; // Method Not Allowed
+            return ['success' => false, 'error' => 'Method Not Allowed'];
         }
 
-        $model = $this->findFileByAccess($id);
-        if (!$model) {
-            return ['success'=>false, 'error'=>'Not found or access denied', 'id'=>(int)$id];
-        }
+        try {
+            $model = $this->findFileByAccess($id);
+            if (!$model) {
+                Yii::$app->response->statusCode = 404;
+                return ['success' => false, 'error' => 'Not found or access denied', 'id' => (int)$id];
+            }
 
-        $check = $this->canDeleteFile($model);
-        if (!$check['allowed']) {
+            $check = $this->canDeleteFile($model);
+            if (!($check['allowed'] ?? false)) {
+                Yii::$app->response->statusCode = 409; // Conflict (referenciado)
+                return [
+                    'success' => false,
+                    'blocked' => true,
+                    'id'      => (int)$model->id,
+                    'refs'    => $check['refs'] ?? [],
+                    'message' => 'File is referenced and cannot be removed.'
+                ];
+            }
+
+            $res = StorageController::removeFile($model->id);
+            $ok  = (bool)($res['success'] ?? false);
+
+            if (!$ok) {
+                Yii::$app->response->statusCode = 500;
+            }
+
             return [
-                'success' => false,
-                'blocked' => true,
+                'success' => $ok,
                 'id'      => (int)$model->id,
-                'refs'    => $check['refs'],
-                'message' => 'File is referenced and cannot be removed.'
+                'result'  => $res,
             ];
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), __METHOD__);
+            Yii::$app->response->statusCode = 500;
+            return ['success' => false, 'error' => $e->getMessage(), 'id' => (int)$id];
         }
-
-        $res = StorageController::removeFile($model->id);
-        return [
-            'success' => (bool)($res['success'] ?? false),
-            'id'      => (int)$model->id,
-            'result'  => $res
-        ];
     }
 
     /** BULK delete (JSON) - expects file_selected[] in POST */
     public function actionDeleteFiles()
     {
-        \Yii::$app->response->format = Response::FORMAT_JSON;
         if (!Yii::$app->request->isPost) {
-            return ['success'=>false, 'error'=>'Bad Request'];
+            return ['success' => false, 'error' => 'Bad Request'];
         }
 
         $ids = (array)Yii::$app->request->post('file_selected', []);
         if (!$ids) {
-            return ['success'=>false, 'error'=>'No files selected'];
+            return ['success' => false, 'error' => 'No files selected'];
         }
 
         $deleted = [];
@@ -255,13 +269,13 @@ class FileController extends AuthorizationController
             $id = (int)$id;
             $model = $this->findFileByAccess($id);
             if (!$model) {
-                $failed[] = ['id'=>$id, 'error'=>'not found/denied'];
+                $failed[] = ['id' => $id, 'error' => 'not found/denied'];
                 continue;
             }
 
             $check = $this->canDeleteFile($model);
             if (!$check['allowed']) {
-                $blocked[] = ['id'=>$id, 'refs'=>$check['refs']];
+                $blocked[] = ['id' => $id, 'refs' => $check['refs']];
                 continue;
             }
 
@@ -269,7 +283,7 @@ class FileController extends AuthorizationController
             if (!empty($res['success'])) {
                 $deleted[] = $id;
             } else {
-                $failed[] = ['id'=>$id, 'error'=>$res['message'] ?? 'unknown'];
+                $failed[] = ['id' => $id, 'error' => $res['message'] ?? 'unknown'];
             }
         }
 
@@ -285,5 +299,4 @@ class FileController extends AuthorizationController
             'failed'      => $failed,
         ];
     }
-
 }
