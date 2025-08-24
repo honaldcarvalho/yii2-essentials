@@ -15,9 +15,13 @@ use croacworks\essentials\controllers\AuthorizationController;
 class ListFiles extends \yii\bootstrap5\Widget
 {
   public $dataProvider;
+  public $title;
 
 public function init(): void
   {
+    if(empty($this->title)){
+        $this->title = Yii::t('app', 'List Files');
+    }
   }
 
   /**$
@@ -244,7 +248,7 @@ public function init(): void
       <div class="card" id="list-files">
 
           <div class="card-header">
-              <h3 class="card-title"><?= Yii::t('app', 'List Files'); ?></h3>
+              <h3 class="card-title">{$this->title}</h3>
           </div>
 
           <div class="card-body">

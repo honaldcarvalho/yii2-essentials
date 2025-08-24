@@ -49,7 +49,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <!--.card-->
 
     <?= AppendModel::widget([
-        'title'=>'Folders',
+        'title'=> Yii::t('app','Folders'),
         'attactModel'=>'Folder',
         'controller'=>'folder',
         'attactClass'=>'croacworks\\essentials\\models\\Folder',
@@ -80,7 +80,7 @@ $this->params['breadcrumbs'][] = $this->title;
     ]); ?>
     <!--.row-->
 
-    <div class="card">
+    <div class="card mt-3">
         <div class="card-header">
             <h3 class="card-title"><?= Yii::t('app', 'Add File'); ?></h3>
         </div>
