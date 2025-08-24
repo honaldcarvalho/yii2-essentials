@@ -21,6 +21,11 @@ class CoreuiAsset extends AssetBundle
         'vendors/@coreui/coreui/js/coreui.bundle.min.js',
         'vendors/simplebar/js/simplebar.min.js',
         'vendors/@coreui/utils/js/index.js',
+        'js/popovers.js',
+        'js/colors.js',
+        'js/widgets.js',
+        'js/tooltips.js',
+        'js/charts.js',
         'js/main.js',
     ];
 
