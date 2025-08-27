@@ -56,7 +56,7 @@ $buttons[] =
             'query' => $model->getUserGroups(),
         ]),
         'showFields' => [
-            'user.fullname',
+            'user.profile.fullname',
             'user.email',
             [
                 'attribute' => 'user.created_at',

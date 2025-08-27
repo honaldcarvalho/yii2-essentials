@@ -16,8 +16,8 @@ use Yii;
  * @property string|null $fullname
  * @property string|null $cpf_cnpj
  * @property string $phone
- * @property int $created_at
- * @property int $updated_at
+ * @property string $created_at
+ * @property string $updated_at
  *
  * @property File $file
  * @property User $user
@@ -54,9 +54,9 @@ class UserProfile extends ModelCommon
     public function rules()
     {
         return [
+            [['fullname'], 'require'],
             [['user_id', 'file_id', 'fullname', 'cpf_cnpj'], 'default', 'value' => null],
-            [['updated_at'], 'default', 'value' => 1755805973],
-            [['user_id','created_at', 'updated_at'], 'integer'],
+            [['user_id'], 'integer'],
             [['fullname', 'phone'], 'string', 'max' => 255],
             [['cpf_cnpj'], 'string', 'max' => 18],
             [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],

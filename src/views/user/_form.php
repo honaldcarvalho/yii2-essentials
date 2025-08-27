@@ -15,40 +15,6 @@ use yii\bootstrap5\ActiveForm;
     'id' => 'user-profile-form',
     'enableAjaxValidation' => false,
 ]); ?>
-
-    <div class="card mb-4">
-        <div class="card-header"><strong><?= Yii::t('app', 'User') ?></strong></div>
-        <div class="card-body">
-            <?= $form->field($model, 'username')->textInput(['maxlength' => true]) ?>
-            <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
-
-            <?php
-            // Campos de senha (virtuais)
-            echo $form->field($model, 'password')->passwordInput(['maxlength' => true])
-                ->hint($model->isNewRecord
-                    ? Yii::t('app', 'At least 6 characters.')
-                    : Yii::t('app', 'Leave blank to keep the current password.')
-                );
-
-            echo $form->field($model, 'password_confirm')->passwordInput(['maxlength' => true])
-                ->hint($model->isNewRecord
-                    ? Yii::t('app', 'Repeat the password for confirmation.')
-                    : Yii::t('app', 'Fill only if you are changing the password.')
-                );
-            ?>
-    
-            <?= $form->field($model, 'status')->dropDownList([
-                User::STATUS_ACTIVE => Yii::t('app', 'Active'),
-                User::STATUS_DELETED => Yii::t('app', 'Deleted'),
-                User::STATUS_INACTIVE => Yii::t('app', 'Inactive'),
-            ]) ?>
-
-            <?php if ($model->hasAttribute('language_id')): ?>
-                <?= $form->field($model, 'language_id')->textInput() ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
     <div class="card mb-4">
         <div class="card-header"><strong><?= Yii::t('app', 'Profile') ?></strong></div>
         <div class="card-body">
@@ -86,6 +52,39 @@ use yii\bootstrap5\ActiveForm;
                 <?= $form->field($profile, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark']) ?>
             <?php endif; ?>
 
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header"><strong><?= Yii::t('app', 'User') ?></strong></div>
+        <div class="card-body">
+            <?= $form->field($model, 'username')->textInput(['maxlength' => true]) ?>
+            <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
+
+            <?php
+            // Campos de senha (virtuais)
+            echo $form->field($model, 'password')->passwordInput(['maxlength' => true])
+                ->hint($model->isNewRecord
+                    ? Yii::t('app', 'At least 6 characters.')
+                    : Yii::t('app', 'Leave blank to keep the current password.')
+                );
+
+            echo $form->field($model, 'password_confirm')->passwordInput(['maxlength' => true])
+                ->hint($model->isNewRecord
+                    ? Yii::t('app', 'Repeat the password for confirmation.')
+                    : Yii::t('app', 'Fill only if you are changing the password.')
+                );
+            ?>
+    
+            <?= $form->field($model, 'status')->dropDownList([
+                User::STATUS_ACTIVE => Yii::t('app', 'Active'),
+                User::STATUS_DELETED => Yii::t('app', 'Deleted'),
+                User::STATUS_INACTIVE => Yii::t('app', 'Inactive'),
+            ]) ?>
+
+            <?php if ($model->hasAttribute('language_id')): ?>
+                <?= $form->field($model, 'language_id')->textInput() ?>
+            <?php endif; ?>
         </div>
     </div>
 
