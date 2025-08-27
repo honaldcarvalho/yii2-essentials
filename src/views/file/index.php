@@ -110,6 +110,7 @@ $this->registerJs(<<<JS
   // -------- Delete individual --------
   $(document).on('click','[data-action="file-delete"]', async function(e){
     e.preventDefault();
+    e.stopImmediatePropagation();
     const url = $(this).attr('href') || $(this).data('url');
     const ok = await Swal.fire({
       title: 'Confirmar',
@@ -262,6 +263,21 @@ $delete_files_button[] =
                   [
                       'class' => \croacworks\essentials\components\gridview\ActionColumnCustom::class,
                       'contentOptions' => ['style'=>'white-space:nowrap;'],
+                      'template' => '{view} {update} {ajax-delete}',
+
+                      'buttons' => [
+                          'ajax-delete' => function ($url, $model) {
+                              $url = \yii\helpers\Url::to(['/file/delete', 'id' => $model->id]);
+                              return \yii\helpers\Html::a('<i class="fas fa-trash"></i>', $url, [
+                                  'title'        => Yii::t('app', 'Delete'),
+                                  'class'        => 'btn btn-sm btn-outline-danger',
+                                  'data-action'  => 'file-delete', // <- nosso handler
+                                  'data-pjax'    => 0,             // não deixe o PJAX interceptar
+                                  'data-method'  => false,         // <- desativa handler padrão do Yii
+                                  'data-confirm' => false,         // <- desativa confirm padrão do Yii
+                              ]);
+                          },
+                      ],
                   ],
               ],
           ]); ?>

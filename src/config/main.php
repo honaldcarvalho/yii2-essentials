@@ -172,6 +172,7 @@ $config = [
                     'rest/cron'
                 ], 'common'),
                 [
+                    'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
                     "page/show/<id:\w+>" => "page/show",

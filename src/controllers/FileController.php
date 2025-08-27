@@ -299,4 +299,85 @@ class FileController extends AuthorizationController
             'failed'      => $failed,
         ];
     }
+
+    /**
+     * Ex.: GET /f/<slug>
+     */
+    public function actionOpen(string $slug)
+    {
+        /** @var File|null $file */
+        $file = File::find()->where(['slug' => $slug])->one();
+        if (!$file) {
+            throw new NotFoundHttpException('Link inválido ou arquivo não encontrado.');
+        }
+
+        $abs = Yii::getAlias('@webroot') . $file->path;
+
+        if (!$abs || !is_file($abs)) {
+            // Loga para facilitar debug em prod
+            Yii::error([
+                'msg'       => 'Arquivo indisponível',
+                'file_id'   => $file->id ?? null,
+                'path'      => $file->path ?? null,
+                'webroot'   => Yii::getAlias('@webroot'),
+                'candidates'=> $this->lastPathCandidates ?? [],
+            ], __METHOD__);
+
+            throw new NotFoundHttpException('Arquivo indisponível.');
+        }
+
+        // Se expirou, ainda serve nesta request e já renova slug +1 dia p/ próximos acessos
+        $now     = time();
+        $expired = !empty($file->expires_at) && (int)$file->expires_at < $now;
+        if ($expired) {
+            $this->rotateSlugAndRenew($file);
+        }
+
+        // Descobre mime (ou derive de extensão, se preferir)
+        $mime = @mime_content_type($abs) ?: ($file->mime ?? 'application/octet-stream');
+
+        $res = Yii::$app->response;
+        $res->format = \yii\web\Response::FORMAT_RAW;
+        $res->headers->set('Content-Type', $mime);
+        $res->headers->set('Content-Disposition', 'inline; filename="'.basename($abs).'"');
+        $res->headers->set('Cache-Control', 'no-store, private, max-age=0');
+        $res->headers->set('Pragma', 'no-cache');
+
+        // Caso use mod_xsendfile, troque as 2 linhas abaixo pelo header X-Sendfile
+        return file_get_contents($abs);
+    }
+
+    /** Gera novo slug e renova expiração (+1 dia) */
+    protected function rotateSlugAndRenew(File $file): void
+    {
+        $newSlug = $this->generateUniqueSlug(32);
+        $newExp  = time() + 3600; // +1 hora
+
+        try {
+            $file->updateAttributes([
+                'slug'       => $newSlug,
+                'expires_at' => $newExp,
+            ]);
+        } catch (\Throwable $e) {
+            Yii::error(['slug_rotate_fail' => $e->getMessage(), 'file_id' => $file->id], __METHOD__);
+        }
+    }
+
+    /** Slug único checando colisão */
+    protected function generateUniqueSlug(int $len = 32): string
+    {
+        do {
+            $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            $n = strlen($alphabet);
+            $s = '';
+            for ($i = 0; $i < $len; $i++) {
+                $s .= $alphabet[random_int(0, $n - 1)];
+            }
+            $candidate = $s;
+        } while (File::find()->where(['slug' => $candidate])->exists());
+        return $candidate;
+    }
+
+    /** ---------- RESOLUÇÃO CORRETA DO CAMINHO FÍSICO ---------- */
+    private array $lastPathCandidates = [];
 }
