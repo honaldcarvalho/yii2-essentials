@@ -1,6 +1,7 @@
 <?php
 
 use croacworks\essentials\components\gridview\ActionColumnCustom;
+use croacworks\essentials\controllers\RoleController;
 use croacworks\essentials\widgets\AppendModel;
 use yii\grid\GridView;
 use yii\helpers\Html;
@@ -15,6 +16,67 @@ $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Menus'), 'url' => ['
 $this->params['breadcrumbs'][] = $this->title;
 
 \yii\web\YiiAsset::register($this);
+$script = <<< JS
+    jQuery("#grid-menu .table tbody").sortable({
+        update: function(event, ui) {
+            const tbody = $(this); // <- só esse tbody
+            let items  = [];
+
+            $('#overlay').show();
+
+            tbody.find("tr").each(function () {
+                items.push($(this).attr("data-key"));
+            });
+
+            $.ajax({
+            method: "POST",
+            url: "/menu/order",
+            data: {
+                items: items,
+                modelClass: "croacworks\\essentials\\models\\SysMenu",
+                field: "order"
+            }
+            }).done(function() {
+                toastr.success("Ordem atualizada");
+            }).fail(function() {
+                toastr.error("Erro ao atualizar a ordem. Recarregue a página");
+            }).always(function(){
+                $('#overlay').hide();
+            });
+        }
+    });
+  $('#submit-auto-add').on('click', function() {
+    const controller = $('#controller').val().trim();
+    const action = $('#action').val().trim() || 'index';
+
+    if (!controller) {
+        toastr.error('Informe o controller.');
+        return;
+    }
+
+    $('#submit-auto-add').prop('disabled', true);
+
+    $.ajax({
+        url: '/menu/auto-add',
+        method: 'GET',
+        data: { controller, action },
+        success: function(response) {
+            location.reload();
+        },
+        error: function(xhr) {
+            const msg = xhr.responseText || 'Erro ao adicionar menu.';
+            toastr.error(msg);
+        },
+        complete: function() {
+            $('#submit-auto-add').prop('disabled', false);
+            $('#modal-auto-add').modal('hide');
+        }
+    });
+});
+
+JS;
+$controllers = RoleController::getAllControllers(); // FQCNs
+$this::registerJs($script, $this::POS_END);
 
 ?>
 
@@ -76,13 +138,11 @@ $this->params['breadcrumbs'][] = $this->title;
         'title' => Yii::t('app', 'Folders'),
         'attactModel' => 'SysMenu',
         'controller' => 'menu',
+        'uniqueId' => 'menu',
         'attactClass' => 'croacworks\\essentials\\models\\SysMenu',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getChildren(),
         ]),
-        'order' => true,
-        'orderModel' => 'SysMenu',
-        'orderField' => 'order',
         'showFields' => [
             [
                 'attribute' => 'label',
