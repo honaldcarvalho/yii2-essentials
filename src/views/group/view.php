@@ -90,7 +90,7 @@ $buttons[] =
             ],
             [
                 'name' => 'user_id',
-                'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->where(['status' => 1])->asArray()->all(),
+                'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->where(['status' => User::STATUS_ACTIVE])->asArray()->all(),
                 'type' => 'select2'
             ],
 
