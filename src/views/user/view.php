@@ -31,8 +31,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'header' => 'Preview',
                 'format' => 'raw',
                 'value' => function ($model) {
-                    if ($model->file) {
-                        return Html::a("<img class='brand-image img-circle elevation-3' width='50' src='{$model->url}' />",Yii::getAlias('@web').$model->url,
+                    if ($model->profile->file) {
+                        return Html::a("<img class='brand-image img-circle elevation-3' width='50' src='{$model->profile->url}' />",
+                        Yii::getAlias('@web').$model->profile->url,
                         ['class'=>'btn btn-outline-secondary',"data-fancybox "=>"", "title"=>\Yii::t('app','View')]);
                     }
                 }
