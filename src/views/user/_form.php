@@ -13,7 +13,7 @@ use yii\widgets\ActiveForm;
 <div class="user-form">
 <?php $form = ActiveForm::begin([
     'id' => 'user-profile-form',
-    'enableAjaxValidation' => true,
+    'enableAjaxValidation' => false,
 ]); ?>
 
     <div class="card mb-4">

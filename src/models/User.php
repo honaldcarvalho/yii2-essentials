@@ -16,8 +16,8 @@ use Yii;
  * @property string $access_token
  * @property string|null $token_validate
  * @property string|null $password_reset_token
- * @property int $created_at
- * @property int $updated_at
+ * @property string $created_at
+ * @property string $updated_at
  * @property int $status
  *
  * @property Log[] $logs
@@ -43,13 +43,11 @@ class User extends Account
         return [
             [['group_id', 'password_reset_token'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['group_id','created_at', 'updated_at', 'status'], 'integer'],
+            [['group_id', 'status'], 'integer'],
 
-            // IMPORTANTE: não exigir password_hash diretamente
-            // Remover 'password_hash' do required aqui:
-            [['username', 'email'], 'required','on'=>['create','update']],
+            [['email'], 'required','on'=>['create','update']],
 
-            [['token_validate'], 'safe'],
+            [['token_validate','created_at', 'updated_at'], 'safe'],
             [['username'], 'string', 'max' => 64],
             [['email', 'password_reset_token'], 'string', 'max' => 190],
             [['password_hash'], 'string', 'max' => 255],
