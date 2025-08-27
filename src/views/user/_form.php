@@ -72,10 +72,10 @@ use yii\widgets\ActiveForm;
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
 
-            <?= $form->field($model, 'phone')->widget(\yii\widgets\MaskedInput::class, [
+            <?= $form->field($profile, 'phone')->widget(\yii\widgets\MaskedInput::class, [
                 'mask' => '(99) 9 9999-9999',
             ]) ?>
-            <?= $form->field($model, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
+            <?= $form->field($profile, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
                 Language::find()
                     ->select('id,name')->asArray()->all(),
                 'id',
