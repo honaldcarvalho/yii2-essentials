@@ -88,7 +88,7 @@ $buttons[] =
             ],
             [
                 'name' => 'user_id',
-                'value' => User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
+                'value' => yii\helpers\ArrayHelper::map(User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),'id','name'),
                 'type' => 'select2'
             ],
 
