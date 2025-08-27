@@ -49,7 +49,7 @@ class DefaultButtons extends Widget
         
         $show = true;
         if($this->verGroup){
-            if($this->model != null && !in_array($this->model->group_id, AuthorizationController::getUserGroups())){
+            if($this->model != null && $this->model->hasAttribute('group_id') && !in_array($this->model->group_id, AuthorizationController::getUserGroups())){
                 $show = false;
             }
         }

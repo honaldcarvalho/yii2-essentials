@@ -20,6 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
     </p>
     <?php Pjax::begin(); ?>
 
+
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
@@ -27,7 +28,6 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'name',
             'status:boolean',
-
             ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom'],
         ],
     ]); ?>
