@@ -13915,8 +13915,90 @@ textarea.form-control-lg {
   margin-top: .25rem;
   border-radius: var(--cui-border-radius-sm);
 }
+/***
+ ---- FORM CONTROL ----
+*/
 
 .help-block{
   color: var(--cui-red);
 }
 
+.hint-block {
+  color: #6b7785;
+}
+
+/* Focus padrão para qualquer .form-control */
+.form-control:focus,
+.select2-container--default .select2-selection:focus {
+  color: var(--cui-body-color);
+  background-color: var(--cui-body-bg);
+  border-color: var(--cui-primary);
+  outline: 0;
+  box-shadow: 0 0 0 var(--cui-focus-ring-width) var(--cui-focus-ring-color);
+}
+
+/* Estado válido */
+.form-control.is-valid,
+.was-validated .form-control:valid {
+  border-color: var(--cui-form-valid-border-color);
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: var(--cui-form-valid-icon, none);
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-valid:focus,
+.was-validated .form-control:valid:focus {
+  border-color: var(--cui-form-valid-border-color);
+  box-shadow: 0 0 0 var(--cui-focus-ring-width) rgba(var(--cui-success-rgb), var(--cui-focus-ring-opacity));
+}
+
+.valid-feedback,
+.valid-tooltip {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: .875rem;
+  color: var(--cui-form-valid-color);
+}
+
+.was-validated .form-control:valid ~ .valid-feedback,
+.was-validated .form-control:valid ~ .valid-tooltip,
+.form-control.is-valid ~ .valid-feedback,
+.form-control.is-valid ~ .valid-tooltip {
+  display: block;
+}
+
+/* Estado inválido */
+.form-control.is-invalid,
+.was-validated .form-control:invalid {
+  border-color: var(--cui-form-invalid-border-color);
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: var(--cui-form-invalid-icon, none);
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid:focus,
+.was-validated .form-control:invalid:focus {
+  border-color: var(--cui-form-invalid-border-color);
+  box-shadow: 0 0 0 var(--cui-focus-ring-width) rgba(var(--cui-danger-rgb), var(--cui-focus-ring-opacity));
+}
+
+.invalid-feedback,
+.invalid-tooltip {
+  display: none;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: .875rem;
+  color: var(--cui-form-invalid-color);
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-control:invalid ~ .invalid-tooltip,
+.form-control.is-invalid ~ .invalid-feedback,
+.form-control.is-invalid ~ .invalid-tooltip {
+  display: block;
+}
