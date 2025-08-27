@@ -6,6 +6,7 @@ use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\controllers\AuthController;
 use croacworks\essentials\controllers\RoleController;
 use yii\bootstrap5\Html;
+use yii\widgets\Pjax;
 
 /* @var $this yii\web\View */
 /* @var $searchModel croacworks\essentials\models\MenuSearch */
@@ -73,7 +74,7 @@ $this::registerJs($script, $this::POS_END);
 
                     <?php // echo $this->render('_search', ['model' => $searchModel]); 
                     ?>
-
+                    <?php Pjax::begin(['id'=>'grid-menu']); ?>
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
                         'filterModel'  => $searchModel,
@@ -108,7 +109,7 @@ $this::registerJs($script, $this::POS_END);
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => ['class' => 'yii\bootstrap5\LinkPager'],
                     ]); ?>
-
+                    <?php Pjax::end(); ?>
 
                 </div>
                 <!--.card-body-->
