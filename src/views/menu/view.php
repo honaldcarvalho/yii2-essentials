@@ -116,12 +116,15 @@ $this::registerJs($script, $this::POS_END);
 
     <?= AppendModel::widget([
         'title' => Yii::t('app', 'Folders'),
-        'attactModel' => 'Folder',
-        'controller' => 'folder',
-        'attactClass' => 'croacworks\\essentials\\models\\Folder',
+        'attactModel' => 'SysMenu',
+        'controller' => 'menu',
+        'attactClass' => 'croacworks\\essentials\\models\\SysMenu',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getChildren(),
         ]),
+        'order' => true,
+        'orderModel' => 'SysMenu',
+        'orderField' => 'order',
         'showFields' => [
             [
                 'attribute' => 'label',
