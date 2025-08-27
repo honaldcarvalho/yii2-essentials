@@ -112,7 +112,21 @@ $this::registerJs($script, $this::POS_END);
         'showFields' => [
             [
                 'attribute' => 'label',
-                'label' => 'Menu',
+
+                [
+                    'attribute' => 'label',
+                    'label' => 'Menu',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        /** @var \croacworks\essentials\models\SysMenu $model */
+                        $count = $model->getChildren()->count();
+                        $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
+                        return \yii\helpers\Html::a(
+                            \yii\helpers\Html::encode($model->label) . $badge,
+                            ['view', 'id' => $model->id]
+                        );
+                    }
+                ],
                 'format' => 'raw',
                 'value' => function ($model) {
                     /** @var \croacworks\essentials\models\SysMenu $model */
