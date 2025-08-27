@@ -270,11 +270,11 @@ $delete_files_button[] =
                               $url = \yii\helpers\Url::to(['/file/delete', 'id' => $model->id]);
                               return \yii\helpers\Html::a('<i class="fas fa-trash"></i>', $url, [
                                   'title'        => Yii::t('app', 'Delete'),
-                                  'class'        => 'btn btn-sm btn-outline-danger',
-                                  'data-action'  => 'file-delete', // <- nosso handler
-                                  'data-pjax'    => 0,             // não deixe o PJAX interceptar
-                                  'data-method'  => false,         // <- desativa handler padrão do Yii
-                                  'data-confirm' => false,         // <- desativa confirm padrão do Yii
+                                  'class'        => 'btn btn-outline-danger',
+                                  'data-action'  => 'file-delete',
+                                  'data-pjax'    => 0,            
+                                  'data-method'  => false,        
+                                  'data-confirm' => false,
                               ]);
                           },
                       ],
