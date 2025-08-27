@@ -26,6 +26,17 @@ $this->params['breadcrumbs'][] = $this->title;
             'group.name:text:'.Yii::t('app', 'Group'),
             #'language.name:text:'.Yii::t('app', 'Language'),
             #'theme',
+            [
+                'attribute'=>'file_id',
+                'header' => 'Preview',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    if ($model->file) {
+                        return Html::a("<img class='brand-image img-circle elevation-3' width='50' src='{$model->url}' />",Yii::getAlias('@web').$model->url,
+                        ['class'=>'btn btn-outline-secondary',"data-fancybox "=>"", "title"=>\Yii::t('app','View')]);
+                    }
+                }
+            ],
             'username',
             'email:email',
             'created_at:datetime',
