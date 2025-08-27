@@ -231,14 +231,23 @@ class AppendModel extends \yii\bootstrap5\Widget
         );
 
         Yii::$app->view->registerJs(<<<JS
-        
-        let modal_{$this->attactModel} = null;
 
-        modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
-            keyboard: true
+        $(function(){
+            let modal_{$this->attactModel} = null;
+
+            modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
+                keyboard: true
+            });
+            $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
+            
+            $(document).on('pjax:start', function() {
+                $('#overlay-{$this->uniqueId}').show();
+            });
+            $(document).on('pjax:complete', function() {
+                $('#overlay-{$this->uniqueId}').hide();
+            });
+            Fancybox.bind("[data-fancybox]");
         });
-        $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
-
         onPjaxReady((root) => {
 
             function clearForms{$this->attactModel}() {
@@ -404,16 +413,6 @@ class AppendModel extends \yii\bootstrap5\Widget
                 }
                 return false;
             }
-
-            $(function(){
-                $(document).on('pjax:start', function() {
-                    $('#overlay-{$this->uniqueId}').show();
-                });
-                $(document).on('pjax:complete', function() {
-                    $('#overlay-{$this->uniqueId}').hide();
-                });
-                Fancybox.bind("[data-fancybox]");
-            });
         });
         JS);
         $field_str = '';
