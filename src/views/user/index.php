@@ -1,11 +1,10 @@
 <?php
 
 use croacworks\essentials\components\gridview\ActionColumnCustom;
-use croacworks\essentials\models\User;
 use yii\helpers\Html;
-use croacworks\essentials\yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
+
 /** @var yii\web\View $this */
 /** @var app\models\Ucroacworks\essentials\ */
 /** @var yii\data\ActiveDataProvider $dataProvider */
@@ -16,11 +15,9 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="user-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
-
     <p>
         <?= Html::a(Yii::t('app', 'Create User'), ['create'], ['class' => 'btn btn-success']) ?>
     </p>
-
     <?php Pjax::begin(); ?>
     <?php // echo $thcroacworks\essentials\['model' => $searchModel]); ?>
 
@@ -51,4 +48,3 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php Pjax::end(); ?>
 
 </div>
-croacworks\essentials\croacworks\essentials\

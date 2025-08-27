@@ -3,6 +3,7 @@
 use yii\widgets\DetailView;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\AppendModel;
+use yii\bootstrap5\Html;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Group */
@@ -29,30 +30,20 @@ $buttons[] =
 
 ?>
 
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?php //croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model,'extras'=>$buttons,'verGroup'=>false]) 
-                        ?>
-                    </p>
-                    <?= DetailView::widget([
-                        'model' => $model,
-                        'attributes' => [
-                            'id',
-                            'name',
-                            'status:boolean',
-                        ],
-                    ]) ?>
-                </div>
-            </div>
-            <!--.row-->
-        </div>
-        <!--.card-body-->
-    </div>
-    <!--.card-->
+<div class="user-update">
+    <h1><?= Html::encode($this->title) ?></h1>
+    <p>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model,'extras'=>$buttons])  ?>
+    </p>
+    <?= DetailView::widget([
+        'model' => $model,
+        'attributes' => [
+            'id',
+            'name',
+            'status:boolean',
+        ],
+    ]) ?>
+
 
     <?= AppendModel::widget([
         'title' => Yii::t('app', 'Users'),
@@ -88,7 +79,7 @@ $buttons[] =
             ],
             [
                 'name' => 'user_id',
-                'value' => yii\helpers\ArrayHelper::map(User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),'id','name'),
+                'value' => yii\helpers\ArrayHelper::map(User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(), 'id', 'name'),
                 'type' => 'select2'
             ],
 
