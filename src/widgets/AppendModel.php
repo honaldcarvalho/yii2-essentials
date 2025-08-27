@@ -232,9 +232,9 @@ class AppendModel extends \yii\bootstrap5\Widget
 
         Yii::$app->view->registerJs(<<<JS
 
-        $(function(){
-            let modal_{$this->attactModel} = null;
+        let modal_{$this->attactModel} = null;
 
+        $(function(){
             modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
                 keyboard: true
             });
