@@ -3,6 +3,7 @@
 /* @var $model croacworks\essentials\models\User */
 /* @var $profile croacworks\essentials\models\UserProfile */
 
+use croacworks\essentials\models\Language;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
@@ -69,12 +70,17 @@ use yii\widgets\ActiveForm;
                 ]) ?>
             </div>
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
-            <?= $form->field($profile, 'phone')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
 
-            <?php if ($profile->hasAttribute('language_id')): ?>
-                <?= $form->field($profile, 'language_id')->textInput() ?>
-            <?php endif; ?>
+            <?= $form->field($model, 'phone')->widget(\yii\widgets\MaskedInput::class, [
+                'mask' => '(99) 9 9999-9999',
+            ]) ?>
+            <?= $form->field($model, 'language_id')->dropDownList(yii\helpers\ArrayHelper::map(
+                Language::find()
+                    ->select('id,name')->asArray()->all(),
+                'id',
+                'name'
+            )) ?>
 
             <?php if ($profile->hasAttribute('theme')): ?>
                 <?= $form->field($profile, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark']) ?>
