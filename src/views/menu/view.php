@@ -83,7 +83,20 @@ $this::registerJs($script, $this::POS_END);
                                         return Html::a($model->menu->label, Url::toRoute([Yii::getAlias('@web/menu/view'), 'id' => $model->parent_id]));
                                 }
                             ],
-                            'label',
+                            [
+                                'attribute' => 'label',
+                                'label' => 'Menu',
+                                'format' => 'raw',
+                                'value' => function ($model) {
+                                    /** @var \croacworks\essentials\models\SysMenu $model */
+                                    $count = $model->getChildren()->count();
+                                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
+                                    return \yii\helpers\Html::a(
+                                        \yii\helpers\Html::encode($model->label) . $badge,
+                                        ['view', 'id' => $model->id]
+                                    );
+                                }
+                            ],
                             'icon',
                             'visible',
                             'url:url',
@@ -111,20 +124,8 @@ $this::registerJs($script, $this::POS_END);
         ]),
         'showFields' => [
             [
-                [
-                    'attribute' => 'label',
-                    'label' => 'Menu',
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        /** @var \croacworks\essentials\models\SysMenu $model */
-                        $count = $model->getChildren()->count();
-                        $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
-                        return \yii\helpers\Html::a(
-                            \yii\helpers\Html::encode($model->label) . $badge,
-                            ['view', 'id' => $model->id]
-                        );
-                    }
-                ],
+                'attribute' => 'label',
+                'label' => 'Menu',
                 'format' => 'raw',
                 'value' => function ($model) {
                     /** @var \croacworks\essentials\models\SysMenu $model */
