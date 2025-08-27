@@ -3,6 +3,8 @@
 namespace croacworks\essentials\models;
 
 use Yii;
+use yii\behaviors\TimestampBehavior;
+use yii\db\Expression;
 
 /**
  * This is the model class for table "users".
@@ -38,6 +40,18 @@ class User extends Account
         return 'users';
     }
 
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
+                'value' => new Expression('NOW()'),
+            ],
+        ]);
+    }
+    
     public function rules()
     {
         return [

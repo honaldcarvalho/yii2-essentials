@@ -14,6 +14,7 @@ class CoreuiAsset extends AssetBundle
         //'vendors/@coreui/chartjs/css/coreui-chartjs.css',
         'css/style.css',
         'css/custom.css',
+        'css/forms.css',
     ];
     
     public $js = [

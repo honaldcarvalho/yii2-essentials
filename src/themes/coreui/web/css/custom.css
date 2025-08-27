@@ -13915,3 +13915,8 @@ textarea.form-control-lg {
   margin-top: .25rem;
   border-radius: var(--cui-border-radius-sm);
 }
+
+.help-block{
+  color: var(--cui-red);
+}
+
