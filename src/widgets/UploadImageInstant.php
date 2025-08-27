@@ -299,396 +299,396 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
 }
 .btn-group .btn, .btn-group label.btn { padding-top: .5rem; padding-bottom: .5rem; }
 CSS;
+
     // ===== JS =====
-    Yii::$app->view->registerJs(<<<JS
-    onPjaxReady((root) => {
-    (function(){
-      // ---- AUTH HELPERS (modo 'instant') ----
-      const AUTH_TOKEN_FROM_PHP = '{$authToken}';
-      const AUTH_META_NAME      = '{$authMetaName}';
-      const AUTH_STORAGE_KEY    = '{$authStorageKey}';
-      const AUTH_COOKIE_NAME    = '{$authCookieName}';
-      const WITH_CREDS          = '{$withCreds}';
-      const AUTH_QUERY_FALLBACK = {$authQueryFallback};
-      const MODEL_CLASS = '{$modelClass}';
-      const MODEL_ID    = '{$modelId}';
-      const LINK_ON_SEND= {$linkOnSend};
-      const DELETE_OLD  = {$deleteOld};
+    $script = <<<JS
+(function(){
+  // ---- AUTH HELPERS (modo 'instant') ----
+  const AUTH_TOKEN_FROM_PHP = '{$authToken}';
+  const AUTH_META_NAME      = '{$authMetaName}';
+  const AUTH_STORAGE_KEY    = '{$authStorageKey}';
+  const AUTH_COOKIE_NAME    = '{$authCookieName}';
+  const WITH_CREDS          = '{$withCreds}';
+  const AUTH_QUERY_FALLBACK = {$authQueryFallback};
+  const MODEL_CLASS = '{$modelClass}';
+  const MODEL_ID    = '{$modelId}';
+  const LINK_ON_SEND= {$linkOnSend};
+  const DELETE_OLD  = {$deleteOld};
 
-      function getCookie(name){
-        return document.cookie
-          .split(';').map(s=>s.trim())
-          .find(s=>s.startsWith(name+'='))
-          ?.split('=').slice(1).join('=') || '';
+  function getCookie(name){
+    return document.cookie
+      .split(';').map(s=>s.trim())
+      .find(s=>s.startsWith(name+'='))
+      ?.split('=').slice(1).join('=') || '';
+  }
+  function getAuthToken(){
+    const meta  = document.querySelector(`meta[name="\${AUTH_META_NAME}"]`)?.content?.trim();
+    const php   = AUTH_TOKEN_FROM_PHP || '';
+    const ls    = localStorage.getItem(AUTH_STORAGE_KEY) || '';
+    const wnd   = window.AUTH_TOKEN || '';
+    const cook  = decodeURIComponent(getCookie(AUTH_COOKIE_NAME) || '');
+    return meta || php || ls || wnd || cook || '';
+  }
+  function commonHeaders() {
+    const h = { 'Accept': 'application/json' };
+    const t = getAuthToken();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+  function withAccessToken(url){
+    if (!AUTH_QUERY_FALLBACK) return url;
+    const t = getAuthToken();
+    if (!t) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return url + sep + 'access-token=' + encodeURIComponent(t);
+  }
+
+  // ---- DOM ----
+  const wrap    = document.getElementById('$wrapId');
+  const photo   = document.getElementById('$photoId');
+  const imageEl = document.getElementById('$imgId');
+  const input   = document.getElementById('$inputId');
+  const overlay = document.getElementById('$overlayId');
+
+  const btnCrop   = document.getElementById('$cropId');
+  const btnSave   = document.getElementById('$saveId');
+  btnSave.style.display = 'none';
+  const btnCancel = document.getElementById('$cancelId');
+  const btnRemove = document.getElementById('$removeBtn');
+
+  const removeHidden = document.getElementById('$removeHiddenId');
+  function setRemoveFlag(v){ if (removeHidden) removeHidden.value = String(v); }
+
+  const modalEl = document.getElementById('$modalId');
+  const modal = new bootstrap.Modal(modalEl, {backdrop:'static', keyboard:false});
+
+  const MODE = '{$mode}';
+  const HIDE_SAVE_BTN = {$hideSaveButton};
+
+  // Input file REAL do modelo
+  const MODEL_INPUT_ID = '{$inputIdPhp}';
+  const MODEL_INPUT_NAME = '{$inputName}';
+
+  function ensureModelFileInput() {
+    let el = document.getElementById(MODEL_INPUT_ID);
+    if (el && el.type === 'file') return el;
+
+    el = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+    if (el) return el;
+
+    const form = wrap.closest('form');
+    if (!form) return null;
+    el = document.createElement('input');
+    el.type = 'file';
+    el.name = MODEL_INPUT_NAME;
+    el.id = MODEL_INPUT_ID;
+    el.style.display = 'none';
+    form.appendChild(el);
+    return el;
+  }
+  const modelFileInput = (MODE === 'defer') ? ensureModelFileInput() : null;
+
+  // No modo 'instant', sincronizamos um hidden [Model][file_id] (para o submit futuro)
+  let hidden = null;
+  if (MODE === 'instant') {
+    // 1) achar/criar um HIDDEN com o mesmo name do atributo do modelo
+    hidden = document.querySelector(`input[type="hidden"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+    if (!hidden) {
+      const form = wrap.closest('form');
+      if (form) {
+        hidden = document.createElement('input');
+        hidden.type  = 'hidden';
+        hidden.name  = MODEL_INPUT_NAME;  // ex.: Captive[file_id]
+        hidden.value = '';
+        form.appendChild(hidden);
       }
-      function getAuthToken(){
-        const meta  = document.querySelector(`meta[name="\${AUTH_META_NAME}"]`)?.content?.trim();
-        const php   = AUTH_TOKEN_FROM_PHP || '';
-        const ls    = localStorage.getItem(AUTH_STORAGE_KEY) || '';
-        const wnd   = window.AUTH_TOKEN || '';
-        const cook  = decodeURIComponent(getCookie(AUTH_COOKIE_NAME) || '');
-        return meta || php || ls || wnd || cook || '';
-      }
-      function commonHeaders() {
-        const h = { 'Accept': 'application/json' };
-        const t = getAuthToken();
-        if (t) h['Authorization'] = 'Bearer ' + t;
-        return h;
-      }
-      function withAccessToken(url){
-        if (!AUTH_QUERY_FALLBACK) return url;
-        const t = getAuthToken();
-        if (!t) return url;
-        const sep = url.includes('?') ? '&' : '?';
-        return url + sep + 'access-token=' + encodeURIComponent(t);
-      }
+    }
+    // 2) se houver <input type="file" name="Model[file_id]">, RENOMEIE para não conflitar
+    const fileSameName = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
+    if (fileSameName) {
+      fileSameName.name = MODEL_INPUT_NAME + '__ignore'; // evita colisão no submit
+    }
+  }
+  
+  // ---- CONFIG ----
+  const CSRF_PARAM = '{$csrfParam}';
+  const CSRF_TOKEN = '{$csrfToken}';
 
-      // ---- DOM ----
-      const wrap    = document.getElementById('$wrapId');
-      const photo   = document.getElementById('$photoId');
-      const imageEl = document.getElementById('$imgId');
-      const input   = document.getElementById('$inputId');
-      const overlay = document.getElementById('$overlayId');
+  const MAX_W = {$maxW};
+  const MAX_MB = {$maxMB};
+  const MAX_BYTES = MAX_MB * 1024 * 1024;
+  const ASPECT = (function(){ try { return eval('{$aspect}'); } catch(e){ return NaN; }})();
 
-      const btnCrop   = document.getElementById('$cropId');
-      const btnSave   = document.getElementById('$saveId');
-      btnSave.style.display = 'none';
-      const btnCancel = document.getElementById('$cancelId');
-      const btnRemove = document.getElementById('$removeBtn');
+  const SEND_URL = '{$sendUrl}';
 
-      const removeHidden = document.getElementById('$removeHiddenId');
-      function setRemoveFlag(v){ if (removeHidden) removeHidden.value = String(v); }
+  const FOLDER_ID   = {$folder};
+  const GROUP_ID    = {$group};
+  const THUMB_ASPECT= {$thumb};
+  const QUALITY     = {$quality};
 
-      const modalEl = document.getElementById('$modalId');
-      const modal = new bootstrap.Modal(modalEl, {backdrop:'static', keyboard:false});
+  const attactClass  = '{$attactClass}';
+  const attactFields = JSON.parse('{$this->jsonSafe($attactFields)}');
 
-      const MODE = '{$mode}';
-      const HIDE_SAVE_BTN = {$hideSaveButton};
+  let tmpFile = null;
+  let cropper = null;
+  let lastSavedFileId = hidden?.value || null;
 
-      // Input file REAL do modelo
-      const MODEL_INPUT_ID = '{$inputIdPhp}';
-      const MODEL_INPUT_NAME = '{$inputName}';
+  function showOverlay(){ overlay.style.display='flex'; }
+  function hideOverlay(){ overlay.style.display='none'; }
 
-      function ensureModelFileInput() {
-        let el = document.getElementById(MODEL_INPUT_ID);
-        if (el && el.type === 'file') return el;
+  function isImage(file){
+    return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file.type);
+  }
 
-        el = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-        if (el) return el;
-
-        const form = wrap.closest('form');
-        if (!form) return null;
-        el = document.createElement('input');
-        el.type = 'file';
-        el.name = MODEL_INPUT_NAME;
-        el.id = MODEL_INPUT_ID;
-        el.style.display = 'none';
-        form.appendChild(el);
-        return el;
-      }
-      const modelFileInput = (MODE === 'defer') ? ensureModelFileInput() : null;
-
-      // No modo 'instant', sincronizamos um hidden [Model][file_id] (para o submit futuro)
-      let hidden = null;
-      if (MODE === 'instant') {
-        // 1) achar/criar um HIDDEN com o mesmo name do atributo do modelo
-        hidden = document.querySelector(`input[type="hidden"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-        if (!hidden) {
-          const form = wrap.closest('form');
-          if (form) {
-            hidden = document.createElement('input');
-            hidden.type  = 'hidden';
-            hidden.name  = MODEL_INPUT_NAME;  // ex.: Captive[file_id]
-            hidden.value = '';
-            form.appendChild(hidden);
+  function compressImage(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if (w > MAX_W || h > MAX_W) {
+            if (w > h) { h = Math.floor(h * MAX_W / w); w = MAX_W; }
+            else { w = Math.floor(w * MAX_W / h); h = MAX_W; }
           }
-        }
-        // 2) se houver <input type="file" name="Model[file_id]">, RENOMEIE para não conflitar
-        const fileSameName = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-        if (fileSameName) {
-          fileSameName.name = MODEL_INPUT_NAME + '__ignore'; // evita colisão no submit
-        }
-      }
-      
-      // ---- CONFIG ----
-      const CSRF_PARAM = '{$csrfParam}';
-      const CSRF_TOKEN = '{$csrfToken}';
-
-      const MAX_W = {$maxW};
-      const MAX_MB = {$maxMB};
-      const MAX_BYTES = MAX_MB * 1024 * 1024;
-      const ASPECT = (function(){ try { return eval('{$aspect}'); } catch(e){ return NaN; }})();
-
-      const SEND_URL = '{$sendUrl}';
-
-      const FOLDER_ID   = {$folder};
-      const GROUP_ID    = {$group};
-      const THUMB_ASPECT= {$thumb};
-      const QUALITY     = {$quality};
-
-      const attactClass  = '{$attactClass}';
-      const attactFields = JSON.parse('{$this->jsonSafe($attactFields)}');
-
-      let tmpFile = null;
-      let cropper = null;
-      let lastSavedFileId = hidden?.value || null;
-
-      function showOverlay(){ overlay.style.display='flex'; }
-      function hideOverlay(){ overlay.style.display='none'; }
-
-      function isImage(file){
-        return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file.type);
-      }
-
-      function compressImage(file){
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = e => {
-            const img = new Image();
-            img.onload = () => {
-              let w = img.width, h = img.height;
-              if (w > MAX_W || h > MAX_W) {
-                if (w > h) { h = Math.floor(h * MAX_W / w); w = MAX_W; }
-                else { w = Math.floor(w * MAX_W / h); h = MAX_W; }
-              }
-              const canvas = document.createElement('canvas');
-              canvas.width = w; canvas.height = h;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img,0,0,w,h);
-              canvas.toBlob((blob) => {
-                if (!blob) return reject('Falha ao comprimir.');
-                if (blob.size > MAX_BYTES) return reject('Imagem excede ' + MAX_MB + 'MB mesmo após compressão.');
-                resolve(new File([blob], file.name, {type: file.type, lastModified: Date.now()}));
-              }, file.type, 0.85);
-            };
-            img.onerror = () => reject('Erro ao carregar a imagem.');
-            img.src = e.target.result;
-          };
-          reader.onerror = () => reject('Erro ao ler o arquivo.');
-          reader.readAsDataURL(file);
-        });
-      }
-
-      function fitAndCenter() {
-        if (!cropper) return;
-        const cont = cropper.getContainerData();
-        let w, h;
-        if (Number.isFinite(ASPECT)) {
-          w = Math.min(cont.width * 0.92, cont.height * 0.92 * ASPECT);
-          h = w / ASPECT;
-        } else {
-          w = cont.width * 0.92;
-          h = cont.height * 0.92;
-        }
-        cropper.setCropBoxData({
-          width:  w,
-          height: h,
-          left:   (cont.width  - w) / 2,
-          top:    (cont.height - h) / 2
-        });
-      }
-
-      function assignFileToModelInput(file) {
-        if (!modelFileInput) return false;
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        modelFileInput.files = dt.files;
-        return true;
-      }
-
-      async function uploadFinalFile(blobOrFile){
-        const fd = new FormData();
-        const fileName = (tmpFile?.name || 'image.jpg');
-        const file = (blobOrFile instanceof File) ? blobOrFile : new File([blobOrFile], fileName, {type: blobOrFile.type || 'image/jpeg', lastModified: Date.now()});
-        fd.append('file', file);
-        fd.append('save', '1');
-        fd.append('folder_id', String(FOLDER_ID));
-        fd.append('group_id', String(GROUP_ID));
-        fd.append('thumb_aspect', String(THUMB_ASPECT));
-        fd.append('quality', String(QUALITY));
-        fd.append(CSRF_PARAM, CSRF_TOKEN);
-
-        if (LINK_ON_SEND && MODEL_CLASS && MODEL_ID) {
-          fd.append('model_class', MODEL_CLASS);
-          fd.append('model_id', String(MODEL_ID));
-          fd.append('model_field', MODEL_INPUT_NAME.split(']').slice(-2, -1)[0] || 'file_id'); // tenta extrair o nome do atributo
-          fd.append('delete_old', String(DELETE_OLD));
-        }
-
-        if (attactClass && attactFields.length === 2 && MODEL_ID) {
-          const payload = { class_name: attactClass, fields: attactFields, id: MODEL_ID };
-          fd.append('attact_model', JSON.stringify(payload));
-        }
-
-        let urlSend = withAccessToken(SEND_URL);
-
-        const res = await fetch(urlSend, {
-          method: 'POST',
-          body: fd,
-          headers: commonHeaders(),
-          credentials: WITH_CREDS,
-        });
-        if(!res.ok) throw new Error('Falha no upload ('+res.status+').');
-        const json = await res.json();
-        if (!json || json.success !== true) {
-          const msg = (json && json.data) ? JSON.stringify(json.data) : 'Resposta inválida.';
-          throw new Error('Upload não aceito: ' + msg);
-        }
-        return json.data; // modelo File
-      }
-
-      // ---- Eventos ----
-      input.addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if(!files || !files.length) return;
-        tmpFile = files[0];
-        if (!isImage(tmpFile)) { alert('Arquivo inválido.'); return; }
-
-        try{
-          showOverlay();
-          let toPreview;
-          if (tmpFile.type !== 'image/png') {
-            const compressed = await compressImage(tmpFile);
-            toPreview = URL.createObjectURL(compressed);
-            tmpFile = compressed;
-          } else {
-            toPreview = URL.createObjectURL(tmpFile);
-          }
-          imageEl.src = toPreview;
-          btnSave.style.display = 'block';
-          setRemoveFlag(0); // escolheu arquivo → não remover
-          modal.show();
-        } catch(err){
-          alert(err);
-        } finally {
-          hideOverlay();
-        }
-      });
-
-      modalEl.addEventListener('shown.bs.modal', () => {
-        if (cropper) { cropper.destroy(); cropper = null; }
-        cropper = new Cropper(imageEl, {
-          viewMode: 2,
-          aspectRatio: ASPECT,
-          initialAspectRatio: ASPECT,
-          autoCropArea: 1,
-          responsive: true,
-          background: false,
-          dragMode: 'move',
-          zoomOnWheel: true,
-          ready() { setTimeout(fitAndCenter, 0); }
-        });
-        if (HIDE_SAVE_BTN) btnSave?.classList.add('d-none');
-      });
-
-      window.addEventListener('resize', () => {
-        if (modalEl.classList.contains('show')) setTimeout(fitAndCenter, 100);
-      });
-
-      btnCancel.addEventListener('click', () => modal.hide());
-
-      // CORTAR: no 'defer' injeta arquivo e fecha; no 'instant' só atualiza preview
-      btnCrop.addEventListener('click', async () => {
-        if (!cropper) return;
-        try{
-          showOverlay();
-          const canvas = cropper.getCroppedCanvas();
-          const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-          if (!blob) throw new Error('Falha ao gerar recorte.');
-
-          let finalFile = (tmpFile?.type === 'image/png')
-            ? new File([blob], tmpFile.name, {type: blob.type})
-            : await (async () => {
-                const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
-                return await compressImage(f);
-              })();
-
-          // preview sempre
-          photo.src = URL.createObjectURL(finalFile);
-
-          if (MODE === 'defer') {
-            assignFileToModelInput(finalFile); // entrega pro form
-            setRemoveFlag(0); // vai salvar com imagem → não remover
-            document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '$id' }}));
-          }
-          btnSave.style.display = 'block';
-          modal.hide();
-        } catch (err){
-          alert(err.message || err);
-        } finally {
-          hideOverlay();
-        }
-      });
-
-      // SALVAR: no 'defer' faz o mesmo que CORTAR; no 'instant' envia pro servidor
-      btnSave.addEventListener('click', async () => {
-        if (!cropper) return;
-        try{
-          showOverlay();
-          const canvas = cropper.getCroppedCanvas();
-          const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-          if(!blob) throw new Error('Falha ao gerar recorte.');
-
-          let finalFile = (tmpFile?.type === 'image/png')
-            ? new File([blob], tmpFile.name, {type: blob.type})
-            : await (async () => {
-                const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
-                return await compressImage(f);
-              })();
-
-          if (MODE === 'defer') {
-            photo.src = URL.createObjectURL(finalFile);
-            assignFileToModelInput(finalFile);
-            setRemoveFlag(0);
-            modal.hide();
-            return;
-          }
-
-          // instant
-          const saved = await uploadFinalFile(finalFile);
-          lastSavedFileId = saved.id || null;
-          if (saved.url) photo.src = saved.url + '?v=' + Date.now();
-          if (hidden) hidden.value = String(lastSavedFileId ?? '');
-          setRemoveFlag(0); // temos imagem → não remover no submit
-          document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '$id' }}));
-          modal.hide();
-        } catch(err){
-          console.error(err);
-          alert(err.message || err);
-        } finally {
-          hideOverlay();
-        }
-      });
-
-      // REMOVER — agora 100% via Behavior (somente marca a intenção e limpa UI)
-      btnRemove.addEventListener('click', async () => {
-        try{
-          showOverlay();
-
-          // visual
-          photo.src = '<?= addslashes($this->placeholder) ?>';
-          btnSave.style.display = 'none';
-
-          // limpa inputs locais
-          if (modelFileInput) modelFileInput.value = '';
-          if (hidden) hidden.value = '';
-
-          // marca para o Behavior remover no submit
-          setRemoveFlag(1);
-
-          // não removemos no servidor aqui; o Behavior cuida no afterSave
-        } catch(err){
-          console.error(err);
-        } finally {
-          hideOverlay();
-        }
-      });
-
-    })();
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img,0,0,w,h);
+          canvas.toBlob((blob) => {
+            if (!blob) return reject('Falha ao comprimir.');
+            if (blob.size > MAX_BYTES) return reject('Imagem excede ' + MAX_MB + 'MB mesmo após compressão.');
+            resolve(new File([blob], file.name, {type: file.type, lastModified: Date.now()}));
+          }, file.type, 0.85);
+        };
+        img.onerror = () => reject('Erro ao carregar a imagem.');
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject('Erro ao ler o arquivo.');
+      reader.readAsDataURL(file);
     });
-    JS);
+  }
+
+  function fitAndCenter() {
+    if (!cropper) return;
+    const cont = cropper.getContainerData();
+    let w, h;
+    if (Number.isFinite(ASPECT)) {
+      w = Math.min(cont.width * 0.92, cont.height * 0.92 * ASPECT);
+      h = w / ASPECT;
+    } else {
+      w = cont.width * 0.92;
+      h = cont.height * 0.92;
+    }
+    cropper.setCropBoxData({
+      width:  w,
+      height: h,
+      left:   (cont.width  - w) / 2,
+      top:    (cont.height - h) / 2
+    });
+  }
+
+  function assignFileToModelInput(file) {
+    if (!modelFileInput) return false;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    modelFileInput.files = dt.files;
+    return true;
+  }
+
+  async function uploadFinalFile(blobOrFile){
+    const fd = new FormData();
+    const fileName = (tmpFile?.name || 'image.jpg');
+    const file = (blobOrFile instanceof File) ? blobOrFile : new File([blobOrFile], fileName, {type: blobOrFile.type || 'image/jpeg', lastModified: Date.now()});
+    fd.append('file', file);
+    fd.append('save', '1');
+    fd.append('folder_id', String(FOLDER_ID));
+    fd.append('group_id', String(GROUP_ID));
+    fd.append('thumb_aspect', String(THUMB_ASPECT));
+    fd.append('quality', String(QUALITY));
+    fd.append(CSRF_PARAM, CSRF_TOKEN);
+
+    if (LINK_ON_SEND && MODEL_CLASS && MODEL_ID) {
+      fd.append('model_class', MODEL_CLASS);
+      fd.append('model_id', String(MODEL_ID));
+      fd.append('model_field', MODEL_INPUT_NAME.split(']').slice(-2, -1)[0] || 'file_id'); // tenta extrair o nome do atributo
+      fd.append('delete_old', String(DELETE_OLD));
+    }
+
+    if (attactClass && attactFields.length === 2 && MODEL_ID) {
+      const payload = { class_name: attactClass, fields: attactFields, id: MODEL_ID };
+      fd.append('attact_model', JSON.stringify(payload));
+    }
+
+    let urlSend = withAccessToken(SEND_URL);
+
+    const res = await fetch(urlSend, {
+      method: 'POST',
+      body: fd,
+      headers: commonHeaders(),
+      credentials: WITH_CREDS,
+    });
+    if(!res.ok) throw new Error('Falha no upload ('+res.status+').');
+    const json = await res.json();
+    if (!json || json.success !== true) {
+      const msg = (json && json.data) ? JSON.stringify(json.data) : 'Resposta inválida.';
+      throw new Error('Upload não aceito: ' + msg);
+    }
+    return json.data; // modelo File
+  }
+
+  // ---- Eventos ----
+  input.addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if(!files || !files.length) return;
+    tmpFile = files[0];
+    if (!isImage(tmpFile)) { alert('Arquivo inválido.'); return; }
+
+    try{
+      showOverlay();
+      let toPreview;
+      if (tmpFile.type !== 'image/png') {
+        const compressed = await compressImage(tmpFile);
+        toPreview = URL.createObjectURL(compressed);
+        tmpFile = compressed;
+      } else {
+        toPreview = URL.createObjectURL(tmpFile);
+      }
+      imageEl.src = toPreview;
+      btnSave.style.display = 'block';
+      setRemoveFlag(0); // escolheu arquivo → não remover
+      modal.show();
+    } catch(err){
+      alert(err);
+    } finally {
+      hideOverlay();
+    }
+  });
+
+  modalEl.addEventListener('shown.bs.modal', () => {
+    if (cropper) { cropper.destroy(); cropper = null; }
+    cropper = new Cropper(imageEl, {
+      viewMode: 2,
+      aspectRatio: ASPECT,
+      initialAspectRatio: ASPECT,
+      autoCropArea: 1,
+      responsive: true,
+      background: false,
+      dragMode: 'move',
+      zoomOnWheel: true,
+      ready() { setTimeout(fitAndCenter, 0); }
+    });
+    if (HIDE_SAVE_BTN) btnSave?.classList.add('d-none');
+  });
+
+  window.addEventListener('resize', () => {
+    if (modalEl.classList.contains('show')) setTimeout(fitAndCenter, 100);
+  });
+
+  btnCancel.addEventListener('click', () => modal.hide());
+
+  // CORTAR: no 'defer' injeta arquivo e fecha; no 'instant' só atualiza preview
+  btnCrop.addEventListener('click', async () => {
+    if (!cropper) return;
+    try{
+      showOverlay();
+      const canvas = cropper.getCroppedCanvas();
+      const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
+      if (!blob) throw new Error('Falha ao gerar recorte.');
+
+      let finalFile = (tmpFile?.type === 'image/png')
+        ? new File([blob], tmpFile.name, {type: blob.type})
+        : await (async () => {
+            const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
+            return await compressImage(f);
+          })();
+
+      // preview sempre
+      photo.src = URL.createObjectURL(finalFile);
+
+      if (MODE === 'defer') {
+        assignFileToModelInput(finalFile); // entrega pro form
+        setRemoveFlag(0); // vai salvar com imagem → não remover
+        document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '$id' }}));
+      }
+      btnSave.style.display = 'block';
+      modal.hide();
+    } catch (err){
+      alert(err.message || err);
+    } finally {
+      hideOverlay();
+    }
+  });
+
+  // SALVAR: no 'defer' faz o mesmo que CORTAR; no 'instant' envia pro servidor
+  btnSave.addEventListener('click', async () => {
+    if (!cropper) return;
+    try{
+      showOverlay();
+      const canvas = cropper.getCroppedCanvas();
+      const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
+      if(!blob) throw new Error('Falha ao gerar recorte.');
+
+      let finalFile = (tmpFile?.type === 'image/png')
+        ? new File([blob], tmpFile.name, {type: blob.type})
+        : await (async () => {
+            const f = new File([blob], tmpFile?.name || 'image.jpg', {type: blob.type});
+            return await compressImage(f);
+          })();
+
+      if (MODE === 'defer') {
+        photo.src = URL.createObjectURL(finalFile);
+        assignFileToModelInput(finalFile);
+        setRemoveFlag(0);
+        modal.hide();
+        return;
+      }
+
+      // instant
+      const saved = await uploadFinalFile(finalFile);
+      lastSavedFileId = saved.id || null;
+      if (saved.url) photo.src = saved.url + '?v=' + Date.now();
+      if (hidden) hidden.value = String(lastSavedFileId ?? '');
+      setRemoveFlag(0); // temos imagem → não remover no submit
+      document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '$id' }}));
+      modal.hide();
+    } catch(err){
+      console.error(err);
+      alert(err.message || err);
+    } finally {
+      hideOverlay();
+    }
+  });
+
+  // REMOVER — agora 100% via Behavior (somente marca a intenção e limpa UI)
+  btnRemove.addEventListener('click', async () => {
+    try{
+      showOverlay();
+
+      // visual
+      photo.src = '<?= addslashes($this->placeholder) ?>';
+      btnSave.style.display = 'none';
+
+      // limpa inputs locais
+      if (modelFileInput) modelFileInput.value = '';
+      if (hidden) hidden.value = '';
+
+      // marca para o Behavior remover no submit
+      setRemoveFlag(1);
+
+      // não removemos no servidor aqui; o Behavior cuida no afterSave
+    } catch(err){
+      console.error(err);
+    } finally {
+      hideOverlay();
+    }
+  });
+
+})();
+JS;
 
     $view->registerCss($css);
+    $view->registerJs($script, \yii\web\View::POS_END);
 
     $showRemove = ($this->imageUrl !== '') ? '' : 'd-none';
 
