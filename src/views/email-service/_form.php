@@ -29,8 +29,6 @@ use yii\bootstrap5\ActiveForm;
 
     <?= $form->field($model, 'port')->textInput() ?>
 
-    <?= AceEditor::widget([ 'model' => $model, 'attribute' => 'template', 'mode' => 'html', 'theme' => 'twilight', 'height' => '500px', ]); ?>
-
     <div class="form-group">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
     </div>
