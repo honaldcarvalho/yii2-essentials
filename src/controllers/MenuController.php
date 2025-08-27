@@ -185,20 +185,59 @@ class MenuController extends AuthorizationController
         return $this->redirect(['index']);
     }
 
-    public function actionOrderSysMenu()
+    public function actionOrderModel()
     {
-        $sysmenus = [];
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        if (Yii::$app->request->isPost) {
-
-            $sysmenus = $_POST['items'];
-
-            foreach ($sysmenus as $key => $value) {
-                $rst = Yii::$app->db->createCommand()->update('sysmenus', ['order' => $key + 1], "id = {$value}")->execute();
-                echo $rst;
-            }
+        if (!Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Método inválido'];
         }
-        return \yii\helpers\Json::encode(['atualizado' => $sysmenus]);
+
+        $post       = \Yii::$app->request->post();
+        $items      = $post['items'] ?? [];
+        $field      = $post['field'] ?? 'order';
+        $modelClass = self::classExist($post['modelClass'] ?? '');
+
+        if (!$modelClass) {
+            return ['success' => false, 'message' => "Model class '{$post['modelClass']}' não existe."];
+        }
+
+        // Busca todos os modelos envolvidos de uma vez
+        /** @var \yii\db\ActiveRecord[] $models */
+        $models = $modelClass::find()->where(['id' => $items])->indexBy('id')->all();
+
+        // Agrupa pelos pais (NULL => 0)
+        $groups = [];            // [parentKey => [ids na ordem visual]]
+        foreach ($items as $id) {
+            if (!isset($models[$id])) continue;
+            $m   = $models[$id];
+            $pid = (int)($m->parent_id ?? 0);
+            $groups[$pid][] = $id;
+        }
+
+        $tx = \Yii::$app->db->beginTransaction();
+        $results = [];
+
+        try {
+            foreach ($groups as $pid => $ids) {
+                $pos = 1;
+                foreach ($ids as $id) {
+                    $m = $models[$id];
+                    $m->{$field} = $pos++;
+                    // salva só o campo de order para ser rápido e evitar validações desnecessárias
+                    if (!$m->save(false, [$field])) {
+                        throw new \RuntimeException("Falha ao salvar #{$m->id}");
+                    }
+                    $results[$m->id] = $m->{$field};
+                }
+            }
+
+            $tx->commit();
+            return ['success' => true, 'ordered' => $results];
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     /**

@@ -16,7 +16,34 @@ $this->title = Yii::t('app', 'Menus');
 $this->params['breadcrumbs'][] = $this->title;
 
 $script = <<< JS
+    jQuery(".table tbody").sortable({
+        update: function(event, ui) {
+            const $tbody = $(this); // <- só esse tbody
+            let items  = [];
 
+            $('#overlay').show();
+
+            $tbody.find("tr").each(function () {
+                items.push($(this).attr("data-key"));
+            });
+
+            $.ajax({
+            method: "POST",
+            url: "/menu/order-menu",
+            data: {
+                items: items,
+                modelClass: "croacworks\\essentials\\models\\SysMenu",
+                field: "order"
+            }
+            }).done(function() {
+                toastr.success("Ordem atualizada");
+            }).fail(function() {
+                toastr.error("Erro ao atualizar a ordem. Recarregue a página");
+            }).always(function(){
+                $('#overlay').hide();
+            });
+        }
+    });
   $('#submit-auto-add').on('click', function() {
     const controller = $('#controller').val().trim();
     const action = $('#action').val().trim() || 'index';
@@ -74,7 +101,7 @@ $this::registerJs($script, $this::POS_END);
 
                     <?php // echo $this->render('_search', ['model' => $searchModel]); 
                     ?>
-                    <?php Pjax::begin(['id'=>'grid-menu']); ?>
+                    <?php Pjax::begin(['id' => 'grid-menu']); ?>
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
                         'filterModel'  => $searchModel,
@@ -100,10 +127,7 @@ $this::registerJs($script, $this::POS_END);
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
                                 'template' => '{status} {view} {update} {delete}',
-                                'uniqueId' => 'menu',
-                                'order' => true,
-                                'orderModel' => 'SysMenu',
-                                'orderField' => 'order',
+                                'uniqueId' => 'menu'
                             ],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
