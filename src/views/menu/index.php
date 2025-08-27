@@ -16,35 +16,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
 $script = <<< JS
 
-    $(function(){
-
-        Fancybox.bind("[data-fancybox]");
-
-        jQuery(".table tbody").sortable({
-            update: function(event, ui) {
-                let items  = [];
-                let i = 0;
-                $('#overlay').show();
-                $( ".table tbody tr" ).each(function( index ) {
-                    items[items.length] = $( this ).attr("data-key");
-                });
-                
-                $.ajax({
-                    method: "POST",
-                    url: '/menu/order-menu',
-                    data: {'items':items}
-                }).done(function(response) {        
-                    toastr.success("atualizado");
-                }).fail(function (response) {
-                    toastr.error("Error ao atualizar a ordem. Recarregue a pagina");
-                }).always(function (response) {
-                    $('#overlay').hide();
-                });
-
-            }
-        });
-
-    });
   $('#submit-auto-add').on('click', function() {
     const controller = $('#controller').val().trim();
     const action = $('#action').val().trim() || 'index';
