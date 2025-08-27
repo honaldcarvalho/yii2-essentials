@@ -415,7 +415,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 return false;
             }
         });
-        JS);
+        JS,Yii::$app->view::POS_END);
         $field_str = '';
 
         $button = Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]);
