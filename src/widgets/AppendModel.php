@@ -248,6 +248,7 @@ class AppendModel extends \yii\bootstrap5\Widget
             });
             Fancybox.bind("[data-fancybox]");
         });
+
         onPjaxReady((root) => {
 
             function clearForms{$this->attactModel}() {
