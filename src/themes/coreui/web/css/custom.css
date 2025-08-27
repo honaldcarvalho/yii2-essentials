@@ -13915,3 +13915,28 @@ textarea.form-control-lg {
   margin-top: .25rem;
   border-radius: var(--cui-border-radius-sm);
 }
+
+.ui-sortable tr:hover {
+    cursor: grab;
+}
+
+.ui-sortable tr:active {
+    cursor: grabbing;
+}
+
+.ui-sortable-helper {
+    background-color: #669900 !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    width: 100% !important;
+}
+
+
+.ui-sortable-helper {
+    background-color: #669900 !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    width: 100% !important;
+    display: table;
+    width: 100%;
+}
