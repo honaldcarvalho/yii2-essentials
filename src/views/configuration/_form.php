@@ -29,9 +29,8 @@ if(!empty($model->file_id && $model->file != null)){
             ])->label(false) ?>
 
         <?= UploadImageInstant::widget([
-            'mode'        => 'defer',                // <- importante
-            'hideSaveButton' => true,                // não exige “Salvar” no modal
-            'model'       => $model,                 // o widget descobre name/id do input
+            'mode'        => 'defer',
+            'model'       => $model,
             'attribute'   => 'file_id',
             'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
             'imageUrl'    => $model->file->url ?? '',
@@ -43,7 +42,7 @@ if(!empty($model->file_id && $model->file != null)){
         <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
         <?= $form->field($model, 'group_id')->dropdownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
         <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name')) ?>
-        <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description'),['prompt'=>'-- NÃO SELECIONADO --']) ?>
+        <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description')) ?>
         <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
         <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
     </div> 
