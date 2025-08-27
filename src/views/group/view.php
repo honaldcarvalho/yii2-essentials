@@ -1,10 +1,8 @@
 <?php
 
+use yii\widgets\DetailView;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\AppendModel;
-use yii\grid\GridView;
-use yii\helpers\Html;
-use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Group */
@@ -90,7 +88,7 @@ $buttons[] =
             ],
             [
                 'name' => 'user_id',
-                'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->where(['status' => User::STATUS_ACTIVE])->asArray()->all(),
+                'valeu' => User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
                 'type' => 'select2'
             ],
 
