@@ -65,8 +65,6 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'password_hash' => Yii::$app->security->generatePasswordHash('admin123'),
             'auth_key' => Yii::$app->security->generateRandomString(),
             'access_token' => Yii::$app->security->generateRandomString(),
-            'created_at' => $time,
-            'updated_at' => $time,
             'status' => User::STATUS_ACTIVE,
         ]);
 
