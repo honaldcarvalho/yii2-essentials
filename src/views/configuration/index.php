@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
-use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 
 /* @var $this yii\web\View */
 /* @var $searchModel croacworks\essentials\models\ParamSearch */

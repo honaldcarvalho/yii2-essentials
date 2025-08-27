@@ -2,7 +2,7 @@
 
 use yii\grid\GridView;
 use croacworks\essentials\widgets\DefaultButtons;
-use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\controllers\AuthController;
 use croacworks\essentials\controllers\RoleController;
 use yii\bootstrap5\Html;
@@ -115,7 +115,7 @@ $this::registerJs($script, $this::POS_END);
                             //'active',
                             'status:boolean',
 
-                            ['class'=>croacworks\essentials\components\gridview\ActionColumn::class,'verGroup'=>false],
+                            ['class'=>croacworks\essentials\components\gridview\ActionColumnCustom::class,'verGroup'=>false],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [

@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use yii\grid\GridView;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -125,7 +125,7 @@ $this::registerJs($script, $this::POS_END);
                             //'active',
                             'status:boolean',
 
-                            ['class'=>croacworks\essentials\components\gridview\ActionColumn::class,'verGroup'=>false],
+                            ['class'=>croacworks\essentials\components\gridview\ActionColumnCustom::class,'verGroup'=>false],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [
