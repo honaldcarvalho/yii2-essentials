@@ -29,7 +29,7 @@ class m230520_203121_create_pages_table extends Migration
         $this->addForeignKey(
             'fk-pages-page_section_id',
             'pages',
-            'section_id',
+            'page_section_id',
             'page_sections',
             'id',
             'RESTRICT'
