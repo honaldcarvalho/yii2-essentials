@@ -17,7 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?php croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'group','show'=>['create'],'buttons_name'=>['create'=>'Create Group']]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'group','show'=>['create'],'buttons_name'=>['create'=>'Create Group']]) ?>
                         </div>
                     </div>
 
