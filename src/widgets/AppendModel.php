@@ -418,17 +418,17 @@ class AppendModel extends \yii\bootstrap5\Widget
         JS);
         $field_str = '';
 
-        $button = Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]);
+        $button = Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]);
         $button_save = Yii::t('app', "Save");
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
             <!-- Modal -->
-            <div class="modal fade" id="save-{$this->uniqueId}" data-bs-backdrop="static" data-bs-keyboard="true" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal fade" id="modal_{$this->uniqueId}" data-bs-backdrop="static" data-bs-keyboard="true" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                 <div class="modal-dialog {$this->modalSize}">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="staticBackdropLabel">{$this->title}</h5>
-                            <button type="button" class="btn-close" onclick="javascript:{$this->attactModel}.hide();" aria-label="Close"></button>
+                            <button type="button" class="btn-close" onclick="javascript:modal_{$this->attactModel}.hide();" aria-label="Close"></button>
                         </div>
                         <div id="overlay-form-{$this->uniqueId}" class="overlay" style="height: 100%;position: absolute;width: 100%;z-index: 3000;display:none;top:0;left:0;">
                             <div class="fa-3x">
@@ -442,7 +442,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="javascript:{$this->attactModel}.hide();"> {$button_cancel} </button>
+                            <button type="button" class="btn btn-secondary" onclick="javascript:modal_{$this->attactModel}.hide();"> {$button_cancel} </button>
                             <button id="btn-save-{$this->uniqueId}" onclick="save{$this->attactModel}()" type="button" class="btn btn-success"><i class="fas fa-plus-circle mr-2 icon"></i> {$button_save} </button>
                         </div>
                     </div>
