@@ -29,7 +29,7 @@ class SysMenu extends ModelCommon
     public function rules(): array
     {
         return [
-            [['label', 'url'], 'required'],
+            [['label', 'url'], 'required','on'=>['create','update']],
             [['parent_id', 'order'], 'integer'],
             [['only_admin', 'status'], 'boolean'],
             [['label', 'url', 'controller', 'action'], 'string', 'max' => 255],

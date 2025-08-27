@@ -18,13 +18,18 @@ class MenuController extends AuthorizationController
      */
     public function actionIndex()
     {
-        $searchModel = new SysMenu();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $searchModel  = new SysMenu();
+        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams);
 
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        // Se não filtraram por parent_id, mostra apenas RAÍZES (parent_id IS NULL)
+        if (!isset(\Yii::$app->request->queryParams['Menu']['parent_id'])) {
+            $dataProvider->query->andWhere(['parent_id' => null]);
+        }
+
+        // Ordena por "order" por padrão
+        $dataProvider->query->orderBy(['order' => SORT_ASC, 'id' => SORT_ASC]);
+
+        return $this->render('index', compact('searchModel', 'dataProvider'));
     }
 
     /**
