@@ -47,7 +47,7 @@ class User extends Account
 
             // IMPORTANTE: não exigir password_hash diretamente
             // Remover 'password_hash' do required aqui:
-            [['username', 'email', 'auth_key', 'access_token', 'created_at', 'updated_at'], 'required'],
+            [['username', 'email'], 'required','on'=>['create','update']],
 
             [['token_validate'], 'safe'],
             [['username'], 'string', 'max' => 64],
