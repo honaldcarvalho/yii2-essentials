@@ -52,19 +52,19 @@ use yii\widgets\ActiveForm;
         <div class="card-header"><strong><?= Yii::t('app', 'Profile') ?></strong></div>
         <div class="card-body">
             <div class="col-sm-12">
-                <?= $form->field($model, 'file_id')
+                <?= $form->field($profile, 'file_id')
                     ->fileInput([
-                        'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+                        'id' => \yii\helpers\Html::getInputId($profile, 'file_id'),
                         'accept' => 'image/*',
                         'style' => 'display:none'
                     ])->label(false) ?>
 
                 <?= UploadImageInstant::widget([
                     'mode'        => 'defer',
-                    'model'       => $model,
+                    'model'       => $profile,
                     'attribute'   => 'file_id',
-                    'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
-                    'imageUrl'    => $model->file->url ?? '',
+                    'fileInputId' => \yii\helpers\Html::getInputId($profile, 'file_id'),
+                    'imageUrl'    => $profile->file->url ?? '',
                     'aspectRatio' => '1',
                 ]) ?>
             </div>
