@@ -18,12 +18,12 @@ $this->params['breadcrumbs'][] = $this->title;
 $script = <<< JS
     jQuery(".table tbody").sortable({
         update: function(event, ui) {
-            const $tbody = $(this); // <- só esse tbody
+            const tbody = $(this); // <- só esse tbody
             let items  = [];
 
             $('#overlay').show();
 
-            $tbody.find("tr").each(function () {
+            tbody.find("tr").each(function () {
                 items.push($(this).attr("data-key"));
             });
 
