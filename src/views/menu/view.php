@@ -76,11 +76,11 @@ $this::registerJs($script, $this::POS_END);
                         'model' => $model,
                         'attributes' => [
                             [
-                                'attribute' => 'sys_menu_id',
+                                'attribute' => 'parent_id',
                                 'format' => 'raw',
                                 'value' => function ($model) {
-                                    if ($model->menu_id != null)
-                                        return Html::a($model->menu->label, Url::toRoute([Yii::getAlias('@web/menu/view'), 'id' => $model->menu_id]));
+                                    if ($model->parent_id != null)
+                                        return Html::a($model->menu->label, Url::toRoute([Yii::getAlias('@web/menu/view'), 'id' => $model->parent_id]));
                                 }
                             ],
                             'label',
@@ -109,28 +109,32 @@ $this::registerJs($script, $this::POS_END);
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getChildren(),
         ]),
-        'showFields' => ['folder.name', 'folder.description', 'folder.status:boolean'],
+        'showFields' => [
+            [
+                'attribute' => 'label',
+                'label' => 'Menu',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    /** @var \croacworks\essentials\models\SysMenu $model */
+                    $count = $model->getChildren()->count();
+                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
+                    return \yii\helpers\Html::a(
+                        \yii\helpers\Html::encode($model->label) . $badge,
+                        ['view', 'id' => $model->id]
+                    );
+                }
+            ],
+            'icon',
+            'order',
+            'url:url',
+            'status:boolean',
+        ],
         'fields' =>
         [
             [
-                [
-                    'attribute' => 'label',
-                    'label' => 'Menu',
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        /** @var \croacworks\essentials\models\SysMenu $model */
-                        $count = $model->getChildren()->count();
-                        $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
-                        return \yii\helpers\Html::a(
-                            \yii\helpers\Html::encode($model->label) . $badge,
-                            ['view', 'id' => $model->id]
-                        );
-                    }
-                ],
-                'icon',
-                'order',
-                'url:url',
-                'status:boolean',
+                'name' => 'parent_id',
+                'type' => 'hidden',
+                'value' => $model->id
             ],
         ]
     ]); ?>
