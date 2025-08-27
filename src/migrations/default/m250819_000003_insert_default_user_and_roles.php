@@ -75,8 +75,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'file_id' => null,
             'fullname' => "System Administrator",
             'cpf_cnpj' => null,
-            'phone' => null,
-            'status' => 10
+            'phone' => null
         ]);
 
         $this->insert('users_groups', [
@@ -90,9 +89,7 @@ class m250819_000003_insert_default_user_and_roles extends Migration
             'controller' => '*',
             'action' => '*',
             'group_id' => 1,
-            'status' => 1,
-            'created_at' => $time,
-            'updated_at' => $time,
+            'status' => 1
         ]);
 
         $this->insert('folders', [
