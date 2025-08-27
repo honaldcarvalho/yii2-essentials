@@ -249,8 +249,6 @@ class AppendModel extends \yii\bootstrap5\Widget
             Fancybox.bind("[data-fancybox]");
         });
 
-        onPjaxReady((root) => {
-
             function clearForms{$this->attactModel}() {
                 
                 const form = $("#form-{$this->uniqueId}");
@@ -414,7 +412,6 @@ class AppendModel extends \yii\bootstrap5\Widget
                 }
                 return false;
             }
-        });
         JS,Yii::$app->view::POS_END);
         $field_str = '';
 
