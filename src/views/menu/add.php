@@ -2,11 +2,11 @@
 
 use yii\helpers\Html;
 
-/** @var yii\web\View $this */
-/** @var croacworks\essentials\models\User $model */
+/* @var $this yii\web\View */
+/* @var $model croacworks\essentials\models\SysMenu */
 
-$this->title = Yii::t('app', 'Create User');
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
+$this->title = Yii::t('app', 'Create Menu');
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Menus'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -15,9 +15,8 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="card-body">
             <div class="row">
                 <div class="col-md-12">
-                    <?=$this->render('_form', [
-                        'model' => $model,
-                        'group' => $group
+                    <?=$this->render('_form_add', [
+                        'model' => $model
                     ]) ?>
                 </div>
             </div>

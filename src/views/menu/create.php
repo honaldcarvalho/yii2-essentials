@@ -2,15 +2,12 @@
 
 use yii\helpers\Html;
 
-/** @var yii\web\View $this */
-/** @var croacworks\essentials\models\User $model */
+/* @var $this yii\web\View */
+/* @var $model croacworks\essentials\models\SysMenu */
 
-$this->title = Yii::t('app', 'Update User: {name}', [
-    'name' => $model->fullname,
-]);
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->fullname, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = 'Update';
+$this->title = Yii::t('app', 'Create Menu');
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Menus'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="container-fluid">

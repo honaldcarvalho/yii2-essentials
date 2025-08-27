@@ -2,7 +2,7 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\Menu;
+use croacworks\essentials\models\SysMenu;
 use croacworks\essentials\models\Rule;
 use croacworks\essentials\models\RuleSearch;
 use yii\web\NotFoundHttpException;

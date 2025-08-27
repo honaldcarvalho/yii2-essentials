@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\controllers\ControllerCommon;
+use croacworks\essentials\controllers\CommonController;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 use yii\grid\GridView;
@@ -168,7 +168,7 @@ $script = <<< JS
   
 JS;
 
-$assetsDir =  ControllerCommon::getAssetsDir();
+$assetsDir =  CommonController::getAssetsDir();
 
 $this::registerJs($script, $this::POS_END);
 $this::registerCss($style);
