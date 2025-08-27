@@ -231,15 +231,15 @@ class AppendModel extends \yii\bootstrap5\Widget
         );
 
         Yii::$app->view->registerJs(<<<JS
-        onPjaxReady((root) => {
-            let modal_{$this->attactModel} = null;
+        
+        let modal_{$this->attactModel} = null;
 
-            $(function(){
-                modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
-                    keyboard: true
-                });
-                $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
-            });
+        modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
+            keyboard: true
+        });
+        $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
+
+        onPjaxReady((root) => {
 
             function clearForms{$this->attactModel}() {
                 
@@ -423,7 +423,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
             <!-- Modal -->
-            <div class="modal fade" id="modal_{$this->uniqueId}" data-bs-backdrop="static" data-bs-keyboard="true" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal fade" id="save-{$this->uniqueId}" data-bs-backdrop="static" data-bs-keyboard="true" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                 <div class="modal-dialog {$this->modalSize}">
                     <div class="modal-content">
                         <div class="modal-header">
