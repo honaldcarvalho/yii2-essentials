@@ -111,8 +111,6 @@ $this::registerJs($script, $this::POS_END);
         ]),
         'showFields' => [
             [
-                'attribute' => 'label',
-
                 [
                     'attribute' => 'label',
                     'label' => 'Menu',
