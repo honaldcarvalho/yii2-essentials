@@ -185,7 +185,7 @@ class MenuController extends AuthorizationController
         return $this->redirect(['index']);
     }
 
-    public function actionOrderModel()
+    public function actionOrder()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
@@ -198,13 +198,9 @@ class MenuController extends AuthorizationController
         $field      = $post['field'] ?? 'order';
         $modelClass = self::classExist($post['modelClass'] ?? '');
 
-        if (!$modelClass) {
-            return ['success' => false, 'message' => "Model class '{$post['modelClass']}' não existe."];
-        }
-
         // Busca todos os modelos envolvidos de uma vez
         /** @var \yii\db\ActiveRecord[] $models */
-        $models = $modelClass::find()->where(['id' => $items])->indexBy('id')->all();
+        $models = SysMenu::find()->where(['id' => $items])->indexBy('id')->all();
 
         // Agrupa pelos pais (NULL => 0)
         $groups = [];            // [parentKey => [ids na ordem visual]]

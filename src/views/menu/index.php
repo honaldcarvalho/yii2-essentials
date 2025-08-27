@@ -29,7 +29,7 @@ $script = <<< JS
 
             $.ajax({
             method: "POST",
-            url: "/menu/order-menu",
+            url: "/menu/order",
             data: {
                 items: items,
                 modelClass: "croacworks\\essentials\\models\\SysMenu",
@@ -104,7 +104,6 @@ $this::registerJs($script, $this::POS_END);
                     <?php Pjax::begin(['id' => 'grid-menu']); ?>
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
-                        'filterModel'  => $searchModel,
                         'columns' => [
                             [
                                 'attribute' => 'label',
