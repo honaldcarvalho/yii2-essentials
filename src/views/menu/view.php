@@ -16,48 +16,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
 \yii\web\YiiAsset::register($this);
 
-$script = <<< JS
-
-    $(function(){
-
-        Fancybox.bind("[data-fancybox]");
-
-        jQuery("#list-item-menu .table tbody").sortable({
-            update: function(event, ui) {
-                let items  = [];
-                let i = 0;
-                $('#overlay').show();
-                $( "#list-item-menu .table tbody tr" ).each(function( index ) {
-                    items[items.length] = $( this ).attr("data-key");
-                });
-                
-                $.ajax({
-                    method: "POST",
-                    url: '/menu/order-menu',
-                    data: {'items':items}
-                }).done(function(response) {        
-                    toastr.success("atualizado");
-                }).fail(function (response) {
-                    toastr.error("Error ao atualizar a ordem. Recarregue a pagina");
-                }).always(function (response) {
-                    $('#overlay').hide();
-                });
-
-            }
-        });
-
-    });
-  
-JS;
-
-$this::registerJs($script, $this::POS_END);
-
-// $MP = new MercadoPago('TEST-3935825493019834-122811-a58b6ebfb2ce4572be4dec4a221a1f2c-25239504');
-// // echo "ADD PAYMENT\n";
-// dd($MP->addPayment());
-// // echo "VER PAYMENTs\n";
-// //dd($MP->getPayments());
-// die();
 ?>
 
 <div class="container-fluid">
