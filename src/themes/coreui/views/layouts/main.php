@@ -37,46 +37,34 @@ $theme = Yii::$app->user->identity->profile->theme;
   <?php
   $this->head();
   $this->registerJs(<<<'JS'
-  (function($){
-    function showOverlay(){
-      if (!$('#custom-loading').length) {
-        $('body').append(
-          '<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>'
-        );
-      }
-    }
-    function hideOverlay(){ $('#custom-loading').remove(); }
+        Fancybox.bind("[data-fancybox]");
+        $(document).on('click', '[data-fancybox]', function () {
+            if($.fancybox === undefined || $.fancybox === null) {
+                console.log('Fancybox is not defined. Please ensure the Fancybox plugin is loaded.');
+            } else {
+                $.fancybox.showLoading = function () {
+                    if ($('#custom-loading').length === 0) {
+                        $('body').append('<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>');
+                    }
+                };
 
-    function bindFancybox(scope){
-      var $root = scope ? $(scope) : $(document);
+                $.fancybox.hideLoading = function () {
+                    $('#custom-loading').remove();
+                };
 
-      // Rebind seguro
-      if (window.Fancybox && typeof Fancybox.bind === 'function') {
-        Fancybox.bind($root.find('[data-fancybox]').get(), {
-          on: {
-            done: () => hideOverlay(),
-            reveal: () => hideOverlay(),
-            destroy: () => hideOverlay()
-          }
+                $.fancybox.showLoading();
+            }
         });
-      }
 
-      // Overlay enquanto abre (ao clicar)
-      $(document).off('click.fbx','[data-fancybox]').on('click.fbx','[data-fancybox]', function(){
-        showOverlay();
-        // fallback: se nada abrir, some depois de 6s
-        setTimeout(hideOverlay, 6000);
-      });
-    }
+        // Esconde após abrir o fancybox
+        $(document).on('afterShow.fb', function () {
+            $.fancybox.hideLoading();
+        });
 
-    // Primeiro bind
-    bindFancybox(document);
-
-    // Rebind após PJAX
-    $(document).on('pjax:end', function(e){
-      bindFancybox(e.target);
-    });
-  })(jQuery);
+        // Também remove ao fechar (garantia extra)
+        $(document).on('afterClose.fb', function () {
+            $.fancybox.hideLoading();
+        });
   JS, View::POS_END);
   ?>
 </head>
