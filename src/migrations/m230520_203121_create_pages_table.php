@@ -13,7 +13,7 @@ class m230520_203121_create_pages_table extends Migration
             'id' => $this->primaryKey(),      
             'group_id' => $this->integer(),      
             'language_id' => $this->integer(),
-            'section_id' => $this->integer(),
+            'page_section_id' => $this->integer(),
             'slug' => $this->string()->notNull()->unique(),
             'title' => $this->string()->notNull(),
             'description' => $this->string(300),
@@ -27,10 +27,10 @@ class m230520_203121_create_pages_table extends Migration
         ]);
 
         $this->addForeignKey(
-            'fk-pages-section_id',
+            'fk-pages-page_section_id',
             'pages',
             'section_id',
-            'sections',
+            'page_sections',
             'id',
             'RESTRICT'
         );
