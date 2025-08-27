@@ -3,6 +3,8 @@
 /* @var $model croacworks\essentials\models\User */
 /* @var $profile croacworks\essentials\models\UserProfile */
 
+use croacworks\essentials\models\User;
+use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
@@ -33,17 +35,12 @@ use yii\widgets\ActiveForm;
                     : Yii::t('app', 'Fill only if you are changing the password.')
                 );
             ?>
-
+    
             <?= $form->field($model, 'status')->dropDownList([
-                0 => Yii::t('app', 'Deleted'),
-                9 => Yii::t('app', 'Inactive'),
-                10 => Yii::t('app', 'Active'),
-                1 => Yii::t('app', 'Active'),
-            ], ['prompt' => Yii::t('app', 'Select...')]) ?>
-
-            <?php if ($model->hasAttribute('theme')): ?>
-                <?= $form->field($model, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark'], ['prompt' => Yii::t('app', 'Select...')]) ?>
-            <?php endif; ?>
+                User::STATUS_ACTIVE => Yii::t('app', 'Active'),
+                User::STATUS_DELETED => Yii::t('app', 'Deleted'),
+                User::STATUS_INACTIVE => Yii::t('app', 'Inactive'),
+            ]) ?>
 
             <?php if ($model->hasAttribute('language_id')): ?>
                 <?= $form->field($model, 'language_id')->textInput() ?>
@@ -54,6 +51,23 @@ use yii\widgets\ActiveForm;
     <div class="card mb-4">
         <div class="card-header"><strong><?= Yii::t('app', 'Profile') ?></strong></div>
         <div class="card-body">
+            <div class="col-sm-12">
+                <?= $form->field($model, 'file_id')
+                    ->fileInput([
+                        'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+                        'accept' => 'image/*',
+                        'style' => 'display:none'
+                    ])->label(false) ?>
+
+                <?= UploadImageInstant::widget([
+                    'mode'        => 'defer',
+                    'model'       => $model,
+                    'attribute'   => 'file_id',
+                    'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+                    'imageUrl'    => $model->file->url ?? '',
+                    'aspectRatio' => '1',
+                ]) ?>
+            </div>
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'phone')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
@@ -63,17 +77,9 @@ use yii\widgets\ActiveForm;
             <?php endif; ?>
 
             <?php if ($profile->hasAttribute('theme')): ?>
-                <?= $form->field($profile, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark'], ['prompt' => Yii::t('app', 'Select...')]) ?>
+                <?= $form->field($profile, 'theme')->dropDownList(['light' => 'Light', 'dark' => 'Dark']) ?>
             <?php endif; ?>
 
-            <?php if ($profile->hasAttribute('file_id')): ?>
-                <?= $form->field($profile, 'file_id')->textInput() ?>
-            <?php endif; ?>
-
-            <?= $form->field($profile, 'status')->dropDownList([
-                0 => Yii::t('app', 'Inactive'),
-                10 => Yii::t('app', 'Active'),
-            ], ['prompt' => Yii::t('app', 'Select...')]) ?>
         </div>
     </div>
 

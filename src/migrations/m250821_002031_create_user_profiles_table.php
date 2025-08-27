@@ -14,14 +14,13 @@ class m250821_002031_create_user_profiles_table extends Migration
 
         $this->createTable('{{%user_profiles}}', [
             'id' => $this->primaryKey(),
+            'file_id' => $this->integer(),
             'user_id' => $this->integer()->notNull(),
             'language_id' => $this->integer()->defaultValue(1),//en-US
             'theme' => $this->string(10)->defaultValue('light'),
-            'file_id' => $this->integer(),
             'fullname' => $this->string(),
             'cpf_cnpj' => $this->string(18),
             'phone' => $this->string(),
-            'status' => $this->smallInteger()->notNull()->defaultValue(10),
             'created_at' => $this->integer()->notNull()->defaultValue(strtotime("now")),
             'updated_at' => $this->integer()->notNull()->defaultValue(strtotime("now")),
         ], $tableOptions);
