@@ -13854,3 +13854,64 @@ textarea.form-control-lg {
 .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {
     max-width: 100%!important;
 }
+
+/* Campo single */
+.select2-container--default .select2-selection--single {
+  background-color: var(--cui-body-bg);
+  border: 1px solid var(--cui-border-color);
+  color: var(--cui-body-color);
+  height: calc(2.25rem + 2px);
+  border-radius: var(--cui-border-radius);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  color: var(--cui-body-color);
+  line-height: 2.25rem;
+  padding-left: .75rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+  color: var(--cui-secondary-color);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+  border-color: var(--cui-body-color) transparent transparent transparent;
+}
+
+/* Dropdown */
+.select2-container--default .select2-results > .select2-results__options {
+  background-color: var(--cui-body-bg);
+  color: var(--cui-body-color);
+  border: 1px solid var(--cui-border-color);
+}
+
+/* Opções */
+.select2-container--default .select2-results__option {
+  background-color: var(--cui-body-bg);
+  color: var(--cui-body-color);
+  padding: .5rem .75rem;
+}
+
+/* Hover na opção */
+.select2-container--default .select2-results__option--highlighted {
+  background-color: var(--cui-secondary-bg);
+  color: var(--cui-emphasis-color);
+}
+
+/* Campo múltiplo */
+.select2-container--default .select2-selection--multiple {
+  background-color: var(--cui-body-bg);
+  border: 1px solid var(--cui-border-color);
+  color: var(--cui-body-color);
+  min-height: calc(2.25rem + 2px);
+  border-radius: var(--cui-border-radius);
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: var(--cui-secondary-bg);
+  border: none;
+  color: var(--cui-emphasis-color);
+  padding: 0 .5rem;
+  margin-top: .25rem;
+  border-radius: var(--cui-border-radius-sm);
+}
