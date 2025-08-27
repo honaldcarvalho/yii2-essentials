@@ -54,7 +54,7 @@ class UserProfile extends ModelCommon
     public function rules()
     {
         return [
-            [['fullname'], 'require'],
+            [['fullname'], 'required'],
             [['user_id', 'file_id', 'fullname', 'cpf_cnpj'], 'default', 'value' => null],
             [['user_id'], 'integer'],
             [['fullname', 'phone'], 'string', 'max' => 255],
