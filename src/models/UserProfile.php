@@ -56,7 +56,7 @@ class UserProfile extends ModelCommon
         return [
             [['user_id', 'file_id', 'fullname', 'cpf_cnpj'], 'default', 'value' => null],
             [['updated_at'], 'default', 'value' => 1755805973],
-            [['user_id', 'file_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['user_id', 'file_id', 'created_at', 'updated_at'], 'integer'],
             [['fullname', 'phone'], 'string', 'max' => 255],
             [['cpf_cnpj'], 'string', 'max' => 18],
             [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
