@@ -35,7 +35,7 @@ $theme = Yii::$app->user->identity->profile->theme;
     <?php 
     $this->head(); 
     $this->registerJs(<<<JS
-    onPjaxReady((root) => {
+
     // Fancybox bindings
     if (window.Fancybox) {
         Fancybox.bind(root.find('[data-fancybox]').get());
@@ -55,7 +55,7 @@ $theme = Yii::$app->user->identity->profile->theme;
 
     $(document).off('afterShow.fb.pjax').on('afterShow.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
     $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
-    });
+
     JS);
     ?>
   </head>
