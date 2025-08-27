@@ -185,6 +185,7 @@ class Account extends ModelCommon implements IdentityInterface
      */
     public function generateAuthKey()
     {
+        $this->access_token = Yii::$app->security->generateRandomString();
         $this->auth_key = Yii::$app->security->generateRandomString();
     }
 

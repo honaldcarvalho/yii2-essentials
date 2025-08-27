@@ -16,8 +16,8 @@ class m230419_000001_create_users extends Migration
             'access_token' => $this->string(32)->notNull(),
             'token_validate' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
             'password_reset_token' => $this->string(190)->null()->unique(),
-            'created_at' => $this->integer()->notNull(),
-            'updated_at' => $this->integer()->notNull(),
+            'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
+            'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),
             'status' => $this->tinyInteger()->notNull()->defaultValue(1),
         ]);
         $this->createIndex('idx_users_group', '{{%users}}', 'group_id');

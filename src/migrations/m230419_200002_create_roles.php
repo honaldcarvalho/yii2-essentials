@@ -14,8 +14,8 @@ class m230419_200002_create_roles extends Migration
             'controller' => $this->string(255)->notNull(), // FQCN
             'action' => $this->string(64)->notNull(),      // ex.: index|view|* 
             'status' => $this->tinyInteger()->notNull()->defaultValue(1),
-            'created_at' => $this->integer()->notNull(),
-            'updated_at' => $this->integer()->notNull(),
+            'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
+            'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),
         ]);
         
         $this->addForeignKey(

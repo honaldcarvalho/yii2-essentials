@@ -137,7 +137,11 @@ class UserController extends AuthorizationController
         }
 
         if ($user->load(Yii::$app->request->post()) && $profile->load(Yii::$app->request->post())) {
+            $name_array = explode(' ', $profile->fullname);
+            $user->username = strtolower($name_array[0] . '_' . end($name_array)).'_'.Yii::$app->security->generateRandomString(8);
 
+            $user->setPassword($user->password);
+            $user->generateAuthKey();
             $isValid = $user->validate();
             $isValid = $profile->validate() && $isValid;
 
