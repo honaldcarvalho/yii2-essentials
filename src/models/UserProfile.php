@@ -16,7 +16,6 @@ use Yii;
  * @property string|null $fullname
  * @property string|null $cpf_cnpj
  * @property string $phone
- * @property int $status
  * @property int $created_at
  * @property int $updated_at
  *
@@ -56,7 +55,6 @@ class UserProfile extends ModelCommon
     {
         return [
             [['user_id', 'file_id', 'fullname', 'cpf_cnpj'], 'default', 'value' => null],
-            [['status'], 'default', 'value' => 10],
             [['updated_at'], 'default', 'value' => 1755805973],
             [['user_id', 'file_id', 'status', 'created_at', 'updated_at'], 'integer'],
             [['fullname', 'phone'], 'string', 'max' => 255],
@@ -78,7 +76,6 @@ class UserProfile extends ModelCommon
             'fullname' => Yii::t('app', 'Fullname'),
             'cpf_cnpj' => Yii::t('app', 'Cpf Cnpj'),
             'phone' => Yii::t('app', 'Phone'),
-            'status' => Yii::t('app', 'Status'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
         ];
