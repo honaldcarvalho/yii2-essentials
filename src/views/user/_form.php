@@ -7,7 +7,7 @@ use croacworks\essentials\models\Language;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 
 ?>
 <div class="user-form">

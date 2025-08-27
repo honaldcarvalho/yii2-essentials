@@ -3,7 +3,7 @@
 use croacworks\essentials\models\Language;
 use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 
 /** @var yii\web\View $this */
 /** @var croacworks\essentials\models\UserProfile $model */
