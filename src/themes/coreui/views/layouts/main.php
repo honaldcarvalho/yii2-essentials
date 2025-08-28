@@ -72,7 +72,7 @@ $theme = Yii::$app->user->identity->profile->theme;
 <body>
   <?php $this->beginBody() ?>
 
-  <?= $this->render('sidebar', ['assetDir' => $assetDir, 'theme' => $theme, 'configuration' => $configuration]) ?>
+  <?= $this->render('menu', ['assetDir' => $assetDir, 'theme' => $theme, 'configuration' => $configuration]) ?>
   <?= $this->render('content', ['content' => $content, 'assetDir' => $assetDir, 'theme' => $theme, 'configuration' => $configuration]) ?>
 
   <?php $this->endBody() ?>
