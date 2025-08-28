@@ -292,15 +292,12 @@ $this::registerJs($script, $this::POS_END);
                 'name'  => 'controller',
                 'type'  => 'select2',
                 'value' => $controllers, // array(FQCN => FQCN)
-                'before' => '<label class="form-label">Controller (FQCN)</label>',
             ],
 
             // Action - Select2 (opções serão carregadas via AJAX quando o controller mudar)
             [
                 'name'  => 'action',
-                'type'  => 'select2',
-                'value' => [],
-                'before' => '<label class="form-label">Action</label>',
+                'type'  => 'text'
             ],
 
             // Ícone FontAwesome - Select2 (carregado via JS do list.json)
@@ -308,7 +305,6 @@ $this::registerJs($script, $this::POS_END);
                 'name'  => 'icon',
                 'type'  => 'select2',
                 'value' => [],
-                'before' => '<label class="form-label">Ícone (Font Awesome)</label>',
             ],
 
             // Demais campos iguais ao seu form
