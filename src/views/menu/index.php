@@ -44,9 +44,11 @@ $script = <<< JS
             });
         }
     });
-  $('#submit-auto-add').on('click', function() {
+    
+    $('#submit-auto-add').on('click', function() {
     const controller = $('#controller').val().trim();
-    const action = $('#action').val().trim() || 'index';
+    const action     = $('#action').val().trim() || 'index';
+    const parent_id  = $('#parent_id').val(); // pode ser undefined/''
 
     if (!controller) {
         toastr.error('Informe o controller.');
@@ -58,8 +60,10 @@ $script = <<< JS
     $.ajax({
         url: '/menu/auto-add',
         method: 'GET',
-        data: { controller, action },
-        success: function(response) {
+        data: { controller, action, parent_id },
+        success: function() {
+            // Se estiver usando PJAX no grid, prefira recarregar só o grid:
+            // $.pjax.reload({container: '#grid-menu'});
             location.reload();
         },
         error: function(xhr) {
@@ -71,7 +75,7 @@ $script = <<< JS
             $('#modal-auto-add').modal('hide');
         }
     });
-});
+    });
 
 JS;
 $controllers = RoleController::getAllControllers(); // FQCNs
@@ -154,6 +158,20 @@ $this::registerJs($script, $this::POS_END);
             </div>
             <div class="modal-body">
                 <form id="auto-add-form">
+                    <div class="mb-3">
+                        <label for="parent_id" class="form-label">Parente</label>
+                        <?= Html::dropDownList(
+                            'parent_id',
+                            null,
+                            \croacworks\essentials\models\SysMenu::optionsTree(),
+                            [
+                                'id' => 'parent_id',
+                                'prompt' => '— Sem parente (raiz) —',
+                                'class' => 'form-select'
+                            ]
+                        ) ?>
+                        <div class="form-text">Escolha o item pai (ou deixe vazio para criar na raiz).</div>
+                    </div>
                     <div class="mb-3">
                         <label for="controller" class="form-label">Controller (FQCN)</label>
                         <?= Html::dropDownList('controller', null, $controllers, [

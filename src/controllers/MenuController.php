@@ -102,54 +102,69 @@ class MenuController extends AuthorizationController
         ]);
     }
 
-    public function actionAutoAdd($controller, $action = 'index')
+    public function actionAutoAdd($controller, $action = 'index', $parent_id = null)
     {
         if (!$controller || !class_exists($controller)) {
             throw new \yii\web\NotFoundHttpException("Controller inválido: $controller");
         }
 
-        // Verifica duplicata
+        // Normaliza parent
+        $parentId = ($parent_id === '' || $parent_id === null) ? null : (int)$parent_id;
+
+        // Verifica duplicata (por parente!)
         $exists = SysMenu::find()
-            ->where(['controller' => $controller, 'action' => $action])
-            ->exists();
+            ->where([
+                'controller' => $controller,
+                'action'     => $action,
+                'parent_id'  => $parentId,
+            ])->exists();
 
         if ($exists) {
-            Yii::$app->session->setFlash('warning', "Já existe um sysmenu para <code>$controller::$action</code>.");
+            Yii::$app->session->setFlash('warning', "Já existe um sysmenu para <code>$controller::$action</code> neste parente.");
             return $this->redirect(['index']);
         }
 
-        // Extrai o nome base do controller e converte para ID
-        $reflection = new \ReflectionClass($controller);
-        $baseName = preg_replace('/Controller$/', '', $reflection->getShortName()); // ex: FormResponse
-        $controllerId = Inflector::camel2id($baseName); // ex: form-response
+        // Extrai base do controller
+        $reflection    = new \ReflectionClass($controller);
+        $baseName      = preg_replace('/Controller$/', '', $reflection->getShortName());
+        $controllerId  = Inflector::camel2id($baseName);
 
-        // Define o caminho base (ex: app, backend, etc)
+        // Define caminho base (opcional)
         $namespaceParts = explode('\\', $controller);
-        $path = isset($namespaceParts[0]) ? strtolower($namespaceParts[0]) : 'app';
+        $path           = isset($namespaceParts[0]) ? strtolower($namespaceParts[0]) : 'app';
 
-        // Cria novo item de sysmenu
-        $model = new SysMenu();
-        $model->label = Inflector::camel2words($baseName);              // Ex: Form Response
-        $model->controller = $controller;
-        $model->action = $action;
-        $model->visible = "$controller;$action";
-        $model->url = "/$controllerId/$action";
-        $model->icon = 'fas fa-circle';
-        $model->icon_style = 'fas';
-        $model->path = $path;
-        $model->active = $controllerId;
-        $model->order = (SysMenu::find()->max('`order`') ?? 0) + 1;
-        $model->status = 1;
+        // Calcula order por irmãos (mesmo parent_id)
+        $maxOrder = SysMenu::find()
+            ->where(['parent_id' => $parentId])
+            ->max('`order`');
+        $nextOrder = ((int)$maxOrder) + 1;
+
+        // Cria
+        $model              = new SysMenu();
+        $model->parent_id   = $parentId;
+        $model->label       = Inflector::camel2words($baseName);
+        $model->controller  = $controller;
+        $model->action      = $action;
+        $model->url         = "/$controllerId/$action";
+        $model->icon        = 'fas fa-circle';
+        $model->icon_style  = 'fas';
+        $model->order       = $nextOrder;
+        $model->status      = 1;
+
+        // Campos opcionais: use apenas se existirem na sua tabela
+        if ($model->hasAttribute('visible')) $model->visible = "$controller;$action";
+        if ($model->hasAttribute('path'))    $model->path    = $path;
+        if ($model->hasAttribute('active'))  $model->active  = $controllerId;
 
         if ($model->save()) {
             Yii::$app->session->setFlash('success', "SysMenu para <code>$controller::$action</code> criado com sucesso.");
+            // Se quiser já ir para a página do pai quando houver parente, troque a linha abaixo por: return $this->redirect(['view', 'id' => $parentId ?: $model->id]);
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
         Yii::$app->session->setFlash('error', "Erro ao criar sysmenu.");
         return $this->redirect(['index']);
     }
-
 
     /**
      * Updates an existing SysMenu model.

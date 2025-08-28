@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\models;
 
 use croacworks\essentials\models\ModelCommon;
@@ -29,7 +30,7 @@ class SysMenu extends ModelCommon
     public function rules(): array
     {
         return [
-            [['label', 'url'], 'required','on'=>['create','update']],
+            [['label', 'url'], 'required', 'on' => ['create', 'update']],
             [['parent_id', 'order'], 'integer'],
             [['only_admin', 'status'], 'boolean'],
             [['label', 'url', 'controller', 'action'], 'string', 'max' => 255],
@@ -66,5 +67,21 @@ class SysMenu extends ModelCommon
     public function getChildren()
     {
         return $this->hasMany(self::class, ['parent_id' => 'id'])->orderBy(['order' => SORT_ASC]);
+    }
+
+    public static function optionsTree($parentId = null, $prefix = ''): array
+    {
+        $out = [];
+        /** @var self[] $rows */
+        $rows = self::find()
+            ->where(['parent_id' => $parentId])
+            ->orderBy(['order' => SORT_ASC, 'label' => SORT_ASC])
+            ->all();
+
+        foreach ($rows as $row) {
+            $out[$row->id] = $prefix . $row->label;
+            $out += self::optionsTree($row->id, $prefix . '— ');
+        }
+        return $out;
     }
 }
