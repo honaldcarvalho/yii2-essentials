@@ -23,6 +23,7 @@ class m250812_220000_create_sys_menus extends Migration
             'show'        => $this->boolean()->notNull()->defaultValue(true),  // hard toggle
             'controller'  => $this->string(255)->null(),   // FQCN
             'action'      => $this->string(255)->null(),   // usado p/ "active"
+            'active'      => $this->string(60),
             'visible'     => $this->string(255)->null(),   // CSV de actions p/ exibição
         ]);
 
