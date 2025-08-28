@@ -91,7 +91,7 @@ function getNodes($parentId = null): array
                     $active = true;
                 } else {
                     $allowed = array_map('trim', explode(';', $actions));
-                    $active  = in_array($currentAction, $allowed, true) || $item->controller == Yii::$app->controller->id;
+                    $active  = in_array($currentAction, $allowed, true);
                 }
             }
         }
