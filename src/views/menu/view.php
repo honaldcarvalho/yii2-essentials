@@ -100,7 +100,7 @@ $this::registerJs($script, $this::POS_END);
                                 'format' => 'raw',
                                 'value' => function ($model) {
                                     if ($model->parent_id != null)
-                                        return Html::a($model->parente->label, Url::toRoute([Yii::getAlias('@web/menu/view'), 'id' => $model->parent_id]));
+                                        return Html::a($model->parent->label, Url::toRoute([Yii::getAlias('@web/menu/view'), 'id' => $model->parent_id]));
                                 }
                             ],
                             [
