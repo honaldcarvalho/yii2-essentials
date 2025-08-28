@@ -1,66 +1,66 @@
 <?php
+
 namespace croacworks\essentials\themes\coreui\widgets;
 
+use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 /**
- * CoreUI Menu widget
+ * CoreuiMenu
  *
- * Aceita a mesma estrutura de items usada no seu AdminLTE,
- * mas renderiza com a marcação e classes do CoreUI.
- *
- * Regras:
- * - Se 'header' => true, vira <li class="nav-title">...</li>
- * - Se 'divider' => true, vira <li class="nav-divider"></li>
- * - Se houver 'items', vira "nav-group" com "nav-group-toggle" e <ul class="nav-group-items">
- * - Ícones:
- *     * Se o 'icon' começar com 'cil-' => usa SVG CoreUI (vendors/@coreui/icons).
- *     * Caso contrário:
- *         - Se 'iconClass' vier pronto, usa <i>.
- *         - Senão tenta montar com FontAwesome (fallback).
+ * 'items' suportados:
+ *  - 'label'       string
+ *  - 'url'         array|string|null  Ex.: ['/user/index'] (usado para inferir o controller)
+ *  - 'items'       array              Subitens (vira "nav-group")
+ *  - 'badge'       string             HTML do badge
+ *  - 'icon'        string             'cil-*' (CoreUI SVG) OU nome FA ('user')
+ *  - 'iconClass'   string             Classe direta <i>
+ *  - 'iconStyle'   string             Estilo FA ('fas','far')
+ *  - 'target'      string
+ *  - 'visible'     bool
+ *  - 'options'     array              atributos do <li>
+ *  - 'controller'  string             FQCN do controller (opcional, ajuda a desambiguar)
+ *  - 'active'      string|array|bool|null
+ *      -> ausente/null: ativo em QUALQUER action do controller do item
+ *      -> 'a;b;c' ou ['a','b']        : ativo se action atual ∈ lista
+ *      -> igual ao controller (id/FQCN): ativo em QUALQUER action desse controller
+ *      -> bool                         : força
  */
 class CoreuiMenu extends \yii\widgets\Menu
 {
-    /** Caminho base para ícones CoreUI (ajuste se necessário) */
     public $coreuiIconBaseHref = '/vendors/@coreui/icons/svg/free.svg';
+    public $compactChildren    = true;
+    public $openOnActive       = true;
+    public $activeLinkClass    = 'active';
 
-    /** Adiciona "compact" no <ul> dos filhos */
-    public $compactChildren = true;
-
-    /** Marca pai como aberto quando filho está ativo: adiciona class "show" no <ul> dos filhos */
-    public $openOnActive = true;
-
-    /** Classe aplicada ao link ativo */
-    public $activeLinkClass = 'active';
-
-    /** Opções do UL raiz */
     public $options = [
-        'class' => 'sidebar-nav',
-        'data-coreui' => 'navigation',
-        'data-simplebar' => '',
+        'class'         => 'sidebar-nav',
+        'data-coreui'   => 'navigation',
+        'data-simplebar'=> '',
     ];
 
-    /** Cada LI */
-    public $itemOptions = ['class' => 'nav-item'];
-
-    /** Ativar pais quando filho estiver ativo */
+    public $itemOptions     = ['class' => 'nav-item'];
     public $activateParents = true;
+    public $encodeLabels    = false;
 
     protected function renderItems($items)
     {
-        $n = count($items);
         $lines = [];
 
-        foreach ($items as $i => $item) {
+        foreach ($items as $item) {
             if (isset($item['visible']) && !$item['visible']) {
                 continue;
             }
 
             // Header
             if (!empty($item['header'])) {
-                $lines[] = Html::tag('li', Html::encode($item['label']), ['class' => 'nav-title']);
+                $lines[] = Html::tag(
+                    'li',
+                    $this->encodeLabels ? Html::encode($item['label']) : $item['label'],
+                    ['class' => 'nav-title']
+                );
                 continue;
             }
 
@@ -70,41 +70,50 @@ class CoreuiMenu extends \yii\widgets\Menu
                 continue;
             }
 
-            $options = array_merge($this->itemOptions, ArrayHelper::getValue($item, 'options', []));
+            $options     = array_merge($this->itemOptions, ArrayHelper::getValue($item, 'options', []));
             $hasChildren = !empty($item['items']);
 
-            // Tipo: grupo ou item simples
             if ($hasChildren) {
+                // Grupo
                 Html::removeCssClass($options, 'nav-item');
                 Html::addCssClass($options, 'nav-group');
 
-                // Monta o <a> do grupo
+                $groupActive = $this->isItemActive($item);
+
+                // CoreUI abre com 'show' no <li.nav-group>
+                if ($this->openOnActive && $groupActive) {
+                    Html::addCssClass($options, 'show');
+                }
+
+                // Toggle do grupo
+                $groupLinkClasses = ['nav-link', 'nav-group-toggle'];
+                if ($groupActive) {
+                    $groupLinkClasses[] = $this->activeLinkClass;
+                }
+
                 $link = Html::a(
-                    $this->renderIcon($item) . Html::tag('span', $item['label']),
+                    $this->renderIcon($item) . Html::tag('span', $this->encodeLabels ? Html::encode($item['label']) : $item['label']),
                     '#',
-                    ['class' => 'nav-link nav-group-toggle']
+                    [
+                        'class'         => implode(' ', $groupLinkClasses),
+                        'aria-expanded' => $groupActive ? 'true' : 'false',
+                    ]
                 );
 
-                // Renderiza filhos
+                // Filhos
                 $childrenUlClasses = ['nav-group-items'];
                 if ($this->compactChildren) {
                     $childrenUlClasses[] = 'compact';
                 }
 
-                // Se algum filho está ativo, abrimos o grupo
                 $childrenHtml = $this->renderItems($item['items']);
-                $groupActive = $this->isItemActive($item);
-                if ($this->openOnActive && $groupActive) {
-                    $childrenUlClasses[] = 'show';
-                }
+                $ul           = Html::tag('ul', $childrenHtml, ['class' => implode(' ', $childrenUlClasses)]);
 
-                $ul = Html::tag('ul', $childrenHtml, ['class' => implode(' ', $childrenUlClasses)]);
-                $content = $link . $ul;
-                $lines[] = Html::tag('li', $content, $options);
+                $lines[] = Html::tag('li', $link . $ul, $options);
             } else {
                 // Item simples
-                $isActive = !empty($item['active']);
                 $url      = isset($item['url']) ? Url::to($item['url']) : '#';
+                $isActive = $this->isItemActive($item);
 
                 $linkClasses = ['nav-link'];
                 if ($isActive) {
@@ -116,7 +125,7 @@ class CoreuiMenu extends \yii\widgets\Menu
                     $aOptions['target'] = $item['target'];
                 }
 
-                $labelHtml = Html::tag('span', $item['label']);
+                $labelHtml = Html::tag('span', $this->encodeLabels ? Html::encode($item['label']) : $item['label']);
                 $badgeHtml = !empty($item['badge']) ? $item['badge'] : '';
 
                 $content = Html::a(
@@ -132,57 +141,154 @@ class CoreuiMenu extends \yii\widgets\Menu
         return implode("\n", $lines);
     }
 
-    protected function renderItem($item)
-    {
-        // Não usamos; sobrescrevemos renderItems() acima
-        return '';
-    }
+    protected function renderItem($item) { return ''; }
 
-    /**
-     * Renderiza o ícone do item:
-     * - Se 'icon' começar com 'cil-' => usa CoreUI SVG <svg><use xlink:href="...#cil-xxx"></use></svg>
-     * - Se 'iconClass' vier => usa <i class="..."></i> (FA ou custom)
-     * - Se 'iconStyle'/'icon' estilo AdminLTE => tenta fallback FA
-     */
     protected function renderIcon(array $item): string
     {
         $icon = trim((string)($item['icon'] ?? ''));
 
-        // CoreUI SVG (preferencial se passar 'cil-...')
+        // CoreUI SVG
         if ($icon !== '' && strpos($icon, 'cil-') === 0) {
             $href = $this->coreuiIconBaseHref . '#' . $icon;
-            return '<svg class="nav-icon"><use xlink:href="'.Html::encode($href).'"></use></svg> ';
+            return '<svg class="nav-icon"><use xlink:href="' . Html::encode($href) . '"></use></svg> ';
         }
 
-        // Se foi passado iconClass direto (ex.: 'nav-icon fas fa-user')
+        // Classe custom direta
         if (!empty($item['iconClass'])) {
-            return '<i class="'.Html::encode($item['iconClass']).'"></i> ';
+            return '<i class="' . Html::encode($item['iconClass']) . '"></i> ';
         }
 
-        // Fallback: tentar montar FA a partir de 'iconStyle' + 'icon'
+        // Fallback FA
         $iconStyle = $item['iconStyle'] ?? 'fas';
         $name      = $icon !== '' ? 'fa-' . $icon : 'fa-circle';
         $cls       = implode(' ', ['nav-icon', $iconStyle, $name]);
 
-        return '<i class="'.Html::encode($cls).'"></i> ';
+        return '<i class="' . Html::encode($cls) . '"></i> ';
     }
 
     /**
-     * Um item "grupo" é considerado ativo se algum filho estiver ativo.
+     * - Sem 'active' => ativo se controller atual == controller do item (qualquer action)
+     * - 'active' == controller (id/FQCN) => ativo em qualquer action
+     * - 'active' lista de actions => controller bate E action atual ∈ lista
+     * - Grupo => ativo se self ativo OU algum filho ativo **visível**
      */
-    protected function isItemActive($item)
+    protected function isItemActive($item): bool
     {
-        if (!empty($item['active'])) {
+        if ($this->isSelfActive($item)) {
             return true;
         }
-        if (empty($item['items'])) {
-            return false;
-        }
-        foreach ($item['items'] as $child) {
-            if ($this->isItemActive($child)) {
-                return true;
+
+        if (!empty($item['items']) && is_array($item['items'])) {
+            foreach ($item['items'] as $child) {
+                // só considera filho visível (ou sem 'visible')
+                $childVisible = !isset($child['visible']) || (bool)$child['visible'] === true;
+                if ($childVisible && $this->isItemActive($child)) {
+                    return true;
+                }
             }
         }
+
         return false;
+    }
+
+    protected function isSelfActive(array $item): bool
+    {
+        
+        $controller = Yii::$app->controller;
+        if ($controller === null) return false;
+
+        $currentControllerId   = $controller->id;
+        $currentControllerFqcn = get_class($controller);
+        $currentActionId       = $controller->action->id ?? '';
+
+        // Controller do item
+        [$itemControllerId, $itemControllerFqcn] = $this->extractItemController($item);
+        $controllerMatches =
+            ($itemControllerId   && $itemControllerId   === $currentControllerId) ||
+            ($itemControllerFqcn && $itemControllerFqcn === $currentControllerFqcn);
+
+        // bool => força
+        if (array_key_exists('active', $item) && is_bool($item['active'])) {
+            return (bool)$item['active'];
+        }
+
+        // Sem 'active' => por controller
+        if (!array_key_exists('active', $item) || $item['active'] === null) {
+            return $controllerMatches;
+        }
+
+        // 'active' == controller (id/FQCN)
+        if (is_string($item['active'])) {
+            $activeStr = ltrim(trim($item['active']), '\\');
+            if ($activeStr === ($itemControllerId ?? '') || $activeStr === ($itemControllerFqcn ?? '')) {
+                return $controllerMatches;
+            }
+        }
+
+        // Lista de actions
+        $actions = $this->parseActionList($item['active']);
+        if (empty($actions)) {
+            return $controllerMatches;
+        }
+
+        return $controllerMatches && in_array($currentActionId, $actions, true);
+    }
+
+    /**
+     * Extrai o controller do item: usa 'controller' (FQCN) se presente,
+     * senão deduz do 'url'. Ignora rotas vazias e '#'.
+     */
+    protected function extractItemController(array $item): array
+    {
+        $fqcn = isset($item['controller']) && is_string($item['controller'])
+            ? ltrim($item['controller'], '\\')
+            : null;
+
+        $id = null;
+
+        if (!empty($item['url'])) {
+            if (is_array($item['url']) && !empty($item['url'][0]) && is_string($item['url'][0])) {
+                $route = trim($item['url'][0], '/');
+            } elseif (is_string($item['url'])) {
+                $route = trim($item['url'], '/');
+            } else {
+                $route = '';
+            }
+
+            if ($route !== '' && $route !== '#') {
+                $first = explode('/', $route)[0] ?? '';
+                $id    = $first !== '' ? $first : null;
+            }
+        }
+
+        return [$id, $fqcn];
+    }
+
+    protected function parseActionList($active): array
+    {
+        if ($active === null || is_bool($active)) return [];
+
+        if (is_string($active)) {
+            return $this->splitSemicolon($active);
+        }
+
+        if (is_array($active)) {
+            $out = [];
+            foreach ($active as $part) {
+                if (is_string($part)) {
+                    $out = array_merge($out, $this->splitSemicolon($part));
+                }
+            }
+            $out = array_values(array_filter(array_map('strtolower', $out), static fn($v) => $v !== ''));
+            return array_unique($out);
+        }
+
+        return [];
+    }
+
+    protected function splitSemicolon(string $s): array
+    {
+        $parts = array_map('trim', explode(';', strtolower($s)));
+        return array_values(array_filter($parts, static fn($v) => $v !== ''));
     }
 }

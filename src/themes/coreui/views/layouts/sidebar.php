@@ -7,18 +7,13 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Role;
 use croacworks\essentials\models\SysMenu;
 
-// Pré-existentes do seu código:
 $config     = Configuration::get();
-$assetDir   = CommonController::getAssetsDir(); // ajuste se seu tema definir outro helper
+$assetDir   = CommonController::getAssetsDir();
 $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
-// ... allowedByVisible() e getNodes() iguais aos seus ...
 /**
- * Regra de exibição baseada em permissões:
- * - $visibleCsv: lista de actions separadas por ';' (ex.: "index;view;create").
- * - Se $visibleCsv = '*' → aparece se existir QUALQUER role ativa para esse controller.
- * - Se $visibleCsv vazio → usa $fallbackActionCsv; se também vazio → comporta como '*'.
+ * Visibilidade por permissões.
  */
 function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string $fallbackActionCsv = null): bool
 {
@@ -50,53 +45,38 @@ function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string 
     return false;
 }
 
-/** Monta recursivamente os nós do menu a partir de sys_menus */
+/**
+ * Monta recursivamente os nós.
+ */
 function getNodes($parentId = null): array
 {
-
     $items = SysMenu::find()
         ->where(['parent_id' => $parentId, 'status' => true])
         ->orderBy(['order' => SORT_ASC])
         ->all();
 
     $nodes = [];
-    $currentFQCN   = get_class(Yii::$app->controller);
-    $currentAction = Yii::$app->controller->action->id;
 
     foreach ($items as $item) {
-        // Hard toggles
         if (!$item->show) continue;
         if ($item->only_admin && !AuthorizationController::isAdmin()) continue;
 
         $isGroup  = ($item->url === '#');
-        $children = getNodes($item->id);
+        $children = $isGroup ? getNodes($item->id) : [];
 
         // Visibilidade
         if ($isGroup) {
-            // Grupo aparece se tiver ao menos um filho visível
             $isVisible = false;
             foreach ($children as $c) {
-                if (!empty($c['visible'])) { $isVisible = true; break; }
+                if (!array_key_exists('visible', $c) || !empty($c['visible'])) {
+                    $isVisible = true; break;
+                }
             }
         } else {
             $isVisible = allowedByVisible($item->controller, $item->visible, $item->action);
         }
 
-        // Active (apenas itens simples com controller)
-        $active = false;
-        if (!$isGroup && $item->controller) {
-            $actions = trim((string)$item->action);
-            if ($item->controller === $currentFQCN) {
-                if ($actions === '' || $actions === '*') {
-                    $active = true;
-                } else {
-                    $allowed = array_map('trim', explode(';', $actions));
-                    $active  = in_array($currentAction, $allowed, true);
-                }
-            }
-        }
-
-        // Nó
+        // Nó base
         $node = [
             'label'     => Yii::t('app', $item->label),
             'icon'      => (string)$item->icon,
@@ -106,12 +86,13 @@ function getNodes($parentId = null): array
         ];
 
         if ($isGroup) {
-            $node['items'] = $children;
+            $node['items'] = $children;               // grupo não recebe 'active'
         } else {
-            $node['active'] = $active;
+            // informe sempre o FQCN para desambiguar controller
+            $node['controller'] = $item->controller ?: null;
+            $node['active'] = $item->active;        // ex.: "index;view;update"
         }
 
-        // Inclui se visível ou (grupo com filhos)
         if ($isVisible || ($isGroup && !empty($children))) {
             $nodes[] = $node;
         }
@@ -122,24 +103,20 @@ function getNodes($parentId = null): array
 
 $nodes = getNodes(null);
 
-// Exemplo: acrescentar Logout ao fim
+// Logout opcional
 $nodes[] = [
     'label' => Yii::t('app', 'Logout'),
     'icon'  => 'cil-account-logout',
     'url'   => ['/site/logout'],
 ];
 
-// (Opcional) header e divider de exemplo
-// array_unshift($nodes, ['label' => 'Theme', 'header' => true]);
 $nodes[] = ['divider' => true];
-?>
 
+?>
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
     <div class="sidebar-header border-bottom">
         <div class="sidebar-brand">
             <?php
-            // Marca + variação estreita (se tiver seus próprios svgs)
-            // Caso prefira a logo da instância:
             if (!empty($config->file_id) && $config->file !== null) {
                 $url = Yii::getAlias('@web') . $config->file->urlThumb;
                 echo '<img class="sidebar-brand-full" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
@@ -155,7 +132,7 @@ $nodes[] = ['divider' => true];
             onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
     </div>
 
-    <!-- (Opcional) bloco de usuário -->
+    <!-- Bloco de usuário (opcional) -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
         <div class="flex-shrink-0">
             <?php if (Yii::$app->user->identity->profile && Yii::$app->user->identity->profile->file): ?>
@@ -174,14 +151,12 @@ $nodes[] = ['divider' => true];
 
     <!-- Navegação -->
     <?= CoreuiMenu::widget([
-        'items' => $nodes,
-        // Se seus SVGs estiverem em outro caminho, ajuste aqui:
+        'items'              => $nodes,
         'coreuiIconBaseHref' => $assetDir . '/vendors/@coreui/icons/svg/free.svg',
-        'compactChildren' => true,
-        'openOnActive'    => true,
-        'activeLinkClass' => 'active',
-        // Se quiser sobrescrever classes do <ul> raiz:
-        'options' => [
+        'compactChildren'    => true,
+        'openOnActive'       => true,
+        'activeLinkClass'    => 'active',
+        'options'            => [
             'class' => 'sidebar-nav',
             'data-coreui' => 'navigation',
             'data-simplebar' => '',
