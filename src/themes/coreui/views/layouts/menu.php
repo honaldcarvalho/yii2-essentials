@@ -1,8 +1,8 @@
 <?php
 
-use croacworks\essentials\widgets\Menu;
+use croacworks\essentials\widgets\CoreUiMenu;
 
-echo Menu::widget([
+echo CoreUiMenu::widget([
      'items' => [
          [
              'label' => 'Starter Pages',
