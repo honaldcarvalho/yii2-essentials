@@ -50,59 +50,18 @@ function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string 
     return false;
 }
 
-function isNodeActive(SysMenu $item, string $currentFQCN, string $currentControllerId, string $currentActionId): bool
-{
-    // 1) Especificação vinda do campo "action"
-    $spec = trim((string)$item->action);
-
-    // 1.1) action vazio ou '*' → ativa para qualquer action do controller FQCN
-    if ($spec === '' || $spec === '*') {
-        return $item->controller && $item->controller === $currentFQCN;
-    }
-
-    // 1.2) Padrão "controller;action" → ex.: "menu;index"
-    if (strpos($spec, ';') !== false && strpos($spec, '/') === false) {
-        [$ctrlId, $actId] = array_map('trim', explode(';', $spec, 2));
-        if ($ctrlId === '' && $actId === '') return false;
-        if ($ctrlId !== '' && $ctrlId !== $currentControllerId) return false;
-        if ($actId === '' || $actId === '*') return true;
-        return $actId === $currentActionId;
-    }
-
-    // 1.3) Padrão só "controller" → ex.: "menu" (qualquer action de /menu/*)
-    if (strpos($spec, '/') === false && strpos($spec, ';') === false) {
-        return $spec === $currentControllerId;
-    }
-
-    // 1.4) Padrão "controller/action" (ou lista separada por vírgula)
-    $routeNow = $currentControllerId . '/' . $currentActionId;
-    foreach (array_map('trim', explode(',', $spec)) as $routeSpec) {
-        if ($routeSpec === $routeNow) return true;
-    }
-
-    // 2) Fallback antigo: se controller FQCN bater e o "action" for lista de actions
-    //    (ex.: "index;view;create"), ativa quando a action atual constar.
-    if ($item->controller && $item->controller === $currentFQCN) {
-        foreach (array_filter(array_map('trim', explode(';', $spec)), 'strlen') as $act) {
-            if ($act === $currentActionId || $act === '*') return true;
-        }
-    }
-
-    return false;
-}
-
 /** Monta recursivamente os nós do menu a partir de sys_menus */
 function getNodes($parentId = null): array
 {
+
     $items = SysMenu::find()
         ->where(['parent_id' => $parentId, 'status' => true])
         ->orderBy(['order' => SORT_ASC])
         ->all();
 
     $nodes = [];
-    $currentFQCN         = get_class(Yii::$app->controller);
-    $currentControllerId = Yii::$app->controller->id;
-    $currentActionId     = Yii::$app->controller->action->id;
+    $currentFQCN   = get_class(Yii::$app->controller);
+    $currentAction = Yii::$app->controller->action->id;
 
     foreach ($items as $item) {
         // Hard toggles
@@ -114,6 +73,7 @@ function getNodes($parentId = null): array
 
         // Visibilidade
         if ($isGroup) {
+            // Grupo aparece se tiver ao menos um filho visível
             $isVisible = false;
             foreach ($children as $c) {
                 if (!empty($c['visible'])) { $isVisible = true; break; }
@@ -122,12 +82,17 @@ function getNodes($parentId = null): array
             $isVisible = allowedByVisible($item->controller, $item->visible, $item->action);
         }
 
-        // Active
-        $selfActive  = (!$isGroup) ? isNodeActive($item, $currentFQCN, $currentControllerId, $currentActionId) : false;
-        $childActive = false;
-        if ($isGroup) {
-            foreach ($children as $c) {
-                if (!empty($c['active'])) { $childActive = true; break; }
+        // Active (apenas itens simples com controller)
+        $active = false;
+        if (!$isGroup && $item->controller) {
+            $actions = trim((string)$item->action);
+            if ($item->controller === $currentFQCN) {
+                if ($actions === '' || $actions === '*') {
+                    $active = true;
+                } else {
+                    $allowed = array_map('trim', explode(';', $actions));
+                    $active  = in_array($currentAction, $allowed, true);
+                }
             }
         }
 
@@ -141,12 +106,12 @@ function getNodes($parentId = null): array
         ];
 
         if ($isGroup) {
-            $node['items']  = $children;
-            $node['active'] = $childActive; // faz o grupo expandir
+            $node['items'] = $children;
         } else {
-            $node['active'] = $selfActive;
+            $node['active'] = $active;
         }
 
+        // Inclui se visível ou (grupo com filhos)
         if ($isVisible || ($isGroup && !empty($children))) {
             $nodes[] = $node;
         }
