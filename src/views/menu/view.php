@@ -297,7 +297,8 @@ $this::registerJs($script, $this::POS_END);
             // Action - Select2 (opções serão carregadas via AJAX quando o controller mudar)
             [
                 'name'  => 'action',
-                'type'  => 'text'
+                'type'  => 'select2',
+                'value' => [],
             ],
 
             // Ícone FontAwesome - Select2 (carregado via JS do list.json)
