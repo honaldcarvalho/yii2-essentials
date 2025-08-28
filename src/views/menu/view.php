@@ -104,7 +104,7 @@ $appendJs = <<<JS
     return base.replace(/([a-z0-9])([A-Z])/g,'$1-$2').toLowerCase();
   }
   function namespaceRoot(fqcn){
-    return (fqcn && fqcn.split('\\')[0] ? fqcn.split('\\')[0] : 'app').toLowerCase();
+    return (fqcn && fqcn.split('\\\\')[0] ? fqcn.split('\\\\')[0] : 'app').toLowerCase();
   }
 
   function refreshVisible(){
