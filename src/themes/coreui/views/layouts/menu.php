@@ -22,7 +22,7 @@ $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) :
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="image user-image">
-                <?php if(Yii::$app->user->identity->file):?>
+                <?php if(Yii::$app->user->identity->profile->file):?>
                     <img class='brand-image img-circle elevation-2' src="<?= Yii::$app->user->identity->profile->file->url; ?>" style='width:32px; opacity: .8' />
                 <?php else:?>
                         <i class="fas fa-user-circle img-circle elevation-2" alt="User Image"></i>
