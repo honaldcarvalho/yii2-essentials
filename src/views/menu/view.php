@@ -127,7 +127,7 @@ $appendJs = <<<JS
     const fqcn = $(this).val();
     actionSelect.html('<option></option>').val(null).trigger('change');
     if(fqcn){
-      $.post('<?= $actionUrl ?>', { controller: fqcn }, function(res){
+      $.post('{$actionUrl}', { controller: fqcn }, function(res){
         if(res && res.success){
           let opts = '<option></option>';
           res.actions.forEach(a => { opts += `<option value="\${a}">\${a}</option>`; });
@@ -147,7 +147,7 @@ $appendJs = <<<JS
   async function ensureIcons(){
     if(iconSelect.data('loaded')) return;
     try{
-      const res = await fetch('<?= $assetsDir ?>/plugins/fontawesome-free/list.json');
+      const res = await fetch('{$assetsDir}/plugins/fontawesome-free/list.json');
       const icons = await res.json();
       let html = '<option></option>';
       icons.forEach(i => { html += `<option value="\${i}" data-icon="\${i}">\${i}</option>`; });
@@ -174,7 +174,7 @@ $appendJs = <<<JS
     const currentCtrl = ctrlSelect.val();
     const currentAct = actionSelect.val();
     if(currentCtrl){
-      $.post('<?= $actionUrl ?>', { controller: currentCtrl }, function(res){
+      $.post('{$actionUrl}', { controller: currentCtrl }, function(res){
         if(res && res.success){
           let opts = '<option></option>';
           res.actions.forEach(a => { opts += `<option value="\${a}">\${a}</option>`; });
