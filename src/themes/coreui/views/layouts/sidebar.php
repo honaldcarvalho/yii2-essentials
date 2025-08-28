@@ -7,18 +7,15 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Role;
 use croacworks\essentials\models\SysMenu;
 
-// Pré-existentes do seu código:
-$config     = Configuration::get();
-$assetDir   = CommonController::getAssetsDir(); // ajuste se seu tema definir outro helper
-$name_split = explode(' ', Yii::$app->user->identity->username);
-$name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
+$config   = Configuration::get();
+$assetDir = CommonController::getAssetsDir();
 
-// ... allowedByVisible() e getNodes() iguais aos seus ...
+$nameSplit = explode(' ', Yii::$app->user->identity->username);
+$nameUser  = $nameSplit[0] . (isset($nameSplit[1]) ? ' ' . end($nameSplit) : '');
+
 /**
- * Regra de exibição baseada em permissões:
- * - $visibleCsv: lista de actions separadas por ';' (ex.: "index;view;create").
- * - Se $visibleCsv = '*' → aparece se existir QUALQUER role ativa para esse controller.
- * - Se $visibleCsv vazio → usa $fallbackActionCsv; se também vazio → comporta como '*'.
+ * Regra de exibição baseada em permissões.
+ * $visibleCsv: lista "index;view;create" | '*' | '' (usa $fallbackActionCsv) | null (usa $fallbackActionCsv)
  */
 function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string $fallbackActionCsv = null): bool
 {
@@ -50,30 +47,58 @@ function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string 
     return false;
 }
 
-/** Monta recursivamente os nós do menu a partir de sys_menus */
-function getNodes($parentId = null): array
+/**
+ * Item ativo:
+ * 1) Prioriza sys_menus.active: compara com $controllerId e "$controllerId/$actionId".
+ *    Aceita múltiplos separados por ';' (ex.: "user;user/update;post/index").
+ * 2) Fallback: sys_menus.controller (FQCN) + sys_menus.action ('*' ou "index;view").
+ */
+function isActiveFor(SysMenu $item, string $controllerId, string $actionId, string $controllerFQCN): bool
 {
+    $activeExpr = trim((string)$item->active);
+    if ($activeExpr !== '') {
+        $targets = array_filter(array_map('trim', explode(';', $activeExpr)), 'strlen');
+        foreach ($targets as $t) {
+            if ($t === $controllerId || $t === $controllerId . '/' . $actionId) {
+                return true;
+            }
+        }
+        // Se explicitou "active" e não bateu, não cai no fallback.
+        return false;
+    }
 
+    // Fallback FQCN + actions
+    if (!$item->controller) return false;
+    if ($item->controller !== $controllerFQCN) return false;
+
+    $acts = trim((string)$item->action);
+    if ($acts === '' || $acts === '*') return true;
+
+    $allowed = array_filter(array_map('trim', explode(';', $acts)), 'strlen');
+    return in_array($actionId, $allowed, true);
+}
+
+/** Monta recursivamente os nós do menu a partir de sys_menus */
+function buildNodes(?int $parentId, string $controllerId, string $actionId, string $controllerFQCN): array
+{
     $items = SysMenu::find()
         ->where(['parent_id' => $parentId, 'status' => true])
         ->orderBy(['order' => SORT_ASC])
         ->all();
 
     $nodes = [];
-    $currentFQCN   = get_class(Yii::$app->controller);
-    $currentAction = Yii::$app->controller->action->id;
 
     foreach ($items as $item) {
-        // Hard toggles
+        // Toggles duros
         if (!$item->show) continue;
         if ($item->only_admin && !AuthorizationController::isAdmin()) continue;
 
         $isGroup  = ($item->url === '#');
-        $children = getNodes($item->id);
+        $children = buildNodes($item->id, $controllerId, $actionId, $controllerFQCN);
 
         // Visibilidade
         if ($isGroup) {
-            // Grupo aparece se tiver ao menos um filho visível
+            // Grupo fica visível se algum filho estiver visível
             $isVisible = false;
             foreach ($children as $c) {
                 if (!empty($c['visible'])) { $isVisible = true; break; }
@@ -82,23 +107,15 @@ function getNodes($parentId = null): array
             $isVisible = allowedByVisible($item->controller, $item->visible, $item->action);
         }
 
-        // Active (apenas itens simples com controller)
+        // Active (somente item simples)
         $active = false;
-        if (!$isGroup && $item->controller) {
-            $actions = trim((string)$item->action);
-            if ($item->controller === $currentFQCN) {
-                if ($actions === '' || $actions === '*') {
-                    $active = true;
-                } else {
-                    $allowed = array_map('trim', explode(';', $actions));
-                    $active  = in_array($currentAction, $allowed, true);
-                }
-            }
+        if (!$isGroup) {
+            $active = isActiveFor($item, $controllerId, $actionId, $controllerFQCN);
         }
 
-        // Nó
+        // Nó do menu
         $node = [
-            'label'     => Yii::t('app', $item->label),
+            'label'     => Yii::t('app', (string)$item->label),
             'icon'      => (string)$item->icon,
             'iconStyle' => (string)$item->icon_style,
             'url'       => [$item->url ?: '#'],
@@ -111,7 +128,6 @@ function getNodes($parentId = null): array
             $node['active'] = $active;
         }
 
-        // Inclui se visível ou (grupo com filhos)
         if ($isVisible || ($isGroup && !empty($children))) {
             $nodes[] = $node;
         }
@@ -120,17 +136,22 @@ function getNodes($parentId = null): array
     return $nodes;
 }
 
-$nodes = getNodes(null);
+// Contexto atual
+$currentControllerId  = Yii::$app->controller->id;
+$currentActionId      = Yii::$app->controller->action->id;
+$currentControllerFQCN = get_class(Yii::$app->controller);
 
-// Exemplo: acrescentar Logout ao fim
+// Monta nós
+$nodes = buildNodes(null, $currentControllerId, $currentActionId, $currentControllerFQCN);
+
+// Acrescenta Logout
 $nodes[] = [
     'label' => Yii::t('app', 'Logout'),
     'icon'  => 'cil-account-logout',
     'url'   => ['/site/logout'],
 ];
 
-// (Opcional) header e divider de exemplo
-// array_unshift($nodes, ['label' => 'Theme', 'header' => true]);
+// (Opcional) divisor
 $nodes[] = ['divider' => true];
 ?>
 
@@ -138,8 +159,6 @@ $nodes[] = ['divider' => true];
     <div class="sidebar-header border-bottom">
         <div class="sidebar-brand">
             <?php
-            // Marca + variação estreita (se tiver seus próprios svgs)
-            // Caso prefira a logo da instância:
             if (!empty($config->file_id) && $config->file !== null) {
                 $url = Yii::getAlias('@web') . $config->file->urlThumb;
                 echo '<img class="sidebar-brand-full" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
@@ -149,13 +168,12 @@ $nodes[] = ['divider' => true];
                 echo '<img class="sidebar-brand-narrow" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($config->title).'" height="32">';
             }
             ?>
-            <?= $config->title ?>
+            <?= htmlspecialchars($config->title) ?>
         </div>
         <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close"
             onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
     </div>
 
-    <!-- (Opcional) bloco de usuário -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
         <div class="flex-shrink-0">
             <?php if (Yii::$app->user->identity->profile && Yii::$app->user->identity->profile->file): ?>
@@ -167,20 +185,17 @@ $nodes[] = ['divider' => true];
             <?php endif; ?>
         </div>
         <div class="flex-grow-1">
-            <div class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></div>
+            <div class="fw-semibold text-white-50"><?= htmlspecialchars($nameUser) ?></div>
             <div class="small text-white-50"><?= htmlspecialchars($config->title) ?></div>
         </div>
     </div>
 
-    <!-- Navegação -->
     <?= CoreuiMenu::widget([
-        'items' => $nodes,
-        // Se seus SVGs estiverem em outro caminho, ajuste aqui:
+        'items'            => $nodes,
         'coreuiIconBaseHref' => $assetDir . '/vendors/@coreui/icons/svg/free.svg',
-        'compactChildren' => true,
-        'openOnActive'    => true,
-        'activeLinkClass' => 'active',
-        // Se quiser sobrescrever classes do <ul> raiz:
+        'compactChildren'  => true,
+        'openOnActive'     => true,
+        'activeLinkClass'  => 'active',
         'options' => [
             'class' => 'sidebar-nav',
             'data-coreui' => 'navigation',
