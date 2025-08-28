@@ -50,97 +50,110 @@ function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string 
     return false;
 }
 
-/** Monta recursivamente os nós do menu a partir de sys_menus */
-function getNodes($controller_id, $id = null)
+function isNodeActive(SysMenu $item, string $currentFQCN, string $currentControllerId, string $currentActionId): bool
 {
-    $items = Menu::find()->where(['menu_id' => $id, 'status' => true])
-        ->orderBy(['order' => SORT_ASC])->all();
+    // 1) Especificação vinda do campo "action"
+    $spec = trim((string)$item->action);
+
+    // 1.1) action vazio ou '*' → ativa para qualquer action do controller FQCN
+    if ($spec === '' || $spec === '*') {
+        return $item->controller && $item->controller === $currentFQCN;
+    }
+
+    // 1.2) Padrão "controller;action" → ex.: "menu;index"
+    if (strpos($spec, ';') !== false && strpos($spec, '/') === false) {
+        [$ctrlId, $actId] = array_map('trim', explode(';', $spec, 2));
+        if ($ctrlId === '' && $actId === '') return false;
+        if ($ctrlId !== '' && $ctrlId !== $currentControllerId) return false;
+        if ($actId === '' || $actId === '*') return true;
+        return $actId === $currentActionId;
+    }
+
+    // 1.3) Padrão só "controller" → ex.: "menu" (qualquer action de /menu/*)
+    if (strpos($spec, '/') === false && strpos($spec, ';') === false) {
+        return $spec === $currentControllerId;
+    }
+
+    // 1.4) Padrão "controller/action" (ou lista separada por vírgula)
+    $routeNow = $currentControllerId . '/' . $currentActionId;
+    foreach (array_map('trim', explode(',', $spec)) as $routeSpec) {
+        if ($routeSpec === $routeNow) return true;
+    }
+
+    // 2) Fallback antigo: se controller FQCN bater e o "action" for lista de actions
+    //    (ex.: "index;view;create"), ativa quando a action atual constar.
+    if ($item->controller && $item->controller === $currentFQCN) {
+        foreach (array_filter(array_map('trim', explode(';', $spec)), 'strlen') as $act) {
+            if ($act === $currentActionId || $act === '*') return true;
+        }
+    }
+
+    return false;
+}
+
+/** Monta recursivamente os nós do menu a partir de sys_menus */
+function getNodes($parentId = null): array
+{
+    $items = SysMenu::find()
+        ->where(['parent_id' => $parentId, 'status' => true])
+        ->orderBy(['order' => SORT_ASC])
+        ->all();
 
     $nodes = [];
+    $currentFQCN         = get_class(Yii::$app->controller);
+    $currentControllerId = Yii::$app->controller->id;
+    $currentActionId     = Yii::$app->controller->action->id;
+
     foreach ($items as $item) {
+        // Hard toggles
+        if (!$item->show) continue;
+        if ($item->only_admin && !AuthorizationController::isAdmin()) continue;
 
-        $visible_parts = explode(';', $item['visible']);
-        $isVisible = true;
+        $isGroup  = ($item->url === '#');
+        $children = getNodes($item->id);
 
-        // filhos primeiro (para sabermos se algum filho está ativo)
-        $item_nodes = [];
-        if ($item['url'] == '#' || ($item['url'] != '#' && $item['menu_id'] == null)) {
-            $item_nodes = getNodes($controller_id, $item['id']);
-
-            if (empty($item_nodes) && $item['url'] == '#') {
-                $isVisible = false;
-            } else {
-                if (count($visible_parts) > 1) {
-                    $isVisible = AuthController::verAuthorization($visible_parts[0], $visible_parts[1], null, $item['path']);
-                } elseif (count($visible_parts) === 1) {
-                    // mostra o pai se pelo menos um filho for visível
-                    $isVisible = false;
-                    foreach ($item_nodes as $n) {
-                        if (!empty($n['visible'])) {
-                            $isVisible = true;
-                            break;
-                        }
-                    }
-                } else {
-                    $isVisible = false;
-                }
+        // Visibilidade
+        if ($isGroup) {
+            $isVisible = false;
+            foreach ($children as $c) {
+                if (!empty($c['visible'])) { $isVisible = true; break; }
             }
         } else {
-            if (count($visible_parts) > 1) {
-                $isVisible = AuthController::verAuthorization($visible_parts[0], $visible_parts[1], null, $item['path']);
-            } elseif (empty($visible_parts)) {
-                $isVisible = false;
-            }
+            $isVisible = allowedByVisible($item->controller, $item->visible, $item->action);
         }
 
-        // --- CÁLCULO DO ACTIVE (corrigido) -----------------------------
-        // Normaliza "menu;index" -> "menu/index"
-        $activeRaw  = (string)$item['active'];
-        $activeNorm = str_replace(';', '/', $activeRaw);
-
-        $currentCtrlAction = $controller_id . '/' . Yii::$app->controller->action->id;
-
-        // Regra:
-        // - Se active = "menu"  -> ativa para qualquer action de /menu/*
-        // - Se active = "menu;index" (ou "menu/index") -> ativa só em /menu/index
-        $selfActive =
-            ($controller_id === $activeRaw) ||
-            ($controller_id === $activeNorm) ||
-            ($currentCtrlAction === $activeRaw) ||
-            ($currentCtrlAction === $activeNorm);
-
-        // Pai deve ficar ativo/expandido se QUALQUER filho estiver ativo
+        // Active
+        $selfActive  = (!$isGroup) ? isNodeActive($item, $currentFQCN, $currentControllerId, $currentActionId) : false;
         $childActive = false;
-        foreach ($item_nodes as $n) {
-            if (!empty($n['active'])) {
-                $childActive = true;
-                break;
+        if ($isGroup) {
+            foreach ($children as $c) {
+                if (!empty($c['active'])) { $childActive = true; break; }
             }
         }
 
-        // Para itens com URL "#", usar childActive; para os demais, usar selfActive
-        $isActive = ($item['url'] == '#') ? $childActive : $selfActive;
-        // --- FIM ACTIVE -----------------------------------------------
-
-        // Monta o node
+        // Nó
         $node = [
-            'label'   => Yii::t('app', $item['label']),
-            'icon'    => "{$item['icon']}",
-            'iconStyle' => "{$item['icon_style']}",
-            'url'     => ["{$item['url']}"],
-            'visible' => $isVisible,
-            'items'   => $item_nodes,
-            'active'  => $isActive,
+            'label'     => Yii::t('app', $item->label),
+            'icon'      => (string)$item->icon,
+            'iconStyle' => (string)$item->icon_style,
+            'url'       => [$item->url ?: '#'],
+            'visible'   => $isVisible,
         ];
 
-        if (!$item['only_admin'] || ($item['only_admin'] && AuthController::isAdmin())) {
+        if ($isGroup) {
+            $node['items']  = $children;
+            $node['active'] = $childActive; // faz o grupo expandir
+        } else {
+            $node['active'] = $selfActive;
+        }
+
+        if ($isVisible || ($isGroup && !empty($children))) {
             $nodes[] = $node;
         }
     }
 
     return $nodes;
 }
-
 
 $nodes = getNodes(null);
 
@@ -196,18 +209,19 @@ $nodes[] = ['divider' => true];
 
     <!-- Navegação -->
     <?= CoreuiMenu::widget([
-    'options' => [
-        'class' => 'nav nav-pills nav-sidebar flex-column nav-child-indent',
-        'data-widget' => 'treeview',
-        'role' => 'menu',
-        'data-accordion' => 'false',
-    ],
-    'activateItems' => true,        // garante que itens possam ficar ativos
-    'activateParents' => true,      // EXPANDE o pai quando o filho está ativo
-    'items' => array_merge($nodes, [
-        ['label' => 'Logout', 'icon' => 'fas fa-sign-out-alt', 'url' => ['/site/logout']],
-    ]),
-]);?>
+        'items' => $nodes,
+        // Se seus SVGs estiverem em outro caminho, ajuste aqui:
+        'coreuiIconBaseHref' => $assetDir . '/vendors/@coreui/icons/svg/free.svg',
+        'compactChildren' => true,
+        'openOnActive'    => true,
+        'activeLinkClass' => 'active',
+        // Se quiser sobrescrever classes do <ul> raiz:
+        'options' => [
+            'class' => 'sidebar-nav',
+            'data-coreui' => 'navigation',
+            'data-simplebar' => '',
+        ],
+    ]); ?>
 
     <div class="sidebar-footer border-top d-none d-md-flex">
         <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
