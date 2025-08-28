@@ -84,55 +84,54 @@ $actionUrl   = Url::to(['/role/get-actions']);      // AJAX p/ listar actions po
 
 $appendJs = <<<JS
 (function(){
-  const modal      = $('#save-menu');          // id do modal gerado pelo AppendModel (uniqueId = 'menu')
-  const $ctrl      = $('#menu-controller');
-  const $act       = $('#menu-action');
-  const $icon      = $('#menu-icon');
-  const $iconStyle = $('#menu-icon_style');
-  const $visible   = $('#menu-visible');
-  const $url       = $('#menu-url');
-  const $path      = $('#menu-path');
-  const $active    = $('#menu-active');
+  const modal = $('#save-menu'); // ok usar jQuery; o nome da variável não tem "$"
+  const ctrlSelect = $('#menu-controller');
+  const actionSelect = $('#menu-action');
+  const iconSelect = $('#menu-icon');
+  const iconStyleInput = $('#menu-icon_style');
+  const visibleInput = $('#menu-visible');
+  const urlInput = $('#menu-url');
+  const pathInput = $('#menu-path');
+  const activeInput = $('#menu-active');
 
   function controllerBaseName(fqcn){
     if(!fqcn) return '';
-    const parts = fqcn.split('\\\\');
-    return (parts.pop() || '').replace(/Controller$/,''); // ex: FormResponse
+    const parts = fqcn.split('\\');
+    return (parts.pop() || '').replace(/Controller$/,'');
   }
   function controllerIdFromFQCN(fqcn){
     const base = controllerBaseName(fqcn);
-    return base.replace(/([a-z0-9])([A-Z])/g,'$1-$2').toLowerCase(); // ex: form-response
+    return base.replace(/([a-z0-9])([A-Z])/g,'$1-$2').toLowerCase();
   }
   function namespaceRoot(fqcn){
-    return (fqcn && fqcn.split('\\\\')[0] ? fqcn.split('\\\\')[0] : 'app').toLowerCase();
+    return (fqcn && fqcn.split('\\')[0] ? fqcn.split('\\')[0] : 'app').toLowerCase();
   }
 
   function refreshVisible(){
-    const c = $ctrl.val() || '';
-    const a = $act.val()  || '';
-    if(c && a){ $visible.val(c + ';' + a); }
+    const c = ctrlSelect.val() || '';
+    const a = actionSelect.val() || '';
+    if(c && a){ visibleInput.val(c + ';' + a); }
   }
   function refreshUrlActivePath(){
-    const fqcn   = $ctrl.val();
+    const fqcn = ctrlSelect.val();
     if(!fqcn) return;
     const ctrlId = controllerIdFromFQCN(fqcn);
-    const ns     = namespaceRoot(fqcn);
-    const act    = $act.val() || 'index';
-    $active.val(ctrlId);
-    $path.val(ns);
-    $url.val('/' + ctrlId + '/' + act);
+    const ns = namespaceRoot(fqcn);
+    const act = actionSelect.val() || 'index';
+    activeInput.val(ctrlId);
+    pathInput.val(ns);
+    urlInput.val('/' + ctrlId + '/' + act);
   }
 
-  // Carregar actions ao mudar controller
-  $ctrl.on('change', function(){
+  ctrlSelect.on('change', function(){
     const fqcn = $(this).val();
-    $act.html('<option></option>').val(null).trigger('change');
+    actionSelect.html('<option></option>').val(null).trigger('change');
     if(fqcn){
-      $.post('{$actionUrl}', { controller: fqcn }, function(res){
+      $.post('<?= $actionUrl ?>', { controller: fqcn }, function(res){
         if(res && res.success){
           let opts = '<option></option>';
-          res.actions.forEach(a => opts += `<option value="\${a}">\${a}</option>`);
-          $act.html(opts).trigger('change');
+          res.actions.forEach(a => { opts += `<option value="${a}">${a}</option>`; });
+          actionSelect.html(opts).trigger('change');
         }
       }, 'json');
     }
@@ -140,62 +139,57 @@ $appendJs = <<<JS
     refreshVisible();
   });
 
-  // Atualiza campos derivados quando a action muda
-  $act.on('change', function(){
+  actionSelect.on('change', function(){
     refreshUrlActivePath();
     refreshVisible();
   });
 
-  // Carregar lista de ícones FA uma vez
   async function ensureIcons(){
-    if($icon.data('loaded')) return;
+    if(iconSelect.data('loaded')) return;
     try{
-      const res   = await fetch('{$assetsDir}/plugins/fontawesome-free/list.json');
+      const res = await fetch('<?= $assetsDir ?>/plugins/fontawesome-free/list.json');
       const icons = await res.json();
       let html = '<option></option>';
-      icons.forEach(i => { html += `<option value="\${i}" data-icon="\${i}">\${i}</option>`; });
-      $icon.html(html).trigger('change');
-      // Embeleza resultados do Select2 com o ícone
-      $icon.on('select2:open', function(){
+      icons.forEach(i => { html += `<option value="${i}" data-icon="${i}">${i}</option>`; });
+      iconSelect.html(html).trigger('change');
+      iconSelect.on('select2:open', function(){
         $('#select2-menu-icon-results li').each(function(){
           const txt = $(this).text();
           $(this).html('<i class="'+txt+'"></i> '+txt);
         });
       });
-      $icon.data('loaded', true);
+      iconSelect.data('loaded', true);
     }catch(e){
       console.warn('Falha ao carregar ícones:', e);
     }
   }
 
-  // Ao abrir o modal, garantir Select2 e ícones
   document.addEventListener('shown.bs.modal', function(e){
     if(e.target.id === 'save-menu'){
       ensureIcons();
     }
   });
 
-  // No modo de edição: garantir que as actions do controller atual sejam preenchidas
   window.appendMenuEditHydrate = function(){
-    const currentCtrl = $ctrl.val();
-    const currentAct  = $act.val();
+    const currentCtrl = ctrlSelect.val();
+    const currentAct = actionSelect.val();
     if(currentCtrl){
-      $.post('{$actionUrl}', { controller: currentCtrl }, function(res){
+      $.post('<?= $actionUrl ?>', { controller: currentCtrl }, function(res){
         if(res && res.success){
           let opts = '<option></option>';
-          res.actions.forEach(a => { opts += `<option value="\${a}">\${a}</option>`; });
-          $act.html(opts).val(currentAct).trigger('change');
+          res.actions.forEach(a => { opts += `<option value="${a}">${a}</option>`; });
+          actionSelect.html(opts).val(currentAct).trigger('change');
         }
       }, 'json');
     }
     ensureIcons();
   };
 
-  // No "Novo": defaults amigáveis
   window.appendMenuNewDefaults = function(){
-    if(!$iconStyle.val()) $iconStyle.val('fas');
+    if(!iconStyleInput.val()) iconStyleInput.val('fas');
   };
 })();
+
 JS;
 
 $this->registerJs($appendJs);
