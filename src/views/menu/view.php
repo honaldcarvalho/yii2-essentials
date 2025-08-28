@@ -96,7 +96,7 @@ $appendJs = <<<JS
 
   function controllerBaseName(fqcn){
     if(!fqcn) return '';
-    const parts = fqcn.split('\\');
+    const parts = fqcn.split('\\\\');
     return (parts.pop() || '').replace(/Controller$/,'');
   }
   function controllerIdFromFQCN(fqcn){
