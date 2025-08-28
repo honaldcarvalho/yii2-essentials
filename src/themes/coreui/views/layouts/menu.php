@@ -2,7 +2,7 @@
 
 use croacworks\essentials\widgets\Menu;
 
-Menu::widget([
+echo Menu::widget([
      'items' => [
          [
              'label' => 'Starter Pages',
