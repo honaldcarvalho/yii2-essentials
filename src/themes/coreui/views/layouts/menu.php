@@ -2,7 +2,8 @@
 
 use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\models\Configuration;
-use croacworks\essentials\widgets\CoreUiMenu;
+use croacworks\essentials\widgets\MenuAdminLte;
+
 // Pré-existentes do seu código:
 $config     = Configuration::get();
 $assetDir   = CommonController::getAssetsDir(); // ajuste se seu tema definir outro helper
@@ -10,47 +11,46 @@ $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 ?>
-<div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
-    <div class="sidebar-header border-bottom">
-        <div class="sidebar-brand">
-            <?php
-            // Marca + variação estreita (se tiver seus próprios svgs)
-            // Caso prefira a logo da instância:
-            if (!empty($config->file_id) && $config->file !== null) {
-                $url = Yii::getAlias('@web') . $config->file->urlThumb;
-                echo '<img class="sidebar-brand-full" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
-                echo '<img class="sidebar-brand-narrow" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
-            } else {
-                echo '<img class="sidebar-brand-full" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($config->title).'" height="32">';
-                echo '<img class="sidebar-brand-narrow" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($config->title).'" height="32">';
-            }
-            ?>
-            <?= $config->title ?>
-        </div>
-        <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close"
-            onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
-    </div>
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="<?=Yii::getAlias('/');?>" class="brand-link">
+        <span class="brand-text font-weight-light"><?= $config->title ?></span>
+    </a>
 
-    <!-- (Opcional) bloco de usuário -->
-    <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
-        <div class="flex-shrink-0">
-            <?php if (Yii::$app->user->identity->profile && Yii::$app->user->identity->profile->file): ?>
-                <img src="<?= Yii::$app->user->identity->profile->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
-            <?php else: ?>
-                <svg width="32" height="32">
-                    <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                </svg>
-            <?php endif; ?>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar user panel (optional) -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image user-image">
+                <?php if(Yii::$app->user->identity->file):?>
+                    <img class='brand-image img-circle elevation-2' src="<?= Yii::$app->user->identity->profile->file->url; ?>" style='width:32px; opacity: .8' />
+                <?php else:?>
+                        <i class="fas fa-user-circle img-circle elevation-2" alt="User Image"></i>
+                <?php endif;?>
+            </div>
+            <div class="info">
+                <?= yii\helpers\Html::a($name_user, ['/user/profile', 'id' =>Yii::$app->user->identity->id],["class"=>"d-block"]) ?><br>
+            </div>
         </div>
-        <div class="flex-grow-1">
-            <div class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></div>
-            <div class="small text-white-50"><?= htmlspecialchars($config->title) ?></div>
-        </div>
-    </div>
 
+        <!-- SidebarSearch Form -->
+        <!-- href be escaped -->
+        <div class="form-inline">
+            <div class="input-group" data-widget="sidebar-search">
+                <input class="form-control form-control-sidebar" type="search" placeholder="<?=Yii::t('app','Search')?>" aria-label="<?=Yii::t('app','Search')?>">
+                <div class="input-group-append">
+                    <button class="btn btn-sidebar">
+                        <i class="fas fa-search fa-fw"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
 <?php
 
-echo CoreUiMenu::widget([
+echo MenuAdminLte::widget([
      'items' => [
          [
              'label' => 'Starter Pages',
@@ -71,8 +71,8 @@ echo CoreUiMenu::widget([
 ])
 
 ?>
-
-    <div class="sidebar-footer border-top d-none d-md-flex">
-        <button class="sidebar-toggler" type="button" data-coreui-toggle="unfoldable"></button>
+        </nav>
+        <!-- /.sidebar-menu -->
     </div>
-</div>
+    <!-- /.sidebar -->
+</aside>
