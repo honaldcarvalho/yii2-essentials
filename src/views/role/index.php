@@ -1,15 +1,15 @@
 <?php
 
-use weebz\yii2basics\models\Group;;
-use weebz\yii2basics\models\Role;
-use weebz\yii2basics\models\User;
+use croacworks\essentials\models\Group;;
+use croacworks\essentials\models\Role;
+use croacworks\essentials\models\User;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\grid\ActionColumn;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 /** @var yii\web\View $this */
-/** @var weebz\yii2basics\models\RoleSearch $searchModel */
+/** @var croacworks\essentials\models\RoleSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = Yii::t('app', 'Roles');
@@ -23,7 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= weebz\yii2basics\widgets\DefaultButtons::widget([
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'controller' => 'Role','show' => ['create'],
                                 'buttons_name' => ['create' => Yii::t('app', 'Create Role')],
                                 'verGroup'=>false
@@ -88,7 +88,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             'status:boolean',
                             [
-                                'class' =>'weebz\yii2basics\components\gridview\ActionColumn','verGroup'=>false,
+                                'class' =>'croacworks\essentials\components\gridview\ActionColumn','verGroup'=>false,
                                 'urlCreator' => function ($action, Role $model, $key, $index, $column) {
                                     return Url::toRoute([$action, 'id' => $model->id]);
                                  }

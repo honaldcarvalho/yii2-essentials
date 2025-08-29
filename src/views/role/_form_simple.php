@@ -1,12 +1,12 @@
 <?php
 
 /** @var yii\web\View $this */
-/** @var weebz\yii2basics\models\Role $model */
+/** @var croacworks\essentials\models\Role $model */
 /** @var yii\widgets\ActiveForm $form */
 
-use weebz\yii2basics\models\Group;;
-use weebz\yii2basics\models\User;
-use weebz\yii2basics\themes\adminlte3\assets\PluginAsset;
+use croacworks\essentials\models\Group;;
+use croacworks\essentials\models\User;
+use croacworks\essentials\themes\adminlte3\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\web\View;
 use yii\widgets\ActiveForm;

@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model weebz\yii2basics\models\Role */
+/* @var $model croacworks\essentials\models\Role */
 
 $this->title = Yii::t('app', 'Update Role: {name}', [
     'name' => $model->id,
