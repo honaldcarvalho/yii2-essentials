@@ -88,7 +88,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             'status:boolean',
                             [
-                                'class' =>'croacworks\essentials\components\gridview\ActionColumn','verGroup'=>false,
+                                'class' =>'croacworks\essentials\components\gridview\ActionColumnCustom','verGroup'=>false,
                                 'urlCreator' => function ($action, Role $model, $key, $index, $column) {
                                     return Url::toRoute([$action, 'id' => $model->id]);
                                  }
