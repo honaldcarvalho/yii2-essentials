@@ -19,7 +19,7 @@ $script = <<< JS
 
 async function populateDropdown() {
 
-    const response = await fetch('{$assetsDir}/plugins/fontawesome-free/list.json');
+    const response = await fetch('{$assetsDir}/plugins/fontawesome-free/list_full.json');
     const iconList = await response.json();
 
     const dropdown = document.getElementById('sysmenu-icon');
