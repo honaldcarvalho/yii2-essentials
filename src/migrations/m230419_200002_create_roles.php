@@ -12,7 +12,7 @@ class m230419_200002_create_roles extends Migration
             'user_id' => $this->integer()->null(),
             'name' => $this->string(120)->null(),
             'controller' => $this->string(255)->notNull(), // FQCN
-            'action' => $this->string(64)->notNull(),      // ex.: index|view|* 
+            'actions' => $this->string(64)->notNull(),
             'status' => $this->tinyInteger()->notNull()->defaultValue(1),
             'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
             'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),

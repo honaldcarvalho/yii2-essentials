@@ -151,7 +151,7 @@ $appendJs = <<<JS
       const icons = await res.json();
       let html = '<option></option>';
       icons.forEach(i => { html += `<option value="\${i}" data-icon="\${i}">\${i}</option>`; });
-      iconSelect.html(html).trigger('change');croacworks\essentials\components\gridview\ActionColumnCustom
+      iconSelect.html(html).trigger('change');
       iconSelect.on('select2:open', function(){
         $('#select2-menu-icon-results li').each(function(){
           const txt = $(this).text();
