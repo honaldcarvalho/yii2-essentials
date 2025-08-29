@@ -1,1 +1,24 @@
  - Onde usa append, verificar os id do grid e demais itemes
+
+
+ Perfeito — entendi as regras finais:
+
+Grupo (tem filhos)
+
+Ignora totalmente controller/active do próprio grupo.
+
+Só fica ativo se algum filho visível estiver ativo.
+
+Se nenhum filho ativo ⇒ grupo nunca ativo/aberto.
+
+Item folha (sem filhos)
+
+Usa controller do item (FQCN ou derivado do url).
+
+Campo active do item define a regra de action:
+
+'' (vazio) ou igual ao nome do controller (id ou FQCN) ⇒ ativo em qualquer action daquele controller;
+
+"a;b;c" ⇒ ativo só se a action atual ∈ {a,b,c}.
+
+Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por filho) + abertura correta dos grupos.
