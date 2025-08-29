@@ -212,9 +212,11 @@ class CoreuiMenu extends \yii\widgets\Menu
             return (bool)$item['active'];
         }
 
-        // Sem 'active' => por controller
+        // Se 'active' AUSENTE/NULL: só ativa se houver controller E não for '#' E o item tiver uma rota real
         if (!array_key_exists('active', $item) || $item['active'] === null) {
-            return $controllerMatches;
+            // Ignora itens com url '#' (ex: System, grupos vazios)
+            $hasRealRoute = isset($item['url']) && $item['url'] !== '#' && $item['url'] !== null;
+            return $controllerMatches && $hasRealRoute;
         }
 
         // 'active' == controller (id/FQCN)
