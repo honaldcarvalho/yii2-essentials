@@ -7,6 +7,27 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
+/**
+ * CoreuiMenu
+ *
+ * 'items' suportados:
+ *  - 'label'       string
+ *  - 'url'         array|string|null  Ex.: ['/user/index'] (usado para inferir o controller)
+ *  - 'items'       array              Subitens (vira "nav-group")
+ *  - 'badge'       string             HTML do badge
+ *  - 'icon'        string             'cil-*' (CoreUI SVG) OU nome FA ('user')
+ *  - 'iconClass'   string             Classe direta <i>
+ *  - 'iconStyle'   string             Estilo FA ('fas','far')
+ *  - 'target'      string
+ *  - 'visible'     bool
+ *  - 'options'     array              atributos do <li>
+ *  - 'controller'  string             FQCN do controller (opcional, ajuda a desambiguar)
+ *  - 'active'      string|array|bool|null
+ *      -> ausente, null ou ''          : ativo em QUALQUER action do controller do item
+ *      -> 'a;b;c' ou ['a','b']        : ativo se action atual ∈ lista
+ *      -> igual ao controller (id/FQCN): ativo em QUALQUER action desse controller
+ *      -> bool                         : força
+ */
 class CoreuiMenu extends \yii\widgets\Menu
 {
     public $coreuiIconBaseHref = '/vendors/@coreui/icons/svg/free.svg';
@@ -15,14 +36,16 @@ class CoreuiMenu extends \yii\widgets\Menu
     public $activeLinkClass    = 'active';
 
     public $options = [
-        'class' => 'sidebar-nav',
-        'data-coreui' => 'navigation',
-        'data-simplebar' => '',
+        'class'         => 'sidebar-nav',
+        'data-coreui'   => 'navigation',
+        'data-simplebar'=> '',
     ];
 
     public $itemOptions     = ['class' => 'nav-item'];
     public $activateParents = true;
     public $encodeLabels    = false;
+
+    /* ========================= RENDER ========================= */
 
     protected function renderItems($items)
     {
@@ -35,7 +58,8 @@ class CoreuiMenu extends \yii\widgets\Menu
 
             // Header
             if (!empty($item['header'])) {
-                $lines[] = Html::tag('li',
+                $lines[] = Html::tag(
+                    'li',
                     $this->encodeLabels ? Html::encode($item['label']) : $item['label'],
                     ['class' => 'nav-title']
                 );
@@ -52,14 +76,15 @@ class CoreuiMenu extends \yii\widgets\Menu
             $hasChildren = !empty($item['items']);
 
             if ($hasChildren) {
-                // GRUPO: só ativa se filho ativo (regra 1)
+                // === GRUPO ===
+                // Regra 1: grupo ignora controller/active próprio. Só abre se algum descendente visível estiver ativo.
                 Html::removeCssClass($options, 'nav-item');
                 Html::addCssClass($options, 'nav-group');
 
-                $groupActive = $this->isGroupActive($item); // <<< apenas filhos
+                $groupActive = $this->isGroupActive($item); // SOMENTE descendentes
 
                 if ($this->openOnActive && $groupActive) {
-                    Html::addCssClass($options, 'show'); // CoreUI abre com show no <li.nav-group>
+                    Html::addCssClass($options, 'show'); // CoreUI abre com 'show' no <li.nav-group>
                 }
 
                 $groupLinkClasses = ['nav-link', 'nav-group-toggle'];
@@ -71,7 +96,7 @@ class CoreuiMenu extends \yii\widgets\Menu
                     $this->renderIcon($item) . Html::tag('span', $this->encodeLabels ? Html::encode($item['label']) : $item['label']),
                     '#',
                     [
-                        'class' => implode(' ', $groupLinkClasses),
+                        'class'         => implode(' ', $groupLinkClasses),
                         'aria-expanded' => $groupActive ? 'true' : 'false',
                     ]
                 );
@@ -86,9 +111,9 @@ class CoreuiMenu extends \yii\widgets\Menu
 
                 $lines[] = Html::tag('li', $link . $ul, $options);
             } else {
-                // FOLHA
+                // === FOLHA ===
                 $url      = isset($item['url']) ? Url::to($item['url']) : '#';
-                $isActive = $this->isLeafActive($item); // <<< regra 2
+                $isActive = $this->isLeafActive($item);
 
                 $linkClasses = ['nav-link'];
                 if ($isActive) {
@@ -141,26 +166,57 @@ class CoreuiMenu extends \yii\widgets\Menu
         return '<i class="' . Html::encode($cls) . '"></i> ';
     }
 
-    /* =======================
-       ATIVAÇÃO: REGRAS NOVAS
-       ======================= */
+    /* ========================= ATIVAÇÃO ========================= */
 
-    // Regra 1: grupo ativo somente se filho visível ativo
+    /**
+     * Decide se um item está ativo conforme as regras:
+     * - Grupo: ativo se ALGUM descendente visível estiver ativo (ignora próprio controller/active).
+     * - Folha: aplica regras de controller/active do próprio item.
+     */
+    protected function isItemActive($item): bool
+    {
+        $hasChildren = !empty($item['items']);
+        return $hasChildren ? $this->isGroupActive($item) : $this->isLeafActive($item);
+    }
+
+    /**
+     * Grupo ativo se algum filho/neto/bisneto **visível** estiver ativo.
+     * Ignora totalmente qualquer 'controller'/'active' do próprio grupo.
+     */
     protected function isGroupActive(array $item): bool
     {
         if (empty($item['items']) || !is_array($item['items'])) {
             return false;
         }
+
         foreach ($item['items'] as $child) {
             $childVisible = !isset($child['visible']) || (bool)$child['visible'] === true;
-            if ($childVisible && ($this->hasChildren($child) ? $this->isGroupActive($child) : $this->isLeafActive($child))) {
-                return true;
+            if (!$childVisible) {
+                continue;
+            }
+            $hasChildren = !empty($child['items']);
+            if ($hasChildren) {
+                if ($this->isGroupActive($child)) {
+                    return true;
+                }
+            } else {
+                if ($this->isLeafActive($child)) {
+                    return true;
+                }
             }
         }
+
         return false;
     }
 
-    // Regra 2: folha ativa conforme controller + active do item
+    /**
+     * Regra de item FOLHA (sem filhos):
+     * - Usa controller do item (FQCN via 'controller' OU deduzido do 'url').
+     * - Campo 'active' define ações:
+     *    • ausente | null | '' | igual ao controller (id/FQCN) => ativo em qualquer action (desde que controller bata)
+     *    • "a;b;c" | ['a','b','c'] => ativo se action atual ∈ lista (e controller bata)
+     *    • bool => força
+     */
     protected function isLeafActive(array $item): bool
     {
         $controller = Yii::$app->controller;
@@ -170,65 +226,53 @@ class CoreuiMenu extends \yii\widgets\Menu
         $currentControllerFqcn = get_class($controller);
         $currentActionId       = $controller->action->id ?? '';
 
-        // Controller do item (FQCN explícito tem prioridade; senão, inferir do url)
+        // Controller do item (id/FQCN)
         [$itemControllerId, $itemControllerFqcn] = $this->extractItemController($item);
 
-        // Controller deve bater
+        // bool => força
+        if (array_key_exists('active', $item) && is_bool($item['active'])) {
+            return (bool)$item['active'];
+        }
+
+        // Precisa bater controller (id OU FQCN)
         $controllerMatches =
-            ($itemControllerId   && $itemControllerId   === $currentControllerId) ||
-            ($itemControllerFqcn && $itemControllerFqcn === $currentControllerFqcn);
+            (($itemControllerId   && $itemControllerId   === $currentControllerId) ||
+             ($itemControllerFqcn && $itemControllerFqcn === $currentControllerFqcn));
 
         if (!$controllerMatches) {
             return false;
         }
 
-        // Normaliza 'active'
-        $rawActive = $item['active'] ?? null;
-        if (is_string($rawActive)) {
-            $rawActive = trim($rawActive);
-            if ($rawActive === '') {
-                $rawActive = null; // vazio => qualquer action do controller
-            }
-        }
+        // Normaliza lista de actions a partir de 'active'
+        $activeParam = $item['active'] ?? null;
 
-        // bool => força
-        if (is_bool($rawActive)) {
-            return $rawActive;
-        }
-
-        // Ausente/null => qualquer action do controller
-        if ($rawActive === null) {
+        // Se 'active' ausente/null/'' => qualquer action (controller já bateu)
+        if ($activeParam === null || $activeParam === '') {
             return true;
         }
 
-        // String igual ao controller (id ou FQCN) => qualquer action
-        if (is_string($rawActive)) {
-            $activeStr = ltrim($rawActive, '\\');
+        // Se 'active' é string e igual ao controller (id/FQCN) => qualquer action
+        if (is_string($activeParam)) {
+            $activeStr = ltrim(trim($activeParam), '\\');
             if ($activeStr === ($itemControllerId ?? '') || $activeStr === ($itemControllerFqcn ?? '')) {
                 return true;
             }
         }
 
-        // Lista de actions ("a;b;c")
-        $actions = $this->parseActionList($rawActive);
+        // Lista de actions
+        $actions = $this->parseActionList($activeParam);
         if (empty($actions)) {
-            return true; // lista vazia ⇒ tratar como "qualquer action"
+            // Nada válido => qualquer action
+            return true;
         }
 
         return in_array($currentActionId, $actions, true);
     }
 
-    protected function hasChildren(array $item): bool
-    {
-        return !empty($item['items']) && is_array($item['items']);
-    }
-
     /**
-     * Extrai o controller do item:
-     *  - 'controller' FQCN (opcional)
-     *  - ou infere a partir do route em 'url'
-     * Ignora '#'/vazio para não sujar o id.
-     * @return array [controllerId|null, controllerFqcn|null]
+     * Extrai controller do item:
+     *  - usa 'controller' (FQCN) se presente;
+     *  - senão deduz 'id' do 'url' (primeiro segmento da rota).
      */
     protected function extractItemController(array $item): array
     {
@@ -258,7 +302,7 @@ class CoreuiMenu extends \yii\widgets\Menu
 
     protected function parseActionList($active): array
     {
-        if ($active === null || is_bool($active)) return [];
+        if ($active === null || $active === '' || is_bool($active)) return [];
 
         if (is_string($active)) {
             return $this->splitSemicolon($active);

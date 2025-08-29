@@ -107,6 +107,7 @@ $nodes = getNodes(null);
 $nodes[] = [
     'label' => Yii::t('app', 'Logout'),
     'icon'  => 'cil-account-logout',
+    'active' => 'logout',
     'url'   => ['/site/logout'],
 ];
 
