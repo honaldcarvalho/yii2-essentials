@@ -113,7 +113,7 @@ $this->registerJs($script);
 
     <?= $form->field($model, 'icon')->dropDownList([], ['prompt' => '-- Selecione um Icone --']) ?>
     
-    <?= $form->field($model, 'icon_style')->textInput(['maxlength' => true,'value'=>$model->isNewRecord ? 'fas' : $model->path]) ?>
+    <?= $form->field($model, 'icon_style')->textInput(['maxlength' => true,'value'=>$model->isNewRecord ? 'fas' : $model->icon_style]) ?>
 
     <?= $form->field($model, 'visible')->textInput(['maxlength' => true]) ?>
 
