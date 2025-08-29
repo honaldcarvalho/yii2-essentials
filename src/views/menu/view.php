@@ -147,7 +147,7 @@ $appendJs = <<<JS
   async function ensureIcons(){
     if(iconSelect.data('loaded')) return;
     try{
-      const res = await fetch('{$assetsDir}/plugins/fontawesome-free/list.json');
+      const res = await fetch('{$assetsDir}/plugins/fontawesome-free/list_full.json');
       const icons = await res.json();
       let html = '<option></option>';
       icons.forEach(i => { html += `<option value="\${i}" data-icon="\${i}">\${i}</option>`; });
