@@ -87,7 +87,7 @@ $this->registerJs($script);
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'menu_id')->widget(\kartik\select2\Select2::classname(), [
+    <?= $form->field($model, 'parent_id')->widget(\kartik\select2\Select2::classname(), [
                                 'data' => yii\helpers\ArrayHelper::map(SysMenu::find()
                                 ->asArray()->all(),'id','label'),
                                 'options' => ['multiple' => false, 'placeholder' => Yii::t('app','Select Menu')],

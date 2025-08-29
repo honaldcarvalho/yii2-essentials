@@ -18,7 +18,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'menu_id') ?>
+    <?= $form->field($model, 'parent_id') ?>
 
     <?= $form->field($model, 'label') ?>
 

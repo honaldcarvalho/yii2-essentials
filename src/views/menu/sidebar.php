@@ -72,12 +72,12 @@ if(!empty($params->file_id) && $params->file != null){
 
                 function getNodes($controller_id,$id = null){
 
-                    $items = SysMenu::find()->where(['menu_id'=>$id,'status'=>true])->orderBy(['order'=>SORT_ASC])->all();
+                    $items = SysMenu::find()->where(['parent_id'=>$id,'status'=>true])->orderBy(['order'=>SORT_ASC])->all();
 
                     $nodes = [];
                     foreach($items as $item){
 
-                        if($item['url'] == '#' || ($item['url'] != '#' && $item['menu_id'] == null)) {
+                        if($item['url'] == '#' || ($item['url'] != '#' && $item['parent_id'] == null)) {
 
                             $visible_parts = explode(';',$item['visible']);
                             $isVisible = true;
