@@ -119,8 +119,6 @@ $this->registerJs($script);
 
     <?= $form->field($model, 'url')->textInput(['maxlength' => true,'value'=>$model->isNewRecord ? '#' : $model->url]) ?>
 
-    <?= $form->field($model, 'path')->textInput(['maxlength' => true,'value'=>$model->isNewRecord ? 'app' : $model->path]) ?>
-
     <?= $form->field($model, 'order')->input('number') ?>
 
     <?= $form->field($model, 'active')->textInput(['maxlength' => true]) ?>
