@@ -22,10 +22,10 @@ async function populateDropdown() {
     const response = await fetch('{$assetsDir}/plugins/fontawesome-free/list.json');
     const iconList = await response.json();
 
-    const dropdown = document.getElementById('menu-icon');
+    const dropdown = document.getElementById('sysmenu-icon');
 
     iconList.forEach(icon => {
-        $('#menu-icon').append(`<option data-icon="\${icon}" value="\${icon}">\${icon}</option>`);
+        $('#sysmenu-icon').append(`<option data-icon="\${icon}" value="\${icon}">\${icon}</option>`);
     });
 }
 
@@ -36,7 +36,7 @@ function iformat(icon) {
 
 populateDropdown().then(iconsArray => {
 
-    $('#menu-icon').select2({
+    $('#sysmenu-icon').select2({
         width: "100%",
         templateSelection: iformat,
         templateResult: iformat,
@@ -45,7 +45,7 @@ populateDropdown().then(iconsArray => {
         }
     });
 
-    $('#menu-icon').val("{$model->icon}").trigger("change");
+    $('#sysmenu-icon').val("{$model->icon}").trigger("change");
 });
 
 $('#controller-select').select2({ width: '100%', placeholder: 'Selecione um controller' });
@@ -55,7 +55,7 @@ function updateVisibleField() {
     let controller = $('#controller-select').val();
     let action = $('#action-select').val();
     if (controller && action) {
-        $('#menu-visible').val(controller + ';' + action);
+        $('#sysmenu-visible').val(controller + ';' + action);
     }
 }
 
@@ -83,7 +83,7 @@ $this->registerJs($script);
 
 ?>
 
-<div class="menu-form">
+<div class="sysmenu-form">
 
     <?php $form = ActiveForm::begin(); ?>
 
