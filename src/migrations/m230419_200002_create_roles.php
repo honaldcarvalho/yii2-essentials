@@ -18,7 +18,6 @@ class m230419_200002_create_roles extends Migration
             'updated_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
             'status' => $this->integer()->defaultValue(1)
         ]);
-        
         $this->addForeignKey(
             'fk-roles-user_id',
             'roles',
