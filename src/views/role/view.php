@@ -23,8 +23,6 @@ $model->origin = str_replace(';', ' | ', $model->origin);
                 <div class="col-md-12">
                     <p>
                         <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Role','model'=>$model,'verGroup'=>false]) ?>
-                        <?= Html::a(Yii::t('app', 'Add Roles'), ['/apply-templates','reseed'=> 1, 'group_id' => $model->group_id], ['class' => 'btn btn-default']) ?>
-                        <?= Html::a(Yii::t('app', 'Add Roles'), ['remove-roles', 'group_id' => $model->group_id], ['class' => 'btn btn-default']) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,

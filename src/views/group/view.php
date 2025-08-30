@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Groups'), 'url' => [
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
-$buttons[] =
+$buttons = [
     [
         'controller' => 'user',
         'action' => 'create',
@@ -26,10 +26,29 @@ $buttons[] =
         'options' =>                    [
             'class' => 'btn btn-success btn-block-m',
         ],
-    ];
-
+    ],
+    [
+        'controller' => 'role',
+        'action' => 'apply-templates',
+        'icon' => '<i class="fas fa-plus-square mr-2"></i>',
+        'text' => Yii::t('app', 'Add Roles'),
+        'link' => "/roles/apply-templates?group_id={$model->group_id}",
+        'options' =>                    [
+            'class' => 'btn btn-success btn-block-m',
+        ],
+    ],
+    [
+        'controller' => 'role',
+        'action' => 'apply-templates',
+        'icon' => '<i class="fas fa-minus-square mr-2"></i>',
+        'text' => Yii::t('app', 'Remove Roles'),
+        'link' => "/roles/remove-templates?group_id={$model->group_id}&reseed=1",
+        'options' =>                    [
+            'class' => 'btn btn-success btn-block-m',
+        ]
+    ],
+];
 ?>
-
 <div class="user-update">
     <h1><?= Html::encode($this->title) ?></h1>
     <p>
