@@ -38,7 +38,7 @@ class RoleTemplateController extends CommonController
      */
     public function actionIndex()
     {
-        $searchModel = new RolesTemplateS();
+        $searchModel = new RolesTemplate();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
@@ -116,19 +116,4 @@ class RoleTemplateController extends CommonController
         return $this->redirect(['index']);
     }
 
-    /**
-     * Finds the RolesTemplate model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return RolesTemplate the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
-    {
-        if (($model = RolesTemplate::findOne(['id' => $id])) !== null) {
-            return $model;
-        }
-
-        throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
-    }
 }
