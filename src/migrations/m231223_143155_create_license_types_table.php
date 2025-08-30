@@ -23,8 +23,8 @@ class m231223_143155_create_license_types_table extends Migration
         ]);
 
         $this->insert('license_types', [
-            'name' => 'Basic',
-            'description' =>'Basic',
+            'name' => 'Single',
+            'description' =>'Single Access',
             'value' => 100,
             'contract' => 'Basic',
             'max_devices' => 1,
@@ -32,22 +32,32 @@ class m231223_143155_create_license_types_table extends Migration
         ]);
 
         $this->insert('license_types', [
-            'name' => 'Pro',
-            'description' =>'Pro',
-            'value' => 300,
-            'contract' => 'Pro',
-            'max_devices' => 1,
+            'name' => '5 Users',
+            'description' =>'5 Users Access',
+            'value' => 100,
+            'contract' => 'Basic',
+            'max_devices' => 5,
             'status' => 1,
         ]);
-        
+
         $this->insert('license_types', [
-            'name' => 'Master',
-            'description' =>'Master',
-            'value' => 600,
-            'contract' => 'Master',
-            'max_devices' => 1,
+            'name' => '10 Users',
+            'description' =>'10 Users Access',
+            'value' => 100,
+            'contract' => 'Basic',
+            'max_devices' => 10,
             'status' => 1,
         ]);
+
+        $this->insert('license_types', [
+            'name' => 'Unlimite',
+            'description' =>'Unlimite Users Access',
+            'value' => 100,
+            'contract' => 'Basic',
+            'max_devices' => 0,
+            'status' => 1,
+        ]);
+
         
     }
 
