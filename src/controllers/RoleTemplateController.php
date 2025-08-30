@@ -2,8 +2,8 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\RoleTemplate;
 use croacworks\essentials\controllers\CommonController;
+use croacworks\essentials\models\RoleTemplate;
 use yii\web\NotFoundHttpException;
 
 /**
