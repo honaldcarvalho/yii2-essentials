@@ -84,15 +84,6 @@ class m250819_000003_seed_default_user_and_roles extends Migration
             'user_id' => 1,
             'group_id' => 2,
         ]);
-        
-        // Insert default admin role (wildcard access for group 1)
-        $this->insert('{{%roles}}', [
-            'name' => 'Administrator',
-            'controller' => '*',
-            'action' => '*',
-            'group_id' => 1,
-            'status' => 1
-        ]);
 
         $this->insert('folders', [
             'id' => 1,
