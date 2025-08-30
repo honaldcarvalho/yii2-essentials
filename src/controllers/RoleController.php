@@ -11,6 +11,8 @@ use yii\helpers\Inflector;
 use yii\web\NotFoundHttpException;
 use croacworks\essentials\models\Group;
 use croacworks\essentials\models\Role;
+use yii\filters\VerbFilter;
+
 /**
  * RoleController implements the CRUD actions for Role model.
  */
@@ -36,7 +38,7 @@ class RoleController extends AuthorizationController
         ];
         return $b;
     }
-    
+
     /**
      * Lists all Role models.
      */
