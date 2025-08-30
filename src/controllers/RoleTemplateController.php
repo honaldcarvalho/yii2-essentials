@@ -9,9 +9,9 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 /**
- * RolesTemplateController implements the CRUD actions for RolesTemplate model.
+ * RoleTemplateController implements the CRUD actions for RolesTemplate model.
  */
-class RolesTemplateController extends CommonController
+class RoleTemplateController extends CommonController
 {
     /**
      * @inheritDoc
