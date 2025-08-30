@@ -31,7 +31,12 @@ $model->origin = str_replace(';', ' | ', $model->origin);
                             'user.fullname:text:'.Yii::t('app', 'User'),
                             'group.name:text:'.Yii::t('app', 'Role'),
                             'controller',
-                            'actions',
+                            [
+                                'attribute'=>'actions',
+                                'value'=> function($data){
+                                    return str_replace(';', ' | ', $data->actions);
+                                }
+                            ],
                             'origin',
                             'status:boolean',
                         ],

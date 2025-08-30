@@ -65,7 +65,6 @@ $buttons = [
         ],
     ]) ?>
 
-
     <?= AppendModel::widget([
         'title' => Yii::t('app', 'Users'),
         'attactModel' => 'UserGroup',
@@ -104,6 +103,34 @@ $buttons = [
                 'type' => 'select2'
             ],
 
+        ]
+    ]); ?>
+
+
+    <?= AppendModel::widget([
+        'new_button'=> false,
+        'title' => Yii::t('app', 'Roles'),
+        'attactModel' => 'Role',
+        'uniqueId' => 'rolesAppend',
+        'controller' => 'roles',
+        'template' => '',
+        'attactClass' => 'croacworks\\essentials\\models\\Role',
+        'dataProvider' => new \yii\data\ActiveDataProvider([
+            'query' => $model->getRoles(),
+        ]),
+        'showFields' => [
+            'id',
+            'user.fullname:text:'.Yii::t('app', 'User'),
+            'group.name:text:'.Yii::t('app', 'Role'),
+            'controller',
+            [
+                'attribute'=>'actions',
+                'value'=> function($data){
+                    return str_replace(';', ' | ', $data->actions);
+                }
+            ],
+            'origin',
+            'status:boolean'
         ]
     ]); ?>
 </div>

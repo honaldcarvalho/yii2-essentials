@@ -81,6 +81,7 @@ class AppendModel extends \yii\bootstrap5\Widget
     public $orderField = 'order';
     public $orderModel = null;
 
+    public $new_button = true;
     public $removeUrl;
     public $getUrl;
     public $saveUrl;
@@ -537,7 +538,7 @@ class AppendModel extends \yii\bootstrap5\Widget
     
                 <div class="card-body">
                     <p>
-                        {$button}
+                        $this->new_button ? $button : ''
                     </p>
                     <div class="row">
                         <div class="col-md-12">
