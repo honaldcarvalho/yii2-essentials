@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\components\gridview\ActionColumn;
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\widgets\DefaultButtons;
 use yii\helpers\Html;
 use yii\grid\GridView;
@@ -55,7 +55,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             'status:boolean',
 
-                            ['class' =>croacworks\essentials\components\gridview\ActionColumn::class,'verGroup'=>false],
+                            ['class' =>croacworks\essentials\components\gridview\ActionColumnCustom::class,'verGroup'=>false],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [
