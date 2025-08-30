@@ -172,7 +172,7 @@ class RoleController extends AuthorizationController
      */
     public function actionApplyTemplates(int $group_id, int $reseed = 1)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         /** @var Group $group */
         $group = Group::findOne($group_id);
@@ -233,7 +233,7 @@ class RoleController extends AuthorizationController
      */
     public function actionApplyTemplatesAll(string $level = '', int $reseed = 1)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         $query = Group::find();
         if ($level !== '') {
@@ -262,7 +262,7 @@ class RoleController extends AuthorizationController
      */
     public function actionRemoveRoles(int $group_id, int $only_auto = 0, int $dry_run = 0)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         // (opcional) validar existência do grupo:
         // if (!Group::find()->where(['id' => $group_id])->exists()) {
