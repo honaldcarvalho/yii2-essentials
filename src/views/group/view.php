@@ -34,7 +34,7 @@ $buttons = [
         'text' => Yii::t('app', 'Add Roles'),
         'link' => "/roles/apply-templates?group_id={$model->id}",
         'options' =>                    [
-            'class' => 'btn btn-outline-default btn-block-m',
+            'class' => 'btn btn-outline-success btn-block-m',
         ],
     ],
     [
