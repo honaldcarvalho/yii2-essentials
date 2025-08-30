@@ -47,12 +47,14 @@ class m250819_000003_insert_default_user_and_roles extends Migration
 
         $this->insert('groups', [
             'id'=>1,
+            'level' => 'free',
             'name' => '*',
             'status'=>true
         ]);
 
         $this->insert('groups', [
             'id'=>2,
+            'level' => 'master',
             'name' => 'Adminstrators',
             'status'=>true
         ]);

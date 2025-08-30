@@ -164,6 +164,95 @@ class RoleController extends AuthorizationController
     }
 
     /**
+     * Aplica (ou reaplica) templates de roles conforme o nível do grupo.
+     * - Apaga somente roles originadas por template (origin='*') quando $reseed=true
+     * - Insere a partir de roles_templates.level == $group->level
+     *
+     * POST /role/apply-templates?group_id=123&reseed=1
+     */
+    public function actionApplyTemplates(int $group_id, int $reseed = 1)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        /** @var Group $group */
+        $group = Group::findOne($group_id);
+        if (!$group) {
+            throw new NotFoundHttpException('Grupo não encontrado.');
+        }
+
+        $level = (string)$group->level; // 'master' | 'admin' | 'user'
+        if ($level === '') {
+            return ['success' => false, 'message' => 'Grupo sem nível definido.'];
+        }
+
+        $db = Yii::$app->db;
+        $tx = $db->beginTransaction();
+        try {
+            if ($reseed) {
+                // Remove apenas as auto-geradas (origin='*')
+                $db->createCommand()->delete('{{%roles}}', [
+                    'group_id' => $group->id,
+                    'origin'   => '*',
+                ])->execute();
+            }
+
+            // Insere via INSERT ... SELECT
+            $sql = "
+                INSERT INTO {{%roles}} 
+                    (`name`, `user_id`, `group_id`, `controller`, `actions`, `origin`, `created_at`, `updated_at`, `status`)
+                SELECT
+                    NULL, NULL, :gid, rt.controller, rt.actions, rt.origin, NOW(), NOW(), rt.status
+                FROM {{%roles_templates}} rt
+                WHERE rt.level = :level
+            ";
+
+            $inserted = $db->createCommand($sql, [
+                ':gid'   => $group->id,
+                ':level' => $level,
+            ])->execute();
+
+            $tx->commit();
+            return [
+                'success'  => true,
+                'group_id' => (int)$group->id,
+                'level'    => $level,
+                'inserted' => (int)$inserted,
+                'message'  => "Templates aplicados com sucesso para o grupo {$group->id} ({$level})."
+            ];
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * (Opcional) Aplica templates para TODOS os grupos de um certo nível,
+     * ou para todos os níveis se $level estiver vazio.
+     *
+     * POST /role/apply-templates-all?level=admin&reseed=1
+     */
+    public function actionApplyTemplatesAll(string $level = '', int $reseed = 1)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $query = Group::find();
+        if ($level !== '') {
+            $query->andWhere(['level' => $level]);
+        }
+
+        $groups = $query->all();
+        $results = [];
+
+        foreach ($groups as $g) {
+            // Reaproveita o método acima via chamada interna
+            Yii::$app->request->setBodyParams([]); // garante POST body vazio
+            $res = $this->actionApplyTemplates((int)$g->id, $reseed);
+            $results[] = $res;
+        }
+
+        return ['success' => true, 'count' => count($results), 'results' => $results];
+    }
+    /**
      * Displays a single Role model.
      */
     public function actionView($id)

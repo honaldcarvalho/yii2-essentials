@@ -18,20 +18,6 @@ class m250829_000001_seed_admin_roles extends Migration
             [
                 'user_id' => null,
                 'group_id' => 2,
-                'controller' => 'croacworks\\essentials\\controllers\\AuthorizationController',
-                'actions' => '',
-                'origin' => '*',
-            ],
-            [
-                'user_id' => null,
-                'group_id' => 2,
-                'controller' => 'croacworks\\essentials\\controllers\\CommonController',
-                'actions' => 'get-fields;get-model;get-models;order-menu;remove;remove-model;save-model;status;status-model',
-                'origin' => '*',
-            ],
-            [
-                'user_id' => null,
-                'group_id' => 2,
                 'controller' => 'croacworks\\essentials\\controllers\\ConfigurationController',
                 'actions' => 'clone;create;delete;index;preview;update;view',
                 'origin' => '*',
@@ -161,14 +147,7 @@ class m250829_000001_seed_admin_roles extends Migration
                 'controller' => 'croacworks\\essentials\\controllers\\UserController',
                 'actions' => 'create;delete;edit;index;profile;remove-group;update',
                 'origin' => '*',
-            ],
-            [
-                'user_id' => null,
-                'group_id' => 2,
-                'controller' => 'croacworks\\essentials\\controllers\\UtilController',
-                'actions' => 'get-model;get-models;remove-model;save-model;save-models',
-                'origin' => '*',
-            ],
+            ]
         ];
 
         // Evita duplicatas (já existentes)
