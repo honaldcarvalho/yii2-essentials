@@ -7,7 +7,7 @@ class m250829_000001_seed_sys_menus extends Migration
     public function safeUp()
     {
         $table = '{{%sys_menus}}';
-
+        $this->execute('SET FOREIGN_KEY_CHECKS=0');
         $this->batchInsert($table, 
             ['parent_id','label','icon','icon_style','url','order','only_admin','status','show','controller','action','active','visible'],
             [
@@ -41,6 +41,7 @@ class m250829_000001_seed_sys_menus extends Migration
                 [12,'Roles','fas fa-shield-halved','fas','/role/index',3,0,1,1,'croacworks\\essentials\\controllers\\RoleController','index',null,'index'],
             ]
         );
+        $this->execute('SET FOREIGN_KEY_CHECKS=1');
     }
 
     public function safeDown()
