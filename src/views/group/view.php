@@ -52,7 +52,7 @@ $buttons = [
 <div class="user-update">
     <h1><?= Html::encode($this->title) ?></h1>
     <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model])  ?>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group','model'=>$model,'extras'=>$buttons])  ?>
     </p>
     <?= DetailView::widget([
         'model' => $model,
