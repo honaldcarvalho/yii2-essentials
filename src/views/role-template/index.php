@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\models\RolesTemplate;
+use croacworks\essentials\models\RoleTemplateController;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\grid\ActionColumn;
@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'status',
             [
                 'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, RolesTemplate $model, $key, $index, $column) {
+                'urlCreator' => function ($action, RoleTemplateController $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
                  }
             ],

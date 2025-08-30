@@ -2,14 +2,14 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\RolesTemplate;
+use croacworks\essentials\models\RoleTemplateController;
 use croacworks\essentials\models\RolesTemplateS;
 use croacworks\essentials\controllers\CommonController;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 /**
- * RoleTemplateController implements the CRUD actions for RolesTemplate model.
+ * RoleTemplateController implements the CRUD actions for RoleTemplateController model.
  */
 class RoleTemplateController extends CommonController
 {
@@ -32,13 +32,13 @@ class RoleTemplateController extends CommonController
     }
 
     /**
-     * Lists all RolesTemplate models.
+     * Lists all RoleTemplateController models.
      *
      * @return string
      */
     public function actionIndex()
     {
-        $searchModel = new RolesTemplate();
+        $searchModel = new RoleTemplateController();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
@@ -48,7 +48,7 @@ class RoleTemplateController extends CommonController
     }
 
     /**
-     * Displays a single RolesTemplate model.
+     * Displays a single RoleTemplateController model.
      * @param int $id ID
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
@@ -61,13 +61,13 @@ class RoleTemplateController extends CommonController
     }
 
     /**
-     * Creates a new RolesTemplate model.
+     * Creates a new RoleTemplateController model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
     public function actionCreate()
     {
-        $model = new RolesTemplate();
+        $model = new RoleTemplateController();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
@@ -83,7 +83,7 @@ class RoleTemplateController extends CommonController
     }
 
     /**
-     * Updates an existing RolesTemplate model.
+     * Updates an existing RoleTemplateController model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param int $id ID
      * @return string|\yii\web\Response
@@ -103,7 +103,7 @@ class RoleTemplateController extends CommonController
     }
 
     /**
-     * Deletes an existing RolesTemplate model.
+     * Deletes an existing RoleTemplateController model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
      * @return \yii\web\Response

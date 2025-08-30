@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
-/** @var croacworks\essentials\models\RolesTemplate $model */
+/** @var croacworks\essentials\models\RoleTemplateController $model */
 
 $this->title = Yii::t('app', 'Create Roles Template');
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Roles Templates'), 'url' => ['index']];

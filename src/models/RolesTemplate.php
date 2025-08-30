@@ -16,7 +16,7 @@ use Yii;
  * @property string $origin
  * @property int $status
  */
-class RolesTemplate extends ModelCommon
+class RoleTemplateController extends ModelCommon
 {
 
     /**
