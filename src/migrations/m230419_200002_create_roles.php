@@ -8,14 +8,14 @@ class m230419_200002_create_roles extends Migration
     {
         $this->createTable('{{%roles}}', [
             'id' => $this->primaryKey(),
-            'group_id' => $this->integer()->null(),
-            'user_id' => $this->integer()->null(),
-            'name' => $this->string(120)->null(),
-            'controller' => $this->string(255)->notNull(), // FQCN
-            'actions' => $this->string(64)->notNull(),
-            'status' => $this->tinyInteger()->notNull()->defaultValue(1),
+            'user_id' => $this->integer(),
+            'group_id' => $this->integer(),
+            'controller' => $this->text()->notNull(), // FQCN com namespace
+            'actions' => $this->text(),
+            'origin' => $this->text()->notNull()->defaultValue('*'),
             'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
-            'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),
+            'updated_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
+            'status' => $this->integer()->defaultValue(1)
         ]);
         
         $this->addForeignKey(
