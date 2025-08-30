@@ -26,6 +26,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'filterModel' => $searchModel,
         'columns' => [
             'id',
+            'parente.name:text:'.Yii::t('app', 'Parent'),
+            'level',
             'name',
             'status:boolean',
             ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom'],

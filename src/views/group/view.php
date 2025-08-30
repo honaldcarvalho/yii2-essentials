@@ -58,6 +58,8 @@ $buttons = [
         'model' => $model,
         'attributes' => [
             'id',
+            'parente.name:text:'.Yii::t('app', 'Parent'),
+            'level',
             'name',
             'status:boolean',
         ],
