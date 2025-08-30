@@ -416,7 +416,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         JS,Yii::$app->view::POS_END);
         $field_str = '';
 
-        $button = Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]);
+        $button = $this->new_button ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
         $button_save = Yii::t('app', "Save");
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
@@ -538,7 +538,7 @@ class AppendModel extends \yii\bootstrap5\Widget
     
                 <div class="card-body">
                     <p>
-                        $this->new_button ? $button : ''
+                        {$button}
                     </p>
                     <div class="row">
                         <div class="col-md-12">
