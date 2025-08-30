@@ -37,7 +37,7 @@ class License extends ModelCommon
     public function rules()
     {
         return [
-            [['license_type_id', 'group_id'], 'required'],
+            [['license_type_id', 'group_id'], 'required','on'=>['create','update']],
             [['license_type_id', 'group_id', 'status'], 'integer'],
             [['validate', 'created_at', 'updated_at'], 'safe'],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],

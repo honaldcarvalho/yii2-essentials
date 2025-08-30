@@ -36,7 +36,7 @@ class LicenseType extends ModelCommon
     public function rules()
     {
         return [
-            [['name', 'description', 'value', 'contract'], 'required'],
+            [['name', 'description', 'value', 'contract'], 'required','on'=>['create','update']],
             [['description', 'contract'], 'string'],
             [['max_devices', 'status'], 'integer'],
             [['name'], 'string', 'max' => 255],
