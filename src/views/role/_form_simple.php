@@ -6,7 +6,7 @@
 
 use croacworks\essentials\models\Group;;
 use croacworks\essentials\models\User;
-use croacworks\essentials\themes\coreuiassets\PluginAsset;
+use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\web\View;
 use yii\widgets\ActiveForm;
