@@ -41,7 +41,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 }
             ],
             'origin',
-            'status:booleand',
+            'status:boolean',
             [
                 'class' => ActionColumnCustom::class
             ],
