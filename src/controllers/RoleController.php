@@ -2,13 +2,15 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\Role;
 use Yii;
-use yii\web\NotFoundHttpException;
-use yii\helpers\Inflector;
+
 use yii\db\Query;
 use ReflectionClass;
 use ReflectionMethod;
+use yii\helpers\Inflector;
+use yii\web\NotFoundHttpException;
+use croacworks\essentials\models\Group;
+use croacworks\essentials\models\Role;
 /**
  * RoleController implements the CRUD actions for Role model.
  */
@@ -173,8 +175,7 @@ class RoleController extends AuthorizationController
     public function actionApplyTemplates(int $group_id, int $reseed = 1)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        /** @var Group $group */
+        
         $group = Group::findOne($group_id);
         if (!$group) {
             throw new NotFoundHttpException('Grupo não encontrado.');

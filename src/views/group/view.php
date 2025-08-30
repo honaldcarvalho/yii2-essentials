@@ -17,37 +17,113 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
 $buttons = [
-    // [
-    //     'controller' => 'user',
-    //     'action' => 'create',
-    //     'icon' => '<i class="fas fa-plus-square mr-2"></i>',
-    //     'text' => Yii::t('app', 'Add User'),
-    //     'link' => "/user/create?id={$model->id}",
-    //     'options' =>                    [
-    //         'class' => 'btn btn-success btn-block-m',
-    //     ],
-    // ],
     [
         'controller' => 'role',
         'action' => 'apply-templates',
         'icon' => '<i class="fas fa-plus-square mr-2"></i>',
         'text' => Yii::t('app', 'Add Roles'),
-        'link' => "/role/apply-templates?group_id={$model->id}",
-        'options' =>                    [
+        // reseed=1 para substituir as auto-geradas conforme templates
+        'link' => "/role/apply-templates?group_id={$model->id}&reseed=1",
+        'options' => [
             'class' => 'btn btn-outline-success btn-block-m',
+            'data-ajax' => '1',
+            'data-action' => 'apply',
+            'data-method' => 'post',
         ],
     ],
     [
         'controller' => 'role',
-        'action' => 'apply-templates',
+        'action' => 'remove-roles',
         'icon' => '<i class="fas fa-minus-square mr-2"></i>',
         'text' => Yii::t('app', 'Remove Roles'),
-        'link' => "/role/remove-templates?group_id={$model->id}&reseed=1",
-        'options' =>                    [
+        // only_auto=0 para remover TUDO do grupo; use 1 para só origin='*'
+        'link' => "/role/remove-roles?group_id={$model->id}&only_auto=0",
+        'options' => [
             'class' => 'btn btn-outline-danger btn-block-m',
+            'data-ajax' => '1',
+            'data-action' => 'remove',
+            'data-method' => 'post',
+            'data-confirm' => Yii::t('app', 'This will remove all roles from this group. Proceed?'),
         ]
     ],
 ];
+
+$js = <<<JS
+(function(){
+    function getCsrf(){
+        if (window.yii && typeof yii.getCsrfToken === 'function') return yii.getCsrfToken();
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    async function postJson(url){
+        var resp = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': getCsrf()
+            }
+        });
+        // tenta json; se falhar, retorna texto
+        try { return await resp.json(); } catch(e) { return { success:false, message: await resp.text() }; }
+    }
+
+    document.addEventListener('click', async function(evt){
+        var anchor = evt.target.closest('a[data-ajax="1"]');
+        if (!anchor) return;
+        evt.preventDefault();
+
+        var url = anchor.getAttribute('href') || anchor.dataset.url || '';
+        var actionType = anchor.dataset.action || '';
+        var confirmText = anchor.dataset.confirm || '';
+
+        // Confirmação para remoção
+        if (actionType === 'remove' && confirmText) {
+            if (window.Swal) {
+                var conf = await Swal.fire({
+                    icon: 'warning',
+                    title: 'Confirmação',
+                    text: confirmText,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim',
+                    cancelButtonText: 'Não'
+                });
+                if (!conf.isConfirmed) return;
+            } else if (!confirm(confirmText)) {
+                return;
+            }
+        }
+
+        var result = await postJson(url);
+
+        var ok = !!(result && result.success);
+        var msg = (result && (result.message || result.error)) || (ok ? 'Operação concluída.' : 'Falha na operação.');
+
+        if (window.Swal) {
+            Swal.fire({
+                icon: ok ? 'success' : 'error',
+                title: ok ? 'Pronto' : 'Ops',
+                text: msg
+            });
+        } else {
+            alert((ok ? 'OK: ' : 'ERRO: ') + msg);
+        }
+
+        if (ok) {
+            // Recarrega somente a lista de Roles
+            if (window.jQuery && jQuery.pjax) {
+                jQuery.pjax.reload({container: '#pjax-roles'});
+            } else {
+                // fallback se Pjax não estiver disponível
+                location.reload();
+            }
+        }
+    });
+})();
+JS;
+
+$this->registerJs($js);
+
 ?>
 <div class="user-update">
     <h1><?= Html::encode($this->title) ?></h1>
@@ -107,6 +183,7 @@ $buttons = [
     ]); ?>
 
 
+    <?php Pjax::begin(['id' => 'pjax-roles', 'timeout' => 0, 'enablePushState' => false]); ?>
     <?= AppendModel::widget([
         'new_button'=> false,
         'title' => Yii::t('app', 'Roles'),
@@ -133,4 +210,5 @@ $buttons = [
             'status:boolean'
         ]
     ]); ?>
+    <?php Pjax::end(); ?>
 </div>
