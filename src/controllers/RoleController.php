@@ -5,6 +5,9 @@ namespace croacworks\essentials\controllers;
 use croacworks\essentials\models\Role;
 use Yii;
 use yii\web\NotFoundHttpException;
+use yii\helpers\Inflector;
+use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * RoleController implements the CRUD actions for Role model.
