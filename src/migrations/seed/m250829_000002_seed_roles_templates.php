@@ -7,6 +7,7 @@ class m250829_000001_create_roles_templates extends Migration
     public function safeUp()
     {
 
+
         $this->batchInsert('{{%roles_templates}}',
             ['level','controller','actions','origin','status'],
             [
@@ -33,6 +34,8 @@ class m250829_000001_create_roles_templates extends Migration
 
     public function safeDown()
     {
-        return true;
+        $this->dropIndex('idx_roles_templates_controller', '{{%roles_templates}}');
+        $this->dropIndex('idx_roles_templates_level', '{{%roles_templates}}');
+        $this->dropTable('{{%roles_templates}}');
     }
 }
