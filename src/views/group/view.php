@@ -32,7 +32,7 @@ $buttons = [
         'action' => 'apply-templates',
         'icon' => '<i class="fas fa-plus-square mr-2"></i>',
         'text' => Yii::t('app', 'Add Roles'),
-        'link' => "/roles/apply-templates?group_id={$model->id}",
+        'link' => "/role/apply-templates?group_id={$model->id}",
         'options' =>                    [
             'class' => 'btn btn-outline-success btn-block-m',
         ],
@@ -42,7 +42,7 @@ $buttons = [
         'action' => 'apply-templates',
         'icon' => '<i class="fas fa-minus-square mr-2"></i>',
         'text' => Yii::t('app', 'Remove Roles'),
-        'link' => "/roles/remove-templates?group_id={$model->id}&reseed=1",
+        'link' => "/role/remove-templates?group_id={$model->id}&reseed=1",
         'options' =>                    [
             'class' => 'btn btn-outline-danger btn-block-m',
         ]
