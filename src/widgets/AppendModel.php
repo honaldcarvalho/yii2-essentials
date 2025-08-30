@@ -74,7 +74,7 @@ class AppendModel extends \yii\bootstrap5\Widget
     public $path = 'app';
     public $template = '{status}{view}{edit}{remove}';
     public $gridId = null;
-    public $fields;
+    public $fields = [];
     public $options = [];
     public $showFields;
     public $order = false;
