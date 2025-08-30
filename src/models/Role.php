@@ -41,7 +41,7 @@ class Role extends ModelCommon
         return [
             [['group_id', 'user_id', 'name'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
-            [['group_id', 'user_id', 'status', 'created_at', 'updated_at'], 'integer'],
+            [['group_id', 'user_id', 'status'], 'integer'],
             [['controller', 'actions', 'created_at', 'updated_at'], 'required'],
             [['name'], 'string', 'max' => 120],
             [['controller'], 'string', 'max' => 255],
