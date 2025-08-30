@@ -1,6 +1,5 @@
 <?php
 
-use yii\widgets\Pjax;
 use yii\widgets\DetailView;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\AppendModel;
@@ -9,14 +8,12 @@ use yii\bootstrap5\Html;
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Group */
 
-$this->title = Yii::t('app', 'View Group: {name}', [
-    'name' => $model->name,
-]);
-
+$this->title = Yii::t('app', 'View Group: {name}', ['name' => $model->name]);
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Groups'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
+// Botões AJAX (com data-pjax="0" para PJAX não interceptar JSON)
 $buttons = [
     [
         'controller' => 'role',
@@ -29,7 +26,7 @@ $buttons = [
             'data-ajax' => '1',
             'data-action' => 'apply',
             'data-method' => 'post',
-            'data-pjax' => '0', // <- evita PJAX interceptar
+            'data-pjax' => '0',
         ],
     ],
     [
@@ -44,11 +41,12 @@ $buttons = [
             'data-action' => 'remove',
             'data-method' => 'post',
             'data-confirm' => Yii::t('app', 'This will remove all roles from this group. Proceed?'),
-            'data-pjax' => '0', // <- evita PJAX interceptar
+            'data-pjax' => '0',
         ]
     ],
 ];
 
+// JS: faz POST das ações e recarrega apenas o PJAX interno do AppendModel (list-rolesAppend-grid)
 $js = <<<JS
 (function(){
     function getCsrf(){
@@ -64,7 +62,8 @@ $js = <<<JS
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-Token': getCsrf(),
                 'Cache-Control': 'no-cache'
-            }
+            },
+            credentials: 'same-origin'
         });
         try { return await resp.json(); } catch(e) { 
             return { success:false, message: await resp.text() }; 
@@ -75,7 +74,7 @@ $js = <<<JS
         var anchor = evt.target.closest('a[data-ajax="1"]');
         if (!anchor) return;
 
-        // impede navegação normal E impede que o PJAX intercepte
+        // bloqueia navegação e evita PJAX externo capturar
         evt.preventDefault();
         evt.stopPropagation();
         if (typeof evt.stopImmediatePropagation === 'function') {
@@ -116,12 +115,10 @@ $js = <<<JS
         if (ok) {
             if (window.jQuery && jQuery.pjax) {
                 jQuery.pjax.reload({
-                    container: '#pjax-roles',
+                    container: '#list-rolesAppend-grid', // container PJAX interno do AppendModel
                     timeout: 0,
                     scrollTo: false,
-                    replace: false,
-                    // força refetch da própria URL da página (evita cache estranho)
-                    url: window.location.href
+                    replace: false
                 });
             } else {
                 location.reload();
@@ -130,14 +127,21 @@ $js = <<<JS
     });
 })();
 JS;
-$this->registerJs($js);
 
+$this->registerJs($js);
 ?>
+
 <div class="user-update">
     <h1><?= Html::encode($this->title) ?></h1>
+
     <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Group', 'model' => $model, 'extras' => $buttons])  ?>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget([
+            'controller' => 'Group',
+            'model'      => $model,
+            'extras'     => $buttons
+        ]) ?>
     </p>
+
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
@@ -174,8 +178,7 @@ $this->registerJs($js);
             ],
             'user.status:boolean',
         ],
-        'fields' =>
-        [
+        'fields' => [
             [
                 'name' => 'group_id',
                 'type' => 'hidden',
@@ -183,28 +186,22 @@ $this->registerJs($js);
             ],
             [
                 'name' => 'user_id',
-                'value' => yii\helpers\ArrayHelper::map(User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(), 'id', 'name'),
+                'value' => yii\helpers\ArrayHelper::map(
+                    User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
+                    'id', 'name'
+                ),
                 'type' => 'select2'
             ],
-
         ]
     ]); ?>
 
-
-    <?php Pjax::begin([
-        'id' => 'pjax-roles',
-        'timeout' => 0,
-        'enablePushState' => false,
-        'clientOptions' => [
-            'type' => 'GET',
-            'scrollTo' => false,
-        ],
-    ]); ?>
-    <?= AppendModel::widget([
-        'new_button' => false,
+    <?php
+    // NÃO envolver em PJAX extra — o AppendModel já cria um PJAX interno com id #list-rolesAppend-grid
+    echo AppendModel::widget([
+        'new_button'=> false,
         'title' => Yii::t('app', 'Roles'),
         'attactModel' => 'Role',
-        'uniqueId' => 'rolesAppend',
+        'uniqueId' => 'rolesAppend',   // <- usado no container interno: #list-rolesAppend-grid
         'controller' => 'roles',
         'template' => '',
         'attactClass' => 'croacworks\\essentials\\models\\Role',
@@ -217,14 +214,14 @@ $this->registerJs($js);
             'group.name:text:' . Yii::t('app', 'Role'),
             'controller',
             [
-                'attribute' => 'actions',
-                'value' => function ($data) {
+                'attribute'=>'actions',
+                'value'=> function($data){
                     return str_replace(';', ' | ', $data->actions);
                 }
             ],
             'origin',
             'status:boolean'
         ]
-    ]); ?>
-    <?php Pjax::end(); ?>
+    ]);
+    ?>
 </div>
