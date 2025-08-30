@@ -7,7 +7,7 @@ use yii\db\Migration;
  * Insere roles para o grupo Admin (group_id=2) com base nos controllers da extensão croacworks\essentials.
  * Ajuste o $adminGroupId se o ID do grupo Admin for diferente.
  */
-class m250829_000001_seed_admin_roles extends Migration
+class m250829_000005_seed_admin_roles extends Migration
 {
     private int $adminGroupId = 2;
     private string $table = '{{%roles}}';

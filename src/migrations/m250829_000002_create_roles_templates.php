@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 
-class m250829_000001_create_roles_templates extends Migration
+class m250829_000002_create_roles_templates extends Migration
 {
     public function safeUp()
     {

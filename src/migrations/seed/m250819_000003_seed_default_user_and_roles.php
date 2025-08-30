@@ -10,7 +10,7 @@ use yii\db\Migration;
  *  - a default admin user (username: admin / password: admin123)
  *  - default roles for group_id = 1 with full access (controller='*', action='*')
  */
-class m250819_000003_insert_default_user_and_roles extends Migration
+class m250819_000003_seed_default_user_and_roles extends Migration
 {
     public function safeUp()
     {
