@@ -13,7 +13,7 @@ use yii\bootstrap5\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
+    <?= $form->field($model, 'parent_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => Yii::t('app','Parent Group')]) ?>
 
     <?= $form->field($model, 'level')->dropDownList([ 'master' => 'Master', 'admin' => 'Admin', 'user' => 'User', 'free' => 'Free', ], ['prompt' => '']) ?>
     
