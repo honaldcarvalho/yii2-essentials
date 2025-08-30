@@ -28,6 +28,7 @@ class m250829_000003_seed_master_roles_templates extends Migration
                 ['master','croacworks\\essentials\\controllers\\PageController','clone;create;delete;index;show;status;update;view','*',1],
                 ['master','croacworks\\essentials\\controllers\\PageHeaderController','create;delete;index;update;view','*',1],
                 ['master','croacworks\\essentials\\controllers\\RoleController','create;delete;get-actions;index;remove;status;update;view','*',1],
+                ['master','croacworks\\essentials\\controllers\\RoleTemplateController','create;delete;get-actions;index;remove;status;update;view','*',1],
                 ['master','croacworks\\essentials\\controllers\\SiteController','ckeditor;dashboard;export;index;login;logout;request-password-reset;resend-verification-email;reset-password;s;verify-email','*',1],
                 ['master','croacworks\\essentials\\controllers\\SourceMessageController','add-translation;clone;create;delete;index;remove;remove-model;save-model;status;status-model;update;view','*',1],
                 ['master','croacworks\\essentials\\controllers\\StorageController','attach;delete;delete-file;download;index;info;link;open;remove;save;spreadsheet;upload','*',1],
