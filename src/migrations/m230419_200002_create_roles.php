@@ -8,6 +8,7 @@ class m230419_200002_create_roles extends Migration
     {
         $this->createTable('{{%roles}}', [
             'id' => $this->primaryKey(),
+            'name' => $this->string(),
             'user_id' => $this->integer(),
             'group_id' => $this->integer(),
             'controller' => $this->text()->notNull(), // FQCN com namespace
