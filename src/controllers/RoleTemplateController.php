@@ -2,9 +2,9 @@
 
 namespace croacworks\essentials\controllers;
 
+use croacworks\essentials\models\RoleTemplate;
 use croacworks\essentials\controllers\CommonController;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * RoleTemplateController implements the CRUD actions for RoleTemplateController model.
