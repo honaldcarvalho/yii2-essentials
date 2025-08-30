@@ -128,7 +128,7 @@ $js = <<<JS
 })();
 JS;
 
-$this->registerJs($js);
+$this->registerJs($js,$this::POS_END);
 ?>
 
 <div class="user-update">
