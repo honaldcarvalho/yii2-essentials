@@ -19,7 +19,7 @@ class RoleTemplateController extends CommonController
      */
     public function actionIndex()
     {
-        $searchModel = RoleTemplate();
+        $searchModel = new RoleTemplate();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
