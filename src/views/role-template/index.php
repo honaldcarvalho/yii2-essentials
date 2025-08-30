@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\models\RoleTemplateController;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -33,14 +34,16 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'level',
             'controller',
-            'actions:ntext',
-            'origin',
-            //'status',
             [
-                'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, RoleTemplateController $model, $key, $index, $column) {
-                    return Url::toRoute([$action, 'id' => $model->id]);
-                 }
+                'attribute'=>'actions',
+                'value'=> function($data){
+                    return str_replace(';', ' | ', $data->actions);
+                }
+            ],
+            'origin',
+            'status:booleand',
+            [
+                'class' => ActionColumnCustom::class
             ],
         ],
     ]); ?>
