@@ -146,7 +146,7 @@ $nodes[] = ['divider' => true];
         </div>
         <div class="flex-grow-1">
             <div class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></div>
-            <div class="small text-white-50"><?= htmlspecialchars($config->title) ?></div>
+            <div class="small text-white-50"><?= htmlspecialchars($config->group->name) ?></div>
         </div>
     </div>
 
