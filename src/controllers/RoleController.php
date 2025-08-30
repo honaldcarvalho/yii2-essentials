@@ -72,25 +72,89 @@ class RoleController extends AuthorizationController
         return $controllers;
     }
 
+    private static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
+    {
+        $byMethod = [];
+        $origins  = [];
+
+        // 1) Métodos action* (públicos), incluindo herdados
+        $ref = new ReflectionClass($controllerClass);
+        foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            $name = $method->getName();
+            if (str_starts_with($name, 'action') && $name !== 'actions') {
+                // transforma actionXpto => xpto (camel2id)
+                $id = Inflector::camel2id(substr($name, 6));
+                $byMethod[$id] = true;
+                if ($withOrigins) {
+                    $origins[$id] = $method->getDeclaringClass()->getName();
+                }
+            }
+        }
+
+        // 2) External actions via actions() (se possível instanciar o controller)
+        $byMap = [];
+        try {
+            // Deriva um ID simples a partir do nome da classe (EmailServiceController => email-service)
+            $short = preg_replace('/Controller$/', '', $ref->getShortName());
+            $id    = Inflector::camel2id($short);
+
+            // Tenta instanciar: __construct($id, $module, $config = [])
+            /** @var \yii\web\Controller $instance */
+            $instance = new $controllerClass($id, \Yii::$app);
+            $map = $instance->actions();
+            if (is_array($map)) {
+                foreach (array_keys($map) as $key) {
+                    $key = trim((string)$key);
+                    if ($key !== '') {
+                        $byMap[$key] = true;
+                        if ($withOrigins && !isset($origins[$key])) {
+                            // marca origem como "actions()"
+                            $origins[$key] = $controllerClass . '::actions()';
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // silencioso: se não der p/ instanciar, apenas não coleta actions() mapeadas
+        }
+
+        // 3) Merge final (set union)
+        $all = array_keys($byMethod + $byMap);
+        sort($all);
+
+        // Se quiser devolver as origens também:
+        if ($withOrigins) {
+            // mantém apenas origens de keys existentes
+            $orig = [];
+            foreach ($all as $k) {
+                $orig[$k] = $origins[$k] ?? $controllerClass;
+            }
+            return ['list' => $all, 'origins' => $orig];
+        }
+
+        return $all;
+    }
+
     /**
-     * AJAX: Retorna actions de um controller FQCN.
+     * AJAX: Retorna actions de um controller FQCN (inclui herdadas e as de actions()).
      */
     public function actionGetActions()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $controllerClass = \Yii::$app->request->post('controller');
 
-        $controllerClass = Yii::$app->request->post('controller');
-
-        if (!class_exists($controllerClass)) {
+        if (!is_string($controllerClass) || !class_exists($controllerClass)) {
             return ['success' => false, 'message' => 'Controller não encontrado.'];
         }
 
         try {
-            $methods = get_class_methods($controllerClass) ?: [];
-            $actions = array_filter($methods, fn($method) => str_starts_with($method, 'action'));
-            $actions = array_map(fn($a) => \yii\helpers\Inflector::camel2id(substr($a, 6)), $actions);
+            // Se quiser ver de onde veio cada action, troque para true
+            $result = self::collectControllerActions($controllerClass, false);
 
-            return ['success' => true, 'actions' => array_values($actions)];
+            return [
+                'success' => true,
+                'actions' => array_values($result),
+            ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
