@@ -42,10 +42,9 @@ class Role extends ModelCommon
             [['group_id', 'user_id', 'name'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
             [['group_id', 'user_id', 'status'], 'integer'],
-            [['controller', 'actions', 'created_at', 'updated_at'], 'required'],
+            [['controller', 'actions'], 'required','on'=>['create','update']],
             [['name'], 'string', 'max' => 120],
             [['controller'], 'string', 'max' => 255],
-            [['actions'], 'string', 'max' => 64],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
