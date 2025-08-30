@@ -19,7 +19,7 @@ class RoleTemplateController extends CommonController
      */
     public function actionIndex()
     {
-        $searchModel = new RoleTemplateController();
+        $searchModel = RoleTemplate();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
@@ -48,7 +48,7 @@ class RoleTemplateController extends CommonController
      */
     public function actionCreate()
     {
-        $model = new RoleTemplateController();
+        $model = RoleTemplate();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
