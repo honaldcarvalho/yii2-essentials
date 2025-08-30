@@ -22,6 +22,21 @@ class RoleController extends AuthorizationController
         $this->free = ['get-actions'];
     }
 
+    public function behaviors()
+    {
+        $b = parent::behaviors();
+        $b['verbs'] = [
+            'class' => VerbFilter::class,
+            'actions' => [
+                'apply-templates'     => ['POST'],
+                'apply-templates-all' => ['POST'],
+                'remove-roles'        => ['POST'],
+                'get-actions'         => ['POST'],
+            ],
+        ];
+        return $b;
+    }
+    
     /**
      * Lists all Role models.
      */
