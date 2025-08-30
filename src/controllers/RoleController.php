@@ -6,9 +6,9 @@ use croacworks\essentials\models\Role;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\helpers\Inflector;
+use yii\db\Query;
 use ReflectionClass;
 use ReflectionMethod;
-
 /**
  * RoleController implements the CRUD actions for Role model.
  */
@@ -252,6 +252,67 @@ class RoleController extends AuthorizationController
 
         return ['success' => true, 'count' => count($results), 'results' => $results];
     }
+
+    /**
+     * Remove roles de um grupo.
+     *
+     * POST /role/remove-roles?group_id=2&only_auto=0&dry_run=0
+     * - only_auto=1 apaga apenas origin='*'
+     * - dry_run=1 só conta, não apaga
+     */
+    public function actionRemoveRoles(int $group_id, int $only_auto = 0, int $dry_run = 0)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        // (opcional) validar existência do grupo:
+        // if (!Group::find()->where(['id' => $group_id])->exists()) {
+        //     throw new NotFoundHttpException('Grupo não encontrado.');
+        // }
+
+        $where = ['group_id' => $group_id];
+        if ($only_auto) {
+            $where['origin'] = '*';
+        }
+
+        $db = Yii::$app->db;
+
+        // Conta quantos registros se enquadram no filtro
+        $total = (new Query())->from('{{%roles}}')->where($where)->count('*', $db);
+
+        if ($dry_run) {
+            return [
+                'success'     => true,
+                'dry_run'     => true,
+                'group_id'    => (int)$group_id,
+                'only_auto'   => (bool)$only_auto,
+                'to_delete'   => (int)$total,
+                'deleted'     => 0,
+                'message'     => 'Dry-run: nenhuma role foi removida.',
+            ];
+        }
+
+        $tx = $db->beginTransaction();
+        try {
+            $deleted = $db->createCommand()->delete('{{%roles}}', $where)->execute();
+            $tx->commit();
+
+            return [
+                'success'   => true,
+                'group_id'  => (int)$group_id,
+                'only_auto' => (bool)$only_auto,
+                'requested' => (int)$total,
+                'deleted'   => (int)$deleted,
+                'message'   => "Remoção concluída para o grupo {$group_id}.",
+            ];
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            return [
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ];
+        }
+    }
+
     /**
      * Displays a single Role model.
      */
