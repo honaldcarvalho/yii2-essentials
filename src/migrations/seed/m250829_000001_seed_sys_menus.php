@@ -42,7 +42,8 @@ class m250829_000001_seed_sys_menus extends Migration
                 // Authentication children (parent_id = 25)
                 [36,25,'Groups','fas fa-users','fas','/group/index',0,0,1,1,'croacworks\\essentials\\controllers\\GroupController','index',null,'index'],
                 [37,25,'Users','fas fa-user','fas','/user/index',1,0,1,1,'croacworks\\essentials\\controllers\\UserController','index',null,'index'],
-                [38,25,'Roles','fas fa-person-booth','fas','/role/index',2,0,1,1,'croacworks\\essentials\\controllers\\RoleController','', 'role','croacworks\\essentials\\controllers\\RuleController;index'],
+                [38,25,'Roles','fas fa-person-booth','fas','/role/index',2,0,1,1,'croacworks\\essentials\\controllers\\RoleController','', 'role','croacworks\\essentials\\controllers\\RoleController;index'],
+                [50,25,'Role Templates','fas fa-puzzle-piece','fas','/role-template/index',2,0,1,1,'croacworks\\essentials\\controllers\\RoleTemplateController','', 'role','croacworks\\essentials\\controllers\\RoleTemplateController;index'],
                 [39,25,'License Types','fas fa-certificate','fas','/license-type/index',5,0,1,1,'croacworks\\essentials\\controllers\\LicenseTypeController','index',null,'index'],
                 [40,25,'Licenses','fas fa-certificate','fas','/license/index',6,0,1,1,'croacworks\\essentials\\controllers\\LicenseController','index',null,'index'],
 
