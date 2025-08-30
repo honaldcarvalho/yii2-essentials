@@ -61,9 +61,6 @@ class m250829_000001_seed_sys_menus extends Migration
                 // Translations children (parent_id = 29)
                 [47,29,'Languages','fas fa-language','fas','/language/index',0,0,1,1,'croacworks\\essentials\\controllers\\LanguageController','index',null,'index'],
                 [48,29,'Source Messages','fas fa-comment','fas','/source-message/index',2,0,1,1,'croacworks\\essentials\\controllers\\SourceMessageController','index',null,'index'],
-
-                // EXTRA: "Roles" direto sob System (ajustado parent_id=13; seu SQL original usava 12)
-                [49,13,'Roles','fas fa-shield-halved','fas','/role/index',3,0,1,1,'croacworks\\essentials\\controllers\\RoleController','index',null,'index'],
             ]
         );
 
