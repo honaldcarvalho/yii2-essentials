@@ -17,16 +17,16 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
 $buttons = [
-    [
-        'controller' => 'user',
-        'action' => 'create',
-        'icon' => '<i class="fas fa-plus-square mr-2"></i>',
-        'text' => Yii::t('app', 'Add User'),
-        'link' => "/user/create?id={$model->id}",
-        'options' =>                    [
-            'class' => 'btn btn-success btn-block-m',
-        ],
-    ],
+    // [
+    //     'controller' => 'user',
+    //     'action' => 'create',
+    //     'icon' => '<i class="fas fa-plus-square mr-2"></i>',
+    //     'text' => Yii::t('app', 'Add User'),
+    //     'link' => "/user/create?id={$model->id}",
+    //     'options' =>                    [
+    //         'class' => 'btn btn-success btn-block-m',
+    //     ],
+    // ],
     [
         'controller' => 'role',
         'action' => 'apply-templates',
