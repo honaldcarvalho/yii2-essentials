@@ -31,6 +31,7 @@ use yii\symfonymailer\Mailer;
  * @property EmailService $emailService
  * @property File $file
  * @property Language $language
+ * @property Group $group
  */
 class Configuration extends ModelCommon
 {
@@ -77,6 +78,7 @@ class Configuration extends ModelCommon
             [['email_service_id'], 'exist', 'skipOnError' => true, 'targetClass' => EmailService::class, 'targetAttribute' => ['email_service_id' => 'id']],
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
+            [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
         ];
     }
 
@@ -125,6 +127,16 @@ class Configuration extends ModelCommon
     public function getFile()
     {
         return $this->hasOne(File::class, ['id' => 'file_id']);
+    }
+
+    /**
+     * Gets query for [[Group]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getGroup()
+    {
+        return $this->hasOne(Group::class, ['id' => 'group_id']);
     }
 
     /**
