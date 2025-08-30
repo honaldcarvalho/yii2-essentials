@@ -1,5 +1,6 @@
 <?php
 
+use yii\widgets\Pjax;
 use yii\widgets\DetailView;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\AppendModel;
