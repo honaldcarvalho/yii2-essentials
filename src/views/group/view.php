@@ -34,7 +34,7 @@ $buttons = [
         'text' => Yii::t('app', 'Add Roles'),
         'link' => "/roles/apply-templates?group_id={$model->id}",
         'options' =>                    [
-            'class' => 'btn btn-success btn-block-m',
+            'class' => 'btn btn-outline-default btn-block-m',
         ],
     ],
     [
@@ -44,7 +44,7 @@ $buttons = [
         'text' => Yii::t('app', 'Remove Roles'),
         'link' => "/roles/remove-templates?group_id={$model->id}&reseed=1",
         'options' =>                    [
-            'class' => 'btn btn-success btn-block-m',
+            'class' => 'btn btn-outline-danger btn-block-m',
         ]
     ],
 ];
