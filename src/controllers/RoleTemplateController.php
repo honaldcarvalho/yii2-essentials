@@ -2,8 +2,6 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\RoleTemplateController;
-use croacworks\essentials\models\RolesTemplateS;
 use croacworks\essentials\controllers\CommonController;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -13,23 +11,6 @@ use yii\filters\VerbFilter;
  */
 class RoleTemplateController extends CommonController
 {
-    /**
-     * @inheritDoc
-     */
-    public function behaviors()
-    {
-        return array_merge(
-            parent::behaviors(),
-            [
-                'verbs' => [
-                    'class' => VerbFilter::className(),
-                    'actions' => [
-                        'delete' => ['POST'],
-                    ],
-                ],
-            ]
-        );
-    }
 
     /**
      * Lists all RoleTemplateController models.
