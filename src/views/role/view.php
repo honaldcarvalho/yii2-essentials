@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\controllers\AuthorizationController;
 use yii\widgets\DetailView;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\AppendModel;
@@ -191,7 +192,7 @@ $this->registerJs($js);
         'template' => '{edit}{remove}',
         'attactClass' => 'croacworks\\essentials\\models\\UserGroup',
         'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getUserGroups(),
+            'query' => AuthorizationController::getUserGroups(),
         ]),
         'showFields' => [
             'user.profile.fullname',
