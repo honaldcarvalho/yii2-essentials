@@ -28,9 +28,6 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
 
     /** NOVO: FQCN do controller para autorização. Ex.: app\controllers\UserController */
     public $controllerFQCN = null;
-    
-    /** NOVO: Botões custom controlados pela própria coluna (sem alias no template) */
-    public $actionCustomButtons = []; // [ 'nome' => [ 'label'=>..., 'icon'=>..., 'url'=>..., 'visible'=>..., 'options'=>..., 'method'=>..., 'pjax'=>..., 'confirm'=>..., 'encodeLabel'=>... ] ]
 
     /**
      * Initializes the default button rendering callbacks.
