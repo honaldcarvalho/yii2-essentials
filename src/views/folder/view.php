@@ -29,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Folder', 'model' => $model]) ?>
+                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model]) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,

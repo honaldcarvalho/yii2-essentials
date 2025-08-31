@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Folder','show'=>['create'],'buttons_name'=>['create'=>'Create Folder']]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show'=>['create'],'buttons_name'=>['create'=>'Create Folder']]) ?>
                         </div>
                     </div>
                     
