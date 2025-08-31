@@ -12,7 +12,7 @@ use yii\widgets\ActiveForm;
 PluginAsset::register($this)->add(['multiselect']);
 
 $controllers    = RoleController::getAllControllers();
-$actionUrl      = Url::to(['get-actions']);
+$actionUrl      = Url::to(['role/get-actions']);
 
 $origins        = [];
 $savedActions   = [];
