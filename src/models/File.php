@@ -53,6 +53,7 @@ class File extends ModelCommon
     public function scenarios()
     {
         $scenarios = parent::scenarios();
+        $scenarios['update'] = ['folder_id','description','caption'];
         return $scenarios;
     }
 
