@@ -6,7 +6,7 @@ use yii\widgets\DetailView;
 /** @var yii\web\View $this */
 /** @var croacworks\essentials\models\RoleTemplateController $model */
 
-$this->title = "{$model->leve}: $model->controller";
+$this->title = "{$model->level}: $model->controller";
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Roles Templates'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
