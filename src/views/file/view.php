@@ -25,7 +25,7 @@ $this::registerJs($script,$this::POS_END);
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'File','model'=>$model]) ?>
+                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model]) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,
