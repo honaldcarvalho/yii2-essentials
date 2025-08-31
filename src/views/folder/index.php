@@ -7,12 +7,12 @@ use yii\grid\GridView;
 /* @var $searchModel croacworks\essentials\models\FolderSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = Yii::t('app', 'Files');
+$this->title = Yii::t('app', 'Folders');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="container-fluid">
     
-
+    <h1><?= Html::encode($this->title) ?></h1>
     
     <div class="row">
         <div class="col-md-12">
