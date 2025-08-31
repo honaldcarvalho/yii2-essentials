@@ -44,7 +44,7 @@ class RoleTemplate extends ModelCommon
             [['actions'], 'default', 'value' => null],
             [['origin'], 'default', 'value' => '*'],
             [['status'], 'default', 'value' => 1],
-            [['level', 'controller'], 'required','on'=>'create','update'],
+            [['level', 'controller'], 'required','on'=>['create','update']],
             [['level', 'actions'], 'string'],
             [['status'], 'integer'],
             [['controller'], 'string', 'max' => 255],

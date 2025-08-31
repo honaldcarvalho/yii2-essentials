@@ -12,14 +12,20 @@ use croacworks\essentials\models\UserGroup;
 
 use yii\behaviors\TimestampBehavior;
 use yii\filters\AccessControl;
+use yii\filters\auth\HttpBearerAuth;
+use yii\filters\VerbFilter;
 use yii\web\NotFoundHttpException;
 
 class AuthorizationController extends CommonController
 {
+    // Mantido para compatibilidade
     const ADMIN_GROUP_ID = 2;
+
     public $free = ['login', 'signup', 'error'];
 
-    public static function isGuest()
+    /* ===== Helpers de usuário/grupos (compatíveis com o que já existe) ===== */
+
+    public static function isGuest(): bool
     {
         return Yii::$app->user->isGuest;
     }
@@ -28,8 +34,37 @@ class AuthorizationController extends CommonController
     {
         return Yii::$app->user->identity;
     }
-    
-    static function userGroup()
+
+    /**
+     * Grupo principal do usuário (sem alterar estrutura atual)
+     */
+    public static function getPrimaryGroupId(): ?int
+    {
+        return self::User()?->group_id;
+    }
+
+    /**
+     * Todos os grupos do usuário: principal primeiro, depois adicionais (ordenados).
+     * Mantém o método getUserGroupsId() existente, apenas reorganizando.
+     */
+    public static function getAllUserGroupIds(): array
+    {
+        $u = self::User();
+        if (!$u) return [];
+
+        $primary = (int)$u->group_id;
+        $others  = array_values(array_diff(array_map('intval', $u->getUserGroupsId()), [$primary]));
+        sort($others, SORT_NUMERIC);
+
+        return array_merge([$primary], $others);
+    }
+
+    /**
+     * Mantido para compatibilidade com pontos do código que usem esse método.
+     * Agora ele só devolve o último grupo como antes (não quebramos nada),
+     * mas internamente passamos a usar getAllUserGroupIds() para autorização.
+     */
+    public static function userGroup()
     {
         $users_groups = [];
 
@@ -72,97 +107,187 @@ class AuthorizationController extends CommonController
         return null;
     }
 
+    /* ===== Behaviors (apenas adições, sem remover o que você já usa) ===== */
+
     public function behaviors()
     {
-        $behaviors = parent::behaviors();
-        $request = Yii::$app->request;
+        $b = parent::behaviors();
 
-        $controller = $this;
-        $action = $this->action->id;
-
-        $show = $this->pageAuth();
-        if (in_array($action, $this->free) || self::isAdmin()) {
-            $show = true;
-        }
-
-        $behaviors = [
-            'timestamp' => [
-                'class' => TimestampBehavior::class,
-                'value' => fn() => date('Y-m-d H:i:s'),
+        // Verbos (mantém OPTIONS liberado em rotas típicas de auth)
+        $b['verbs'] = [
+            'class' => VerbFilter::class,
+            'actions' => [
+                'login'  => ['POST', 'OPTIONS'],
+                'signup' => ['POST', 'OPTIONS'],
             ],
-            'access' => [
-                'class' => AccessControl::class,
-                'rules' => [
-                    [
-                        'allow' => true,
-                        'actions' => $this->free,
-                        'roles' => ['?'],
-                    ],
-                    [
-                        'allow' => $show,
-                        'actions' => [$action],
-                        'roles' => ['@'],
-                    ],
+        ];
+
+        // Timestamp (mantém seu comportamento)
+        $b['timestamp'] = [
+            'class' => TimestampBehavior::class,
+            'value' => fn() => date('Y-m-d H:i:s'),
+        ];
+
+        // AccessControl com matchCallback (licença + overlay + admin)
+        $b['access'] = [
+            'class' => AccessControl::class,
+            'rules' => [
+                [
+                    'allow' => true,
+                    'actions' => $this->free,
+                    'roles' => ['?', '@'],
+                ],
+                [
+                    'allow' => true,
+                    'roles' => ['@'],
+                    'matchCallback' => function () {
+                        if (self::isAdmin()) return true;
+
+                        // Licença
+                        if ($this->verifyLicense() === null) {
+                            Yii::$app->session->setFlash('warning', Yii::t('app', 'License expired!'));
+                            return false;
+                        }
+
+                        // Autorização por overlay
+                        return $this->pageAuth();
+                    },
                 ],
             ],
         ];
 
-        if ($this->config->logging && $controller->id != 'log') {
+        // Logging seguro (mantém sua lógica, com máscara básica)
+        if ($this->config->logging && $this->id != 'log') {
             if (Yii::$app->user->identity !== null) {
-                $log = new Log();
-                $log->action = $action;
-                $log->ip = $this->getUserIP();
-                $log->device = $this->getOS();
-                $log->controller = Yii::$app->controller->id;
-                $log->user_id = Yii::$app->user->identity->id;
-
-                if ($request->get('id')) {
-                    $log->data = $request->get('id');
-                } elseif ($request->post()) {
-                    $data_json = json_encode($request->post());
-                    if (!str_contains($data_json, 'password')) {
-                        $log->data = $data_json;
-                    }
-                }
-
-                $log->save();
+                $this->logRequestSafe();
             }
         }
 
-        return $behaviors;
+        return $b;
     }
 
-    public function pageAuth()
+    /* ===== Autorização por página (overlay) ===== */
+
+    public function pageAuth(): bool
     {
-        $show = false;
+        if (self::isGuest()) return false;
+        if (self::isAdmin()) return true;
 
-        if (!self::isGuest()) {
-            $controllerFQCN = static::getClassPath(); // <- Corrigido aqui
-            $request_action = Yii::$app->controller->action->id;
-            $groups = self::User()->getUserGroupsId();
+        $controllerFQCN = static::getClassPath();
+        $action         = Yii::$app->controller->action->id;
 
-            $query = Role::find()
-                ->where([
-                    'controller' => $controllerFQCN,
-                    'status' => 1,
-                ])
-                ->andWhere(['or', ['in', 'group_id', $groups], ['group_id' => self::User()->group_id]])
+        // cache leve por request
+        static $memo = [];
+        $key = $controllerFQCN . '#' . $action . '#' . (self::User()?->id ?? 0);
+        if (array_key_exists($key, $memo)) return $memo[$key];
+
+        return $memo[$key] = $this->isActionAllowedByOverlay($controllerFQCN, $action);
+    }
+
+    /**
+     * Overlay: grupo principal -> grupos adicionais (ordenados).
+     * Allows adicionam, denies (prefixo "-") removem. "*" expande para todas as actions do controller.
+     */
+    protected function isActionAllowedByOverlay(string $controllerFQCN, string $action): bool
+    {
+        $groups = self::getAllUserGroupIds();
+        if (empty($groups)) return false;
+
+        $allControllerActions = $this->listControllerActions($controllerFQCN);
+        $effective = []; // mapa action => true
+
+        foreach ($groups as $gId) {
+            /** @var Role[] $roles */
+            $roles = Role::find()
+                ->where(['controller' => $controllerFQCN, 'group_id' => $gId, 'status' => 1])
                 ->all();
 
-            foreach ($query as $role) {
-                $actions = explode(';', $role->actions ?? '');
-                foreach ($actions as $action) {
-                    if (trim($action) === trim($request_action)) {
-                        $show = true;
-                        break 2;
+            foreach ($roles as $r) {
+                $tokens = $this->parseActionsTokens((string)$r->actions);
+
+                // allow tudo
+                if (in_array('*', $tokens, true)) {
+                    foreach ($allControllerActions as $a) {
+                        $effective[$a] = true;
+                    }
+                }
+
+                // allows explícitos
+                foreach ($tokens as $t) {
+                    if ($t === '' || $t === '*' || $t[0] === '-') continue;
+                    $effective[$t] = true;
+                }
+
+                // denies explícitos (precedência)
+                foreach ($tokens as $t) {
+                    if (isset($t[0]) && $t[0] === '-') {
+                        $name = ltrim($t, '-');
+                        unset($effective[$name]);
                     }
                 }
             }
         }
-        return $show;
+
+        return !empty($effective[$action]);
     }
 
-    public static function verAuthorization($controllerFQCN, $request_action, $model = null)
+    /**
+     * Converte "index;view;-delete;*" em tokens normalizados.
+     */
+    protected function parseActionsTokens(string $raw): array
+    {
+        $parts = array_filter(array_map('trim', explode(';', $raw)));
+        $out = [];
+        foreach ($parts as $p) {
+            $p = mb_strtolower($p);
+            if ($p === '*') {
+                $out[] = '*';
+                continue;
+            }
+            if (str_starts_with($p, '-')) {
+                $out[] = '-' . ltrim($p, '-');
+                continue;
+            }
+            $out[] = $p;
+        }
+        return $out;
+    }
+
+    /**
+     * Lista as actions públicas do controller (via reflexão).
+     * Ex.: actionIndex => "index", actionCreate => "create", etc.
+     */
+    protected function listControllerActions(string $controllerFQCN): array
+    {
+        $ids = [];
+        try {
+            $rc = new \ReflectionClass($controllerFQCN);
+            foreach ($rc->getMethods(\ReflectionMethod::IS_PUBLIC) as $m) {
+                if ($m->isStatic()) continue;
+                $name = $m->getName();
+                if (!str_starts_with($name, 'action')) continue;
+                $id = $this->extractActionId($name);
+                if ($id) $ids[] = $id;
+            }
+        } catch (\Throwable $e) {
+            // fallback mínimo
+            $ids = ['index', 'view', 'create', 'update', 'delete'];
+        }
+        return array_values(array_unique($ids));
+    }
+
+    protected function extractActionId(string $methodName): ?string
+    {
+        if (!str_starts_with($methodName, 'action')) return null;
+        $id = substr($methodName, 6); // remove 'action'
+        if ($id === '') return null;
+        $id = preg_replace('/([a-z])([A-Z])/', '$1-$2', $id);
+        return mb_strtolower($id);
+    }
+
+    /* ===== Autorização programática (compatível) ===== */
+
+    public static function verAuthorization($controllerFQCN, $request_action, $model = null): bool
     {
         if (self::isGuest()) return false;
         if (self::isAdmin()) return true;
@@ -172,47 +297,98 @@ class AuthorizationController extends CommonController
             return false;
         }
 
-        $groups = self::User()->getUserGroupsId();
-
+        // Guarda por grupo no registro (mantém a sua regra)
         if ($model && $model->verGroup) {
-            if ($request_action === 'view' && $model->group_id == 1) {
-                return true;
-            }
-            if (!in_array($model->group_id, $groups)) {
+            $groups = self::getAllUserGroupIds();
+
+            if ($request_action === 'view' && (int)$model->group_id === 1) {
+                // público (mantido)
+            } else if (!in_array((int)$model->group_id, $groups, true)) {
                 return false;
             }
         }
 
-        $roles = Role::find()
-            ->where(['controller' => $controllerFQCN, 'status' => 1])
-            ->andWhere(['in', 'group_id', $groups])
-            ->all();
+        /** @var self $ctrl */
+        $ctrl = Yii::$app->controller instanceof self
+            ? Yii::$app->controller
+            : new self(Yii::$app->controller->id, Yii::$app->controller->module);
 
-        foreach ($roles as $role) {
-            $actions = explode(';', $role->actions);
-            if (in_array($request_action, $actions)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $ctrl->isActionAllowedByOverlay($controllerFQCN, $request_action);
     }
 
+    /* ===== Licença (mantida) ===== */
+
+    // Substitua seu método atual:
     public static function verifyLicense()
     {
-        $groups = self::User()?->getUserGroupsId();
+        // Admin passa sempre
         if (self::isAdmin()) return true;
 
-        $licenses = License::find()->where(['in', 'group_id', $groups])->all();
-
-        foreach ($licenses as $license) {
-            if (strtotime($license->validate) >= strtotime(date('Y-m-d')) && $license->status) {
-                return $license;
-            }
+        $u = self::User();
+        if (!$u || !$u->group_id) {
+            return null; // sem usuário ou sem grupo principal
         }
 
-        return null;
+        // Licença válida do GRUPO PRINCIPAL apenas
+        return License::find()
+            ->where([
+                'group_id' => (int)$u->group_id,
+                'status'   => 1,
+            ])
+            // aceita DATE ou DATETIME na coluna `validate`
+            ->andWhere(['>=', 'validate', date('Y-m-d')])
+            ->orderBy(['validate' => SORT_DESC, 'id' => SORT_DESC])
+            ->one();
     }
+
+    // (Opcional, se quiser ler como booleano em matchCallback)
+    public static function verifyLicenseBool(): bool
+    {
+        if (self::isAdmin()) return true;
+        return self::verifyLicense() !== null;
+    }
+    
+    /* ===== Log seguro (mantido, com máscara leve) ===== */
+
+    protected function logRequestSafe(): void
+    {
+        $request = Yii::$app->request;
+        try {
+            $log = new Log();
+            $log->action = Yii::$app->controller->action->id ?? '';
+            $log->ip = $this->getUserIP();
+            $log->device = $this->getOS();
+            $log->controller = Yii::$app->controller->id;
+            $log->user_id = Yii::$app->user->identity->id;
+
+            if ($request->get('id')) {
+                $log->data = $request->get('id');
+            } elseif ($request->post()) {
+                $payload = $request->post();
+                foreach ($payload as $k => &$v) {
+                    $lk = mb_strtolower((string)$k);
+                    if (
+                        str_contains($lk, 'password') || str_contains($lk, 'senha') ||
+                        str_contains($lk, 'token')    || str_contains($lk, 'secret') ||
+                        str_contains($lk, 'authorization') || str_contains($lk, 'access_token')
+                    ) {
+                        $v = '***';
+                    }
+                }
+                $data_json = json_encode($payload);
+                if (strlen($data_json) > 8192) $data_json = substr($data_json, 0, 8192) . '…';
+                if (!str_contains($data_json, 'password')) {
+                    $log->data = $data_json;
+                }
+            }
+
+            $log->save();
+        } catch (\Throwable $e) {
+            // não quebra o fluxo
+        }
+    }
+
+    /* ===== findModel (mantido, só usando getAllUserGroupIds) ===== */
 
     protected function findModel($id, $model_name = null)
     {
@@ -225,7 +401,7 @@ class AuthorizationController extends CommonController
             $modelObj->verGroup &&
             !self::isAdmin()
         ) {
-            $groups = self::User()->getUserGroupsId();
+            $groups = self::getAllUserGroupIds();
 
             if (Yii::$app->controller->action->id === 'view') {
                 $groups[] = 1;

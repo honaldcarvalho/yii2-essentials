@@ -2,14 +2,13 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\models\RoleTemplate;
 use yii\web\NotFoundHttpException;
 
 /**
  * RoleTemplateController implements the CRUD actions for RoleTemplateController model.
  */
-class RoleTemplateController extends CommonController
+class RoleTemplateController extends AuthorizationController
 {
 
     /**
@@ -48,7 +47,7 @@ class RoleTemplateController extends CommonController
      */
     public function actionCreate()
     {
-        $model = RoleTemplate();
+        $model =  new RoleTemplate();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
