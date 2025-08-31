@@ -268,15 +268,16 @@ $delete_files_button[] =
                       'contentOptions' => ['style'=>'white-space:nowrap;'],
                       'template' => '{view} {update} {ajax-delete}',
 
+                      'controllerFQCN' => app\controllers\FileController::class, // usado na verAuthorization
                       'buttons' => [
                           'ajax-delete' => function ($url, $model) {
                               $url = \yii\helpers\Url::to(['/file/delete', 'id' => $model->id]);
                               return \yii\helpers\Html::a('<i class="fas fa-trash"></i>', $url, [
                                   'title'        => Yii::t('app', 'Delete'),
                                   'class'        => 'btn btn-outline-danger',
-                                  'data-action'  => 'file-delete',
-                                  'data-pjax'    => 0,            
-                                  'data-method'  => false,        
+                                  'data-action'  => 'file-delete', // seu handler AJAX já cuida disso
+                                  'data-pjax'    => 0,
+                                  'data-method'  => false,
                                   'data-confirm' => false,
                               ]);
                           },
