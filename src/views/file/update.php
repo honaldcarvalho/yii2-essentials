@@ -17,9 +17,7 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
             <div class="row">
                 <div class="col-md-12">
                     <?=$this->render('_form', [
-                        'model' => $model,
-                        'accept'=> $accept,
-                        'aspectRatio'=> '210/297'
+                        'model' => $model
                     ]) ?>
                 </div>
             </div>
