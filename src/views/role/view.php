@@ -20,7 +20,7 @@ $model->origin = str_replace(';', ' | ', $model->origin);
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= coracworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Role','model'=>$model,'verGroup'=>true]) ?>
+                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Role','model'=>$model,'verGroup'=>true]) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,
