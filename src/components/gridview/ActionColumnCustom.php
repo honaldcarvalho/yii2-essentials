@@ -1,10 +1,4 @@
 <?php
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace croacworks\essentials\components\gridview;
 
 use Yii;
@@ -28,6 +22,9 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
 
     /** NOVO: FQCN do controller para autorização. Ex.: app\controllers\UserController */
     public $controllerFQCN = null;
+
+    /** NOVO: Botões custom controlados pela própria coluna (sem alias no template) */
+    public $actionCustomButtons = []; // [ 'nome' => [ 'label'=>..., 'icon'=>..., 'url'=>..., 'visible'=>..., 'options'=>..., 'method'=>..., 'pjax'=>..., 'confirm'=>..., 'encodeLabel'=>... ] ]
 
     /**
      * Initializes the default button rendering callbacks.
@@ -226,7 +223,85 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
 
     public function renderDataCellContent($model, $key, $index)
     {
-        return Html::tag('div', parent::renderDataCellContent($model, $key, $index), ['class' => 'btn-group']);
+        // HTML dos botões padrão
+        $base = parent::renderDataCellContent($model, $key, $index);
+
+        // HTML dos botões custom (NOVO)
+        $custom = $this->renderCustomButtons($model, $key, $index);
+
+        // Mantém estrutura existente (btn-group), apenas **anexando** os custom
+        return Html::tag('div', $base . $custom, ['class' => 'btn-group']);
+    }
+
+    /**
+     * NOVO: renderiza botões custom definidos em $actionCustomButtons
+     */
+    protected function renderCustomButtons($model, $key, $index): string
+    {
+        if (empty($this->actionCustomButtons)) {
+            return '';
+        }
+
+        // Define FQCN padrão se necessário
+        if ($this->controllerFQCN === null) {
+            $this->controllerFQCN = get_class(Yii::$app->controller);
+        }
+
+        $out = '';
+
+        foreach ($this->actionCustomButtons as $name => $def) {
+            // visibilidade
+            $visible = $def['visible'] ?? true;
+            if ($visible instanceof \Closure) {
+                $visible = (bool)$visible($model, $key, $index);
+            }
+            if (!$visible) {
+                continue;
+            }
+
+            // autorização (mesma regra usada nos botões padrão)
+            if (!Authz::isAdmin()) {
+                $can = Authz::verAuthorization($this->controllerFQCN, $name, $this->verGroup ? $model : null);
+                if (!$can) {
+                    continue;
+                }
+            }
+
+            $label       = $def['label'] ?? ucfirst($name);
+            $encodeLabel = (bool)($def['encodeLabel'] ?? false);
+            $iconHtml    = $def['icon'] ?? ''; // '<i class="fas fa-sync"></i>' etc.
+
+            $url = $def['url'] ?? '#';
+            if ($url instanceof \Closure) {
+                $url = $url($model, $key, $index);
+            }
+            if (is_array($url)) {
+                $url = \yii\helpers\Url::to($url);
+            }
+
+            $method  = strtoupper($def['method'] ?? 'GET');
+            $confirm = $def['confirm'] ?? null;
+            $pjax    = (bool)($def['pjax'] ?? true);
+
+            $options = (array)($def['options'] ?? []);
+            // mantém visual coerente com os padrões
+            if (empty($options['class'])) {
+                $options['class'] = 'btn btn-outline-secondary';
+            }
+            $options['data-method'] = $method;
+            $options['data-pjax']   = $pjax ? '1' : '0';
+            if ($confirm) {
+                // usa confirm nativo do Yii (ou seu JS global já instalado)
+                $options['data-confirm'] = $confirm;
+            }
+
+            $content = $iconHtml ? ($iconHtml . ' ') : '';
+            $content .= $encodeLabel ? Html::encode($label) : $label;
+
+            $out .= Html::a($content, $url, $options);
+        }
+
+        return $out;
     }
 
     /**
@@ -316,8 +391,6 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
      */
     public static function addSlashUpperLower($controllerName)
     {
-        // Implementação mínima baseada no padrão anterior.
-        // Ajuste aqui se sua versão original tinha lógica específica.
         $id = strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $controllerName));
         return $id ?: false;
     }
