@@ -117,15 +117,14 @@ class LoginForm extends Model
 
         // Contar usuários distintos ativos na janela (Soft mode)
         try {
-            // MySQL não aceita placeholder para o valor do INTERVAL; por isso interpolamos inteiro já validado
             $hb = max(1, (int)$heartbeat);
             $sql = "
-            SELECT COUNT(DISTINCT uas.user_id)
-            FROM {{%user_active_sessions}} uas
-            WHERE uas.group_id = :gid
-              AND uas.is_active = 1
-              AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
-        ";
+                SELECT COUNT(DISTINCT uas.session_id)
+                FROM {{%user_active_sessions}} uas
+                WHERE uas.group_id = :gid
+                AND uas.is_active = 1
+                AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
+            ";
             $activeCount = (int)$db->createCommand($sql, [':gid' => $groupId])->queryScalar();
         } catch (\Throwable $e) {
             // Se a tabela ainda não existir, não bloqueia (rode a migration)
