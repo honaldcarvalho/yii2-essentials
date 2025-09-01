@@ -74,14 +74,13 @@ class LoginForm extends Model
             return false;
         }
 
-        // Carregar licença do grupo base
+        // Carregar licença do grupo base (usa a coluna `validate`)
         $licenseRow = $db->createCommand('
         SELECT 
             l.id AS license_id,
-            COALESCE(l.heartbeat_seconds, 600)             AS heartbeat_seconds,
-            COALESCE(l.max_users_override, lt.max_devices) AS limit_users,
-            l.expires_at AS expires_at,
-            l.status     AS status
+            COALESCE(l.heartbeat_seconds, 600)              AS heartbeat_seconds,
+            COALESCE(l.max_users_override, lt.max_devices)  AS limit_users,
+            l.`validate`                                    AS `validate`
         FROM {{%licenses}} l
         JOIN {{%license_types}} lt ON lt.id = l.license_type_id
         WHERE l.group_id = :gid
@@ -94,26 +93,42 @@ class LoginForm extends Model
             return false;
         }
 
-        // Validação de expiração (opcional)
-        if (!empty($licenseRow['expires_at']) && strtotime($licenseRow['expires_at']) < time()) {
-            $this->addError('username', Yii::t('app', 'License expired for this group.'));
-            return false;
+        // Expiração baseada em `licenses.validate`
+        $rawValidate = $licenseRow['validate'] ?? null;
+        if ($rawValidate !== null && $rawValidate !== '') {
+            // Aceita tanto string de data quanto timestamp numérico
+            if (is_numeric($rawValidate)) {
+                $ts = (int)$rawValidate;
+            } else {
+                $ts = @strtotime((string)$rawValidate);
+                $ts = $ts === false ? 0 : $ts;
+            }
+            if ($ts > 0 && $ts < time()) {
+                $this->addError('username', Yii::t('app', 'License expired for this group.'));
+                return false;
+            }
         }
 
         $heartbeat = (int)$licenseRow['heartbeat_seconds'];
+        if ($heartbeat <= 0) {
+            $heartbeat = 600; // fallback
+        }
         $limit     = (int)$licenseRow['limit_users'];
 
-        // Contar usuários distintos ativos na janela
+        // Contar usuários distintos ativos na janela (Soft mode)
         try {
-            $activeCount = (int)$db->createCommand('
+            // MySQL não aceita placeholder para o valor do INTERVAL; por isso interpolamos inteiro já validado
+            $hb = max(1, (int)$heartbeat);
+            $sql = "
             SELECT COUNT(DISTINCT uas.user_id)
             FROM {{%user_active_sessions}} uas
             WHERE uas.group_id = :gid
               AND uas.is_active = 1
-              AND uas.last_seen_at > (NOW() - INTERVAL :hb SECOND)
-        ', [':gid' => $groupId, ':hb' => ($heartbeat > 0 ? $heartbeat : 600)])->queryScalar();
+              AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
+        ";
+            $activeCount = (int)$db->createCommand($sql, [':gid' => $groupId])->queryScalar();
         } catch (\Throwable $e) {
-            // Se tabela não existir ainda, considera 0
+            // Se a tabela ainda não existir, não bloqueia (rode a migration)
             $activeCount = 0;
         }
 
@@ -161,7 +176,6 @@ class LoginForm extends Model
 
         return true;
     }
-
 
     /**
      * Finds user by [[username]]
