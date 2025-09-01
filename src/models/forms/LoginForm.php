@@ -117,15 +117,25 @@ class LoginForm extends Model
 
         // Contar usuários distintos ativos na janela (Soft mode)
         try {
+            // Depois do INSERT/UPSERT da sessão atual:
             $hb = max(1, (int)$heartbeat);
-            $sql = "
+            $sqlRecheck = "
                 SELECT COUNT(DISTINCT uas.session_id)
                 FROM {{%user_active_sessions}} uas
                 WHERE uas.group_id = :gid
                 AND uas.is_active = 1
                 AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
             ";
-            $activeCount = (int)$db->createCommand($sql, [':gid' => $groupId])->queryScalar();
+            $activeAfter = (int)$db->createCommand($sqlRecheck, [':gid' => $groupId])->queryScalar();
+
+            if ($limit > 0 && $activeAfter > $limit) {
+                $db->createCommand('UPDATE {{%user_active_sessions}} SET is_active = 0 WHERE session_id = :sid', [
+                    ':sid' => $sessionId
+                ])->execute();
+                Yii::$app->user->logout(false);
+                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
+                return false;
+            }
 
             if ($limit > 0 && $activeAfter > $limit) {
                 // estourou após este login -> desativar a sessão recém criada e falhar o login
