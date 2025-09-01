@@ -96,13 +96,8 @@ class LoginForm extends Model
         // Expiração baseada em `licenses.validate`
         $rawValidate = $licenseRow['validate'] ?? null;
         if ($rawValidate !== null && $rawValidate !== '') {
-            // Aceita tanto string de data quanto timestamp numérico
-            if (is_numeric($rawValidate)) {
-                $ts = (int)$rawValidate;
-            } else {
-                $ts = @strtotime((string)$rawValidate);
-                $ts = $ts === false ? 0 : $ts;
-            }
+            $ts = is_numeric($rawValidate) ? (int)$rawValidate : @strtotime((string)$rawValidate);
+            $ts = $ts === false ? 0 : $ts;
             if ($ts > 0 && $ts < time()) {
                 $this->addError('username', Yii::t('app', 'License expired for this group.'));
                 return false;
@@ -113,43 +108,27 @@ class LoginForm extends Model
         if ($heartbeat <= 0) {
             $heartbeat = 600; // fallback
         }
-        $limit     = (int)$licenseRow['limit_users'];
 
-        // Contar usuários distintos ativos na janela (Soft mode)
+        // Limite de usuários
+        $limit = (int)$licenseRow['limit_users'];
+        if ($limit <= 0) {
+            $cfg = \croacworks\essentials\models\Configuration::get();
+            $limit = (int)($cfg->max_user ?? 0);
+        }
+
+        // Contar SESSÕES ativas antes de registrar a nova
+        $activeCount = 0;
         try {
-            // Depois do INSERT/UPSERT da sessão atual:
             $hb = max(1, (int)$heartbeat);
-            $sqlRecheck = "
-                SELECT COUNT(DISTINCT uas.session_id)
-                FROM {{%user_active_sessions}} uas
-                WHERE uas.group_id = :gid
-                AND uas.is_active = 1
-                AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
-            ";
-            $activeAfter = (int)$db->createCommand($sqlRecheck, [':gid' => $groupId])->queryScalar();
-
-            if ($limit > 0 && $activeAfter > $limit) {
-                $db->createCommand('UPDATE {{%user_active_sessions}} SET is_active = 0 WHERE session_id = :sid', [
-                    ':sid' => $sessionId
-                ])->execute();
-                Yii::$app->user->logout(false);
-                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
-                return false;
-            }
-
-            if ($limit > 0 && $activeAfter > $limit) {
-                // estourou após este login -> desativar a sessão recém criada e falhar o login
-                $db->createCommand('UPDATE {{%user_active_sessions}} SET is_active = 0 WHERE session_id = :sid', [
-                    ':sid' => $sessionId
-                ])->execute();
-
-                Yii::$app->user->logout(false); // garante a sessão Yii destruída
-                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
-                return false;
-            }
-            
+            $sql = "
+            SELECT COUNT(DISTINCT uas.session_id)
+            FROM {{%user_active_sessions}} uas
+            WHERE uas.group_id = :gid
+              AND uas.is_active = 1
+              AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
+        ";
+            $activeCount = (int)$db->createCommand($sql, [':gid' => $groupId])->queryScalar();
         } catch (\Throwable $e) {
-            // Se a tabela ainda não existir, não bloqueia (rode a migration)
             $activeCount = 0;
         }
 
@@ -159,6 +138,7 @@ class LoginForm extends Model
         }
         // ==== END Soft License-Limit Gate ====
 
+        // Faz o login do Yii
         $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;
         if (!Yii::$app->user->login($user, $duration)) {
             $this->addError('username', Yii::t('app', 'Login failed.'));
@@ -195,8 +175,35 @@ class LoginForm extends Model
         }
         // ==== END Register/Activate session ====
 
+        // ==== RECHECK após registrar a sessão (anti-corrida) ====
+        try {
+            $hb = max(1, (int)$heartbeat);
+            $sqlRecheck = "
+            SELECT COUNT(DISTINCT uas.session_id)
+            FROM {{%user_active_sessions}} uas
+            WHERE uas.group_id = :gid
+              AND uas.is_active = 1
+              AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
+        ";
+            $activeAfter = (int)$db->createCommand($sqlRecheck, [':gid' => $groupId])->queryScalar();
+
+            if ($limit > 0 && $activeAfter > $limit) {
+                // estourou após registrar -> desativar esta sessão e sair
+                $db->createCommand('UPDATE {{%user_active_sessions}} SET is_active = 0 WHERE session_id = :sid', [
+                    ':sid' => $sessionId
+                ])->execute();
+
+                Yii::$app->user->logout(false);
+                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
+                return false;
+            }
+        } catch (\Throwable $e) {
+            // silencioso
+        }
+
         return true;
     }
+
 
     /**
      * Finds user by [[username]]
