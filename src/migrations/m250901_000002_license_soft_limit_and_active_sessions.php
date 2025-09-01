@@ -2,7 +2,7 @@
 
 use yii\db\Migration;
 
-class m20250901_000001_license_soft_limit_and_active_sessions extends Migration
+class m250901_000002_license_soft_limit_and_active_sessions extends Migration
 {
     public function safeUp()
     {
