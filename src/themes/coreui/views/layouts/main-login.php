@@ -39,7 +39,7 @@ $theme = 'dark'; //Yii::$app->user->identity->theme;
 
 <body>
   <?php $this->beginBody() ?>
-  <div class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+  <div class="bg-body-tertiary d-flex flex-row align-items-center">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-8">
