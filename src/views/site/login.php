@@ -20,6 +20,8 @@ $this->title = 'Login';
                             <h1>Login</h1>
                             <p class="text-body-secondary">Sign In to your account</p>
                             <?php $form = ActiveForm::begin(['id' => 'login-form']); ?>
+                            <?= $form->errorSummary($model, ['class' => 'alert alert-danger']); ?>
+
                             <div class="input-group mb-3">
                                 <span class="input-group-text">
                                     <i class="fas fa-user icon"></i>
