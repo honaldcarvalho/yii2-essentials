@@ -8,6 +8,7 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
+use croacworks\essentials\widgets\Alert;
 use yii\helpers\Html;
 
 CoreuiAsset::register($this);
