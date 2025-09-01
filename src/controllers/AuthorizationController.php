@@ -416,4 +416,72 @@ class AuthorizationController extends CommonController
 
         throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
     }
+
+
+    /** 
+     * Heartbeat SOFT: registra/atualiza presença por sessão usando SEMPRE user.group_id.
+     * Não derruba sessões e NÃO alterna grupo no contexto desta sessão.
+     * Mantém todas as regras de autorização existentes.
+     */
+    public function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        // Ações livres não precisam de heartbeat
+        if (in_array($action->id, (array)$this->free, true)) {
+            return true;
+        }
+
+        if (!Yii::$app->user->isGuest) {
+            $user = self::User();
+            $groupId = (int)($user->group_id ?? 0);
+            if ($groupId > 0) {
+                $this->upsertHeartbeat(
+                    Yii::$app->session->id,
+                    (int)$user->id,
+                    $groupId,
+                    Yii::$app->request->userIP,
+                    (string)substr((string)Yii::$app->request->userAgent, 0, 255)
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * UPSERT de heartbeat em user_active_sessions.
+     * Requer índice UNIQUE em session_id conforme migration sugerida.
+     * Não alterna group_id por sessão (regra: SEMPRE user.group_id para presença/licença).
+     */
+    protected function upsertHeartbeat(string $sessionId, int $userId, int $groupId, ?string $ip, ?string $userAgent): void
+    {
+        try {
+            Yii::$app->db->createCommand(" 
+                INSERT INTO {{%user_active_sessions}}
+                    (session_id, user_id, group_id, ip, user_agent, created_at, last_seen_at, is_active)
+                VALUES
+                    (:sid, :uid, :gid, :ip, :ua, NOW(), NOW(), 1)
+                ON DUPLICATE KEY UPDATE
+                    user_id      = VALUES(user_id),
+                    group_id     = VALUES(group_id),
+                    ip           = VALUES(ip),
+                    user_agent   = VALUES(user_agent),
+                    last_seen_at = VALUES(last_seen_at),
+                    is_active    = 1
+            ", [
+                ':sid' => $sessionId,
+                ':uid' => $userId,
+                ':gid' => $groupId,
+                ':ip'  => $ip,
+                ':ua'  => $userAgent,
+            ])->execute();
+        } catch (\Throwable $e) {
+            // Fail-safe: não quebra o fluxo da página se a tabela ainda não existir
+            Yii::debug('[heartbeat] ' . $e->getMessage(), __METHOD__);
+        }
+    }
+
 }

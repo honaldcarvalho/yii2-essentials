@@ -23,9 +23,10 @@ use Mpdf\Mpdf;
 class SiteController extends CommonController
 {
 
-    public function __construct($id, $module, $config = array()) {
+    public function __construct($id, $module, $config = array())
+    {
         parent::__construct($id, $module, $config);
-        $this->free = array_merge($this->free,['reset-password','request-password-reset','verify-email','login','logout']);
+        $this->free = array_merge($this->free, ['reset-password', 'request-password-reset', 'verify-email', 'login', 'logout']);
     }
 
     /**
@@ -137,7 +138,7 @@ class SiteController extends CommonController
         return $this->render('dashboard');
     }
 
-        /**
+    /**
      * Displays homepage.
      *
      * @return string
@@ -155,7 +156,7 @@ class SiteController extends CommonController
      */
     public function actionLogin()
     {
-        
+
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
@@ -181,10 +182,23 @@ class SiteController extends CommonController
      */
     public function actionLogout()
     {
+        // ==== BEGIN Soft Mode: deactivate session ====
+        try {
+            $sessionId = Yii::$app->session->id;
+            Yii::$app->db->createCommand('
+            UPDATE {{%user_active_sessions}}
+            SET is_active = 0
+            WHERE session_id = :sid
+        ', [':sid' => $sessionId])->execute();
+        } catch (\Throwable $e) {
+            // ignora se tabela ainda não existir
+        }
+        // ==== END deactivate session ====
+
         Yii::$app->user->logout();
-        Yii::$app->session->remove('language');
         return $this->goHome();
     }
+
 
 
     public function actionRequestPasswordReset()
@@ -194,7 +208,7 @@ class SiteController extends CommonController
         $model = new PasswordResetRequestForm();
 
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            
+
             if ($model->sendEmail()) {
                 Yii::$app->session->setFlash('success', 'Check your email for further instructions.');
 
@@ -280,5 +294,4 @@ class SiteController extends CommonController
             'model' => $model
         ]);
     }
-    
 }
