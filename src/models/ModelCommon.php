@@ -83,7 +83,13 @@ class ModelCommon extends \yii\db\ActiveRecord
         if ($verGroup && property_exists(static::class, 'verGroup')) {
             $user = \croacworks\essentials\controllers\AuthorizationController::User();
 
+
             if ($user) {
+
+                if (\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+                    return $query; // não aplica filtro de grupo
+                }
+
                 // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
                 $groupIds = Group::familyIdsFromUser($user);
 
@@ -283,30 +289,33 @@ class ModelCommon extends \yii\db\ActiveRecord
         $user = AuthorizationController::User();
 
         if ($this->verGroup && $user) {
-            // NOVO: família completa do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
-            $group_ids = Group::familyIdsFromUser($user);
+            if (!\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
 
-            // (opcional) garante visibilidade do grupo 1
-            $group_ids[] = 1;
-            $group_ids = array_values(array_unique(array_map('intval', $group_ids)));
+                // NOVO: família completa do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
+                $group_ids = Group::familyIdsFromUser($user);
 
-            $table = static::tableName();
+                // (opcional) garante visibilidade do grupo 1
+                $group_ids[] = 1;
+                $group_ids = array_values(array_unique(array_map('intval', $group_ids)));
 
-            $groupPath = method_exists($this, 'groupRelationPath') ? static::groupRelationPath() : null;
+                $table = static::tableName();
 
-            if ($groupPath) {
-                $relationPath = '';
-                foreach ($groupPath as $i => $relation) {
-                    $relationPath .= ($i > 0 ? '.' : '') . $relation;
-                    $query->joinWith([$relationPath]);
+                $groupPath = method_exists($this, 'groupRelationPath') ? static::groupRelationPath() : null;
+
+                if ($groupPath) {
+                    $relationPath = '';
+                    foreach ($groupPath as $i => $relation) {
+                        $relationPath .= ($i > 0 ? '.' : '') . $relation;
+                        $query->joinWith([$relationPath]);
+                    }
+
+                    $tableAlias = Yii::createObject(static::class)->getRelation(end($groupPath))->modelClass::tableName();
+                    $query->andFilterWhere(['in', "{$tableAlias}.group_id", $group_ids]);
+                } elseif (isset($options['groupModel'])) {
+                    $query->andFilterWhere(['in', "{$options['groupModel']['table']}.group_id", $group_ids]);
+                } elseif ($this->hasAttribute('group_id')) {
+                    $query->andFilterWhere(["{$table}.group_id" => $group_ids]);
                 }
-
-                $tableAlias = Yii::createObject(static::class)->getRelation(end($groupPath))->modelClass::tableName();
-                $query->andFilterWhere(['in', "{$tableAlias}.group_id", $group_ids]);
-            } elseif (isset($options['groupModel'])) {
-                $query->andFilterWhere(['in', "{$options['groupModel']['table']}.group_id", $group_ids]);
-            } elseif ($this->hasAttribute('group_id')) {
-                $query->andFilterWhere(["{$table}.group_id" => $group_ids]);
             }
         }
 
