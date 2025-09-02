@@ -103,7 +103,7 @@ $this::registerJs($script, $this::POS_END);
                         </div>
                     </div>
 
-                    <?php // echo $this->render('_search', ['model' => $searchModel]); 
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); 
                     ?>
                     <?php Pjax::begin(['id' => 'grid-menu']); ?>
                     <?= GridView::widget([

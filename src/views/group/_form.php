@@ -68,6 +68,15 @@ $labels = [
     )->label(Yii::t('app', 'Parent Group') . (!$isMaster ? ' *' : ''));
     ?>
 
+    <?= $form->field($model, 'parent_id')->dropDownList(
+        ArrayHelper::map($parents, 'id', 'name'),
+        [
+            'prompt'   => $isMaster ? '' : Yii::t('app', 'Select a parent group'),
+            'required' => !$isMaster,
+        ]
+    )->label(Yii::t('app', 'Parent Group') . (!$isMaster ? ' *' : ''));
+    ?>
+
     <?php
     if ($isMaster) {
         // Master pode escolher qualquer nível
