@@ -36,7 +36,7 @@ use yii\bootstrap5\ActiveForm;
                     'aspectRatio' => '1',
                 ]) ?>
             </div>
-            <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
+            
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
 
@@ -60,7 +60,7 @@ use yii\bootstrap5\ActiveForm;
     <div class="card mb-4">
         <div class="card-header"><strong><?= Yii::t('app', 'User') ?></strong></div>
         <div class="card-body">
-            <?= $form->field($model, 'username')->textInput(['maxlength' => true]) ?>
+            <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
             <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
 
             <?php
