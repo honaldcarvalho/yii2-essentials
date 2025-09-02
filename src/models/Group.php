@@ -257,4 +257,103 @@ class Group extends ModelCommon
         $ids = $user->getUserGroupsId(); // já existe no teu projeto
         return static::familyIdsFromMany($ids);
     }
+
+    /**
+     * find() com escopo:
+     * - Admin: vê tudo (sem filtro).
+     * - Não admin: vê apenas grupos na família (raiz do(s) seu(s) grupo(s)).
+     * - Guest: nada.
+     */
+    public static function find($applyScope = true): ActiveQuery
+    {
+        $query = parent::find();
+
+        if ($applyScope === false) {
+            return $query;
+        }
+
+        $user = AuthorizationController::User();
+        if (!$user) {
+            // convidado não lista grupos
+            return $query->where('1=0');
+        }
+
+        if (AuthorizationController::isAdmin()) {
+            // admin/master: sem escopo
+            return $query;
+        }
+
+        // família do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
+        $familyIds = static::familyIdsFromUser($user);
+        $familyIds = array_values(array_unique(array_map('intval', $familyIds)));
+
+        if (empty($familyIds)) {
+            return $query->where('1=0');
+        }
+
+        // Só grupos da família
+        $table = static::tableName();
+        $query->andWhere(["{$table}.id" => $familyIds]);
+
+        return $query;
+    }
+
+    /**
+     * search() para Grid/List:
+     * - Usa o find() acima (já com escopo).
+     * - Filtros simples: id, name (like), level, status, parent_id.
+     *
+     * @param array $params
+     * @param array $options ['pageSize'=>int, 'orderBy'=>['col'=>SORT_DESC]]
+     */
+    public function search($params, $options = ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]): ActiveDataProvider
+    {
+        $query = static::find(true); // aplica escopo
+
+        // Ordenação/paginação padrão
+        $sort = [
+            'defaultOrder' => isset($options['orderBy']) ? $options['orderBy'] : ['id' => SORT_DESC],
+            'attributes'   => ['id', 'name', 'level', 'status', 'parent_id', 'created_at', 'updated_at'],
+        ];
+        $pageSize = isset($options['pageSize']) ? (int)$options['pageSize'] : 10;
+
+        $dataProvider = new ActiveDataProvider([
+            'query'      => $query,
+            'pagination' => ['pageSize' => $pageSize],
+            'sort'       => $sort,
+        ]);
+
+        // Carrega filtros
+        $this->load($params);
+
+        // Se validações falharem, retorna sem aplicar filtros adicionais
+        if (method_exists($this, 'validate') && !$this->validate()) {
+            return $dataProvider;
+        }
+
+        $table = static::tableName();
+
+        // Filtros comuns (ajuste conforme seus fields)
+        if (isset($this->id) && $this->id !== '' && is_numeric($this->id)) {
+            $query->andWhere(["{$table}.id" => (int)$this->id]);
+        }
+
+        if (isset($this->name) && $this->name !== '') {
+            $query->andWhere(['like', "{$table}.name", $this->name]);
+        }
+
+        if (isset($this->level) && $this->level !== '') {
+            $query->andWhere(["{$table}.level" => $this->level]);
+        }
+
+        if (isset($this->status) && $this->status !== '' && $this->status !== null) {
+            $query->andWhere(["{$table}.status" => (int)$this->status]);
+        }
+
+        if (isset($this->parent_id) && $this->parent_id !== '' && $this->parent_id !== null) {
+            $query->andWhere(["{$table}.parent_id" => (int)$this->parent_id]);
+        }
+
+        return $dataProvider;
+    }
 }
