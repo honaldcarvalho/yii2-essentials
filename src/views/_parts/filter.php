@@ -1,71 +1,71 @@
 <?php
-
 $path = explode('\\', get_class($searchModel));
 $modelName = end($path);
-$collapsed = 'collapsed-card';
-$display = 'none';
 
-if (isset($_GET["{$modelName}"])) {
-    foreach ($_GET["{$modelName}"] as $parametro) {
-        if (!empty($parametro)) {
-            $collapsed = "";
-            $display = 'block';
+// detecta se deve iniciar aberto
+$isOpen = false;
+if (isset($_GET[$modelName])) {
+    foreach ((array)$_GET[$modelName] as $valor) {
+        if ($valor !== '' && $valor !== null) {
+            $isOpen = true;
+            break;
         }
     }
 }
 
-$script = <<< JS
-function clearFilters(){
-    document.querySelectorAll('form').forEach(form => form.reset());
-    document.querySelectorAll('select').forEach(select => {
-        select.value = null;
-        if (window.jQuery && jQuery.fn.select2) {
-            jQuery(select).val(null).trigger('change');
-        }
-    });
-    document.querySelectorAll(':checkbox, :radio').forEach(el => el.checked = false);
-    return false;
-}
+$js = <<<JS
+(function initFilterCollapse(){
+  function setIcon(open){
+    var icon = document.getElementById('collapseToggleIcon');
+    if (!icon) return;
+    icon.classList.toggle('fa-plus', !open);
+    icon.classList.toggle('fa-minus', open);
+  }
 
-document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('.btn-reset').forEach(btn => {
-        btn.addEventListener('click', function(e){
-            e.preventDefault();
-            clearFilters();
-        });
-    });
+  var collapseEl = document.getElementById('collapseExample');
+  if (!collapseEl) return;
 
-    const collapseEl = document.getElementById('collapseSearch');
-    const icon = document.querySelector('#collapseToggleIcon');
-    if (collapseEl && icon) {
-        collapseEl.addEventListener('show.bs.collapse', () => {
-            icon.classList.remove('fa-plus');
-            icon.classList.add('fa-minus');
-        });
-        collapseEl.addEventListener('hide.bs.collapse', () => {
-            icon.classList.remove('fa-minus');
-            icon.classList.add('fa-plus');
-        });
-    }
-});
+  // estado inicial (caso já venha "show")
+  setIcon(collapseEl.classList.contains('show'));
+
+  // ouvintes CoreUI 5
+  collapseEl.addEventListener('show.coreui.collapse', function(){ setIcon(true); });
+  collapseEl.addEventListener('shown.coreui.collapse', function(){ setIcon(true); });
+  collapseEl.addEventListener('hide.coreui.collapse', function(){ setIcon(false); });
+  collapseEl.addEventListener('hidden.coreui.collapse', function(){ setIcon(false); });
+
+  // fallback Bootstrap (se aplicável)
+  collapseEl.addEventListener('show.bs.collapse', function(){ setIcon(true); });
+  collapseEl.addEventListener('shown.bs.collapse', function(){ setIcon(true); });
+  collapseEl.addEventListener('hide.bs.collapse', function(){ setIcon(false); });
+  collapseEl.addEventListener('hidden.bs.collapse', function(){ setIcon(false); });
+})();
 JS;
 
-$this::registerJs($script, \yii\web\View::POS_END);
-
+$this->registerJs($js, \yii\web\View::POS_END);
 ?>
-<div class="card">
-    <div class="card-header">
-        <button type="button" class="btn btn-tool w-100" data-coreui-toggle="collapse" href="#collapseSearch" role="button" aria-expanded="false" aria-controls="collapseSearch">
-            <span class="float-start"><i class="fa fa-filter"></i> <?= Yii::t('app', 'Filters') ?></span>
-            <i id="collapseToggleIcon" class="fas fa-plus float-end"></i>
-        </button>
-    </div>
 
-    <div class="collapse" id="collapseSearch">
-        <div class="card card-body <?= $collapsed ?>">
-            <?= $this->render("{$view}/_search", [
-                'model' => $searchModel
-            ]) ?>
-        </div>
+<div class="card">
+  <div class="card-header">
+    <button
+      type="button"
+      class="btn btn-tool w-100"
+      data-coreui-toggle="collapse"
+      data-coreui-target="#collapseExample"
+      aria-controls="collapseExample"
+      aria-expanded="<?= $isOpen ? 'true' : 'false' ?>"
+    >
+      <span class="float-start">
+        <i class="fa fa-filter"></i> <?= Yii::t('app', 'Filters') ?>
+      </span>
+      <i id="collapseToggleIcon"
+         class="fas <?= $isOpen ? 'fa-minus' : 'fa-plus' ?> float-end"></i>
+    </button>
+  </div>
+
+  <div class="collapse <?= $isOpen ? 'show' : '' ?>" id="collapseExample">
+    <div class="card card-body">
+      <?= $this->render("{$view}/_search", ['model' => $searchModel]) ?>
     </div>
+  </div>
 </div>
