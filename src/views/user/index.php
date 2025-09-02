@@ -26,6 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             'id',
             'group.name:text:'.Yii::t('app', 'Group'),
+            'profile.fullname:text:'.Yii::t('app', 'Full Name'),
             #'language.name:text:'.Yii::t('app', 'Language'),
             #'theme',
             [
@@ -40,7 +41,6 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 }
             ],
-            'username',
             'email:email',
             'created_at:datetime',
             'updated_at:datetime',

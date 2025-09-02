@@ -24,7 +24,10 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'group.name:text:'.Yii::t('app', 'Group'),
-            #'language.name:text:'.Yii::t('app', 'Language'),
+            'profile.fullname:text:'.Yii::t('app', 'Full Name'),
+            'username',
+            'email:email',
+            'profile.language.name:text:'.Yii::t('app', 'Language'),
             #'theme',
             [
                 'attribute'=>'file_id',
@@ -38,8 +41,6 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 }
             ],
-            'username',
-            'email:email',
             'created_at:datetime',
             'updated_at:datetime',
             [
