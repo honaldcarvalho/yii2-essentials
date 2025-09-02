@@ -5,7 +5,7 @@ use croacworks\essentials\models\User;
 use croacworks\essentials\models\Language;
 
 /** @var yii\web\View $this */
-/** @var croacworks\essentials\models\User $searchModel */
+/** @var croacworks\essentials\models\User $model */
 
 // opções para selects
 $languages = \yii\helpers\ArrayHelper::map(
@@ -86,7 +86,7 @@ if (isset($_GET['User'])) {
           ], ['class' => 'form-select','prompt' => Yii::t('app','All')]) ?>
         </div>
 
-        <?php if ($searchModel->hasAttribute('language_id')): ?>
+        <?php if ($model->hasAttribute('language_id')): ?>
         <div class="col-md-2">
           <label class="form-label"><?= Yii::t('app','Language') ?></label>
           <?= Html::dropDownList('User[language_id:number]', $_GET['User']['language_id'] ?? '', $languages, [
