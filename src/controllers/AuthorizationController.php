@@ -126,12 +126,33 @@ class AuthorizationController extends CommonController
 
         return $ids ?: [$gid];
     }
-    
+
     public static function isAdmin(): bool
     {
-        return !self::isGuest() && UserGroup::find()
-            ->where(['user_id' => Yii::$app->user->id, 'group_id' => self::ADMIN_GROUP_ID])
-            ->exists();
+        static $memo = null;
+        if ($memo !== null) return $memo;
+
+        $userId = Yii::$app->user->id;
+        if (!$userId) return $memo = false;
+
+        $db = Yii::$app->db;
+
+        // Pega os nomes das tabelas sem disparar AR::find()
+        $groupsTable = \croacworks\essentials\models\Group::tableName();
+        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+            ? \croacworks\essentials\models\UsersGroup::tableName()
+            : '{{%users_groups}}'; // fallback
+
+        // Consulta direta, sem AR/relations
+        $exists = (new \yii\db\Query())
+            ->from("$ugTable ug")
+            ->innerJoin("$groupsTable g", 'g.id = ug.group_id')
+            ->where(['ug.user_id' => $userId])
+            ->andWhere(['in', 'g.level', ['master']])
+            ->limit(1)
+            ->exists($db);
+
+        return $memo = (bool)$exists;
     }
 
     public static function getUserByToken()
@@ -386,7 +407,7 @@ class AuthorizationController extends CommonController
         if (self::isAdmin()) return true;
         return self::verifyLicense() !== null;
     }
-    
+
     /* ===== Log seguro (mantido, com máscara leve) ===== */
 
     protected function logRequestSafe(): void
@@ -522,5 +543,4 @@ class AuthorizationController extends CommonController
             Yii::debug('[heartbeat] ' . $e->getMessage(), __METHOD__);
         }
     }
-
 }
