@@ -88,7 +88,7 @@ $labels = [
             ])->label(Yii::t('app', 'Level') . ' (' . Yii::t('app', 'read-only') . ')');
             echo Html::hiddenInput(Html::getInputName($model, 'level'), $model->level);
         } else {
-            echo $form->field($model, 'level')->dropDownList($allowed, ['prompt' => '']);
+            echo $form->field($model, 'level')->dropDownList($allowed);
         }
     }
     ?>
