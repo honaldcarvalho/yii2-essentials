@@ -9,6 +9,8 @@ use yii\helpers\ArrayHelper;
 /** @var yii\bootstrap5\ActiveForm $form */
 /** @var croacworks\essentials\models\Group $model */
 
+$isMaster = AuthorizationController::isAdmin();
+
 // Usuário atual
 $user = AuthorizationController::User();
 
@@ -51,8 +53,12 @@ $parents = $query->all();
 
     <?= $form->field($model, 'parent_id')->dropDownList(
         ArrayHelper::map($parents, 'id', 'name'),
-        ['prompt' => '']
-    ); ?>
+        [
+            'prompt'   => $isMaster ? '' : Yii::t('app', 'Select a parent group'),
+            'required' => !$isMaster,
+        ]
+    )->label(Yii::t('app', 'Parent Group') . (!$isMaster ? ' *' : ''));
+    ?>
 
     <?= $form->field($model, 'level')->dropDownList([ 'master' => 'Master', 'admin' => 'Admin', 'user' => 'User', 'free' => 'Free', ]) ?>
     
