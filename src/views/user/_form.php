@@ -3,6 +3,7 @@
 /* @var $model croacworks\essentials\models\User */
 /* @var $profile croacworks\essentials\models\UserProfile */
 
+use croacworks\essentials\models\Group;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\User;
 use croacworks\essentials\widgets\UploadImageInstant;
