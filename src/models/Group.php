@@ -2,9 +2,11 @@
 
 namespace croacworks\essentials\models;
 
-use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 use yii\db\Query;
+use yii\data\ActiveDataProvider;
+use croacworks\essentials\controllers\AuthorizationController;
+
 /**
  * This is the model class for table "groups".
  *
