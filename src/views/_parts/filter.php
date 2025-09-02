@@ -39,16 +39,12 @@ $this::registerJs($script);
 ?>
 <div class="row">
 
-
-
-    <p class="d-inline-flex gap-1">
-        <label class="card-title text-weebz"><i class="fa fa-filter"></i> <?= Yii::t('app', 'Filtros') ?></label>
     <div class="card-tools">
         <button type="button" class="btn btn-tool" data-coreui-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-            <i class="fas fa-plus"></i>
+            <i class="fa fa-filter"></i> <?= Yii::t('app', 'Filtros') ?> <i class="fas fa-plus"></i>
         </button>
     </div>
-    </p>
+
     <div class="collapse" id="collapseExample">
         <div class="card card-body <?= $collapsed ?>">
             <?= $this->render("{$view}/_search", [
