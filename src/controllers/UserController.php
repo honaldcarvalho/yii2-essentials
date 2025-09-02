@@ -36,7 +36,7 @@ class UserController extends AuthorizationController
         $options = [
             'orderBy' => ['id' => SORT_DESC],
             'join' => [
-                ['LEFT JOIN', '{{%user_profiles}} p', 'p.user_id = {{%users}}.id'],
+                ['LEFT JOIN', '{{%user_profiles}} profile', 'profile.user_id = {{%users}}.id'],
             ],
         ];
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $options);
