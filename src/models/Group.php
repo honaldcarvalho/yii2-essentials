@@ -2,9 +2,12 @@
 
 namespace croacworks\essentials\models;
 
-use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
+use yii\data\ActiveDataProvider;
 use yii\db\Query;
+use croacworks\essentials\controllers\AuthorizationController;
+use croacworks\essentials\models\ActiveQuery as BaseActiveQuery; // <- use o SEU ActiveQuery
+
 /**
  * This is the model class for table "groups".
  *
@@ -260,31 +263,38 @@ class Group extends ModelCommon
     }
 
     /**
-     * find() com escopo:
-     * - Admin: vê tudo (sem filtro).
-     * - Não admin: vê apenas grupos na família (raiz do(s) seu(s) grupo(s)).
-     * - Guest: nada.
+     * find() com escopo de família para não-admin.
+     * Mantém compatibilidade com AR/relations (sem quebrar hasOne/hasMany).
      */
-    public static function find($applyScope = true): ActiveQuery
+    public static function find($applyScope = true): BaseActiveQuery
     {
-        $query = parent::find();
+        // NUNCA use parent::find() aqui, pois retorna yii\db\ActiveQuery
+        $query = new BaseActiveQuery(get_called_class());
+
+        // Se for chamado a partir de uma relação (getXxx), NÃO aplique escopo
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6);
+        foreach ($bt as $t) {
+            if (isset($t['function'], $t['class'])
+                && str_starts_with($t['function'], 'get')
+                && is_subclass_of($t['class'], \yii\db\BaseActiveRecord::class)) {
+                return $query; // sem escopo para relações
+            }
+        }
 
         if ($applyScope === false) {
-            return $query;
+            return $query; // usado quando quiser listar sem escopo
         }
 
         $user = AuthorizationController::User();
         if (!$user) {
-            // convidado não lista grupos
-            return $query->where('1=0');
+            return $query->where('1=0'); // guest não vê nada
         }
 
         if (AuthorizationController::isAdmin()) {
-            // admin/master: sem escopo
-            return $query;
+            return $query; // admin/master vê tudo
         }
 
-        // família do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
+        // Escopo de família (pai ⇄ filhos ⇄ irmãos)
         $familyIds = static::familyIdsFromUser($user);
         $familyIds = array_values(array_unique(array_map('intval', $familyIds)));
 
@@ -292,69 +302,38 @@ class Group extends ModelCommon
             return $query->where('1=0');
         }
 
-        // Só grupos da família
-        $table = static::tableName();
-        $query->andWhere(["{$table}.id" => $familyIds]);
-
-        return $query;
+        return $query->andWhere([static::tableName().'.id' => $familyIds]);
     }
 
     /**
-     * search() para Grid/List:
-     * - Usa o find() acima (já com escopo).
-     * - Filtros simples: id, name (like), level, status, parent_id.
-     *
-     * @param array $params
-     * @param array $options ['pageSize'=>int, 'orderBy'=>['col'=>SORT_DESC]]
+     * search() com o escopo acima aplicado por padrão.
      */
     public function search($params, $options = ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]): ActiveDataProvider
     {
-        $query = static::find(true); // aplica escopo
-
-        // Ordenação/paginação padrão
-        $sort = [
-            'defaultOrder' => isset($options['orderBy']) ? $options['orderBy'] : ['id' => SORT_DESC],
-            'attributes'   => ['id', 'name', 'level', 'status', 'parent_id', 'created_at', 'updated_at'],
-        ];
-        $pageSize = isset($options['pageSize']) ? (int)$options['pageSize'] : 10;
+        $query = static::find(true); // aplica escopo (não-admin => família; admin => tudo)
 
         $dataProvider = new ActiveDataProvider([
             'query'      => $query,
-            'pagination' => ['pageSize' => $pageSize],
-            'sort'       => $sort,
+            'pagination' => ['pageSize' => (int)($options['pageSize'] ?? 10)],
+            'sort'       => [
+                'defaultOrder' => $options['orderBy'] ?? ['id' => SORT_DESC],
+                'attributes'   => ['id','name','level','status','parent_id','created_at','updated_at'],
+            ],
         ]);
 
-        // Carrega filtros
         $this->load($params);
-
-        // Se validações falharem, retorna sem aplicar filtros adicionais
         if (method_exists($this, 'validate') && !$this->validate()) {
             return $dataProvider;
         }
 
-        $table = static::tableName();
-
-        // Filtros comuns (ajuste conforme seus fields)
-        if (isset($this->id) && $this->id !== '' && is_numeric($this->id)) {
-            $query->andWhere(["{$table}.id" => (int)$this->id]);
-        }
-
-        if (isset($this->name) && $this->name !== '') {
-            $query->andWhere(['like', "{$table}.name", $this->name]);
-        }
-
-        if (isset($this->level) && $this->level !== '') {
-            $query->andWhere(["{$table}.level" => $this->level]);
-        }
-
-        if (isset($this->status) && $this->status !== '' && $this->status !== null) {
-            $query->andWhere(["{$table}.status" => (int)$this->status]);
-        }
-
-        if (isset($this->parent_id) && $this->parent_id !== '' && $this->parent_id !== null) {
-            $query->andWhere(["{$table}.parent_id" => (int)$this->parent_id]);
-        }
+        $t = static::tableName();
+        $query->andFilterWhere([$t.'.id' => $this->id])
+              ->andFilterWhere([$t.'.level' => $this->level])
+              ->andFilterWhere([$t.'.status' => $this->status])
+              ->andFilterWhere([$t.'.parent_id' => $this->parent_id])
+              ->andFilterWhere(['like', $t.'.name', $this->name]);
 
         return $dataProvider;
     }
+
 }
