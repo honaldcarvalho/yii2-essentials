@@ -35,14 +35,11 @@ class UserController extends AuthorizationController
         $searchModel = new User();
         $options = [
             'orderBy' => ['id' => SORT_DESC],
-            // usa o suporte nativo do ModelCommon (sem mudar search()):
             'join' => [
-                // [method, table, criteria]
                 ['LEFT JOIN', '{{%user_profiles}} p', 'p.user_id = {{%users}}.id'],
             ],
         ];
-
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $options);
+        $dataProvider = $model->search(Yii::$app->request->queryParams, $options);
 
         return $this->render('index', [
             'searchModel' => $searchModel,

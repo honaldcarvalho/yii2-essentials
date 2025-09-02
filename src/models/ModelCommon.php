@@ -207,15 +207,27 @@ class ModelCommon extends \yii\db\ActiveRecord
      *
      * @return ActiveDataProvider
      */
-    public function search($params, $options = ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC], 'order' => false],)
+    /**
+     * Creates data provider instance with search query applied
+     *
+     * @param array $params
+     * @param array $options [
+     *   'select'   => array|string,
+     *   'orderBy'  => array (default: ['id' => SORT_DESC]),
+     *   'pageSize' => int (default: 10),
+     *   'order'    => ['field' => '...', 'flag' => '...']|false,
+     *   'join'     => [ [method, table, criteria], ... ],
+     *   'groupModel' => ['table' => '...', 'field' => '...'],
+     * ]
+     * @return \yii\data\ActiveDataProvider
+     */
+    public function search($params, $options = ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC], 'order' => false])
     {
         $this->scenario = self::SCENARIO_SEARCH;
 
         $className = self::getClass();
-        $table = static::tableName();
-        $pageSize = 10;
-        $order = false;
-        $orderField = false;
+        $table     = static::tableName();
+        $pageSize  = 10;
 
         $query = static::find();
 
@@ -224,34 +236,28 @@ class ModelCommon extends \yii\db\ActiveRecord
         }
 
         $sort = [
-            'defaultOrder' => ['id' => SORT_DESC], // padrão
+            'defaultOrder' => ['id' => SORT_DESC],
         ];
-
         if (isset($options['orderBy'])) {
             $sort['defaultOrder'] = $options['orderBy'];
         }
-
         if (isset($options['pageSize'])) {
-            $pageSize = $options['pageSize'];
+            $pageSize = (int)$options['pageSize'];
         }
 
-        /**
-            AQUI FAZ A VERIFICAÇÃO SE TEM UM ITEM DE ORDENAMENTO QUE MUDA A TAMANHO DA LISTAGEM. CASO SEJA FORNECIDO UM CAMPO FLAG E ELE NÃO SEJA NULO/VAZIO
-            O TAMANHO PASSA PARA 10000
-         */
+        // Ordenação especial + expansão da paginação
         if (isset($options['order']) && $options['order'] && !empty($options['order']) && count($params) > 0) {
             $query->orderBy([$options['order']['field'] => SORT_ASC]);
 
             if (
-                (
-                    isset($options['order']['flag']) &&
-                    $options['order']['flag'] != false &&
-                    isset($params[$className][$options['order']['flag']]) &&
-                    !empty($params[$className][$options['order']['flag']])
-                )
+                isset($options['order']['flag']) &&
+                $options['order']['flag'] !== false &&
+                isset($params[$className][$options['order']['flag']]) &&
+                !empty($params[$className][$options['order']['flag']])
             ) {
+                // Se qualquer outro filtro também vier preenchido, expande o pageSize
                 foreach ($params["{$className}"] as $field => $search) {
-                    if (!empty($search)) {
+                    if ($search !== '' && $search !== null && (!is_array($search) || array_filter($search, fn($v) => $v !== '' && $v !== null))) {
                         $pageSize = 10000;
                         break;
                     }
@@ -259,45 +265,34 @@ class ModelCommon extends \yii\db\ActiveRecord
             }
         }
 
-        if (isset($options['join'])) {
-            if (is_array($options['join'])) {
-                foreach ($options['join'] as $model) {
-                    [$method, $table, $criteria] = $model;
-                    $query->join($method, $table, $criteria);
-                }
+        // JOINs opcionais
+        if (!empty($options['join']) && is_array($options['join'])) {
+            foreach ($options['join'] as $model) {
+                [$method, $jt, $criteria] = $model;
+                $query->join($method, $jt, $criteria);
             }
         }
 
+        // groupModel (JOIN auxiliar para group_id externo)
         if (isset($options['groupModel'])) {
-            $field =  AuthorizationController::addSlashUpperLower($className);
             $query->leftJoin($options['groupModel']['table'], "{$table}.{$options['groupModel']['field']} = {$options['groupModel']['table']}.id");
         }
-        // add conditions that should always apply here
 
-        $dataProvider = new ActiveDataProvider([
-            'query' => $query,
-            'pagination' => [
-                'pageSize' => $pageSize
-            ],
-            'sort' => $sort,
+        $dataProvider = new \yii\data\ActiveDataProvider([
+            'query'      => $query,
+            'pagination' => ['pageSize' => $pageSize],
+            'sort'       => $sort,
         ]);
 
         $this->load($params);
 
-        // grid filtering conditions
-        $user = AuthorizationController::User();
-
+        // Filtro por família de grupos (quando verGroup = true e usuário não é admin)
+        $user = \croacworks\essentials\controllers\AuthorizationController::User();
         if ($this->verGroup && $user) {
             if (!\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
-
-                // NOVO: família completa do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
-                $group_ids = Group::familyIdsFromUser($user);
-
-                // (opcional) garante visibilidade do grupo 1
-                $group_ids[] = 1;
+                $group_ids = \croacworks\essentials\models\Group::familyIdsFromUser($user);
+                $group_ids[] = 1; // mantém visibilidade do grupo 1 (público), se for sua regra
                 $group_ids = array_values(array_unique(array_map('intval', $group_ids)));
-
-                $table = static::tableName();
 
                 $groupPath = method_exists($this, 'groupRelationPath') ? static::groupRelationPath() : null;
 
@@ -307,8 +302,10 @@ class ModelCommon extends \yii\db\ActiveRecord
                         $relationPath .= ($i > 0 ? '.' : '') . $relation;
                         $query->joinWith([$relationPath]);
                     }
+                    $tableAlias = \Yii::createObject(static::class)
+                        ->getRelation(end($groupPath))
+                        ->modelClass::tableName();
 
-                    $tableAlias = Yii::createObject(static::class)->getRelation(end($groupPath))->modelClass::tableName();
                     $query->andFilterWhere(['in', "{$tableAlias}.group_id", $group_ids]);
                 } elseif (isset($options['groupModel'])) {
                     $query->andFilterWhere(['in', "{$options['groupModel']['table']}.group_id", $group_ids]);
@@ -319,69 +316,109 @@ class ModelCommon extends \yii\db\ActiveRecord
         }
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
-        //create criteria by search type
+        // === AQUI VAI O PATCH DE COMPATIBILIDADE COM ALIASES E "__" ===
+        // helper: normaliza campo "relacao__campo" -> "relacao.campo"
+        $normalizeField = static function (string $f): string {
+            // não mexe em backticks
+            if (strpos($f, '`') !== false) {
+                return $f;
+            }
+            // troca __ por .
+            return str_replace('__', '.', $f);
+        };
+
+        // helper: resolve o nome de coluna final
+        $resolveColumn = static function (string $baseTable, string $field) use ($normalizeField): string {
+            $field = $normalizeField($field);
+            // se já vier como alias.campo ou com backticks, não prefixa
+            if (strpos($field, '.') !== false || strpos($field, '`') !== false) {
+                return $field;
+            }
+            return "{$baseTable}.{$field}";
+        };
+        // === FIM PATCH ===
+
+        // Monta filtros
         foreach ($params as $field => $search) {
-
-            if ($field == 'page')
+            if ($field === 'page') {
                 continue;
-
-            $field_type = gettype($search);
-            $field_parts = explode(':', $field);
-            if (count($field_parts) > 1) {
-                [$field, $field_type] = $field_parts;
             }
 
-            if (!isset($params["{$className}"]))
+            if (!isset($params[$className])) {
                 continue;
+            }
 
-            foreach ($params["{$className}"] as $field => $search) {
-
-                $field_type = gettype($search);
-                if (is_numeric($search) && (int)$search == $search) {
-                    $field_type = "number";
-                }
-                $field_parts = explode(':', $field);
-
-                if (count($field_parts) > 1) {
-                    [$field, $field_type] = $field_parts;
+            foreach ($params[$className] as $rawField => $value) {
+                // detecta tipo
+                $fieldType = gettype($value);
+                if (is_numeric($value) && (int)$value == $value) {
+                    $fieldType = 'number';
                 }
 
-                if ($field_type == 'custom') {
-                    $query->andFilterWhere(["$table.$field", $search[0], $search[1]]);
-                } else if ($field_type == 'between') {
-                    $query->andFilterWhere(['between', "$table.$field", $search[0], $search[1]]);
-                } else if ($field_type == 'string') {
-                    if (str_contains($field, 'sod') || str_contains($field, 'eod')) {
-                        [$field_date, $pos] = explode('FDT', $field);
-                        if ($pos == 'sod') {
-                            $query->andFilterWhere(['>=', "$table.$field_date", $search]);
-                        } else if ($pos == 'eod') {
-                            $query->andFilterWhere(['<=', "$table.$field_date", $search]);
+                // permite sufixo "campo:tipo"
+                $parts = explode(':', $rawField);
+                $fieldName = $parts[0];
+                if (count($parts) > 1) {
+                    $fieldType = $parts[1];
+                }
+
+                // colunas especiais com FDTsod / FDTeod (ex.: created_atFDTsod)
+                if (str_contains($fieldName, 'FDT')) {
+                    [$baseField, $pos] = explode('FDT', $fieldName);
+                    $column = $resolveColumn($table, $baseField);
+                    if ($value !== '' && $value !== null) {
+                        if ($pos === 'sod') {
+                            $query->andFilterWhere(['>=', $column, $value]);
+                        } elseif ($pos === 'eod') {
+                            $query->andFilterWhere(['<=', $column, $value]);
                         }
-                    } else {
-                        $query->andFilterWhere(['like', "$table.$field", $search]);
                     }
-                } else if (str_contains($field, 'sod') || str_contains($field, 'eod')) {
-                    [$field_date, $pos] = explode('FDT', $field);
-                    if ($pos == 'sod') {
-                        $query->andFilterWhere(['>=', "$table." . $field_date, $search]);
-                    } else if ($pos == 'eod') {
-                        $query->andFilterWhere(['<=', "$table." . $field_date, $search]);
+                    continue;
+                }
+
+                // coluna (com suporte a alias)
+                $column = $resolveColumn($table, $fieldName);
+
+                // tipos suportados
+                if ($fieldType === 'custom' && is_array($value) && count($value) >= 2) {
+                    // ['operator', value]; ou [value1, value2] dependendo do seu padrão
+                    // Mantendo sua assinatura original:
+                    // $query->andFilterWhere(["$table.$field", $search[0], $search[1]]);
+                    // Corrigido para usar $column:
+                    $query->andFilterWhere([$value[0], $column, $value[1]]);
+                } elseif ($fieldType === 'between' && is_array($value) && count($value) >= 2) {
+                    $query->andFilterWhere(['between', $column, $value[0], $value[1]]);
+                } elseif ($fieldType === 'string') {
+                    // LIKE
+                    if ($value !== '' && $value !== null) {
+                        $query->andFilterWhere(['like', $column, $value]);
                     }
                 } else {
-                    $query->andFilterWhere(["$table.$field" => $search]);
+                    // igualdade (inclui number e arrays simples)
+                    if (is_array($value)) {
+                        // in-list (quando vier array)
+                        $flat = array_values(array_filter($value, fn($v) => $v !== '' && $v !== null));
+                        if (!empty($flat)) {
+                            $query->andFilterWhere([$column => $flat]);
+                        }
+                    } else {
+                        if ($value !== '' && $value !== null) {
+                            $query->andFilterWhere([$column => $value]);
+                        }
+                    }
                 }
             }
         }
-        // $query = $dataProvider->query;
-        // dd($query->createCommand()->getRawSql());
+
+        // Debug (opcional)
+        // $sql = $query->createCommand()->getRawSql(); dd($sql);
+
         return $dataProvider;
     }
+
 
     public static function clearFrontendCache($key)
     {
