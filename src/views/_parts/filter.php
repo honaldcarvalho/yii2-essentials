@@ -1,21 +1,21 @@
 <?php
 
-    $path = explode('\\',get_class($searchModel));
-    $modelName = end($path);
-    $collapsed = 'collapsed-card';
-    $display = 'none';
+$path = explode('\\', get_class($searchModel));
+$modelName = end($path);
+$collapsed = 'collapsed-card';
+$display = 'none';
 
-    if(isset($_GET["{$modelName}"])){
+if (isset($_GET["{$modelName}"])) {
 
-        foreach ($_GET["{$modelName}"] as $parametro){
-            if(!empty($parametro)){
-                $collapsed = "";
-                $display = 'block';
-            }
+    foreach ($_GET["{$modelName}"] as $parametro) {
+        if (!empty($parametro)) {
+            $collapsed = "";
+            $display = 'block';
         }
     }
+}
 
-    $script = <<< JS
+$script = <<< JS
 
         function clearFilters(){
 
@@ -34,30 +34,27 @@
         });
     JS;
 
-    $this::registerJs($script);
+$this::registerJs($script);
 
 ?>
 <div class="row">
-    <div class="col-md-12">
 
-        <div class="card <?= $collapsed ?>">
-            <div class="btn card-header" data-card-widget="collapse" title="Collapse">
-                <label class="card-title text-weebz"><i class="fa fa-filter"></i> <?= Yii::t('app','Filtros')?></label>
-                <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="card-body" style="display:<?= $display ?>;">
-                <div class="col-md-12">
 
-                    <?= $this->render("{$view}/_search", [
-                        'model' => $searchModel
-                    ]) ?>
 
-                </div>
-            </div>
+    <p class="d-inline-flex gap-1">
+        <label class="card-title text-weebz"><i class="fa fa-filter"></i> <?= Yii::t('app', 'Filtros') ?></label>
+    <div class="card-tools">
+        <button type="button" class="btn btn-tool" data-coreui-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+    </p>
+    <div class="collapse" id="collapseExample">
+        <div class="card card-body <?= $collapsed ?>">
+            <?= $this->render("{$view}/_search", [
+                'model' => $searchModel
+            ]) ?>
+
         </div>
     </div>
 
