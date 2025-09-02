@@ -35,6 +35,7 @@ use yii\bootstrap5\ActiveForm;
                     'aspectRatio' => '1',
                 ]) ?>
             </div>
+            <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
 
