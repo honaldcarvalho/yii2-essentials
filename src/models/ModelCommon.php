@@ -86,44 +86,43 @@ class ModelCommon extends \yii\db\ActiveRecord
 
             if ($user) {
 
-                if (\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
-                    return $query; // não aplica filtro de grupo
-                }
+                if (!\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
 
-                // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
-                $groupIds = Group::familyIdsFromUser($user);
+                    // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
+                    $groupIds = Group::familyIdsFromUser($user);
 
-                // Mantém acesso ao grupo 1 se for tua política (opcional)
-                $groupIds[] = 1;
-                $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
+                    // Mantém acesso ao grupo 1 se for tua política (opcional)
+                    $groupIds[] = 1;
+                    $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
 
-                $table = static::tableName();
-                $model = new static();
+                    $table = static::tableName();
+                    $model = new static();
 
-                if ($model->hasAttribute('group_id')) {
-                    $query->andWhere(["{$table}.group_id" => $groupIds]);
-                } elseif (method_exists($model, 'groupRelationPath')) {
-                    $path = $model::groupRelationPath();
-                    $relationPath = implode('.', $path);
+                    if ($model->hasAttribute('group_id')) {
+                        $query->andWhere(["{$table}.group_id" => $groupIds]);
+                    } elseif (method_exists($model, 'groupRelationPath')) {
+                        $path = $model::groupRelationPath();
+                        $relationPath = implode('.', $path);
 
-                    $valid = true;
-                    $currentModel = $model;
+                        $valid = true;
+                        $currentModel = $model;
 
-                    foreach ($path as $relation) {
-                        $method = 'get' . ucfirst($relation);
-                        if (!method_exists($currentModel, $method)) {
-                            Yii::warning("Relação inválida '{$relation}' em groupRelationPath() de " . static::class);
-                            $valid = false;
-                            break;
+                        foreach ($path as $relation) {
+                            $method = 'get' . ucfirst($relation);
+                            if (!method_exists($currentModel, $method)) {
+                                Yii::warning("Relação inválida '{$relation}' em groupRelationPath() de " . static::class);
+                                $valid = false;
+                                break;
+                            }
+                            $relationQuery = $currentModel->$method();
+                            $currentModel = new ($relationQuery->modelClass);
                         }
-                        $relationQuery = $currentModel->$method();
-                        $currentModel = new ($relationQuery->modelClass);
-                    }
 
-                    if ($valid) {
-                        $query->joinWith([$relationPath]);
-                        $finalTable = $currentModel::tableName();
-                        $query->andWhere(["{$finalTable}.group_id" => $groupIds]);
+                        if ($valid) {
+                            $query->joinWith([$relationPath]);
+                            $finalTable = $currentModel::tableName();
+                            $query->andWhere(["{$finalTable}.group_id" => $groupIds]);
+                        }
                     }
                 }
             }
