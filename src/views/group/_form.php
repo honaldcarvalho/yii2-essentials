@@ -45,6 +45,14 @@ if (!AuthorizationController::isAdmin() && !empty($familyIds)) {
 
 $parents = $query->all();
 
+
+$labels = [
+    'master' => Yii::t('app', 'Master'),
+    'admin'  => Yii::t('app', 'Admin'),
+    'user'   => Yii::t('app', 'User'),
+    'free'   => Yii::t('app', 'Free'),
+];
+
 ?>
 
 <div class="group-form">
@@ -60,14 +68,37 @@ $parents = $query->all();
     )->label(Yii::t('app', 'Parent Group') . (!$isMaster ? ' *' : ''));
     ?>
 
-    <?= $form->field($model, 'level')->dropDownList([ 'master' => 'Master', 'admin' => 'Admin', 'user' => 'User', 'free' => 'Free', ]) ?>
-    
+    <?php
+    if ($isMaster) {
+        // Master pode escolher qualquer nível
+        echo $form->field($model, 'level')->dropDownList($labels, ['prompt' => '']);
+    } else {
+        // Não-master: só Admin e User
+        $allowed = [
+            'admin' => $labels['admin'],
+            'user'  => $labels['user'],
+        ];
+
+        // Se estiver editando um registro cujo nível atual não é permitido,
+        // mostramos o valor atual como somente leitura para evitar troca acidental.
+        if (!$model->isNewRecord && isset($labels[$model->level]) && !isset($allowed[$model->level])) {
+            echo $form->field($model, 'level')->textInput([
+                'value'    => $labels[$model->level],
+                'readonly' => true,
+            ])->label(Yii::t('app', 'Level') . ' (' . Yii::t('app', 'read-only') . ')');
+            echo Html::hiddenInput(Html::getInputName($model, 'level'), $model->level);
+        } else {
+            echo $form->field($model, 'level')->dropDownList($allowed, ['prompt' => '']);
+        }
+    }
+    ?>
+
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group">
-        <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('<i class="fas fa-save mr-2"></i>' . Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>
