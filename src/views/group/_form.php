@@ -49,7 +49,7 @@ $parents = $query->all();
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= echo $form->field($model, 'parent_id')->dropDownList(
+    <?= $form->field($model, 'parent_id')->dropDownList(
         ArrayHelper::map($parents, 'id', 'name'),
         ['prompt' => '']
     ); ?>
