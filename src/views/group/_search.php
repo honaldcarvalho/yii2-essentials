@@ -70,7 +70,6 @@ $labels = [
         ArrayHelper::map($parents, 'id', 'name'),
         [
             'prompt'   => $isMaster ? '' : Yii::t('app', 'Select a parent group'),
-            'required' => !$isMaster,
         ]
     )->label(Yii::t('app', 'Parent Group') . (!$isMaster ? ' *' : ''));
     ?>
