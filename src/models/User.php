@@ -27,6 +27,7 @@ use yii\db\Expression;
  * @property Role[] $roles
  * @property UserProfile $profile
  * @property UsersGroup[] $usersGroups
+ * @property Group $group
  */
 
 class User extends Account
@@ -103,6 +104,7 @@ class User extends Account
     public function getNotifications(){ return $this->hasMany(Notification::class, ['user_id' => 'id']); }
     public function getRoles()     { return $this->hasMany(Role::class, ['user_id' => 'id']); }
     public function getProfile()   { return $this->hasOne(UserProfile::class, ['user_id' => 'id']); }
+    public function getGroup()   { return $this->hasOne(Group::class, ['group_id' => 'id']); }
     public function getUsersGroups(){ return $this->hasMany(UserGroup::class, ['user_id' => 'id']); }
 
     public function getGroups()
