@@ -38,7 +38,7 @@ $this::registerJs($script);
 
 ?>
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex align-items-center highlight-toolbar ps-3 pe-2 py-1 border-0 border-top border-bottom">
         <div class="d-flex ms-auto">
             <button type="button" class="btn btn-tool" data-coreui-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
                 <i class="fa fa-filter"></i> <?= Yii::t('app', 'Filters') ?> <i class="fas fa-plus"></i>
