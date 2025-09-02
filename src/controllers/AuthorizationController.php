@@ -88,6 +88,45 @@ class AuthorizationController extends CommonController
             : self::User()?->getUserGroupsId();
     }
 
+
+    /**
+     * Current effective group id (base group) for scoping.
+     * Ajuste se uses "current group" por token/URL/selector.
+     */
+    public static function currentGroupId(): ?int
+    {
+        $user = Yii::$app->user->identity ?? null;
+        if (!$user) return null;
+
+        // Base case: usa group_id do usuário (teu padrão atual).
+        // Se você já implementa "group ativo" via sessão/token, substitua aqui.
+        return (int)($user->group_id ?? 0) ?: null;
+    }
+
+    /**
+     * Returns all group IDs within the same family (root tree) as current group.
+     * Cache curto para reduzir hits.
+     */
+    public static function groupScopeIds(): array
+    {
+        $gid = static::currentGroupId();
+        if (!$gid) return [];
+
+        $cacheKey = 'group-family:' . $gid;
+        $ids = Yii::$app->cache->get($cacheKey);
+        if ($ids === false) {
+            try {
+                $ids = Group::familyIds($gid);
+            } catch (\Throwable $e) {
+                // Fallback se a instância não suporta CTE
+                $ids = Group::familyIdsNoCte($gid);
+            }
+            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s de cache (ajuste à vontade)
+        }
+
+        return $ids ?: [$gid];
+    }
+    
     public static function isAdmin(): bool
     {
         return !self::isGuest() && UserGroup::find()

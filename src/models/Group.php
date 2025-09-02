@@ -151,4 +151,110 @@ class Group extends ModelCommon
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
+
+    /**
+     * Sobe na árvore até achar o root de um grupo.
+     */
+    public static function getRootId(int $groupId): int
+    {
+        $db   = Yii::$app->db;
+        $curr = $groupId;
+
+        while (true) {
+            $row = (new Query())
+                ->from(static::tableName())
+                ->select(['parent_id'])
+                ->where(['id' => $curr])
+                ->one($db);
+
+            if (!$row || empty($row['parent_id'])) {
+                return (int)$curr;
+            }
+            $curr = (int)$row['parent_id'];
+        }
+    }
+
+    /**
+     * Retorna TODOS os ids da árvore daquele ROOT (root + descendentes).
+     * Tenta CTE recursivo; cai no fallback se não suportado.
+     */
+    public static function familyIdsByRoot(int $rootId): array
+    {
+        $db = Yii::$app->db;
+
+        try {
+            $sql = "
+                WITH RECURSIVE grp AS (
+                    SELECT id, parent_id
+                    FROM " . static::tableName() . " 
+                    WHERE id = :root
+                  UNION ALL
+                    SELECT g.id, g.parent_id
+                    FROM " . static::tableName() . " g
+                    JOIN grp ON g.parent_id = grp.id
+                )
+                SELECT id FROM grp
+            ";
+            $ids = $db->createCommand($sql, [':root' => $rootId])->queryColumn();
+            return array_values(array_unique(array_map('intval', $ids)));
+        } catch (\Throwable $e) {
+            // FALLBACK: sem CTE (MariaDB muito antiga)
+            $all = (new Query())
+                ->from(static::tableName())
+                ->select(['id','parent_id'])
+                ->all($db);
+
+            $byParent = [];
+            foreach ($all as $g) {
+                $pid = (int)($g['parent_id'] ?? 0);
+                $byParent[$pid][] = (int)$g['id'];
+            }
+
+            $stack = [$rootId];
+            $seen  = [];
+            while ($stack) {
+                $curr = array_pop($stack);
+                if (isset($seen[$curr])) continue;
+                $seen[$curr] = true;
+
+                foreach ($byParent[$curr] ?? [] as $child) {
+                    if (!isset($seen[$child])) $stack[] = $child;
+                }
+            }
+            return array_map('intval', array_keys($seen));
+        }
+    }
+
+    /**
+     * A partir de VÁRIOS grupos, une as famílias (caso o usuário tenha mais de um root).
+     */
+    public static function familyIdsFromMany(array $groupIds): array
+    {
+        $roots    = [];
+        $families = [];
+
+        foreach ($groupIds as $gid) {
+            $gid = (int)$gid;
+            if ($gid <= 0) continue;
+            $root = static::getRootId($gid);
+            $roots[$root] = true;
+        }
+
+        foreach (array_keys($roots) as $rootId) {
+            foreach (static::familyIdsByRoot((int)$rootId) as $id) {
+                $families[$id] = true;
+            }
+        }
+
+        return array_values(array_map('intval', array_keys($families)));
+    }
+
+    /**
+     * Helper direto para o usuário.
+     */
+    public static function familyIdsFromUser(\croacworks\essentials\models\User $user): array
+    {
+        $ids = $user->getUserGroupsId(); // já existe no teu projeto
+        return static::familyIdsFromMany($ids);
+    }
 }

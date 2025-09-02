@@ -65,11 +65,11 @@ class ModelCommon extends \yii\db\ActiveRecord
     {
         $query = parent::find();
 
+        // evita intervir em chamadas dentro de relações
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
         foreach ($backtrace as $trace) {
             if (isset($trace['function']) && str_starts_with($trace['function'], 'get') && isset($trace['class'])) {
                 if (is_subclass_of($trace['class'], \yii\db\BaseActiveRecord::class)) {
-                    // Está sendo chamado dentro de um relacionamento
                     return $query;
                 }
             }
@@ -84,17 +84,18 @@ class ModelCommon extends \yii\db\ActiveRecord
             $user = \croacworks\essentials\controllers\AuthorizationController::User();
 
             if ($user) {
-                $groupIds = Group::getAllDescendantIds($user->getUserGroupsId());
+                // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
+                $groupIds = Group::familyIdsFromUser($user);
+
+                // Mantém acesso ao grupo 1 se for tua política (opcional)
                 $groupIds[] = 1;
+                $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
 
                 $table = static::tableName();
                 $model = new static();
 
-                // Caso tenha group_id direto
                 if ($model->hasAttribute('group_id')) {
                     $query->andWhere(["{$table}.group_id" => $groupIds]);
-
-                    // Caso precise navegar por relações
                 } elseif (method_exists($model, 'groupRelationPath')) {
                     $path = $model::groupRelationPath();
                     $relationPath = implode('.', $path);
@@ -109,15 +110,13 @@ class ModelCommon extends \yii\db\ActiveRecord
                             $valid = false;
                             break;
                         }
-
                         $relationQuery = $currentModel->$method();
                         $currentModel = new ($relationQuery->modelClass);
                     }
 
                     if ($valid) {
                         $query->joinWith([$relationPath]);
-
-                        $finalTable = $currentModel::tableName(); // <- pega o nome real da tabela final
+                        $finalTable = $currentModel::tableName();
                         $query->andWhere(["{$finalTable}.group_id" => $groupIds]);
                     }
                 }
@@ -284,18 +283,15 @@ class ModelCommon extends \yii\db\ActiveRecord
         $user = AuthorizationController::User();
 
         if ($this->verGroup && $user) {
-            // IDs dos grupos do usuário
-            $directGroupIds = $user->getUserGroupsId();
+            // NOVO: família completa do(s) grupo(s) do usuário (pai ⇄ filhos ⇄ irmãos)
+            $group_ids = Group::familyIdsFromUser($user);
 
-            // IDs de todos os grupos descendentes (herdados via parent_id)
-            $group_ids = Group::getAllDescendantIds($directGroupIds);
-
-            // Se quiser sempre garantir acesso ao grupo ID 1 (admin), mantenha isso:
+            // (opcional) garante visibilidade do grupo 1
             $group_ids[] = 1;
+            $group_ids = array_values(array_unique(array_map('intval', $group_ids)));
 
             $table = static::tableName();
 
-            // Caminho definido no modelo, se existir
             $groupPath = method_exists($this, 'groupRelationPath') ? static::groupRelationPath() : null;
 
             if ($groupPath) {
@@ -306,7 +302,7 @@ class ModelCommon extends \yii\db\ActiveRecord
                 }
 
                 $tableAlias = Yii::createObject(static::class)->getRelation(end($groupPath))->modelClass::tableName();
-                $query->andWhere(["{$tableAlias}.group_id" => $group_ids]);
+                $query->andFilterWhere(['in', "{$tableAlias}.group_id", $group_ids]);
             } elseif (isset($options['groupModel'])) {
                 $query->andFilterWhere(['in', "{$options['groupModel']['table']}.group_id", $group_ids]);
             } elseif ($this->hasAttribute('group_id')) {
