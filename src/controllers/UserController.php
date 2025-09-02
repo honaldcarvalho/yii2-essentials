@@ -39,7 +39,7 @@ class UserController extends AuthorizationController
                 ['LEFT JOIN', '{{%user_profiles}} p', 'p.user_id = {{%users}}.id'],
             ],
         ];
-        $dataProvider = $model->search(Yii::$app->request->queryParams, $options);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $options);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
