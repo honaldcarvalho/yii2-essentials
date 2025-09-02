@@ -2,12 +2,9 @@
 
 namespace croacworks\essentials\models;
 
-use Yii;
-use yii\data\ActiveDataProvider;
-use yii\db\Query;
 use croacworks\essentials\controllers\AuthorizationController;
-use croacworks\essentials\models\ActiveQuery as BaseActiveQuery; // <- use o SEU ActiveQuery
-
+use Yii;
+use yii\db\Query;
 /**
  * This is the model class for table "groups".
  *
@@ -261,40 +258,41 @@ class Group extends ModelCommon
         $ids = $user->getUserGroupsId(); // já existe no teu projeto
         return static::familyIdsFromMany($ids);
     }
-
+    
     /**
      * find() com escopo de família para não-admin.
-     * Mantém compatibilidade com AR/relations (sem quebrar hasOne/hasMany).
+     * ⚠️ Sem return type custom aqui!
      */
-    public static function find($applyScope = true): BaseActiveQuery
+    public static function find($applyScope = true) // <-- sem type!
     {
-        // NUNCA use parent::find() aqui, pois retorna yii\db\ActiveQuery
-        $query = new BaseActiveQuery(get_called_class());
+        $query = parent::find();
 
-        // Se for chamado a partir de uma relação (getXxx), NÃO aplique escopo
+        // Se for chamado dentro de uma relação (getXxx), não aplica escopo
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6);
         foreach ($bt as $t) {
-            if (isset($t['function'], $t['class'])
-                && str_starts_with($t['function'], 'get')
-                && is_subclass_of($t['class'], \yii\db\BaseActiveRecord::class)) {
-                return $query; // sem escopo para relações
+            if (
+                isset($t['function'], $t['class']) &&
+                str_starts_with($t['function'], 'get') &&
+                is_subclass_of($t['class'], \yii\db\BaseActiveRecord::class)
+            ) {
+                return $query;
             }
         }
 
         if ($applyScope === false) {
-            return $query; // usado quando quiser listar sem escopo
+            return $query; // listar sem escopo quando precisar
         }
 
         $user = AuthorizationController::User();
         if (!$user) {
-            return $query->where('1=0'); // guest não vê nada
+            return $query->where('1=0'); // guest: nada
         }
 
         if (AuthorizationController::isAdmin()) {
-            return $query; // admin/master vê tudo
+            return $query; // admin: vê tudo
         }
 
-        // Escopo de família (pai ⇄ filhos ⇄ irmãos)
+        // família do(s) grupo(s) do usuário
         $familyIds = static::familyIdsFromUser($user);
         $familyIds = array_values(array_unique(array_map('intval', $familyIds)));
 
@@ -302,15 +300,15 @@ class Group extends ModelCommon
             return $query->where('1=0');
         }
 
-        return $query->andWhere([static::tableName().'.id' => $familyIds]);
+        return $query->andWhere([static::tableName() . '.id' => $familyIds]);
     }
 
     /**
-     * search() com o escopo acima aplicado por padrão.
+     * search() usando o escopo acima.
      */
     public function search($params, $options = ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]): ActiveDataProvider
     {
-        $query = static::find(true); // aplica escopo (não-admin => família; admin => tudo)
+        $query = static::find(true); // aplica escopo (admin: sem filtro; não-admin: família)
 
         $dataProvider = new ActiveDataProvider([
             'query'      => $query,
