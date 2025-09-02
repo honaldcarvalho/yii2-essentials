@@ -49,7 +49,7 @@ $languages = \yii\helpers\ArrayHelper::map(
 
     <div class="col-md-4">
       <label class="form-label"><?= Yii::t('app','Full name') ?></label>
-      <?= Html::textInput('User[profile.fullname:string]', $_GET['User']['profile.fullname'] ?? '', [
+      <?= Html::textInput('User[profile.fullname:string]', $_GET['User']['profile.fullname:string'] ?? '', [
         'class' => 'form-control mirror-to',
         'data-alias' => 'User[profile__fullname:string]',
         'maxlength' => true,
