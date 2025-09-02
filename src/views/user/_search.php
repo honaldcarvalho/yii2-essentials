@@ -24,25 +24,7 @@ if (isset($_GET['User'])) {
 }
 ?>
 
-<div class="card mb-3">
-  <div class="card-header">
-    <button
-      type="button"
-      class="btn btn-tool w-100"
-      data-coreui-toggle="collapse"
-      data-coreui-target="#userFilters"
-      aria-controls="userFilters"
-      aria-expanded="<?= $isOpen ? 'true' : 'false' ?>"
-    >
-      <span class="float-start">
-        <i class="fa fa-filter"></i> <?= Yii::t('app','Filters') ?>
-      </span>
-      <i id="collapseToggleIcon" class="fas <?= $isOpen ? 'fa-minus' : 'fa-plus' ?> float-end"></i>
-    </button>
-  </div>
-
-  <div class="collapse <?= $isOpen ? 'show' : '' ?>" id="userFilters">
-    <div class="card card-body">
+<div class="">
 
       <?php $form = ActiveForm::begin([
           'id' => 'user-search-form',
@@ -134,8 +116,6 @@ if (isset($_GET['User'])) {
 
       <?php ActiveForm::end(); ?>
 
-    </div>
-  </div>
 </div>
 
 <?php
