@@ -33,7 +33,16 @@ class UserController extends AuthorizationController
     public function actionIndex()
     {
         $searchModel = new User();
-        $dataProvider = $searchModel->search($this->request->queryParams);
+        $options = [
+            'orderBy' => ['id' => SORT_DESC],
+            // usa o suporte nativo do ModelCommon (sem mudar search()):
+            'join' => [
+                // [method, table, criteria]
+                ['LEFT JOIN', '{{%user_profiles}} p', 'p.user_id = {{%users}}.id'],
+            ],
+        ];
+
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $options);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -138,7 +147,7 @@ class UserController extends AuthorizationController
 
         if ($user->load(Yii::$app->request->post()) && $profile->load(Yii::$app->request->post())) {
             $name_array = explode(' ', $profile->fullname);
-            $user->username = strtolower($name_array[0] . '_' . end($name_array)).'_'.Yii::$app->security->generateRandomString(8);
+            $user->username = strtolower($name_array[0] . '_' . end($name_array)) . '_' . Yii::$app->security->generateRandomString(8);
 
             $user->setPassword($user->password);
             $user->generateAuthKey();
