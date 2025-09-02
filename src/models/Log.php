@@ -20,7 +20,7 @@ use Yii;
  */
 class Log extends ModelCommon
 {
-    public $verGroup = false;
+    public $verGroup = true;
     /**
      * {@inheritdoc}
      */

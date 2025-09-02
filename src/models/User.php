@@ -31,6 +31,7 @@ use yii\db\Expression;
 
 class User extends Account
 {
+    public $verGroup = true;
     /** Virtuals (não existem na tabela) */
     public $password;
     public $password_confirm;

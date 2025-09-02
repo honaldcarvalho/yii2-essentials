@@ -24,7 +24,7 @@ use Yii;
 class Role extends ModelCommon
 {
 
-
+    public $verGroup = true;
     /**
      * {@inheritdoc}
      */

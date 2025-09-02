@@ -18,7 +18,7 @@ use Yii;
  */
 class RoleTemplate extends ModelCommon
 {
-
+    public $verGroup = true;
     /**
      * ENUM field values
      */

@@ -16,6 +16,8 @@ use Yii;
  */
 class UserGroup extends ModelCommon
 {
+
+    public $verGroup = true;
     /**
      * {@inheritdoc}
      */

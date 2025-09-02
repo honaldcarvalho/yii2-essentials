@@ -29,6 +29,7 @@ use Yii;
  */
 class Page extends ModelCommon
 {
+    public $verGroup = true;
     /**
      * {@inheritdoc}
      */
