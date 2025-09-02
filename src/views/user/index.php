@@ -19,11 +19,10 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= Html::a(Yii::t('app', 'Create User'), ['create'], ['class' => 'btn btn-success']) ?>
     </p>
     <?php Pjax::begin(); ?>
-    <?php // echo $thcroacworks\essentials\['model' => $searchModel]); ?>
+    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); 
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
         'columns' => [
             'id',
             'group.name:text:'.Yii::t('app', 'Group'),
