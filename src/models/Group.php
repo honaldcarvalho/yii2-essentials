@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 use yii\db\Query;
 /**
