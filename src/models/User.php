@@ -84,7 +84,7 @@ class User extends Account
     {
         return [
             'id' => Yii::t('app', 'ID'),
-            'group_id' => Yii::t('app', 'Group ID'),
+            'group_id' => Yii::t('app', 'Group'),
             'username' => Yii::t('app', 'Username'),
             'email' => Yii::t('app', 'Email'),
             'password' => Yii::t('app', 'Password'),
@@ -104,7 +104,7 @@ class User extends Account
     public function getNotifications(){ return $this->hasMany(Notification::class, ['user_id' => 'id']); }
     public function getRoles()     { return $this->hasMany(Role::class, ['user_id' => 'id']); }
     public function getProfile()   { return $this->hasOne(UserProfile::class, ['user_id' => 'id']); }
-    public function getGroup()   { return $this->hasOne(Group::class, ['group_id' => 'id']); }
+    public function getGroup()   { return $this->hasOne(Group::class, ['id'=>'group_id']); }
     public function getUsersGroups(){ return $this->hasMany(UserGroup::class, ['user_id' => 'id']); }
 
     public function getGroups()
