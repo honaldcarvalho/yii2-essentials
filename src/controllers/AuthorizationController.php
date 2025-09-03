@@ -64,22 +64,59 @@ class AuthorizationController extends CommonController
      * Agora ele só devolve o último grupo como antes (não quebramos nada),
      * mas internamente passamos a usar getAllUserGroupIds() para autorização.
      */
-    public static function userGroup()
+    public static function userGroup(): ?int
     {
-        $users_groups = [];
-
+        // 1) Se NÃO há Authorization header, e usuário NÃO é guest,
+        //    tentamos recuperar o grupo da sessão (pode ser objeto, array ou escalar)
         $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
-        if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
-            if (!self::isGuest())
-                return Yii::$app->session->get('group')->id;
+        if (!$authHeader || !preg_match('/^Bearer\s+(.+?)$/', $authHeader)) {
+            if (!self::isGuest()) {
+                $g = Yii::$app->session->get('group');
+
+                // objeto com ->id
+                if (is_object($g) && isset($g->id)) {
+                    return (int)$g->id;
+                }
+                // array com ['id' => ...]
+                if (is_array($g) && isset($g['id'])) {
+                    return (int)$g['id'];
+                }
+                // escalar (já veio só o id)
+                if (is_scalar($g) && $g !== null && $g !== '') {
+                    return (int)$g;
+                }
+
+                // Se o usuário está logado mas a sessão não tem group,
+                // tente usar o primeiro grupo do usuário (se existir).
+                $user = self::getUserByToken();
+                if ($user) {
+                    $ids = $user->getUserGroupsId();
+                    if (is_array($ids) && !empty($ids)) {
+                        return (int)reset($ids);
+                    }
+                }
+
+                // Fallback: grupo público/padrão (ajuste se o seu padrão não for 1)
+                return 1;
+            }
+
+            // Guest sem header -> sem grupo
+            return null;
         }
 
+        // 2) Há Authorization: derive do token
         $user = self::getUserByToken();
-        if ($user)
-            $users_groups = $user->getUserGroupsId();
+        if ($user) {
+            $ids = $user->getUserGroupsId();
+            if (is_array($ids) && !empty($ids)) {
+                return (int)reset($ids); // primeiro grupo do usuário
+            }
+        }
 
-        return end($users_groups);
+        // 3) Último fallback
+        return null; // ou , conforme sua regra
     }
+
 
     public static function getUserGroups()
     {
