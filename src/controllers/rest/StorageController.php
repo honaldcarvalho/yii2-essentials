@@ -27,6 +27,9 @@ class StorageController extends ControllerRest
         string $message,
         array $context = []
     ): array {
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = $bt[1] ?? [];
+
         $payload = [
             'code'    => $code,
             'success' => false,
@@ -34,6 +37,8 @@ class StorageController extends ControllerRest
                 'type'    => $type,
                 'message' => Yii::t('app', $message),
                 'context' => $context,
+                'file'    => $caller['file'] ?? null,
+                'line'    => $caller['line'] ?? null,
             ],
         ];
 
