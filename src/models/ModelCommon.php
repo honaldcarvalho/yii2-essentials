@@ -86,7 +86,7 @@ class ModelCommon extends \yii\db\ActiveRecord
 
             if ($user) {
 
-                if (!\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+                if (!\croacworks\essentials\controllers\AuthorizationController::isMaster()) {
 
                     // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
                     $groupIds = Group::familyIdsFromUser($user);
@@ -149,7 +149,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         if ($insert) {
             $user = AuthorizationController::User();
 
-            if (AuthorizationController::isAdmin()) {
+            if (AuthorizationController::isMaster()) {
                 if (!empty($this->group_id)) {
                     return true;
                 } else if (($admin_group = Parameter::findOne(['name' => 'admin-group'])?->value) !== null && $this->hasAttribute('group_id')) {
@@ -289,7 +289,7 @@ class ModelCommon extends \yii\db\ActiveRecord
         // Filtro por família de grupos (quando verGroup = true e usuário não é admin)
         $user = \croacworks\essentials\controllers\AuthorizationController::User();
         if ($this->verGroup && $user) {
-            if (!\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+            if (!\croacworks\essentials\controllers\AuthorizationController::isMaster()) {
                 $group_ids = \croacworks\essentials\models\Group::familyIdsFromUser($user);
                 $group_ids[] = 1; // mantém visibilidade do grupo 1 (público), se for sua regra
                 $group_ids = array_values(array_unique(array_map('intval', $group_ids)));

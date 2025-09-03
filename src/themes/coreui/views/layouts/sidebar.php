@@ -18,7 +18,7 @@ $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) :
 function allowedByVisible(?string $controllerFQCN, ?string $visibleCsv, ?string $fallbackActionCsv = null): bool
 {
     if (AuthorizationController::isGuest()) return false;
-    if (AuthorizationController::isAdmin()) return true;
+    if (AuthorizationController::isMaster()) return true;
 
     $controllerFQCN = trim((string)$controllerFQCN);
     if ($controllerFQCN === '') return false;
@@ -59,7 +59,7 @@ function getNodes($parentId = null): array
 
     foreach ($items as $item) {
         if (!$item->show) continue;
-        if ($item->only_admin && !AuthorizationController::isAdmin()) continue;
+        if ($item->only_admin && !AuthorizationController::isMaster()) continue;
 
         $isGroup  = ($item->url === '#');
         $children = $isGroup ? getNodes($item->id) : [];

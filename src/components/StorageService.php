@@ -151,7 +151,7 @@ class StorageService extends Component
             if ($opts->saveModel) {
                 $tx = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);
                 $group_id = $this->resolveGroupId((int)($opts->groupId ?? 1));
-                if (!AuthorizationController::isAdmin()) {
+                if (!AuthorizationController::isMaster()) {
                     $group_id = AuthorizationController::userGroup();
                 }
 
@@ -351,7 +351,7 @@ class StorageService extends Component
         try {
             if (
                 class_exists('\croacworks\essentials\controllers\AuthorizationController')
-                && !\croacworks\essentials\controllers\AuthorizationController::isAdmin()
+                && !\croacworks\essentials\controllers\AuthorizationController::isMaster()
             ) {
                 return (int)\croacworks\essentials\controllers\AuthorizationController::userGroup();
             }

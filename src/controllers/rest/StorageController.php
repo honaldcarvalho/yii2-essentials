@@ -476,7 +476,7 @@ class StorageController extends ControllerRest
             if ($save) {
                 // group_id real (se não admin)
                 $file_uploaded['group_id'] = $group_id;
-                if (!AuthorizationController::isAdmin()) {
+                if (!AuthorizationController::isMaster()) {
                     $file_uploaded['group_id'] = AuthorizationController::userGroup();
                 }
 
@@ -690,7 +690,7 @@ class StorageController extends ControllerRest
             $success = false;
             $users_groups =  AuthorizationController::getUserGroups();
 
-            if (!AuthorizationController::isAdmin()) {
+            if (!AuthorizationController::isMaster()) {
                 $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
             } else {
                 $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups], ['in', 'group_id', [null, 1]]])->one();

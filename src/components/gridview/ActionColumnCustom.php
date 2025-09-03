@@ -300,7 +300,7 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
                 }
 
                 // ---- AUTORIZAÇÃO (AuthorizationController + FQCN) ----
-                if (!Authz::isAdmin()) {
+                if (!Authz::isMaster()) {
                     $can = Authz::verAuthorization($this->controllerFQCN, $name, $this->verGroup ? $model : null);
                     return $can ? $link : '';
                 }

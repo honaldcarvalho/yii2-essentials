@@ -514,7 +514,7 @@ class StorageController extends Controller
         $groupId = $requestedGroupId;
         try {
             if (class_exists('\croacworks\essentials\controllers\AuthorizationController')
-                && !\croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+                && !\croacworks\essentials\controllers\AuthorizationController::isMaster()) {
                 $groupId = \croacworks\essentials\controllers\AuthorizationController::userGroup();
             }
         } catch (\Throwable) {}

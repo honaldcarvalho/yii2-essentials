@@ -116,7 +116,7 @@ if(!empty($params->file_id) && $params->file != null){
                                 $node['active'] = ($controller_id == "{$item['active']}") || ($controller_id."/".Yii::$app->controller->action->id  == "{$item['active']}");
                             }
 
-                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isAdmin()) {
+                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isMaster()) {
                                 $nodes[] = $node;
                             }
                                     
@@ -130,7 +130,7 @@ if(!empty($params->file_id) && $params->file != null){
                                 $isVisible = false;
                             }
 
-                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isAdmin()) {
+                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isMaster()) {
                                 $nodes[] = [
                                     'label' => Yii::t('app', $item['label']),
                                     'icon'=> "{$item['icon']}",

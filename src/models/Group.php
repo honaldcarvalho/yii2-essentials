@@ -290,7 +290,7 @@ class Group extends ModelCommon
             return $query->where('1=0'); // guest: nada
         }
 
-        if (AuthorizationController::isAdmin()) {
+        if (AuthorizationController::isMaster()) {
             return $query; // admin: vê tudo
         }
 

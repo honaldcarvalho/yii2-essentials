@@ -48,7 +48,7 @@ function getNodes($controller_id, $id = null)
             } else {
 
                 if (count($visible_parts) > 1) {
-                    $isVisible =  AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
+                    $isVisible =  AuthorizationController::isMaster() || AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
                 } else if (count($visible_parts) === 1) {
                     // verifica se algum filho é visível; se sim, mostra o grupo
                     $isVisible = false;
@@ -78,7 +78,7 @@ function getNodes($controller_id, $id = null)
                     ($controller_id . "/" . Yii::$app->controller->action->id == "{$item['active']}");
             }
 
-            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isAdmin()) {
+            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isMaster()) {
                 $nodes[] = $node;
             }
         } else {
@@ -86,12 +86,12 @@ function getNodes($controller_id, $id = null)
             $isVisible = true;
 
             if (count($visible_parts) > 1) {
-                $isVisible =  AuthorizationController::isAdmin() || AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
+                $isVisible =  AuthorizationController::isMaster() || AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
             } else if (empty($visible_parts)) {
                 $isVisible = false;
             }
 
-            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isAdmin()) {
+            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isMaster()) {
                 $nodes[] = [
                     'label'     => Yii::t('app', $item['label']),
                     'icon'      => "{$item['icon']}",

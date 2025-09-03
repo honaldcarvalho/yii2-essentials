@@ -73,7 +73,7 @@ class DefaultButtons extends Widget
             if (
                 $this->model->group_id !== null &&
                 !in_array((int)$this->model->group_id, array_map('intval', $userGroups), true) &&
-                !(AuthorizationController::isAdmin())
+                !(AuthorizationController::isMaster())
             ) {
                 $renderForRecord = false;
             }
@@ -85,7 +85,7 @@ class DefaultButtons extends Widget
         if (
             in_array('index', $this->show, true) &&
             $renderForRecord &&
-            (AuthorizationController::isAdmin() ||
+            (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'index', null))
         ) {
             $this->buttons .= Html::a(
@@ -99,7 +99,7 @@ class DefaultButtons extends Widget
         if (
             in_array('create', $this->show, true) &&
             $renderForRecord &&
-            (AuthorizationController::isAdmin() ||
+            (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'create', null))
         ) {
             $this->buttons .= Html::a(
@@ -113,7 +113,7 @@ class DefaultButtons extends Widget
         if (
             in_array('update', $this->show, true) &&
             $renderForRecord && $this->model &&
-            (AuthorizationController::isAdmin() ||
+            (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'update', $this->model))
         ) {
             $pk = $this->model->getPrimaryKey(true); // array PK (composta ou simples)
@@ -129,7 +129,7 @@ class DefaultButtons extends Widget
         if (
             in_array('delete', $this->show, true) &&
             $renderForRecord && $this->model &&
-            (AuthorizationController::isAdmin() ||
+            (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'delete', $this->model))
         ) {
             $pk = $this->model->getPrimaryKey(true);
@@ -151,7 +151,7 @@ class DefaultButtons extends Widget
         if (
             in_array('clone', $this->show, true) &&
             $renderForRecord && $this->model &&
-            (AuthorizationController::isAdmin() ||
+            (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'clone', $this->model))
         ) {
             $pk = $this->model->getPrimaryKey(true);
@@ -181,7 +181,7 @@ class DefaultButtons extends Widget
 
             if (!$extraAction) continue;
 
-            if (AuthorizationController::isAdmin() ||
+            if (AuthorizationController::isMaster() ||
                 AuthorizationController::verAuthorization($extraController, $extraAction, $this->model)) {
                 $this->buttons .= Html::a(
                     $extraIcon . '<span class="btn-text">' . Yii::t('app', $extraTextKey) . '</span>',

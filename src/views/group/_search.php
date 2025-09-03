@@ -9,7 +9,7 @@ use yii\helpers\ArrayHelper;
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\GroupSearch */
 /* @var $form yii\widgets\ActiveForm */
-$isMaster = AuthorizationController::isAdmin();
+$isMaster = AuthorizationController::isMaster();
 
 // Usuário atual
 $user = AuthorizationController::User();
@@ -18,7 +18,7 @@ $user = AuthorizationController::User();
 $familyIds = $user ? Group::familyIdsFromUser($user) : [];
 
 // (Opcional) bypass admin: vê tudo
-if (AuthorizationController::isAdmin()) {
+if (AuthorizationController::isMaster()) {
     $familyIds = []; // lista vazia -> sem filtro
 }
 
@@ -39,7 +39,7 @@ $familyIds = array_values(array_unique(array_map('intval', $familyIds)));
 $query = Group::find()->orderBy(['name' => SORT_ASC])->asArray();
 
 // Aplica filtro somente se tiver familyIds e NÃO for admin
-if (!AuthorizationController::isAdmin() && !empty($familyIds)) {
+if (!AuthorizationController::isMaster() && !empty($familyIds)) {
     $query->where(['id' => $familyIds]);
 }
 

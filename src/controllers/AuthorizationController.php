@@ -127,7 +127,7 @@ class AuthorizationController extends CommonController
         return $ids ?: [$gid];
     }
 
-    public static function isAdmin(): bool
+    public static function isMaster(): bool
     {
         static $memo = null;
         if ($memo !== null) {
@@ -170,6 +170,56 @@ class AuthorizationController extends CommonController
         $exists = (new \yii\db\Query())
             ->from("$groupsTable g")
             ->where(['g.level' => 'master'])
+            ->andWhere($orCondition)
+            ->limit(1)
+            ->exists($db);
+
+        return $memo = (bool)$exists;
+    }
+
+    public static function isAdmin(): bool
+    {
+        static $memo = null;
+        if ($memo !== null) {
+            return $memo;
+        }
+
+        $userId = Yii::$app->user->id;
+        if (!$userId) {
+            return $memo = false;
+        }
+
+        $db = Yii::$app->db;
+
+        // Tabelas (sem disparar AR::find())
+        $groupsTable = \croacworks\essentials\models\Group::tableName();
+        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+            ? \croacworks\essentials\models\UsersGroup::tableName()
+            : '{{%users_groups}}'; // fallback
+
+        // Pega o group_id direto do identity (não faz query extra)
+        $directGroupId = null;
+        if (($identity = Yii::$app->user->identity) && property_exists($identity, 'group_id')) {
+            $directGroupId = $identity->group_id ?: null;
+        }
+
+        // Subquery: todos os grupos ligados via users_groups
+        $subUserGroups = (new \yii\db\Query())
+            ->select('ug.group_id')
+            ->from("$ugTable ug")
+            ->where(['ug.user_id' => $userId]);
+
+        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN users_groups)
+        $orCondition = ['or'];
+        if ($directGroupId) {
+            $orCondition[] = ['g.id' => (int)$directGroupId];
+        }
+        $orCondition[] = ['in', 'g.id', $subUserGroups];
+
+        // Consulta única: existe algum grupo 'master' que atenda uma das condições acima?
+        $exists = (new \yii\db\Query())
+            ->from("$groupsTable g")
+            ->where(['g.level' => 'admin'])
             ->andWhere($orCondition)
             ->limit(1)
             ->exists($db);
@@ -223,7 +273,7 @@ class AuthorizationController extends CommonController
                     'allow' => true,
                     'roles' => ['@'],
                     'matchCallback' => function () {
-                        if (self::isAdmin()) return true;
+                        if (self::isMaster()) return true;
 
                         // Licença
                         if ($this->verifyLicense() === null) {
@@ -253,7 +303,7 @@ class AuthorizationController extends CommonController
     public function pageAuth(): bool
     {
         if (self::isGuest()) return false;
-        if (self::isAdmin()) return true;
+        if (self::isMaster()) return true;
 
         $controllerFQCN = static::getClassPath();
         $action         = Yii::$app->controller->action->id;
@@ -372,7 +422,7 @@ class AuthorizationController extends CommonController
     public static function verAuthorization($controllerFQCN, $request_action, $model = null): bool
     {
         if (self::isGuest()) return false;
-        if (self::isAdmin()) return true;
+        if (self::isMaster()) return true;
 
         if (self::verifyLicense() === null) {
             Yii::$app->session->setFlash('warning', Yii::t('app', 'License expired!'));
@@ -404,7 +454,7 @@ class AuthorizationController extends CommonController
     public static function verifyLicense()
     {
         // Admin passa sempre
-        if (self::isAdmin()) return true;
+        if (self::isMaster()) return true;
 
         $u = self::User();
         if (!$u || !$u->group_id) {
@@ -426,7 +476,7 @@ class AuthorizationController extends CommonController
     // (Opcional, se quiser ler como booleano em matchCallback)
     public static function verifyLicenseBool(): bool
     {
-        if (self::isAdmin()) return true;
+        if (self::isMaster()) return true;
         return self::verifyLicense() !== null;
     }
 
@@ -481,7 +531,7 @@ class AuthorizationController extends CommonController
         if (
             property_exists($modelObj, 'verGroup') &&
             $modelObj->verGroup &&
-            !self::isAdmin()
+            !self::isMaster()
         ) {
             $groups = self::getAllUserGroupIds();
 

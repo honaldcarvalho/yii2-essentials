@@ -80,7 +80,7 @@ class FileController extends AuthorizationController
                 foreach ($files_id as $file_id) {
                     try {
 
-                        if ($this::isAdmin()) {
+                        if ($this::isMaster()) {
                             $model = File::find()->where(['id' => $file_id])->one();
                         } else {
                             $model = $model = File::find()->where(['id' => $file_id])->andWhere(['or', ['in', 'group_id', $this::getUserGroups()]])->one();
@@ -108,7 +108,7 @@ class FileController extends AuthorizationController
     public function actionRemoveFile($id)
     {
         $folder_id = Yii::$app->request->get('folder');
-        if ($this::isAdmin()) {
+        if ($this::isMaster()) {
             $model = File::find()->where(['id' => $id])->one();
         } else {
             $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $this::getUserGroups()]])->one();
@@ -205,7 +205,7 @@ class FileController extends AuthorizationController
     {
         $users_groups = AuthorizationController::getUserGroups();
 
-        if (!AuthorizationController::isAdmin()) {
+        if (!AuthorizationController::isMaster()) {
             return File::find()->where(['id' => $id])
                 ->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
         }
