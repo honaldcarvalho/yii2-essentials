@@ -18,6 +18,124 @@ use croacworks\essentials\controllers\AuthorizationController;
 
 class StorageController extends ControllerRest
 {
+    /**
+     * Standard error payload builder.
+     */
+    private static function errorResponse(
+        int $code,
+        string $type,
+        string $message,
+        array $context = []
+    ): array {
+        $payload = [
+            'code'    => $code,
+            'success' => false,
+            'error'   => [
+                'type'    => $type,
+                'message' => Yii::t('app', $message),
+                'context' => $context,
+            ],
+        ];
+
+        if (defined('YII_ENV_DEV') && YII_ENV_DEV) {
+            $payload['error']['env'] = 'dev';
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Map any \Throwable into a standard error payload.
+     */
+    private static function mapException(\Throwable $e, array $context = []): array
+    {
+        // DB
+        if ($e instanceof \yii\db\IntegrityException) {
+            return self::errorResponse(409, 'db.integrity', 'Database integrity violation.', [
+                'driverMessage' => $e->getMessage(),
+            ] + $context);
+        }
+        if ($e instanceof \yii\db\Exception) {
+            return self::errorResponse(500, 'db.exception', 'Database error.', [
+                'driverMessage' => $e->getMessage(),
+                'errorInfo'     => method_exists($e, 'errorInfo') ? $e->errorInfo : null,
+            ] + $context);
+        }
+
+        // Imagine
+        if ($e instanceof \Imagine\Exception\Exception) {
+            return self::errorResponse(422, 'image.process_failed', 'Failed to process image.', [
+                'imagine' => get_class($e),
+                'detail'  => $e->getMessage(),
+            ] + $context);
+        }
+
+        // FFMpeg
+        if (stripos(get_class($e), 'FFMpeg') !== false) {
+            return self::errorResponse(422, 'video.encode_failed', 'Failed to process video (FFMpeg).', [
+                'ffmpeg' => get_class($e),
+                'detail' => $e->getMessage(),
+            ] + $context);
+        }
+
+        // HTTP/Yii
+        if ($e instanceof \yii\web\BadRequestHttpException) {
+            return self::errorResponse(400, 'request.bad_request', $e->getMessage() ?: 'Bad Request.', $context);
+        }
+        if ($e instanceof \yii\web\NotFoundHttpException) {
+            return self::errorResponse(404, 'request.not_found', $e->getMessage() ?: 'Not Found.', $context);
+        }
+
+        // Generic
+        $resp = self::errorResponse(500, 'unhandled_exception', 'Unhandled error.', [
+            'exception' => get_class($e),
+            'detail'    => $e->getMessage(),
+        ] + $context);
+
+        if (defined('YII_ENV_DEV') && YII_ENV_DEV) {
+            $resp['error']['trace'] = $e->getTraceAsString();
+        }
+
+        return $resp;
+    }
+
+    /**
+     * Translate PHP upload error code.
+     */
+    private static function phpUploadErrorName(int $code): string
+    {
+        $map = [
+            UPLOAD_ERR_INI_SIZE   => 'UPLOAD_ERR_INI_SIZE (File exceeds upload_max_filesize).',
+            UPLOAD_ERR_FORM_SIZE  => 'UPLOAD_ERR_FORM_SIZE (File exceeds the MAX_FILE_SIZE form limit).',
+            UPLOAD_ERR_PARTIAL    => 'UPLOAD_ERR_PARTIAL (The uploaded file was only partially uploaded).',
+            UPLOAD_ERR_NO_FILE    => 'UPLOAD_ERR_NO_FILE (No file was uploaded).',
+            UPLOAD_ERR_NO_TMP_DIR => 'UPLOAD_ERR_NO_TMP_DIR (Missing a temporary folder).',
+            UPLOAD_ERR_CANT_WRITE => 'UPLOAD_ERR_CANT_WRITE (Failed to write file to disk).',
+            UPLOAD_ERR_EXTENSION  => 'UPLOAD_ERR_EXTENSION (A PHP extension stopped the file upload).',
+            0                     => 'OK',
+        ];
+        return $map[$code] ?? "UNKNOWN ({$code})";
+    }
+
+    /**
+     * Diagnose filesystem write failure for better error messages.
+     */
+    private static function diagnoseWriteFailure(string $targetPath, ?\yii\web\UploadedFile $file = null): array
+    {
+        $dir = dirname($targetPath);
+        return [
+            'target'          => $targetPath,
+            'dir'             => $dir,
+            'dir_exists'      => is_dir($dir),
+            'dir_writable'    => is_dir($dir) ? is_writable($dir) : false,
+            'file_error'      => $file ? $file->error : null,
+            'file_error_name' => $file ? self::phpUploadErrorName((int)$file->error) : null,
+            'free_space'      => @disk_free_space($dir) ?: null,
+            'uid'             => function_exists('posix_geteuid') ? @posix_geteuid() : null,
+            'user'            => function_exists('posix_getpwuid') && function_exists('posix_geteuid')
+                ? (@posix_getpwuid(@posix_geteuid())['name'] ?? null) : null,
+        ];
+    }
 
     public function actionGetFile()
     {
@@ -106,18 +224,17 @@ class StorageController extends ControllerRest
 
     /**
      * Compress an image if it exceeds the maximum file size.
-     * 
+     *
      * @param string $filePath Path to the uploaded image file.
      * @param int $maxFileSize Maximum file size in bytes.
      * @return string|false Path to the compressed image, or false on failure.
      */
-
     static function compressImage($filePath, $maxFileSize, $quality = 90)
     {
         try {
             // Get the current size of the image
             $fileSize = filesize($filePath);
-            if ($fileSize <= 1 * 1024 * 1024) {
+            if ($fileSize <= $maxFileSize) {
                 return Image::getImagine()->open($filePath); // Return the original file path
             }
             do {
@@ -143,41 +260,43 @@ class StorageController extends ControllerRest
 
             return $image;
         } catch (\Throwable $th) {
-            unlink($filePath);
-            throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
+            @unlink($filePath);
+            throw new \yii\web\BadRequestHttpException(
+                Yii::t('app', 'Failed to compress image: ') . $th->getMessage(),
+                0,
+                $th
+            );
         }
     }
 
     static function createThumbnail($srcImagePath, $destImagePath, $thumbWidth = 160, $thumbHeight = 99)
     {
-        // Abre a imagem original
+        // Open source image
         $image = Image::getImagine()->open($srcImagePath);
 
-        // Obtém as dimensões da imagem original
+        // Source dimensions
         $size = $image->getSize();
         $width = $size->getWidth();
         $height = $size->getHeight();
 
-        // Calcula a proporção de aspecto da miniatura e da imagem original
+        // Aspect ratios
         $aspectRatio = $thumbWidth / $thumbHeight;
         $imageRatio = $width / $height;
 
-        // Define o novo tamanho para manter o aspect ratio
+        // Compute crop size preserving aspect ratio
         if ($imageRatio > $aspectRatio) {
-            // Se a imagem é mais larga que o aspecto da miniatura
             $newHeight = $height;
             $newWidth = (int)($height * $aspectRatio);
         } else {
-            // Se a imagem é mais alta que o aspecto da miniatura
             $newWidth = $width;
             $newHeight = (int)($width / $aspectRatio);
         }
 
-        // Calcula o ponto de corte para centralizar a imagem
+        // Center crop
         $src_x = ($width / 2) - ($newWidth / 2);
         $src_y = ($height / 2) - ($newHeight / 2);
 
-        // Corta a imagem a partir do centro e redimensiona
+        // Crop + resize
         return Image::crop($srcImagePath, $newWidth, $newHeight, [$src_x, $src_y])
             ->resize(new Box($thumbWidth, $thumbHeight))
             ->save($destImagePath, ['quality' => 100]);
@@ -242,7 +361,7 @@ class StorageController extends ControllerRest
             $model         = new File();
 
             if (($temp_file = $file) === null) {
-                $response = ['code' => 400, 'success' => false, 'data' => ['No file received']];
+                $response = self::errorResponse(400, 'upload.no_file', 'No file received.', []);
                 return $response;
             }
 
@@ -268,7 +387,7 @@ class StorageController extends ControllerRest
                 [$type, $format] = explode('/', $temp_file->type);
             }
 
-            // ======== IMAGEM ========
+            // ======== IMAGE ========
             if ($type === 'image') {
                 if ($folder_id === 1) {
                     $folder_id = 2;
@@ -294,53 +413,68 @@ class StorageController extends ControllerRest
                     FileHelper::createDirectory($pathThumbRoot);
                 }
 
-                // salva original
+                // save original
                 if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                    throw new \RuntimeException('Falha ao salvar a imagem original.');
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save original image.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
                 }
                 $createdPaths['file'] = $filePathRoot;
 
-                // gera thumb
-                if ($thumb_aspect == 1) {
-                    $image_size = getimagesize($filePathRoot);
-                    if (!$image_size) {
-                        throw new \RuntimeException('getimagesize falhou.');
-                    }
+                // generate thumb
+                try {
+                    if ($thumb_aspect == 1) {
+                        $image_size = getimagesize($filePathRoot);
+                        if (!$image_size) {
+                            return self::errorResponse(
+                                422,
+                                'image.get_size_failed',
+                                'Failed to read image size.',
+                                ['input' => $filePathRoot]
+                            );
+                        }
 
-                    $major = $image_size[0]; // width
-                    $min   = $image_size[1]; // height
-                    $mov   = ($major - $min) / 2;
-                    $point = [$mov, 0];
-
-                    if ($major < $min) {
-                        $major = $image_size[1];
-                        $min   = $image_size[0];
+                        $major = $image_size[0]; // width
+                        $min   = $image_size[1]; // height
                         $mov   = ($major - $min) / 2;
-                        $point = [0, $mov];
-                    }
+                        $point = [$mov, 0];
 
-                    Image::crop($filePathRoot, $min, $min, $point)
-                        ->save($filePathThumbRoot, ['quality' => 100]);
-                    $createdPaths['thumb'] = $filePathThumbRoot;
+                        if ($major < $min) {
+                            $major = $image_size[1];
+                            $min   = $image_size[0];
+                            $mov   = ($major - $min) / 2;
+                            $point = [0, $mov];
+                        }
 
-                    if ($min > 300) {
-                        Image::thumbnail($filePathThumbRoot, 300, 300)
+                        Image::crop($filePathRoot, $min, $min, $point)
                             ->save($filePathThumbRoot, ['quality' => 100]);
+                        $createdPaths['thumb'] = $filePathThumbRoot;
+
+                        if ($min > 300) {
+                            Image::thumbnail($filePathThumbRoot, 300, 300)
+                                ->save($filePathThumbRoot, ['quality' => 100]);
+                        }
+                    } else {
+                        // format WxH in $options['thumb_aspect'] (e.g., "300/200")
+                        [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
+                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
+                        $createdPaths['thumb'] = $filePathThumbRoot;
                     }
-                } else {
-                    // formato WxH em $options['thumb_aspect'] (ex: "300/200")
-                    [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
-                    self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
-                    $createdPaths['thumb'] = $filePathThumbRoot;
+                } catch (\Throwable $e) {
+                    $safeUnlink($createdPaths['thumb']);
+                    return self::mapException($e, ['stage' => 'image.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
                 }
 
-                // ======== VÍDEO ========
+                // ======== VIDEO ========
             } elseif ($type === 'video') {
                 if ($folder_id === 1) {
                     $folder_id = 3;
                 }
 
-                // sempre mp4 como saída final
+                // always mp4 as final output
                 if (!empty($file_name)) {
                     $name = "{$file_name}.mp4";
                 } else {
@@ -361,25 +495,42 @@ class StorageController extends ControllerRest
 
                 if ($convert_video && strtolower($ext) !== 'mp4') {
                     if (!$temp_file->saveAs($fileTemp, ['quality' => $quality])) {
-                        throw new \RuntimeException('Falha ao salvar o arquivo de vídeo temporário.');
+                        return self::errorResponse(
+                            500,
+                            'filesystem.write_failed',
+                            'Failed to save temporary video file.',
+                            self::diagnoseWriteFailure($fileTemp, $temp_file)
+                        );
                     }
                     $createdPaths['temp'] = $fileTemp;
 
-                    $ffmpeg = FFMpeg::create();
-                    $video  = $ffmpeg->open($fileTemp);
-                    $video->save(new X264(), $filePathRoot);
+                    try {
+                        $ffmpeg = FFMpeg::create();
+                        $video  = $ffmpeg->open($fileTemp);
+                        $video->save(new X264(), $filePathRoot);
+                    } catch (\Throwable $e) {
+                        $safeUnlink($createdPaths['temp']);
+                        $safeUnlink($filePathRoot);
+                        $createdPaths['temp'] = null;
+                        return self::mapException($e, ['stage' => 'video.encode', 'input' => $fileTemp, 'output' => $filePathRoot]);
+                    }
 
                     $safeUnlink($createdPaths['temp']);
-                    $createdPaths['temp'] = null; // já removido
+                    $createdPaths['temp'] = null; // removed
                     $ext = 'mp4';
                 } else {
                     if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                        throw new \RuntimeException('Falha ao salvar o vídeo.');
+                        return self::errorResponse(
+                            500,
+                            'filesystem.write_failed',
+                            'Failed to save video.',
+                            self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                        );
                     }
                 }
                 $createdPaths['file'] = $filePathRoot;
 
-                // thumb do vídeo
+                // video thumbnail
                 $sec = 2;
                 $video_thumb_name  = str_replace('.', '_', $name) . '.jpg';
                 $pathThumb         = "{$files_folder}/videos/thumbs";
@@ -392,46 +543,61 @@ class StorageController extends ControllerRest
                     FileHelper::createDirectory($pathThumbRoot);
                 }
 
-                $ffmpeg = FFMpeg::create();
-                $video  = $ffmpeg->open($filePathRoot);
-                $frame  = $video->frame(TimeCode::fromSeconds($sec));
-                $frame->save($filePathThumbRoot);
-                $createdPaths['thumb'] = $filePathThumbRoot;
+                try {
+                    $ffmpeg = FFMpeg::create();
+                    $video  = $ffmpeg->open($filePathRoot);
+                    $frame  = $video->frame(TimeCode::fromSeconds($sec));
+                    $frame->save($filePathThumbRoot);
+                    $createdPaths['thumb'] = $filePathThumbRoot;
 
-                // crop/resize opcional da thumb
-                if ($thumb_aspect == 1) {
-                    $image_size = getimagesize($filePathThumbRoot);
-                    if (!$image_size) {
-                        throw new \RuntimeException('getimagesize (thumb vídeo) falhou.');
-                    }
+                    // optional crop/resize
+                    if ($thumb_aspect == 1) {
+                        $image_size = getimagesize($filePathThumbRoot);
+                        if (!$image_size) {
+                            return self::errorResponse(
+                                422,
+                                'image.get_size_failed',
+                                'Failed to read video thumbnail size.',
+                                ['input' => $filePathThumbRoot]
+                            );
+                        }
 
-                    $major = $image_size[0];
-                    $min   = $image_size[1];
-                    $mov   = ($major - $min) / 2;
-                    $point = [$mov, 0];
-
-                    if ($major < $min) {
-                        $major = $image_size[1];
-                        $min   = $image_size[0];
+                        $major = $image_size[0];
+                        $min   = $image_size[1];
                         $mov   = ($major - $min) / 2;
-                        $point = [0, $mov];
-                    }
+                        $point = [$mov, 0];
 
-                    Image::crop($filePathThumbRoot, $min, $min, $point)
-                        ->save($filePathThumbRoot, ['quality' => 100]);
+                        if ($major < $min) {
+                            $major = $image_size[1];
+                            $min   = $image_size[0];
+                            $mov   = ($major - $min) / 2;
+                            $point = [0, $mov];
+                        }
 
-                    if ($min > 300) {
-                        Image::thumbnail($filePathThumbRoot, 300, 300)
+                        Image::crop($filePathThumbRoot, $min, $min, $point)
                             ->save($filePathThumbRoot, ['quality' => 100]);
+
+                        if ($min > 300) {
+                            Image::thumbnail($filePathThumbRoot, 300, 300)
+                                ->save($filePathThumbRoot, ['quality' => 100]);
+                        }
+                    } else {
+                        [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
+                        self::createThumbnail($filePathThumbRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
                     }
-                } else {
-                    [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
-                    self::createThumbnail($filePathThumbRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
+                } catch (\Throwable $e) {
+                    $safeUnlink($createdPaths['thumb']);
+                    return self::mapException($e, ['stage' => 'video.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
                 }
 
-                // duração
-                $ffprobe  = \FFMpeg\FFProbe::create();
-                $duration = (int)$ffprobe->format($filePathRoot)->get('duration');
+                // duration
+                try {
+                    $ffprobe  = \FFMpeg\FFProbe::create();
+                    $duration = (int)$ffprobe->format($filePathRoot)->get('duration');
+                } catch (\Throwable $e) {
+                    // Non-fatal: duration unknown
+                    $duration = 0;
+                }
 
                 // ======== DOC ========
             } else {
@@ -452,7 +618,12 @@ class StorageController extends ControllerRest
                 }
 
                 if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                    throw new \RuntimeException('Falha ao salvar o documento.');
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save document.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
                 }
                 $createdPaths['file'] = $filePathRoot;
             }
@@ -474,7 +645,7 @@ class StorageController extends ControllerRest
             ];
 
             if ($save) {
-                // group_id real (se não admin)
+                // real group_id (if not admin)
                 $file_uploaded['group_id'] = $group_id;
                 if (!AuthorizationController::isMaster()) {
                     $file_uploaded['group_id'] = AuthorizationController::userGroup();
@@ -487,21 +658,28 @@ class StorageController extends ControllerRest
                 $model = Yii::createObject($file_uploaded);
 
                 if (!$model->save()) {
-                    // requisito: se der erro ao salvar no banco, apagar a imagem/arquivo enviado (e thumb)
+                    // requirement: if DB save fails, remove uploaded file(s)
                     $safeUnlink($createdPaths['file']);
                     $safeUnlink($createdPaths['thumb']);
 
-                    $response = ['code' => 200, 'success' => false, 'data' => $model->getErrors()];
-                    return $response;
+                    return self::errorResponse(
+                        422,
+                        'db.validation_failed',
+                        'Failed to save file in database.',
+                        [
+                            'firstErrors' => $model->getFirstErrors(),
+                            'allErrors'   => $model->getErrors(),
+                            'attributes'  => $model->getAttributes(null, ['file']),
+                        ]
+                    );
                 }
 
-                // attach opcional
+                // optional attach
                 if ($attact_model) {
                     $attact = new $attact_model->class_name([
                         $attact_model->fields[0] => $attact_model->id,
                         $attact_model->fields[1] => $model->id
                     ]);
-                    // se falhar o attach, não é crítico para o arquivo salvo; logamos
                     if (!$attact->save()) {
                         Yii::warning(['attach_error' => $attact->getErrors()], __METHOD__);
                     }
@@ -511,17 +689,17 @@ class StorageController extends ControllerRest
                 return $response;
             }
 
-            // caso não salve no banco, apenas retorna metadados do upload
+            // no DB save: return metadata only
             $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
             return $response;
         } catch (\Throwable $th) {
-            // em qualquer exceção: limpar arquivos criados
+            // cleanup on exception
             $safeUnlink($createdPaths['file']);
             $safeUnlink($createdPaths['thumb']);
             $safeUnlink($createdPaths['temp']);
 
-            Yii::error("Erro em uploadFile: {$th->getMessage()}\n{$th->getTraceAsString()}", __METHOD__);
-            return ['code' => 500, 'success' => false, 'data' => ["Unrecoverable error: " . $th->getMessage()]];
+            Yii::error("uploadFile error: {$th->getMessage()}\n{$th->getTraceAsString()}", __METHOD__);
+            return self::mapException($th, ['stage' => 'uploadFile.catch']);
         }
     }
 
@@ -534,9 +712,24 @@ class StorageController extends ControllerRest
                 throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
             }
 
+            // Diagnose PHP upload error (if any)
+            if ($temp_file->error !== UPLOAD_ERR_OK) {
+                $err = self::errorResponse(
+                    400,
+                    'upload.php_error',
+                    'PHP upload error.',
+                    [
+                        'php_error'      => $temp_file->error,
+                        'php_error_name' => self::phpUploadErrorName((int)$temp_file->error),
+                    ]
+                );
+                \Yii::$app->response->statusCode = 400;
+                return $err;
+            }
+
             $post = $this->request->post();
 
-            // opções do upload
+            // upload options
             $options = [];
             $options['file_name']     = $post['file_name']     ?? false;
             $options['description']   = $post['description']   ?? $temp_file->name;
@@ -548,30 +741,31 @@ class StorageController extends ControllerRest
             $options['thumb_aspect']  = $post['thumb_aspect']  ?? 1;
             $options['quality']       = $post['quality']       ?? 80;
 
-            // imagem: comprime temp
+            // image: compress temp if larger than 5MB (5 * 1024 * 1024)
             [$type, $format] = explode('/', $temp_file->type);
             if ($type === 'image') {
-                self::compressImage($temp_file->tempName, 5);
+                self::compressImage($temp_file->tempName, 5 * 1024 * 1024);
             }
 
-            // faz upload (pode retornar data como objeto File OU array)
+            // perform upload
             $result = self::uploadFile($temp_file, $options);
 
-            // Se não deu upload, devolve como está
+            // return if failed (already standardized)
             if (empty($result['success'])) {
+                \Yii::$app->response->statusCode = (int)($result['code'] ?? 500);
                 return $result;
             }
 
-            // --- LINK DIRETO AO MODELO (novo) ---
+            // --- direct link to model (new) ---
             $linkClass = $post['model_class'] ?? null;
             $linkId    = $post['model_id']    ?? null;       // PK
-            $linkField = $post['model_field'] ?? null;       // ex: 'file_id'
+            $linkField = $post['model_field'] ?? null;       // e.g., 'file_id'
             $deleteOld = (int)($post['delete_old'] ?? 1);
 
             $linkRequested = !empty($linkClass) && $linkId !== null && !empty($linkField);
 
             if ($linkRequested) {
-                // Extrai o ID do arquivo salvo (objeto ou array)
+                // Extract file id (object or array)
                 $fileData = $result['data'] ?? null;
                 $fileId   = 0;
                 if (is_object($fileData) && isset($fileData->id)) {
@@ -583,19 +777,21 @@ class StorageController extends ControllerRest
                 if ($fileId <= 0) {
                     $result['link'] = [
                         'linked' => false,
-                        'error'  => 'Upload ok mas não retornou ID do arquivo.'
+                        'error'  => Yii::t('app', 'Upload succeeded but file ID was not returned.'),
                     ];
                     return $result;
                 }
 
-                // tenta vincular
+                // attempt link
                 $result['link'] = self::linkFileToModel($fileId, $linkClass, (int)$linkId, $linkField, $deleteOld);
             }
 
             return $result;
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
-            return ['code' => 500, 'success' => false, 'data' => ['Exception' => $th->getMessage()]];
+            $err = self::mapException($th, ['stage' => 'actionSend.catch']);
+            \Yii::$app->response->statusCode = (int)($err['code'] ?? 500);
+            return $err;
         }
     }
 
@@ -607,25 +803,25 @@ class StorageController extends ControllerRest
     {
         try {
             if (!class_exists($class)) {
-                return ['linked' => false, 'error' => "Class not found: {$class}"];
+                return ['linked' => false, 'error' => Yii::t('app', "Class not found: {class}", ['class' => $class])];
             }
             if (!is_subclass_of($class, \yii\db\ActiveRecord::class)) {
-                return ['linked' => false, 'error' => "Class is not ActiveRecord: {$class}"];
+                return ['linked' => false, 'error' => Yii::t('app', "Class is not ActiveRecord: {class}", ['class' => $class])];
             }
 
             /** @var \yii\db\ActiveRecord $model */
             $model = $class::findOne($id);
             if (!$model) {
-                return ['linked' => false, 'error' => "Model id #{$id} not found for {$class}"];
+                return ['linked' => false, 'error' => Yii::t('app', "Model id #{id} not found for {class}", ['id' => $id, 'class' => $class])];
             }
             if (!$model->hasAttribute($field)) {
-                return ['linked' => false, 'error' => "Field '{$field}' not found in {$class}"];
+                return ['linked' => false, 'error' => Yii::t('app', "Field '{field}' not found in {class}", ['field' => $field, 'class' => $class])];
             }
 
             $table = method_exists($class, 'tableName') ? $class::tableName() : '(unknown)';
             $oldId = (int)$model->getAttribute($field);
 
-            // já está igual? então só confirma e sai
+            // already linked
             if ($oldId === $fileId) {
                 $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
                 return [
@@ -643,21 +839,21 @@ class StorageController extends ControllerRest
                 ];
             }
 
-            // ⚠️ forçar update direto na coluna (sem validação/eventos)
+            // force direct update (no validation/events)
             $updatedRows = 0;
             $tx = $model->getDb()->beginTransaction();
             try {
-                $updatedRows = $model->updateAttributes([$field => $fileId]); // retorna nº de linhas atualizadas
+                $updatedRows = $model->updateAttributes([$field => $fileId]); // returns updated rows
                 $tx->commit();
             } catch (\Throwable $e) {
                 $tx->rollBack();
-                return ['linked' => false, 'error' => 'updateAttributes failed: ' . $e->getMessage()];
+                return ['linked' => false, 'error' => Yii::t('app', 'updateAttributes failed: {msg}', ['msg' => $e->getMessage()])];
             }
 
-            // revalida no BD
+            // re-check in DB
             $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
 
-            // remover antigo se pedido
+            // remove old if requested
             $removed = false;
             if ($deleteOld && $oldId && $oldId !== $fileId) {
                 $rm = self::removeFile($oldId);
@@ -700,20 +896,20 @@ class StorageController extends ControllerRest
                 $id = $model->name;
                 $file_name = $model->name;
 
-                $message = "Could not remove model #{$id}";
-                $thumb = "Could not remove thumb file {$file_name}.";
-                $file = "Could not remove file {$file_name}.";
+                $message = Yii::t('app', "Could not remove model #{id}", ['id' => $id]);
+                $thumb = Yii::t('app', "Could not remove thumb file {file}.", ['file' => $file_name]);
+                $file = Yii::t('app', "Could not remove file {file}.", ['file' => $file_name]);
 
                 if ($model->delete() !== false) {
 
-                    $message = "Model #{$id} removed.";
+                    $message = Yii::t('app', "Model #{id} removed.", ['id' => $id]);
 
                     if (@unlink(Yii::getAlias('@webroot') . $model->path))
-                        $file = "File {$file_name} removed.";
+                        $file = Yii::t('app', "File {file} removed.", ['file' => $file_name]);
 
                     if ($model->pathThumb) {
                         if (@unlink(Yii::getAlias('@webroot') . $model->pathThumb))
-                            $thumb = "Thumb file {$file_name} removed.";
+                            $thumb = Yii::t('app', "Thumb file {file} removed.", ['file' => $file_name]);
                     }
                 } else {
                     return [

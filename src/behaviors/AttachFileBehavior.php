@@ -89,6 +89,90 @@ class AttachFileBehavior extends Behavior
         $this->log('rememberOld', ['oldId' => $this->oldId]);
     }
 
+    /**
+     * Traduz código de erro do PHP upload.
+     */
+    private function phpUploadErrorName(int $code): string
+    {
+        $map = [
+            UPLOAD_ERR_INI_SIZE   => 'UPLOAD_ERR_INI_SIZE (File exceeds upload_max_filesize).',
+            UPLOAD_ERR_FORM_SIZE  => 'UPLOAD_ERR_FORM_SIZE (File exceeds the MAX_FILE_SIZE form limit).',
+            UPLOAD_ERR_PARTIAL    => 'UPLOAD_ERR_PARTIAL (The uploaded file was only partially uploaded).',
+            UPLOAD_ERR_NO_FILE    => 'UPLOAD_ERR_NO_FILE (No file was uploaded).',
+            UPLOAD_ERR_NO_TMP_DIR => 'UPLOAD_ERR_NO_TMP_DIR (Missing a temporary folder).',
+            UPLOAD_ERR_CANT_WRITE => 'UPLOAD_ERR_CANT_WRITE (Failed to write file to disk).',
+            UPLOAD_ERR_EXTENSION  => 'UPLOAD_ERR_EXTENSION (A PHP extension stopped the file upload).',
+            0                     => 'OK',
+        ];
+        return $map[$code] ?? "UNKNOWN ({$code})";
+    }
+
+    /**
+     * Constrói uma mensagem amigável a partir da resposta padronizada do StorageController.
+     * Mantém mensagens em inglês e injeta contexto útil.
+     */
+    private function buildUploadErrorMessage(array $resp): string
+    {
+        // Formato esperado:
+        // ['code'=>int,'success'=>false,'error'=>['type'=>string,'message'=>string,'context'=>array]]
+        $type    = $resp['error']['type']    ?? 'error.unknown';
+        $message = $resp['error']['message'] ?? 'Upload failed.';
+        $ctx     = $resp['error']['context'] ?? [];
+
+        $parts = [];
+        $parts[] = Yii::t('app', '{message}', ['message' => $message]);
+
+        // Detalhes úteis por tipo
+        if ($type === 'filesystem.write_failed') {
+            $target       = $ctx['target']       ?? null;
+            $dir          = $ctx['dir']          ?? null;
+            $dirExists    = isset($ctx['dir_exists']) ? ($ctx['dir_exists'] ? 'yes' : 'no') : null;
+            $dirWritable  = isset($ctx['dir_writable']) ? ($ctx['dir_writable'] ? 'yes' : 'no') : null;
+            $freeSpace    = $ctx['free_space']   ?? null;
+            $phpErr       = $ctx['file_error_name'] ?? null;
+
+            if ($target)      $parts[] = Yii::t('app', 'Target: {p}', ['p' => $target]);
+            if ($dir)         $parts[] = Yii::t('app', 'Directory: {p}', ['p' => $dir]);
+            if ($dirExists)   $parts[] = Yii::t('app', 'Directory exists: {v}', ['v' => $dirExists]);
+            if ($dirWritable) $parts[] = Yii::t('app', 'Directory writable: {v}', ['v' => $dirWritable]);
+            if ($freeSpace)   $parts[] = Yii::t('app', 'Free space: {v} bytes', ['v' => (string)$freeSpace]);
+            if ($phpErr)      $parts[] = Yii::t('app', 'PHP upload status: {s}', ['s' => $phpErr]);
+        }
+
+        if ($type === 'db.validation_failed') {
+            // Mostrar primeiro erro de validação
+            $first = $ctx['firstErrors'] ?? [];
+            if (!empty($first)) {
+                foreach ($first as $field => $err) {
+                    // err pode ser string
+                    $parts[] = Yii::t('app', 'Validation: {field} - {error}', ['field' => $field, 'error' => (string)$err]);
+                    break; // apenas o primeiro
+                }
+            }
+        }
+
+        if ($type === 'upload.php_error') {
+            $phpName = $ctx['php_error_name'] ?? null;
+            if ($phpName) {
+                $parts[] = Yii::t('app', 'PHP upload error: {s}', ['s' => $phpName]);
+            }
+        }
+
+        if ($type === 'image.process_failed' || $type === 'video.encode_failed') {
+            $detail = $ctx['detail'] ?? null;
+            $stage  = $ctx['stage']  ?? null;
+            if ($stage)  $parts[] = Yii::t('app', 'Stage: {s}', ['s' => $stage]);
+            if ($detail) $parts[] = Yii::t('app', 'Detail: {d}', ['d' => $detail]);
+        }
+
+        // Fallback: se sobrou algum contexto útil
+        if (empty($ctx) === false && in_array($type, ['filesystem.write_failed','db.validation_failed','upload.php_error','image.process_failed','video.encode_failed']) === false) {
+            $parts[] = Yii::t('app', 'Context: {c}', ['c' => json_encode($ctx, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)]);
+        }
+
+        return implode(' | ', $parts);
+    }
+
     public function handleUploadOrKeep(ModelEvent $event): void
     {
         if ($this->alreadyUploaded) {
@@ -110,22 +194,51 @@ class AttachFileBehavior extends Behavior
         // 1) Upload síncrono
         $uploaded = UploadedFile::getInstance($owner, $attr);
         if ($uploaded instanceof UploadedFile) {
-            try {
-                $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => 1]);
-                if (!empty($resp['success'])) {
-                    $this->alreadyUploaded = true;
-                    $newId = (int)$resp['data']['id'];
-                    $owner->{$attr} = $newId;
-                    if ($this->deleteOldOnReplace && $this->oldId && $this->oldId != $newId) {
-                        $this->toDeleteId = $this->oldId;
-                    }
-                    return;
-                }
-                $owner->addError($attr, Yii::t('app', 'Falha ao enviar imagem.'));
+            // Antes de enviar, trate possíveis códigos de erro do PHP upload
+            if ($uploaded->error !== UPLOAD_ERR_OK) {
+                $msg = $this->phpUploadErrorName((int)$uploaded->error);
+                $owner->addError($attr, Yii::t('app', 'Upload failed: {msg}', ['msg' => $msg]));
                 $event->isValid = false;
                 return;
+            }
+
+            try {
+                $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => 1]);
+
+                if (!empty($resp['success'])) {
+                    $this->alreadyUploaded = true;
+                    $newId = 0;
+
+                    // uploadFile() pode retornar data como objeto (ActiveRecord) ou array
+                    if (is_object($resp['data']) && isset($resp['data']->id)) {
+                        $newId = (int)$resp['data']->id;
+                    } elseif (is_array($resp['data']) && isset($resp['data']['id'])) {
+                        $newId = (int)$resp['data']['id'];
+                    }
+
+                    if ($newId > 0) {
+                        $owner->{$attr} = $newId;
+                        if ($this->deleteOldOnReplace && $this->oldId && $this->oldId != $newId) {
+                            $this->toDeleteId = $this->oldId;
+                        }
+                        return;
+                    }
+
+                    // Upload disse sucesso, mas não retornou id
+                    $owner->addError($attr, Yii::t('app', 'Upload succeeded but file ID was not returned.'));
+                    $event->isValid = false;
+                    return;
+                }
+
+                // Falhou — use mensagem rica do StorageController
+                $owner->addError($attr, $this->buildUploadErrorMessage($resp));
+                $event->isValid = false;
+                return;
+
             } catch (\Throwable $e) {
-                $owner->addError($attr, Yii::t('app', 'Falha ao enviar imagem.'));
+                // Exceções não mapeadas — mensagem genérica (em inglês)
+                $owner->addError($attr, Yii::t('app', 'Upload failed due to an unexpected error.'));
+                $this->log('upload exception', ['err' => $e->getMessage()]);
                 $event->isValid = false;
                 return;
             }
