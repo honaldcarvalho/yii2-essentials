@@ -130,7 +130,7 @@ class User extends Account
      *  - group_id base do usuário (users.group_id)
      *  - vínculos na tabela users_groups
      */
-    private function isMasterByUserId(int $userId, ?int $baseGroupId, \yii\db\Connection $db): bool
+    public static function isMasterByUserId(int $userId, ?int $baseGroupId, \yii\db\Connection $db): bool
     {
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)

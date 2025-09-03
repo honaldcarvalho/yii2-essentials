@@ -73,7 +73,7 @@ class LoginForm extends Model
 
         // BYPASS: admin master (considera base group_id e users_groups)
         try {
-            if ($this->isMasterByUserId($userId, $groupId, $db)) {
+            if (User::isMasterByUserId($userId, $groupId, $db)) {
                 $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;
                 if (!Yii::$app->user->login($user, $duration)) {
                     $this->addError('username', Yii::t('app', 'Login failed.'));
