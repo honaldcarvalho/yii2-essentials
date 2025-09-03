@@ -130,25 +130,47 @@ class AuthorizationController extends CommonController
     public static function isAdmin(): bool
     {
         static $memo = null;
-        if ($memo !== null) return $memo;
+        if ($memo !== null) {
+            return $memo;
+        }
 
         $userId = Yii::$app->user->id;
-        if (!$userId) return $memo = false;
+        if (!$userId) {
+            return $memo = false;
+        }
 
         $db = Yii::$app->db;
 
-        // Pega os nomes das tabelas sem disparar AR::find()
+        // Tabelas (sem disparar AR::find())
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
             ? \croacworks\essentials\models\UsersGroup::tableName()
             : '{{%users_groups}}'; // fallback
 
-        // Consulta direta, sem AR/relations
-        $exists = (new \yii\db\Query())
+        // Pega o group_id direto do identity (não faz query extra)
+        $directGroupId = null;
+        if (($identity = Yii::$app->user->identity) && property_exists($identity, 'group_id')) {
+            $directGroupId = $identity->group_id ?: null;
+        }
+
+        // Subquery: todos os grupos ligados via users_groups
+        $subUserGroups = (new \yii\db\Query())
+            ->select('ug.group_id')
             ->from("$ugTable ug")
-            ->innerJoin("$groupsTable g", 'g.id = ug.group_id')
-            ->where(['ug.user_id' => $userId])
-            ->andWhere(['in', 'g.level', ['master']])
+            ->where(['ug.user_id' => $userId]);
+
+        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN users_groups)
+        $orCondition = ['or'];
+        if ($directGroupId) {
+            $orCondition[] = ['g.id' => (int)$directGroupId];
+        }
+        $orCondition[] = ['in', 'g.id', $subUserGroups];
+
+        // Consulta única: existe algum grupo 'master' que atenda uma das condições acima?
+        $exists = (new \yii\db\Query())
+            ->from("$groupsTable g")
+            ->where(['g.level' => 'master'])
+            ->andWhere($orCondition)
             ->limit(1)
             ->exists($db);
 

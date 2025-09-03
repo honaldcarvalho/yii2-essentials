@@ -68,7 +68,23 @@ class LoginForm extends Model
         }
 
         $db = Yii::$app->db;
+        $userId  = (int)$user->id;
         $groupId = (int)$user->group_id;
+
+        // BYPASS: admin master (considera base group_id e users_groups)
+        try {
+            if ($this->isMasterByUserId($userId, $groupId, $db)) {
+                $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;
+                if (!Yii::$app->user->login($user, $duration)) {
+                    $this->addError('username', Yii::t('app', 'Login failed.'));
+                    return false;
+                }
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // se a consulta falhar por algum motivo, não faz bypass e segue fluxo normal
+        }
+
         if ($groupId <= 0) {
             $this->addError('username', Yii::t('app', 'User has no base group assigned.'));
             return false;

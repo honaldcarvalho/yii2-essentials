@@ -53,7 +53,7 @@ class User extends Account
             ],
         ]);
     }
-    
+
     public function rules()
     {
         return [
@@ -61,9 +61,9 @@ class User extends Account
             [['status'], 'default', 'value' => 1],
             [['group_id', 'status'], 'integer'],
 
-            [['email'], 'required','on'=>['create','update']],
+            [['email'], 'required', 'on' => ['create', 'update']],
 
-            [['token_validate','created_at', 'updated_at'], 'safe'],
+            [['token_validate', 'created_at', 'updated_at'], 'safe'],
             [['username'], 'string', 'max' => 64],
             [['email', 'password_reset_token'], 'string', 'max' => 190],
             [['password_hash'], 'string', 'max' => 255],
@@ -77,7 +77,7 @@ class User extends Account
             [['password'], 'string', 'min' => 6],
             ['password_confirm', 'compare', 'compareAttribute' => 'password', 'message' => Yii::t('app', 'Passwords do not match.')],
 
-       ];
+        ];
     }
 
     public function attributeLabels()
@@ -100,12 +100,64 @@ class User extends Account
         ];
     }
 
-    public function getLogs()      { return $this->hasMany(Log::class, ['user_id' => 'id']); }
-    public function getNotifications(){ return $this->hasMany(Notification::class, ['user_id' => 'id']); }
-    public function getRoles()     { return $this->hasMany(Role::class, ['user_id' => 'id']); }
-    public function getProfile()   { return $this->hasOne(UserProfile::class, ['user_id' => 'id']); }
-    public function getGroup()   { return $this->hasOne(Group::class, ['id'=>'group_id']); }
-    public function getUsersGroups(){ return $this->hasMany(UserGroup::class, ['user_id' => 'id']); }
+    public function getLogs()
+    {
+        return $this->hasMany(Log::class, ['user_id' => 'id']);
+    }
+    public function getNotifications()
+    {
+        return $this->hasMany(Notification::class, ['user_id' => 'id']);
+    }
+    public function getRoles()
+    {
+        return $this->hasMany(Role::class, ['user_id' => 'id']);
+    }
+    public function getProfile()
+    {
+        return $this->hasOne(UserProfile::class, ['user_id' => 'id']);
+    }
+    public function getGroup()
+    {
+        return $this->hasOne(Group::class, ['id' => 'group_id']);
+    }
+    public function getUsersGroups()
+    {
+        return $this->hasMany(UserGroup::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Retorna true se o usuário for master (admin global), considerando:
+     *  - group_id base do usuário (users.group_id)
+     *  - vínculos na tabela users_groups
+     */
+    private function isMasterByUserId(int $userId, ?int $baseGroupId, \yii\db\Connection $db): bool
+    {
+        $groupsTable = \croacworks\essentials\models\Group::tableName();
+        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+            ? \croacworks\essentials\models\UsersGroup::tableName()
+            : '{{%users_groups}}';
+
+        // 1) base group_id é master?
+        if ($baseGroupId && $baseGroupId > 0) {
+            $isBaseMaster = (new \yii\db\Query())
+                ->from($groupsTable)
+                ->where(['id' => (int)$baseGroupId, 'level' => 'master'])
+                ->limit(1)
+                ->exists($db);
+            if ($isBaseMaster) return true;
+        }
+
+        // 2) existe algum vínculo em users_groups com grupo master?
+        $isMemberMaster = (new \yii\db\Query())
+            ->from("$ugTable ug")
+            ->innerJoin("$groupsTable g", 'g.id = ug.group_id')
+            ->where(['ug.user_id' => (int)$userId, 'g.level' => 'master'])
+            ->limit(1)
+            ->exists($db);
+
+        return (bool)$isMemberMaster;
+    }
+
 
     public function getGroups()
     {
