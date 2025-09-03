@@ -26,24 +26,27 @@ class StorageController extends ControllerRest
         int $code,
         string $type,
         string $message,
-        array $context = [],
-        \Throwable $e = null
+        array $context = []
     ): array {
-        // Capture caller (who invoked errorResponse)
-        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-        $caller = $bt[1] ?? [];
+        // Captura a 1ª frame do chamador real (ignora a própria errorResponse)
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $caller = null;
+        foreach ($bt as $frame) {
+            if (($frame['function'] ?? null) !== __FUNCTION__) {
+                $caller = $frame;
+                break;
+            }
+        }
 
         $payload = [
             'code'    => $code,
             'success' => false,
             'error'   => [
-                'type'         => $type,
-                'message'      => Yii::t('app', $message),
-                'context'      => $context,
-                'caller_file'  => $caller['file'] ?? null,
-                'caller_line'  => $caller['line'] ?? null,
-                'throw_file'   => $e ? $e->getFile() : null,
-                'throw_line'   => $e ? $e->getLine() : null,
+                'type'    => $type,
+                'message' => Yii::t('app', $message),
+                'context' => $context,
+                'file'    => $caller['file'] ?? null,
+                'line'    => $caller['line'] ?? null,
             ],
         ];
 
@@ -54,60 +57,30 @@ class StorageController extends ControllerRest
         return $payload;
     }
 
+
     /**
      * Map any \Throwable into a standard error payload (with file/line).
      */
     private static function mapException(\Throwable $e, array $context = []): array
     {
-        // DB
-        if ($e instanceof \yii\db\IntegrityException) {
-            return self::errorResponse(409, 'db.integrity', 'Database integrity violation.', [
-                'driverMessage' => $e->getMessage(),
-            ] + $context, $e);
-        }
-        if ($e instanceof \yii\db\Exception) {
-            return self::errorResponse(500, 'db.exception', 'Database error.', [
-                'driverMessage' => $e->getMessage(),
-                'errorInfo'     => method_exists($e, 'errorInfo') ? $e->errorInfo : null,
-            ] + $context, $e);
-        }
+        // Você pode distinguir tipos aqui (db, image, video...) – mantive simples:
+        $resp = self::errorResponse(
+            500,
+            'unhandled_exception',
+            $e->getMessage(), // use a própria mensagem do Throwable
+            ['exception' => get_class($e), 'detail' => $e->getMessage()] + $context
+        );
 
-        // Imagine
-        if ($e instanceof \Imagine\Exception\Exception) {
-            return self::errorResponse(422, 'image.process_failed', 'Failed to process image.', [
-                'imagine' => get_class($e),
-                'detail'  => $e->getMessage(),
-            ] + $context, $e);
-        }
-
-        // FFMpeg
-        if (stripos(get_class($e), 'FFMpeg') !== false) {
-            return self::errorResponse(422, 'video.encode_failed', 'Failed to process video (FFMpeg).', [
-                'ffmpeg' => get_class($e),
-                'detail' => $e->getMessage(),
-            ] + $context, $e);
-        }
-
-        // HTTP/Yii
-        if ($e instanceof \yii\web\BadRequestHttpException) {
-            return self::errorResponse(400, 'request.bad_request', $e->getMessage() ?: 'Bad Request.', $context, $e);
-        }
-        if ($e instanceof \yii\web\NotFoundHttpException) {
-            return self::errorResponse(404, 'request.not_found', $e->getMessage() ?: 'Not Found.', $context, $e);
-        }
-
-        // Generic
-        $resp = self::errorResponse(500, 'unhandled_exception', 'Unhandled error.', [
-            'exception' => get_class($e),
-            'detail'    => $e->getMessage(),
-        ] + $context, $e);
+        // Força o ponto exato do erro
+        $resp['error']['file'] = $e->getFile();
+        $resp['error']['line'] = $e->getLine();
 
         if (defined('YII_ENV_DEV') && YII_ENV_DEV) {
             $resp['error']['trace'] = $e->getTraceAsString();
         }
-
         return $resp;
     }
+
 
     /**
      * Translate PHP upload error code.
@@ -456,7 +429,7 @@ class StorageController extends ControllerRest
                     return self::mapException($e, ['stage' => 'image.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
                 }
 
-            // ======== VIDEO ========
+                // ======== VIDEO ========
             } elseif ($type === 'video') {
                 if ($folder_id === 1) {
                     $folder_id = 3;
@@ -582,7 +555,7 @@ class StorageController extends ControllerRest
                     $duration = 0;
                 }
 
-            // ======== DOC ========
+                // ======== DOC ========
             } else {
                 $type = 'doc';
                 if ($folder_id === 1) {

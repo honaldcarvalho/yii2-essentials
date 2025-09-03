@@ -79,6 +79,16 @@ class AttachFileBehavior extends Behavior
         $file    = $resp['error']['file']    ?? null;
         $line    = $resp['error']['line']    ?? null;
 
+        // Fallback: extrai file:line da 1ª linha do trace, se existir
+        if ((!$file || !$line) && !empty($resp['error']['trace'])) {
+            $trace = (string)$resp['error']['trace'];
+            // Padrões comuns: "#0 /caminho/arquivo.php(123): ..."
+            if (preg_match('/#0\s+([^\(]+)\((\d+)\):/', $trace, $m)) {
+                $file = $file ?: ($m[1] ?? null);
+                $line = $line ?: (isset($m[2]) ? (int)$m[2] : null);
+            }
+        }
+
         $parts = [];
         $parts[] = $message;
 
@@ -92,6 +102,7 @@ class AttachFileBehavior extends Behavior
 
         return implode(' | ', $parts);
     }
+
 
     public function handleUploadOrKeep(ModelEvent $event): void
     {
@@ -146,7 +157,6 @@ class AttachFileBehavior extends Behavior
                 $owner->addError($attr, $this->buildUploadErrorMessage($resp));
                 $event->isValid = false;
                 return;
-
             } catch (\Throwable $e) {
                 $owner->addError($attr, "Upload failed: {$e->getMessage()} at {$e->getFile()}:{$e->getLine()}");
                 $event->isValid = false;
