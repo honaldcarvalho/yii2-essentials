@@ -20,13 +20,16 @@ class StorageController extends ControllerRest
 {
     /**
      * Standard error payload builder.
+     * Adds caller (who called errorResponse) and, if provided, the Throwable file/line.
      */
     private static function errorResponse(
         int $code,
         string $type,
         string $message,
-        array $context = []
+        array $context = [],
+        \Throwable $e = null
     ): array {
+        // Capture caller (who invoked errorResponse)
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $caller = $bt[1] ?? [];
 
@@ -34,11 +37,13 @@ class StorageController extends ControllerRest
             'code'    => $code,
             'success' => false,
             'error'   => [
-                'type'    => $type,
-                'message' => Yii::t('app', $message),
-                'context' => $context,
-                'file'    => $caller['file'] ?? null,
-                'line'    => $caller['line'] ?? null,
+                'type'         => $type,
+                'message'      => Yii::t('app', $message),
+                'context'      => $context,
+                'caller_file'  => $caller['file'] ?? null,
+                'caller_line'  => $caller['line'] ?? null,
+                'throw_file'   => $e ? $e->getFile() : null,
+                'throw_line'   => $e ? $e->getLine() : null,
             ],
         ];
 
@@ -50,7 +55,7 @@ class StorageController extends ControllerRest
     }
 
     /**
-     * Map any \Throwable into a standard error payload.
+     * Map any \Throwable into a standard error payload (with file/line).
      */
     private static function mapException(\Throwable $e, array $context = []): array
     {
@@ -58,13 +63,13 @@ class StorageController extends ControllerRest
         if ($e instanceof \yii\db\IntegrityException) {
             return self::errorResponse(409, 'db.integrity', 'Database integrity violation.', [
                 'driverMessage' => $e->getMessage(),
-            ] + $context);
+            ] + $context, $e);
         }
         if ($e instanceof \yii\db\Exception) {
             return self::errorResponse(500, 'db.exception', 'Database error.', [
                 'driverMessage' => $e->getMessage(),
                 'errorInfo'     => method_exists($e, 'errorInfo') ? $e->errorInfo : null,
-            ] + $context);
+            ] + $context, $e);
         }
 
         // Imagine
@@ -72,7 +77,7 @@ class StorageController extends ControllerRest
             return self::errorResponse(422, 'image.process_failed', 'Failed to process image.', [
                 'imagine' => get_class($e),
                 'detail'  => $e->getMessage(),
-            ] + $context);
+            ] + $context, $e);
         }
 
         // FFMpeg
@@ -80,22 +85,22 @@ class StorageController extends ControllerRest
             return self::errorResponse(422, 'video.encode_failed', 'Failed to process video (FFMpeg).', [
                 'ffmpeg' => get_class($e),
                 'detail' => $e->getMessage(),
-            ] + $context);
+            ] + $context, $e);
         }
 
         // HTTP/Yii
         if ($e instanceof \yii\web\BadRequestHttpException) {
-            return self::errorResponse(400, 'request.bad_request', $e->getMessage() ?: 'Bad Request.', $context);
+            return self::errorResponse(400, 'request.bad_request', $e->getMessage() ?: 'Bad Request.', $context, $e);
         }
         if ($e instanceof \yii\web\NotFoundHttpException) {
-            return self::errorResponse(404, 'request.not_found', $e->getMessage() ?: 'Not Found.', $context);
+            return self::errorResponse(404, 'request.not_found', $e->getMessage() ?: 'Not Found.', $context, $e);
         }
 
         // Generic
         $resp = self::errorResponse(500, 'unhandled_exception', 'Unhandled error.', [
             'exception' => get_class($e),
             'detail'    => $e->getMessage(),
-        ] + $context);
+        ] + $context, $e);
 
         if (defined('YII_ENV_DEV') && YII_ENV_DEV) {
             $resp['error']['trace'] = $e->getTraceAsString();
@@ -171,6 +176,7 @@ class StorageController extends ControllerRest
             throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
+            return self::mapException($th, ['stage' => 'actionGetFile.catch']);
         }
     }
 
@@ -184,12 +190,8 @@ class StorageController extends ControllerRest
                 $folder_id = $post['folder_id'] ?? null;
                 $type = $post['type'] ?? null;
                 $query = $post['query'] ?? false;
-                $users_groups =  AuthorizationController::getUserGroups();
 
                 $queryObj = File::find()->where(['or', ['like', 'name', $query], ['like', 'description', $query]]);
-                // if ($group_id !== null) {
-                //     $queryObj->andWhere(['group_id'=>$group_id]);
-                // }
                 if ($folder_id !== null) {
                     $queryObj->andWhere(['folder_id' => $folder_id]);
                 }
@@ -201,13 +203,13 @@ class StorageController extends ControllerRest
             throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
+            return self::mapException($th, ['stage' => 'actionListFiles.catch']);
         }
     }
 
     public function actionListFolder($id)
     {
         try {
-
             $users_groups = AuthorizationController::getUserByToken()->getUserGroupsId();
             $folder = Folder::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups], ['folder_id' => null]])->one();
 
@@ -224,6 +226,7 @@ class StorageController extends ControllerRest
             }
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
+            return self::mapException($th, ['stage' => 'actionListFolder.catch']);
         }
     }
 
@@ -237,29 +240,19 @@ class StorageController extends ControllerRest
     static function compressImage($filePath, $maxFileSize, $quality = 90)
     {
         try {
-            // Get the current size of the image
             $fileSize = filesize($filePath);
             if ($fileSize <= $maxFileSize) {
-                return Image::getImagine()->open($filePath); // Return the original file path
+                return Image::getImagine()->open($filePath);
             }
             do {
-                // Open the image using Imagine
                 $image = Image::getImagine()->open($filePath);
-
-                // Get the current dimensions of the image
                 $size = $image->getSize();
-
-                // Reduce the dimensions by 10%
                 $newSize = new Box($size->getWidth() * 0.9, $size->getHeight() * 0.9);
 
-                // Resize the image
                 $image->resize($newSize)
                     ->save($filePath, ['quality' => $quality]);
 
-                // Recheck the file size after compression
                 $fileSize = filesize($filePath);
-
-                // Lower the quality slightly with each iteration
                 $quality -= 10;
             } while ($fileSize > $maxFileSize && $quality > 10);
 
@@ -276,19 +269,15 @@ class StorageController extends ControllerRest
 
     static function createThumbnail($srcImagePath, $destImagePath, $thumbWidth = 160, $thumbHeight = 99)
     {
-        // Open source image
         $image = Image::getImagine()->open($srcImagePath);
 
-        // Source dimensions
         $size = $image->getSize();
         $width = $size->getWidth();
         $height = $size->getHeight();
 
-        // Aspect ratios
         $aspectRatio = $thumbWidth / $thumbHeight;
         $imageRatio = $width / $height;
 
-        // Compute crop size preserving aspect ratio
         if ($imageRatio > $aspectRatio) {
             $newHeight = $height;
             $newWidth = (int)($height * $aspectRatio);
@@ -297,11 +286,9 @@ class StorageController extends ControllerRest
             $newHeight = (int)($width / $aspectRatio);
         }
 
-        // Center crop
         $src_x = ($width / 2) - ($newWidth / 2);
         $src_y = ($height / 2) - ($newHeight / 2);
 
-        // Crop + resize
         return Image::crop($srcImagePath, $newWidth, $newHeight, [$src_x, $src_y])
             ->resize(new Box($thumbWidth, $thumbHeight))
             ->save($destImagePath, ['quality' => 100]);
@@ -323,14 +310,13 @@ class StorageController extends ControllerRest
             'quality'         => 80
         ]
     ) {
-        // utilitário para remover caminhos de forma segura
         $safeUnlink = function (?string $p) {
             if ($p && is_file($p)) {
                 @unlink($p);
             }
         };
 
-        $createdPaths = [ // tudo que criarmos entra aqui para limpeza em erro
+        $createdPaths = [
             'file'  => null,
             'thumb' => null,
             'temp'  => null,
@@ -418,7 +404,6 @@ class StorageController extends ControllerRest
                     FileHelper::createDirectory($pathThumbRoot);
                 }
 
-                // save original
                 if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
                     return self::errorResponse(
                         500,
@@ -429,7 +414,6 @@ class StorageController extends ControllerRest
                 }
                 $createdPaths['file'] = $filePathRoot;
 
-                // generate thumb
                 try {
                     if ($thumb_aspect == 1) {
                         $image_size = getimagesize($filePathRoot);
@@ -442,8 +426,8 @@ class StorageController extends ControllerRest
                             );
                         }
 
-                        $major = $image_size[0]; // width
-                        $min   = $image_size[1]; // height
+                        $major = $image_size[0];
+                        $min   = $image_size[1];
                         $mov   = ($major - $min) / 2;
                         $point = [$mov, 0];
 
@@ -463,7 +447,6 @@ class StorageController extends ControllerRest
                                 ->save($filePathThumbRoot, ['quality' => 100]);
                         }
                     } else {
-                        // format WxH in $options['thumb_aspect'] (e.g., "300/200")
                         [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
                         self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
                         $createdPaths['thumb'] = $filePathThumbRoot;
@@ -473,13 +456,12 @@ class StorageController extends ControllerRest
                     return self::mapException($e, ['stage' => 'image.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
                 }
 
-                // ======== VIDEO ========
+            // ======== VIDEO ========
             } elseif ($type === 'video') {
                 if ($folder_id === 1) {
                     $folder_id = 3;
                 }
 
-                // always mp4 as final output
                 if (!empty($file_name)) {
                     $name = "{$file_name}.mp4";
                 } else {
@@ -521,7 +503,7 @@ class StorageController extends ControllerRest
                     }
 
                     $safeUnlink($createdPaths['temp']);
-                    $createdPaths['temp'] = null; // removed
+                    $createdPaths['temp'] = null;
                     $ext = 'mp4';
                 } else {
                     if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
@@ -535,7 +517,6 @@ class StorageController extends ControllerRest
                 }
                 $createdPaths['file'] = $filePathRoot;
 
-                // video thumbnail
                 $sec = 2;
                 $video_thumb_name  = str_replace('.', '_', $name) . '.jpg';
                 $pathThumb         = "{$files_folder}/videos/thumbs";
@@ -555,7 +536,6 @@ class StorageController extends ControllerRest
                     $frame->save($filePathThumbRoot);
                     $createdPaths['thumb'] = $filePathThumbRoot;
 
-                    // optional crop/resize
                     if ($thumb_aspect == 1) {
                         $image_size = getimagesize($filePathThumbRoot);
                         if (!$image_size) {
@@ -595,16 +575,14 @@ class StorageController extends ControllerRest
                     return self::mapException($e, ['stage' => 'video.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
                 }
 
-                // duration
                 try {
                     $ffprobe  = \FFMpeg\FFProbe::create();
                     $duration = (int)$ffprobe->format($filePathRoot)->get('duration');
                 } catch (\Throwable $e) {
-                    // Non-fatal: duration unknown
                     $duration = 0;
                 }
 
-                // ======== DOC ========
+            // ======== DOC ========
             } else {
                 $type = 'doc';
                 if ($folder_id === 1) {
@@ -650,7 +628,6 @@ class StorageController extends ControllerRest
             ];
 
             if ($save) {
-                // real group_id (if not admin)
                 $file_uploaded['group_id'] = $group_id;
                 if (!AuthorizationController::isMaster()) {
                     $file_uploaded['group_id'] = AuthorizationController::userGroup();
@@ -663,7 +640,6 @@ class StorageController extends ControllerRest
                 $model = Yii::createObject($file_uploaded);
 
                 if (!$model->save()) {
-                    // requirement: if DB save fails, remove uploaded file(s)
                     $safeUnlink($createdPaths['file']);
                     $safeUnlink($createdPaths['thumb']);
 
@@ -679,7 +655,6 @@ class StorageController extends ControllerRest
                     );
                 }
 
-                // optional attach
                 if ($attact_model) {
                     $attact = new $attact_model->class_name([
                         $attact_model->fields[0] => $attact_model->id,
@@ -694,11 +669,9 @@ class StorageController extends ControllerRest
                 return $response;
             }
 
-            // no DB save: return metadata only
             $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
             return $response;
         } catch (\Throwable $th) {
-            // cleanup on exception
             $safeUnlink($createdPaths['file']);
             $safeUnlink($createdPaths['thumb']);
             $safeUnlink($createdPaths['temp']);
@@ -717,7 +690,6 @@ class StorageController extends ControllerRest
                 throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
             }
 
-            // Diagnose PHP upload error (if any)
             if ($temp_file->error !== UPLOAD_ERR_OK) {
                 $err = self::errorResponse(
                     400,
@@ -734,7 +706,6 @@ class StorageController extends ControllerRest
 
             $post = $this->request->post();
 
-            // upload options
             $options = [];
             $options['file_name']     = $post['file_name']     ?? false;
             $options['description']   = $post['description']   ?? $temp_file->name;
@@ -746,31 +717,26 @@ class StorageController extends ControllerRest
             $options['thumb_aspect']  = $post['thumb_aspect']  ?? 1;
             $options['quality']       = $post['quality']       ?? 80;
 
-            // image: compress temp if larger than 5MB (5 * 1024 * 1024)
             [$type, $format] = explode('/', $temp_file->type);
             if ($type === 'image') {
                 self::compressImage($temp_file->tempName, 5 * 1024 * 1024);
             }
 
-            // perform upload
             $result = self::uploadFile($temp_file, $options);
 
-            // return if failed (already standardized)
             if (empty($result['success'])) {
                 \Yii::$app->response->statusCode = (int)($result['code'] ?? 500);
                 return $result;
             }
 
-            // --- direct link to model (new) ---
             $linkClass = $post['model_class'] ?? null;
-            $linkId    = $post['model_id']    ?? null;       // PK
-            $linkField = $post['model_field'] ?? null;       // e.g., 'file_id'
+            $linkId    = $post['model_id']    ?? null;
+            $linkField = $post['model_field'] ?? null;
             $deleteOld = (int)($post['delete_old'] ?? 1);
 
             $linkRequested = !empty($linkClass) && $linkId !== null && !empty($linkField);
 
             if ($linkRequested) {
-                // Extract file id (object or array)
                 $fileData = $result['data'] ?? null;
                 $fileId   = 0;
                 if (is_object($fileData) && isset($fileData->id)) {
@@ -787,7 +753,6 @@ class StorageController extends ControllerRest
                     return $result;
                 }
 
-                // attempt link
                 $result['link'] = self::linkFileToModel($fileId, $linkClass, (int)$linkId, $linkField, $deleteOld);
             }
 
@@ -826,7 +791,6 @@ class StorageController extends ControllerRest
             $table = method_exists($class, 'tableName') ? $class::tableName() : '(unknown)';
             $oldId = (int)$model->getAttribute($field);
 
-            // already linked
             if ($oldId === $fileId) {
                 $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
                 return [
@@ -844,21 +808,18 @@ class StorageController extends ControllerRest
                 ];
             }
 
-            // force direct update (no validation/events)
             $updatedRows = 0;
             $tx = $model->getDb()->beginTransaction();
             try {
-                $updatedRows = $model->updateAttributes([$field => $fileId]); // returns updated rows
+                $updatedRows = $model->updateAttributes([$field => $fileId]);
                 $tx->commit();
             } catch (\Throwable $e) {
                 $tx->rollBack();
                 return ['linked' => false, 'error' => Yii::t('app', 'updateAttributes failed: {msg}', ['msg' => $e->getMessage()])];
             }
 
-            // re-check in DB
             $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
 
-            // remove old if requested
             $removed = false;
             if ($deleteOld && $oldId && $oldId !== $fileId) {
                 $rm = self::removeFile($oldId);
@@ -886,7 +847,6 @@ class StorageController extends ControllerRest
     public static function removeFile($id)
     {
         try {
-
             $file = false;
             $success = false;
             $users_groups =  AuthorizationController::getUserGroups();
@@ -948,6 +908,7 @@ class StorageController extends ControllerRest
             throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
+            return self::mapException($th, ['stage' => 'actionRemoveFile.catch']);
         }
     }
 
@@ -969,6 +930,7 @@ class StorageController extends ControllerRest
             throw new \yii\web\BadRequestHttpException(Yii::t('app', 'Bad Request.'));
         } catch (\Throwable $th) {
             AuthorizationController::error($th);
+            return self::mapException($th, ['stage' => 'actionRemoveFiles.catch']);
         }
     }
 }
