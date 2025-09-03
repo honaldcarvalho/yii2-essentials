@@ -82,7 +82,7 @@ class LoginForm extends Model
                 return true;
             }
         } catch (\Throwable $e) {
-            // se a consulta falhar por algum motivo, não faz bypass e segue fluxo normal
+            // se a consulta falhar por algum motivo, não faz bypass e segue fluxo normal 
         }
 
         if ($groupId <= 0) {
