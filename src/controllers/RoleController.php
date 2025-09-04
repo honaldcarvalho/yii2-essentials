@@ -97,7 +97,11 @@ class RoleController extends AuthorizationController
 
     public static function getAllControllersRestricted(): array
     {
-        $all = self::getAllControllers(); // seu método atual que lista FQCNs
+        $all = self::getAllControllers();
+
+        if(AuthorizationController::isMaster())
+            return $all;
+
         $scope = GrantScopeService::currentUserGrantScope();
         // Se tiver '*' global, retorna tudo
         if (isset($scope['*']) || in_array('*', array_keys($scope), true)) return $all;
