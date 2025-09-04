@@ -35,8 +35,6 @@ $this->registerJs($js);
         'prompt' => '-- Level --'
     ]) ?>
 
-    <?= $form->field($model, 'user_id')->dropDownList(yii\helpers\ArrayHelper::map(User::find()->select('id,username')->asArray()->all(), 'id', 'username'), ['prompt' => '-- selecione um usuario --']) ?>
-
     <?= $form->field($model, 'controller')->dropDownList($controllers, [
         'multiple' => false,
         'prompt' => '-- CONTROLLER --',
