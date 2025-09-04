@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\controllers;
 
 use Yii;
@@ -10,6 +11,7 @@ use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 
+use croacworks\essentials\controllers\AuthorizationController as Auth;
 use croacworks\essentials\components\StorageService;
 use croacworks\essentials\components\dto\StorageOptions;
 use croacworks\essentials\jobs\GenerateThumbJob;
@@ -27,9 +29,19 @@ class StorageController extends Controller
             'access' => [
                 'class' => AccessControl::class,
                 'only' => [
-                    'upload','delete','info','list','download','update',
-                    'move','replace','attach','detach','regenerate-thumb',
-                    'transcode','probe-duration'
+                    'upload',
+                    'delete',
+                    'info',
+                    'list',
+                    'download',
+                    'update',
+                    'move',
+                    'replace',
+                    'attach',
+                    'detach',
+                    'regenerate-thumb',
+                    'transcode',
+                    'probe-duration'
                 ],
                 'rules' => [
                     [
@@ -42,12 +54,12 @@ class StorageController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'upload'           => ['POST'],
-                    'delete'           => ['POST','DELETE'],
-                    'update'           => ['POST','PUT','PATCH'],
+                    'delete'           => ['POST', 'DELETE'],
+                    'update'           => ['POST', 'PUT', 'PATCH'],
                     'move'             => ['POST'],
                     'replace'          => ['POST'],
                     'attach'           => ['POST'],
-                    'detach'           => ['POST','DELETE'],
+                    'detach'           => ['POST', 'DELETE'],
                     'regenerate-thumb' => ['POST'],
                     'transcode'        => ['POST'],
                     'probe-duration'   => ['POST'],
@@ -62,6 +74,7 @@ class StorageController extends Controller
     // ---------------------------- CORE ----------------------------
 
     /** POST /storage/upload (multipart/form-data) */
+    /** POST /storage/upload (multipart/form-data) */
     public function actionUpload(): Response
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -74,11 +87,49 @@ class StorageController extends Controller
             return $this->asJson(['ok' => false, 'error' => 'Arquivo não encontrado no campo "file".']);
         }
 
+        // Sempre pegar os IDs crus do request (sem confiar neles ainda)
+        $requestedGroupId = (int)Yii::$app->request->post('group_id', 0);
+        $folderId         = (int)Yii::$app->request->post('folder_id', 1);
+
+        // ======== REGRA DE NEGÓCIO DO GROUP ========
+        // Só master pode escolher livremente o group_id. Não-masters: ignorar POST[group_id]
+        // e resolver pelo pai (folder) ou pelo próprio usuário.
+        $resolvedGroupId = 0;
+        try {
+            if (class_exists(Auth::class) && method_exists(Auth::class, 'resolveParentGroupId')) {
+                // A função já trata: se não master, usa o group do pai/usuário; se master, aceita o informado.
+                $resolvedGroupId = (int)Auth::resolveParentGroupId($requestedGroupId, $folderId);
+            } else {
+                // Fallback mínimo (sem criar helpers novos)
+                if (class_exists(Auth::class) && method_exists(Auth::class, 'isMaster') && method_exists(Auth::class, 'userGroup')) {
+                    if (Auth::isMaster()) {
+                        $resolvedGroupId = $requestedGroupId ?: (int)Auth::userGroup();
+                    } else {
+                        $resolvedGroupId = (int)Auth::userGroup(); // usuário sempre tem group_id
+                    }
+                } else {
+                    // Último recurso: NÃO deixar 0 (evita "Group is invalid")
+                    $resolvedGroupId = (int)(Yii::$app->user->identity->group_id ?? 0);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Nunca permitir 0 aqui
+            $resolvedGroupId = (int)(Yii::$app->user->identity->group_id ?? 0);
+        }
+
+        if ($resolvedGroupId <= 0) {
+            return $this->asJson([
+                'ok'    => false,
+                'error' => 'Falha ao determinar o grupo do arquivo.',
+            ]);
+        }
+        // ============================================
+
         $opts = new StorageOptions([
             'fileName'     => Yii::$app->request->post('file_name'),
             'description'  => Yii::$app->request->post('description'),
-            'folderId'     => (int)Yii::$app->request->post('folder_id', 1),
-            'groupId'      => (int)Yii::$app->request->post('group_id', 1),
+            'folderId'     => $folderId,
+            'groupId'      => $resolvedGroupId, // <- FORÇADO
             'saveModel'    => (bool)Yii::$app->request->post('save', 1),
             'convertVideo' => (bool)Yii::$app->request->post('convert_video', 1),
             'thumbAspect'  => Yii::$app->request->post('thumb_aspect', 1), // 1 ou "W/H"
@@ -125,7 +176,8 @@ class StorageController extends Controller
             $query->andWhere(['type' => $type]); // 'image'|'video'|'doc'
         }
         if ($q = Yii::$app->request->get('q')) {
-            $query->andFilterWhere(['or',
+            $query->andFilterWhere([
+                'or',
                 ['like', 'name', $q],
                 ['like', 'description', $q],
                 ['like', 'extension', $q],
@@ -134,12 +186,12 @@ class StorageController extends Controller
 
         $page     = max(1, (int)Yii::$app->request->get('page', 1));
         $pageSize = min(100, max(1, (int)Yii::$app->request->get('pageSize', 20)));
-        $count    = ( clone $query )->count();
+        $count    = (clone $query)->count();
         $items    = $query->orderBy(['id' => SORT_DESC])
-                          ->offset(($page-1)*$pageSize)
-                          ->limit($pageSize)
-                          ->asArray()
-                          ->all();
+            ->offset(($page - 1) * $pageSize)
+            ->limit($pageSize)
+            ->asArray()
+            ->all();
 
         return $this->asJson([
             'ok' => true,
@@ -233,8 +285,12 @@ class StorageController extends Controller
 
         // limpa disco independente do resultado do delete do DB
         $okFs  = true;
-        if (is_file($fileAbs))  { $okFs = $okFs && @unlink($fileAbs); }
-        if ($thumbAbs && is_file($thumbAbs)) { $okFs = $okFs && @unlink($thumbAbs); }
+        if (is_file($fileAbs)) {
+            $okFs = $okFs && @unlink($fileAbs);
+        }
+        if ($thumbAbs && is_file($thumbAbs)) {
+            $okFs = $okFs && @unlink($thumbAbs);
+        }
 
         return $this->asJson(['ok' => (bool)($okDb && $okFs)]);
     }
@@ -294,7 +350,7 @@ class StorageController extends Controller
         }
 
         $model->updated_at = time();
-        $model->save(false, ['size','updated_at']);
+        $model->save(false, ['size', 'updated_at']);
 
         return $this->asJson(['ok' => true, 'data' => $model->attributes]);
     }
@@ -400,9 +456,8 @@ class StorageController extends Controller
             $this->generateImageThumbNow($srcAbs, $thumbAbs, $aspect);
             $model->pathThumb = $thumbRel;
             $model->urlThumb  = $this->publicUrlFromAbs($thumbAbs);
-            $model->save(false, ['pathThumb','urlThumb']);
+            $model->save(false, ['pathThumb', 'urlThumb']);
             return $this->asJson(['ok' => true, 'queued' => false, 'data' => $model->attributes]);
-
         } else { // video
             $baseDir  = str_replace('/videos', '/videos/thumbs', \dirname($model->path));
             $thumbRel = $baseDir . '/' . str_replace('.', '_', $model->name) . '.jpg';
@@ -426,7 +481,7 @@ class StorageController extends Controller
             $this->generateVideoThumbNow($srcAbs, $thumbAbs);
             $model->pathThumb = $thumbRel;
             $model->urlThumb  = $this->publicUrlFromAbs($thumbAbs);
-            $model->save(false, ['pathThumb','urlThumb']);
+            $model->save(false, ['pathThumb', 'urlThumb']);
             return $this->asJson(['ok' => true, 'queued' => false, 'data' => $model->attributes]);
         }
     }
@@ -510,20 +565,39 @@ class StorageController extends Controller
 
     private function applyGroupFilter($query, ?int $requestedGroupId = null)
     {
-        // Se você tiver AuthorizationController para grupo do usuário, usa aqui:
-        $groupId = $requestedGroupId;
         try {
-            if (class_exists('\croacworks\essentials\controllers\AuthorizationController')
-                && !\croacworks\essentials\controllers\AuthorizationController::isMaster()) {
-                $groupId = \croacworks\essentials\controllers\AuthorizationController::userGroup();
+            if (class_exists(Auth::class) && method_exists(Auth::class, 'isMaster') && method_exists(Auth::class, 'userGroup')) {
+                if (Auth::isMaster()) {
+                    // Master pode filtrar por qualquer group_id explicitamente solicitado
+                    if ($requestedGroupId !== null && $requestedGroupId > 0) {
+                        $query->andWhere(['group_id' => (int)$requestedGroupId]);
+                    }
+                } else {
+                    // Não-master sempre restringe ao seu group (ou herdado) — nunca deixar 0
+                    $gid = (int)Auth::userGroup();
+                    if ($gid > 0) {
+                        $query->andWhere(['group_id' => $gid]);
+                    } else {
+                        // Segurança extra: se por algum motivo não vier, bloqueia resultados
+                        $query->andWhere('1=0');
+                    }
+                }
+                return $query;
             }
-        } catch (\Throwable) {}
+        } catch (\Throwable) {
+            // cair no fallback abaixo
+        }
 
-        if ($groupId) {
-            $query->andWhere(['group_id' => (int)$groupId]);
+        // Fallback bem conservador (sem helpers novos)
+        $gid = (int)(Yii::$app->user->identity->group_id ?? 0);
+        if ($gid > 0) {
+            $query->andWhere(['group_id' => $gid]);
+        } else {
+            $query->andWhere('1=0');
         }
         return $query;
     }
+
 
     private function absFromWebPath(string $webPath): string
     {
@@ -541,25 +615,41 @@ class StorageController extends Controller
         FileHelper::createDirectory(\dirname($thumbAbs));
         if ($aspect === 1) {
             $size = @getimagesize($srcAbs);
-            if (!$size) { throw new \RuntimeException('getimagesize falhou.'); }
-            [$w,$h] = $size; $side=min($w,$h);
-            $x=(int)(($w-$side)/2); $y=(int)(($h-$side)/2);
+            if (!$size) {
+                throw new \RuntimeException('getimagesize falhou.');
+            }
+            [$w, $h] = $size;
+            $side = min($w, $h);
+            $x = (int)(($w - $side) / 2);
+            $y = (int)(($h - $side) / 2);
         } else {
-            [$tw,$th] = array_map('intval', explode('/', (string)$aspect));
+            [$tw, $th] = array_map('intval', explode('/', (string)$aspect));
             $size = @getimagesize($srcAbs);
-            if (!$size) { throw new \RuntimeException('getimagesize falhou.'); }
-            [$w,$h] = $size;
-            $target = $tw/$th; $ratio=$w/$h;
-            if ($ratio > $target) { $newW=(int)($h*$target); $newH=$h; $x=(int)(($w-$newW)/2); $y=0; }
-            else { $newW=$w; $newH=(int)($w/$target); $x=0; $y=(int)(($h-$newH)/2); }
-            \yii\imagine\Image::crop($srcAbs, $newW, $newH, [$x,$y])
-                ->resize(new \Imagine\Image\Box($tw,$th))
-                ->save($thumbAbs, ['quality'=>100]);
+            if (!$size) {
+                throw new \RuntimeException('getimagesize falhou.');
+            }
+            [$w, $h] = $size;
+            $target = $tw / $th;
+            $ratio = $w / $h;
+            if ($ratio > $target) {
+                $newW = (int)($h * $target);
+                $newH = $h;
+                $x = (int)(($w - $newW) / 2);
+                $y = 0;
+            } else {
+                $newW = $w;
+                $newH = (int)($w / $target);
+                $x = 0;
+                $y = (int)(($h - $newH) / 2);
+            }
+            \yii\imagine\Image::crop($srcAbs, $newW, $newH, [$x, $y])
+                ->resize(new \Imagine\Image\Box($tw, $th))
+                ->save($thumbAbs, ['quality' => 100]);
             return;
         }
-        \yii\imagine\Image::crop($srcAbs, $side, $side, [$x,$y])->save($thumbAbs, ['quality'=>100]);
+        \yii\imagine\Image::crop($srcAbs, $side, $side, [$x, $y])->save($thumbAbs, ['quality' => 100]);
         if ($side > 300) {
-            \yii\imagine\Image::thumbnail($thumbAbs, 300, 300)->save($thumbAbs, ['quality'=>100]);
+            \yii\imagine\Image::thumbnail($thumbAbs, 300, 300)->save($thumbAbs, ['quality' => 100]);
         }
     }
 
@@ -570,12 +660,15 @@ class StorageController extends Controller
         $video  = $ffmpeg->open($videoAbs);
         $video->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(2))->save($thumbAbs);
         // crop quadrado + resize
-        $size=@getimagesize($thumbAbs);
+        $size = @getimagesize($thumbAbs);
         if ($size) {
-            [$w,$h]=$size; $side=min($w,$h); $x=(int)(($w-$side)/2); $y=(int)(($h-$side)/2);
-            \yii\imagine\Image::crop($thumbAbs, $side, $side, [$x,$y])->save($thumbAbs, ['quality'=>100]);
-            if ($side>300) {
-                \yii\imagine\Image::thumbnail($thumbAbs, 300, 300)->save($thumbAbs, ['quality'=>100]);
+            [$w, $h] = $size;
+            $side = min($w, $h);
+            $x = (int)(($w - $side) / 2);
+            $y = (int)(($h - $side) / 2);
+            \yii\imagine\Image::crop($thumbAbs, $side, $side, [$x, $y])->save($thumbAbs, ['quality' => 100]);
+            if ($side > 300) {
+                \yii\imagine\Image::thumbnail($thumbAbs, 300, 300)->save($thumbAbs, ['quality' => 100]);
             }
         }
     }
