@@ -1,11 +1,20 @@
 <?php
 
+use croacworks\essentials\controllers\RoleController;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\RoleSearch */
 /* @var $form yii\widgets\ActiveForm */
+$controllers = RoleController::getAllControllers();
+$js = <<<JS
+$(function () {
+    $('#role-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});
+});
+JS;
+
+$this->registerJs($js);
 ?>
 
 <div class="row mt-2">
@@ -21,19 +30,20 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'user_id') ?>
+    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
 
-    <?= $form->field($model, 'group_id') ?>
+    <?= $form->field($model, 'user_id')->dropDownList(yii\helpers\ArrayHelper::map(User::find()->select('id,username')->asArray()->all(), 'id', 'username'), ['prompt' => '-- selecione um usuario --']) ?>
 
-    <?= $form->field($model, 'controller') ?>
-
-    <?= $form->field($model, 'actions') ?>
-
-    <?php // echo $form->field($model, 'status') ?>
+    <?= $form->field($model, 'controller')->dropDownList($controllers, [
+        'multiple' => false,
+        'prompt' => '-- CONTROLLER --',
+    ]) ?>
+    
+    <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group">
         <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton('<i class="fas fa-broom mr-2"></i>' .Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
+        <?= Html::resetButton('<i class="fas fa-broom mr-2"></i>' .Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary btn-reset']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>
