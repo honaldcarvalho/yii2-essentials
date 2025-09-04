@@ -21,7 +21,7 @@ $fromActions  = [];
 $toActions  = [];
 
 PluginAsset::register($this)->add(['multiselect']);
-$controllers = RoleController::getAllControllers();
+$controllers = RoleController::getAllControllersRestricted();
 $actionUrl = Url::to(['get-actions']);
 
 if(!$model->isNewRecord){

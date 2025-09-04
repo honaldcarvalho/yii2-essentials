@@ -11,6 +11,7 @@ use yii\helpers\Inflector;
 use yii\web\NotFoundHttpException;
 use croacworks\essentials\models\Group;
 use croacworks\essentials\models\Role;
+use croacworks\essentials\services\GrantScopeService;
 use yii\filters\VerbFilter;
 
 /**
@@ -92,6 +93,17 @@ class RoleController extends AuthorizationController
         }
 
         return $controllers;
+    }
+
+    public static function getAllControllersRestricted(): array
+    {
+        $all = self::getAllControllers(); // seu método atual que lista FQCNs
+        $scope = GrantScopeService::currentUserGrantScope();
+        // Se tiver '*' global, retorna tudo
+        if (isset($scope['*']) || in_array('*', array_keys($scope), true)) return $all;
+
+        // Só controllers que o usuário tem no escopo
+        return array_values(array_intersect($all, array_keys($scope)));
     }
 
     private static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
@@ -192,7 +204,7 @@ class RoleController extends AuthorizationController
     public function actionApplyTemplates(int $group_id, int $reseed = 1)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
+
         $group = Group::findOne($group_id);
         if (!$group) {
             throw new NotFoundHttpException('Grupo não encontrado.');

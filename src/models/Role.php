@@ -3,6 +3,7 @@
 namespace croacworks\essentials\models;
 
 use croacworks\essentials\models\ModelCommon;
+use croacworks\essentials\services\GrantScopeService;
 use Yii;
 
 /**
@@ -36,9 +37,10 @@ class Role extends ModelCommon
     /**
      * {@inheritdoc}
      */
+
     public function rules()
     {
-        return [
+        return array_merge(parent::rules(), [
             [['group_id', 'user_id', 'name'], 'default', 'value' => null],
             [['status'], 'default', 'value' => 1],
             [['group_id', 'user_id', 'status'], 'integer'],
@@ -47,9 +49,39 @@ class Role extends ModelCommon
             [['controller'], 'string', 'max' => 255],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-        ];
-    }
 
+            // Validador de escopo de concessão (não aplica para master)
+            ['action', function($attribute) {
+                $user = Yii::$app->user->identity;
+                if (!$user) return;
+
+                // Se for master/super admin, bypass (ajuste para sua checagem real)
+                if (method_exists(\croacworks\essentials\controllers\AuthorizationController::class, 'isAdmin')
+                    && \croacworks\essentials\controllers\AuthorizationController::isAdmin()) {
+                    return;
+                }
+
+                $controller = $this->controller;
+                $action     = $this->action ?: '*';
+
+                // Se o usuário tentar criar wildcard '*', valide se ele pode conceder todas as actions
+                if ($action === '*') {
+                    // mínimo: precisa ter wildcard no mesmo controller
+                    if (!GrantScopeService::canGrant($controller, '*')) {
+                        $this->addError($attribute, Yii::t('app', 'Você não pode conceder acesso total a este controller.'));
+                    }
+                    return;
+                }
+
+                if (!GrantScopeService::canGrant($controller, $action)) {
+                    $this->addError($attribute, Yii::t('app', 'Você não tem permissão para conceder {ctrl}::{act}.', [
+                        'ctrl' => $controller,
+                        'act'  => $action
+                    ]));
+                }
+            }],
+        ]);
+    }
     /**
      * {@inheritdoc}
      */

@@ -8,7 +8,7 @@ use yii\widgets\ActiveForm;
 /* @var $model croacworks\essentials\models\RoleTemplate */
 /* @var $form yii\widgets\ActiveForm */
 
-$controllers = RoleController::getAllControllers();
+$controllers = RoleController::getAllControllersRestricted();
 $js = <<<JS
 $(function () {
     $('#roletemplate-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});

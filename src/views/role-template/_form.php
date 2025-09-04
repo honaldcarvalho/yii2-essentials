@@ -11,7 +11,7 @@ use yii\widgets\ActiveForm;
 
 PluginAsset::register($this)->add(['multiselect']);
 
-$controllers    = RoleController::getAllControllers();
+$controllers = RoleController::getAllControllersRestricted();
 $actionUrl      = Url::to(['role/get-actions']);
 
 $origins        = [];

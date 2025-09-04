@@ -9,7 +9,7 @@ use yii\widgets\ActiveForm;
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\RoleSearch */
 /* @var $form yii\widgets\ActiveForm */
-$controllers = RoleController::getAllControllers();
+$controllers = RoleController::getAllControllersRestricted();
 $js = <<<JS
 $(function () {
     $('#role-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});
