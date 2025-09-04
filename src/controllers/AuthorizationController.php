@@ -429,13 +429,14 @@ class AuthorizationController extends CommonController
             return false;
         }
 
-        // Guarda por grupo no registro (mantém a sua regra)
+        // ⬇️ AQUI: usar família (próprio + ancestrais), não só os grupos do usuário
         if ($model && $model->verGroup) {
-            $groups = self::getAllUserGroupIds();
+            $groups = \croacworks\essentials\models\Group::familyIdsFromUser(self::User());
+            $groups = array_map('intval', (array)$groups);
 
             if ($request_action === 'view' && (int)$model->group_id === 1) {
-                // público (mantido)
-            } else if (!in_array((int)$model->group_id, $groups, true)) {
+                // público
+            } elseif (!in_array((int)$model->group_id, $groups, true)) {
                 return false;
             }
         }
@@ -447,6 +448,7 @@ class AuthorizationController extends CommonController
 
         return $ctrl->isActionAllowedByOverlay($controllerFQCN, $request_action);
     }
+
 
     /* ===== Licença (mantida) ===== */
 
@@ -574,15 +576,13 @@ class AuthorizationController extends CommonController
         $model = $modelClass::find()->where(['id' => $id]);
         $modelObj = new $modelClass;
 
-        if (
-            property_exists($modelObj, 'verGroup') &&
-            $modelObj->verGroup &&
-            !self::isMaster()
-        ) {
-            $groups = self::getAllUserGroupIds();
+        if (property_exists($modelObj, 'verGroup') && $modelObj->verGroup && !self::isMaster()) {
+
+            $groups = \croacworks\essentials\models\Group::familyIdsFromUser(self::User());
+            $groups = array_map('intval', (array)$groups);
 
             if (Yii::$app->controller->action->id === 'view') {
-                $groups[] = 1;
+                $groups[] = 1; // público
             }
 
             $model->andFilterWhere(['in', 'group_id', $groups]);
@@ -594,7 +594,6 @@ class AuthorizationController extends CommonController
 
         throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
     }
-
 
     /** 
      * Heartbeat SOFT: registra/atualiza presença por sessão usando SEMPRE user.group_id.
