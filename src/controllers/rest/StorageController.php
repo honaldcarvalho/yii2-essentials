@@ -267,6 +267,40 @@ class StorageController extends ControllerRest
             ->save($destImagePath, ['quality' => 100]);
     }
 
+    /**
+     * Resolve to parent group id when available.
+     * If there's no parent, returns the same $groupId.
+     */
+    private static function resolveParentGroupId(?int $groupId): int
+    {
+        // Fallbacks iniciais
+        if (!$groupId || $groupId <= 0) {
+            // tenta derivar do usuário autenticado ou usa 1 como padrão
+            $groupId = \croacworks\essentials\controllers\AuthorizationController::userGroup() ?? 1;
+        }
+
+        // Tenta via modelo Group (ajuste o namespace se o seu Group estiver em outro lugar)
+        try {
+            if (class_exists(\croacworks\essentials\models\Group::class)) {
+                /** @var \yii\db\ActiveRecord $group */
+                $group = \croacworks\essentials\models\Group::find()
+                    ->select(['id', 'parent_id'])
+                    ->where(['id' => (int)$groupId])
+                    ->asArray()
+                    ->one();
+
+                if ($group && !empty($group['parent_id'])) {
+                    return (int)$group['parent_id'];
+                }
+            }
+        } catch (\Throwable $e) {
+            // silencioso: se der algo errado, mantém o próprio groupId
+        }
+
+        return (int)$groupId;
+    }
+
+
     public static function uploadFile(
         $file,
         $options = [
@@ -307,7 +341,8 @@ class StorageController extends ControllerRest
             $webFiles      = "{$web}{$files_folder}";
 
             $temp_file     = $file;
-            $group_id      = 1;
+            $inputGroupId  = isset($options['group_id']) ? (int)$options['group_id'] : (int)(\croacworks\essentials\controllers\AuthorizationController::userGroup() ?? 1);
+            $group_id      = self::resolveParentGroupId($inputGroupId);
             $folder_id     = null;
             $duration      = 0;
             $save          = 0;
@@ -601,10 +636,14 @@ class StorageController extends ControllerRest
             ];
 
             if ($save) {
-                $file_uploaded['group_id'] = $group_id;
+
+                // Se NÃO for master, derive do usuário e aplique pai
                 if (!AuthorizationController::isMaster()) {
-                    $file_uploaded['group_id'] = AuthorizationController::userGroup();
+                    $userGroup = AuthorizationController::userGroup() ?? 1;
+                    $effectiveGroupId = self::resolveParentGroupId((int)$userGroup);
                 }
+
+                $file_uploaded['group_id'] = (int)$effectiveGroupId;
 
                 $file_uploaded['class'] = File::class;
                 $file_uploaded['file']  = $temp_file;
