@@ -267,34 +267,6 @@ class StorageController extends ControllerRest
             ->save($destImagePath, ['quality' => 100]);
     }
 
-    /**
-     * Resolve to parent group id when available.
-     * If there's no parent, returns the same $groupId.
-     */
-    private static function resolveParentGroupId(?int $inputGroupId): int
-    {
-        $isMaster  = \croacworks\essentials\controllers\AuthorizationController::isMaster();
-        $userGroup = (int)\croacworks\essentials\controllers\AuthorizationController::userGroup();
-
-        // candidato: não-master sempre o do usuário; master pode vir do input (ou cai no do master)
-        $candidate = $isMaster ? (int)($inputGroupId ?? $userGroup) : $userGroup;
-
-        // pega pai se existir; senão devolve o próprio
-        if (class_exists(\croacworks\essentials\models\Group::class)) {
-            $g = \croacworks\essentials\models\Group::find()
-                ->select(['id', 'parent_id'])
-                ->where(['id' => $candidate])
-                ->asArray()
-                ->one();
-
-            if ($g && !empty($g['parent_id'])) {
-                return (int)$g['parent_id'];
-            }
-        }
-
-        return $candidate;
-    }
-
     public static function uploadFile(
         $file,
         $options = [
@@ -335,7 +307,7 @@ class StorageController extends ControllerRest
             $webFiles      = "{$web}{$files_folder}";
 
             $temp_file     = $file;
-            $group_id = self::resolveParentGroupId(isset($options['group_id']) ? (int)$options['group_id'] : null);
+            $group_id      = 1;
             $folder_id     = null;
             $duration      = 0;
             $save          = 0;
@@ -629,8 +601,10 @@ class StorageController extends ControllerRest
             ];
 
             if ($save) {
-
-                $file_uploaded['group_id'] = $group_id; // mantém o que calculamos acima
+                $file_uploaded['group_id'] = $group_id;
+                if (!AuthorizationController::isMaster()) {
+                    $file_uploaded['group_id'] = AuthorizationController::userGroup();
+                }
 
                 $file_uploaded['class'] = File::class;
                 $file_uploaded['file']  = $temp_file;
