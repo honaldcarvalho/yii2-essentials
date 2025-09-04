@@ -74,7 +74,6 @@ class StorageController extends Controller
     // ---------------------------- CORE ----------------------------
 
     /** POST /storage/upload (multipart/form-data) */
-    /** POST /storage/upload (multipart/form-data) */
     public function actionUpload(): Response
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -87,52 +86,38 @@ class StorageController extends Controller
             return $this->asJson(['ok' => false, 'error' => 'Arquivo não encontrado no campo "file".']);
         }
 
-        // Sempre pegar os IDs crus do request (sem confiar neles ainda)
+        // Valores crus do request (não confiar neles ainda)
         $requestedGroupId = (int)Yii::$app->request->post('group_id', 0);
         $folderId         = (int)Yii::$app->request->post('folder_id', 1);
 
-        // ======== REGRA DE NEGÓCIO DO GROUP ========
-        // Só master pode escolher livremente o group_id. Não-masters: ignorar POST[group_id]
-        // e resolver pelo pai (folder) ou pelo próprio usuário.
-        $resolvedGroupId = 0;
+        // === REGRA DE GRUPO ===
+        // Não-master: ignorar POST[group_id] e resolver via parent/usuário.
+        // Master: pode definir group_id; se não enviar, cai no seu próprio.
         try {
-            if (class_exists(Auth::class) && method_exists(Auth::class, 'resolveParentGroupId')) {
-                // A função já trata: se não master, usa o group do pai/usuário; se master, aceita o informado.
+            if (method_exists(Auth::class, 'resolveParentGroupId')) {
+                // OBS: ordem conforme você pediu: (requestedGroupId, folderId)
                 $resolvedGroupId = (int)Auth::resolveParentGroupId($requestedGroupId, $folderId);
             } else {
-                // Fallback mínimo (sem criar helpers novos)
-                if (class_exists(Auth::class) && method_exists(Auth::class, 'isMaster') && method_exists(Auth::class, 'userGroup')) {
-                    if (Auth::isMaster()) {
-                        $resolvedGroupId = $requestedGroupId ?: (int)Auth::userGroup();
-                    } else {
-                        $resolvedGroupId = (int)Auth::userGroup(); // usuário sempre tem group_id
-                    }
-                } else {
-                    // Último recurso: NÃO deixar 0 (evita "Group is invalid")
-                    $resolvedGroupId = (int)(Yii::$app->user->identity->group_id ?? 0);
-                }
+                // fallback mínimo, sem helpers novos
+                $resolvedGroupId = (int)(Yii::$app->user->identity->group_id ?? 0);
             }
-        } catch (\Throwable $e) {
-            // Nunca permitir 0 aqui
+        } catch (\Throwable) {
             $resolvedGroupId = (int)(Yii::$app->user->identity->group_id ?? 0);
         }
 
         if ($resolvedGroupId <= 0) {
-            return $this->asJson([
-                'ok'    => false,
-                'error' => 'Falha ao determinar o grupo do arquivo.',
-            ]);
+            // nunca deixe salvar 0 — dá o mesmo erro "Group is invalid"
+            return $this->asJson(['ok' => false, 'error' => 'Falha ao determinar o grupo do arquivo.']);
         }
-        // ============================================
 
         $opts = new StorageOptions([
             'fileName'     => Yii::$app->request->post('file_name'),
             'description'  => Yii::$app->request->post('description'),
             'folderId'     => $folderId,
-            'groupId'      => $resolvedGroupId, // <- FORÇADO
+            'groupId'      => $resolvedGroupId, // <- FORÇADO AQUI
             'saveModel'    => (bool)Yii::$app->request->post('save', 1),
             'convertVideo' => (bool)Yii::$app->request->post('convert_video', 1),
-            'thumbAspect'  => Yii::$app->request->post('thumb_aspect', 1), // 1 ou "W/H"
+            'thumbAspect'  => Yii::$app->request->post('thumb_aspect', 1),
             'quality'      => (int)Yii::$app->request->post('quality', 85),
         ]);
 
@@ -144,7 +129,7 @@ class StorageController extends Controller
             $payload = ($result instanceof \yii\db\BaseActiveRecord) ? $result->attributes : $result->toArray();
             return $this->asJson(['ok' => true, 'data' => $payload]);
         } catch (\Throwable $e) {
-            Yii::error("Storage upload failed: {$e->getMessage()}", __METHOD__);
+            Yii::error("REST Storage upload failed: {$e->getMessage()}", __METHOD__);
             return $this->asJson(['ok' => false, 'error' => 'Falha ao processar upload.', 'detail' => YII_ENV_DEV ? $e->getMessage() : null]);
         }
     }
