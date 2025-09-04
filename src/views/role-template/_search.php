@@ -1,14 +1,25 @@
 <?php
 
+use croacworks\essentials\controllers\RoleController;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-/** @var yii\web\View $this */
-/** @var croacworks\essentials\models\RolesTemplateS $model */
-/** @var yii\widgets\ActiveForm $form */
+/* @var $this yii\web\View */
+/* @var $model croacworks\essentials\models\RoleTemplate */
+/* @var $form yii\widgets\ActiveForm */
+
+$controllers = RoleController::getAllControllers();
+$js = <<<JS
+$(function () {
+    $('#roletemplate-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});
+});
+JS;
+
+$this->registerJs($js);
 ?>
 
-<div class="roles-template-search">
+<div class="row mt-2">
+    <div class="col-md-12">
 
     <?php $form = ActiveForm::begin([
         'action' => ['index'],
@@ -20,21 +31,24 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'level') ?>
+    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
 
-    <?= $form->field($model, 'controller') ?>
+    <?= $form->field($model, 'user_id')->dropDownList(yii\helpers\ArrayHelper::map(User::find()->select('id,username')->asArray()->all(), 'id', 'username'), ['prompt' => '-- selecione um usuario --']) ?>
 
-    <?= $form->field($model, 'actions') ?>
-
-    <?= $form->field($model, 'origin') ?>
-
-    <?php // echo $form->field($model, 'status') ?>
+    <?= $form->field($model, 'controller')->dropDownList($controllers, [
+        'multiple' => false,
+        'prompt' => '-- CONTROLLER --',
+    ]) ?>
+    
+    <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group">
-        <?= Html::submitButton(Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton(Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
+        <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
+        <?= Html::resetButton('<i class="fas fa-broom mr-2"></i>' .Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary btn-reset']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>
 
+    </div>
+    <!--.col-md-12-->
 </div>
