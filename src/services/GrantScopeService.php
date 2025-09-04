@@ -41,7 +41,7 @@ class GrantScopeService
 
         // 2) Pegar as roles efetivas desses grupos
         $rows = (new Query())
-            ->select(['controller','action'])
+            ->select(['controller','actions'])
             ->from($rolesTable)
             ->where(['group_id' => $groupIds])
             ->all();
