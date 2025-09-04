@@ -253,14 +253,111 @@ class Group extends ModelCommon
     }
 
     /**
-     * Helper direto para o usuário.
+     * Retorna todos os grupos “da família” a partir de um usuário:
+     * - grupos do próprio usuário (group_id e users_groups)
+     * - ancestrais (subindo parent_id até a raiz)
+     * - descendentes (todos os filhos recursivamente)
+     * - irmãos (mesmo parent_id) – opcional
      */
-    public static function familyIdsFromUser(\croacworks\essentials\models\User $user): array
+    public static function familyIdsFromUser($user, bool $includeSiblings = true): array
     {
-        $ids = $user->getUserGroupsId(); // já existe no teu projeto
-        return static::familyIdsFromMany($ids);
+        $seed = [];
+
+        // 1) grupo principal do usuário (coluna group_id)
+        if (!empty($user->group_id)) {
+            $seed[] = (int)$user->group_id;
+        }
+
+        // 2) grupos via pivot users_groups
+        try {
+            $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+                ? \croacworks\essentials\models\UsersGroup::tableName()
+                : '{{%users_groups}}';
+
+            $rows = (new \yii\db\Query())
+                ->from($ugTable)
+                ->select('group_id')
+                ->where(['user_id' => (int)$user->id])
+                ->column();
+
+            foreach ($rows as $gid) {
+                if ($gid !== null) $seed[] = (int)$gid;
+            }
+        } catch (\Throwable $e) {
+            // Se não existir a tabela/pivot, segue só com o group_id
+        }
+
+        $seed = array_values(array_unique(array_map('intval', $seed)));
+        if (empty($seed)) return [];
+
+        // 3) expande família
+        return self::expandFamilyIds($seed, $includeSiblings);
     }
-    
+
+    /**
+     * Expande uma lista de grupos para incluir ancestrais, descendentes e (opcionalmente) irmãos.
+     */
+    public static function expandFamilyIds(array $seedIds, bool $includeSiblings = true): array
+    {
+        $seen = [];
+        $queue = array_values(array_unique(array_map('intval', $seedIds)));
+
+        // marca semente
+        foreach ($queue as $id) $seen[$id] = true;
+
+        // — ancestrais (sobe parent_id)
+        foreach ($queue as $id) {
+            $cur = self::findOne($id);
+            while ($cur && $cur->parent_id) {
+                $pid = (int)$cur->parent_id;
+                if (!isset($seen[$pid])) {
+                    $seen[$pid] = true;
+                }
+                $cur = self::findOne($pid);
+            }
+        }
+
+        // — descendentes (todos os filhos recursivamente)
+        $toVisit = array_keys($seen);
+        while (!empty($toVisit)) {
+            $chunk = array_splice($toVisit, 0, 50); // evita consultas gigantes
+            $children = self::find()
+                ->where(['parent_id' => $chunk])
+                ->all();
+
+            foreach ($children as $child) {
+                $cid = (int)$child->id;
+                if (!isset($seen[$cid])) {
+                    $seen[$cid] = true;
+                    $toVisit[] = $cid;
+                }
+            }
+        }
+
+        // — irmãos (opcional)
+        if ($includeSiblings) {
+            // pega todos os pais presentes
+            $parents = (new \yii\db\Query())
+                ->from(self::tableName())
+                ->select('DISTINCT parent_id')
+                ->where(['id' => array_keys($seen)])
+                ->andWhere('parent_id IS NOT NULL')
+                ->column();
+
+            if (!empty($parents)) {
+                $siblings = self::find()
+                    ->where(['parent_id' => $parents])
+                    ->all();
+
+                foreach ($siblings as $sib) {
+                    $seen[(int)$sib->id] = true;
+                }
+            }
+        }
+
+        return array_values(array_map('intval', array_keys($seen)));
+    }    
+
     /**
      * find() com escopo de família para não-admin.
      * ⚠️ Sem return type custom aqui!
