@@ -271,35 +271,29 @@ class StorageController extends ControllerRest
      * Resolve to parent group id when available.
      * If there's no parent, returns the same $groupId.
      */
-    private static function resolveParentGroupId(?int $groupId): int
+    private static function resolveParentGroupId(?int $inputGroupId): int
     {
-        // Fallbacks iniciais
-        if (!$groupId || $groupId <= 0) {
-            // tenta derivar do usuário autenticado ou usa 1 como padrão
-            $groupId = \croacworks\essentials\controllers\AuthorizationController::userGroup() ?? 1;
-        }
+        $isMaster  = \croacworks\essentials\controllers\AuthorizationController::isMaster();
+        $userGroup = (int)\croacworks\essentials\controllers\AuthorizationController::userGroup();
 
-        // Tenta via modelo Group (ajuste o namespace se o seu Group estiver em outro lugar)
-        try {
-            if (class_exists(\croacworks\essentials\models\Group::class)) {
-                /** @var \yii\db\ActiveRecord $group */
-                $group = \croacworks\essentials\models\Group::find()
-                    ->select(['id', 'parent_id'])
-                    ->where(['id' => (int)$groupId])
-                    ->asArray()
-                    ->one();
+        // candidato: não-master sempre o do usuário; master pode vir do input (ou cai no do master)
+        $candidate = $isMaster ? (int)($inputGroupId ?? $userGroup) : $userGroup;
 
-                if ($group && !empty($group['parent_id'])) {
-                    return (int)$group['parent_id'];
-                }
+        // pega pai se existir; senão devolve o próprio
+        if (class_exists(\croacworks\essentials\models\Group::class)) {
+            $g = \croacworks\essentials\models\Group::find()
+                ->select(['id', 'parent_id'])
+                ->where(['id' => $candidate])
+                ->asArray()
+                ->one();
+
+            if ($g && !empty($g['parent_id'])) {
+                return (int)$g['parent_id'];
             }
-        } catch (\Throwable $e) {
-            // silencioso: se der algo errado, mantém o próprio groupId
         }
 
-        return (int)$groupId;
+        return $candidate;
     }
-
 
     public static function uploadFile(
         $file,
@@ -341,8 +335,7 @@ class StorageController extends ControllerRest
             $webFiles      = "{$web}{$files_folder}";
 
             $temp_file     = $file;
-            $inputGroupId  = isset($options['group_id']) ? (int)$options['group_id'] : (int)(\croacworks\essentials\controllers\AuthorizationController::userGroup() ?? 1);
-            $group_id      = self::resolveParentGroupId($inputGroupId);
+            $group_id = self::resolveParentGroupId(isset($options['group_id']) ? (int)$options['group_id'] : null);
             $folder_id     = null;
             $duration      = 0;
             $save          = 0;
@@ -637,13 +630,7 @@ class StorageController extends ControllerRest
 
             if ($save) {
 
-                // Se NÃO for master, derive do usuário e aplique pai
-                if (!AuthorizationController::isMaster()) {
-                    $userGroup = AuthorizationController::userGroup() ?? 1;
-                    $effectiveGroupId = self::resolveParentGroupId((int)$userGroup);
-                }
-
-                $file_uploaded['group_id'] = (int)$effectiveGroupId;
+                $file_uploaded['group_id'] = $group_id; // mantém o que calculamos acima
 
                 $file_uploaded['class'] = File::class;
                 $file_uploaded['file']  = $temp_file;
