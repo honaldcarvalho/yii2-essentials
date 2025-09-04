@@ -72,13 +72,22 @@ class RoleTemplateController extends AuthorizationController
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $post = $this->request->post();
+        $savedActions = $model->actions ? explode(';', $model->actions) : [];
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost && $model->load($post)) {
+            $model->actions = isset($post['to']) ? implode(';', $post['to']) : null;
+            $model->controller = trim($model->controller);
+            $model->origin = isset($post['RoleTemplate']['origin']) ? implode(';', $post['RoleTemplate']['origin']) : '*';
+
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('update', [
             'model' => $model,
+            'savedActions' => $savedActions,
         ]);
     }
 
