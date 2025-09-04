@@ -31,7 +31,9 @@ $this->registerJs($js);
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
+    <?= $form->field($model, 'level')->dropDownList(\croacworks\essentials\models\RoleTemplate::optsLevel(), [
+        'prompt' => '-- Level --'
+    ]) ?>
 
     <?= $form->field($model, 'user_id')->dropDownList(yii\helpers\ArrayHelper::map(User::find()->select('id,username')->asArray()->all(), 'id', 'username'), ['prompt' => '-- selecione um usuario --']) ?>
 
