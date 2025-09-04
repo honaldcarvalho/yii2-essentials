@@ -48,7 +48,6 @@ class RoleTemplate extends ModelCommon
             [['level', 'actions'], 'string'],
             [['status'], 'integer'],
             [['controller'], 'string', 'max' => 255],
-            [['origin'], 'string', 'max' => 50],
             ['level', 'in', 'range' => array_keys(self::optsLevel())],
         ];
     }
