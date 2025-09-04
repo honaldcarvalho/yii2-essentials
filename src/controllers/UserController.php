@@ -313,7 +313,7 @@ class UserController extends AuthorizationController
 
     protected function findModel($id, $model = null)
     {
-        if (isset(Yii::$app->user->identity) && !$this::isAdmin()) {
+        if (isset(Yii::$app->user->identity) && !$this::isMaster() && !$this::isAdmin()) {
             return Yii::$app->user->identity;
         } else if (($model = User::findOne($id)) !== null) {
             return $model;
