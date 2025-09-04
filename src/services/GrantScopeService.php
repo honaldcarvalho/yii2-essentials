@@ -49,7 +49,7 @@ class GrantScopeService
         $map = [];
         foreach ($rows as $r) {
             $c = $r['controller'];
-            $a = $r['action'] ?: '*';
+            $a = $r['actions'] ?: '*';
             if (!isset($map[$c])) $map[$c] = [];
             // normalizar '*' (qualquer action naquele controller)
             if ($a === '*') { $map[$c] = ['*']; continue; }
