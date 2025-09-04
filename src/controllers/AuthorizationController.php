@@ -454,24 +454,70 @@ class AuthorizationController extends CommonController
     public static function verifyLicense()
     {
         // Admin passa sempre
-        if (self::isMaster()) return true;
+        if (self::isMaster()) {
+            return true;
+        }
 
         $u = self::User();
         if (!$u || !$u->group_id) {
             return null; // sem usuário ou sem grupo principal
         }
 
-        // Licença válida do GRUPO PRINCIPAL apenas
-        return License::find()
-            ->where([
-                'group_id' => (int)$u->group_id,
-                'status'   => 1,
-            ])
-            // aceita DATE ou DATETIME na coluna `validate`
-            ->andWhere(['>=', 'validate', date('Y-m-d')])
-            ->orderBy(['validate' => SORT_DESC, 'id' => SORT_DESC])
-            ->one();
+        $db = \Yii::$app->db;
+
+        // Evita loops acidentais em hierarquias corrompidas
+        $visited = [];
+        $current = (int)$u->group_id;
+
+        while ($current && !in_array($current, $visited, true)) {
+            $visited[] = $current;
+
+            // Busca a licença mais "recente" deste grupo (sem filtrar por data aqui)
+            /** @var \croacworks\essentials\models\License|null $lic */
+            $lic = \croacworks\essentials\models\License::find()
+                ->where(['group_id' => $current, 'status' => 1])
+                ->orderBy(['validate' => SORT_DESC, 'id' => SORT_DESC])
+                ->one();
+
+            // Validação flexível do campo `validate`:
+            // - null/'' => ilimitada (considera válida)
+            // - numérica => timestamp UNIX
+            // - string => parse via strtotime
+            if ($lic) {
+                $raw = $lic->validate ?? null;
+
+                $isValid = true; // default: sem data -> válido
+                if ($raw !== null && $raw !== '') {
+                    if (is_numeric($raw)) {
+                        $ts = (int)$raw;
+                    } else {
+                        $ts = @strtotime((string)$raw);
+                        $ts = $ts === false ? 0 : $ts;
+                    }
+                    // Se tiver timestamp válido e estiver no passado, invalida
+                    if ($ts > 0 && $ts < time()) {
+                        $isValid = false;
+                    }
+                }
+
+                if ($isValid) {
+                    // Encontramos a licença efetiva neste ancestral
+                    return $lic;
+                }
+            }
+
+            // Sobe para o pai
+            $parent = $db->createCommand('SELECT parent_id FROM {{%groups}} WHERE id = :gid', [
+                ':gid' => $current
+            ])->queryScalar();
+
+            $current = $parent ? (int)$parent : 0;
+        }
+
+        // Nenhuma licença válida encontrada na cadeia
+        return null;
     }
+
 
     // (Opcional, se quiser ler como booleano em matchCallback)
     public static function verifyLicenseBool(): bool
