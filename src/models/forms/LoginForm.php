@@ -49,6 +49,80 @@ class LoginForm extends Model
             }
         }
     }
+    /**
+     * Sobe na hierarquia a partir de $groupId (incluindo ele) até encontrar a primeira licença.
+     * Retorna array com:
+     * - license_group_id (int) → grupo “dono” da licença efetiva
+     * - heartbeat_seconds (int)
+     * - limit_users (int)
+     * - validate (mixed|null)  → o mesmo que está em licenses.validate
+     */
+    public function resolveEffectiveLicense(int $groupId): ?array
+    {
+        $db = Yii::$app->db;
+        $visited = [];
+        $current = $groupId;
+
+        while ($current && !in_array($current, $visited, true)) {
+            $visited[] = $current;
+
+            // Tenta pegar licença deste nó
+            $row = $db->createCommand('
+            SELECT 
+                :gid AS license_group_id,
+                COALESCE(l.heartbeat_seconds, 600)              AS heartbeat_seconds,
+                COALESCE(l.max_users_override, lt.max_devices)  AS limit_users,
+                l.`validate`                                    AS `validate`
+            FROM {{%licenses}} l
+            JOIN {{%license_types}} lt ON lt.id = l.license_type_id
+            WHERE l.group_id = :gid
+            ORDER BY l.id DESC
+            LIMIT 1
+        ', [':gid' => $current])->queryOne();
+
+            if ($row) {
+                return $row;
+            }
+
+            // Sobe para o pai
+            $parent = $db->createCommand('
+            SELECT parent_id FROM {{%groups}} WHERE id = :gid
+        ', [':gid' => $current])->queryScalar();
+
+            $current = $parent ? (int)$parent : 0;
+        }
+
+        return null; // nenhuma licença encontrada na cadeia
+    }
+
+    /**
+     * Coleta **todos os group_ids** do sub-árvore (raiz incluída).
+     * Estratégia iterativa (evita CTE para compatibilidade).
+     */
+    public function collectSubtreeGroupIds(int $rootGroupId): array
+    {
+        $db = Yii::$app->db;
+        $result = [$rootGroupId];
+        $frontier = [$rootGroupId];
+
+        while (!empty($frontier)) {
+            $children = $db->createCommand('
+            SELECT id FROM {{%groups}} WHERE parent_id IN (' . implode(',', array_map('intval', $frontier)) . ')
+        ')->queryColumn();
+
+            $children = array_values(array_unique(array_map('intval', $children)));
+
+            // remove já coletados
+            $children = array_values(array_diff($children, $result));
+
+            if (empty($children)) break;
+
+            $result = array_merge($result, $children);
+            $frontier = $children;
+        }
+
+        return $result;
+    }
 
     /**
      * Logs in a user using the provided username and password.
@@ -61,17 +135,16 @@ class LoginForm extends Model
             return false;
         }
 
-        // ==== BEGIN Soft License-Limit Gate (by user.group_id) ====
         $user = $this->getUser();
         if (!$user) {
             return false;
         }
 
-        $db = Yii::$app->db;
+        $db      = Yii::$app->db;
         $userId  = (int)$user->id;
         $groupId = (int)$user->group_id;
 
-        // BYPASS: admin master (considera base group_id e users_groups)
+        // BYPASS: master/admin (considera base group_id e users_groups)
         try {
             if (User::isMasterByUserId($userId, $groupId, $db)) {
                 $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;
@@ -82,7 +155,7 @@ class LoginForm extends Model
                 return true;
             }
         } catch (\Throwable $e) {
-            // se a consulta falhar por algum motivo, não faz bypass e segue fluxo normal 
+            // se falhar, segue fluxo normal sem bypass
         }
 
         if ($groupId <= 0) {
@@ -90,78 +163,71 @@ class LoginForm extends Model
             return false;
         }
 
-        // Carregar licença do grupo base (usa a coluna `validate`)
-        $licenseRow = $db->createCommand('
-        SELECT 
-            l.id AS license_id,
-            COALESCE(l.heartbeat_seconds, 600)              AS heartbeat_seconds,
-            COALESCE(l.max_users_override, lt.max_devices)  AS limit_users,
-            l.`validate`                                    AS `validate`
-        FROM {{%licenses}} l
-        JOIN {{%license_types}} lt ON lt.id = l.license_type_id
-        WHERE l.group_id = :gid
-        ORDER BY l.id DESC
-        LIMIT 1
-    ', [':gid' => $groupId])->queryOne();
-
-        if (!$licenseRow) {
-            $this->addError('username', Yii::t('app', 'License not found for this group.'));
+        // === (1) Descobrir a licença efetiva subindo a hierarquia ===
+        $effective = $this->resolveEffectiveLicense($groupId);
+        if (!$effective) {
+            $this->addError('username', Yii::t('app', 'No active license found in the group hierarchy.'));
             return false;
         }
 
-        // Expiração baseada em `licenses.validate`
-        $rawValidate = $licenseRow['validate'] ?? null;
+        $licenseGroupId = (int)$effective['license_group_id'];
+        $heartbeat      = (int)($effective['heartbeat_seconds'] ?? 600);
+        if ($heartbeat <= 0) $heartbeat = 600;
+
+        // Expiração baseada no campo `validate` da licença efetiva (se informado)
+        $rawValidate = $effective['validate'] ?? null;
         if ($rawValidate !== null && $rawValidate !== '') {
             $ts = is_numeric($rawValidate) ? (int)$rawValidate : @strtotime((string)$rawValidate);
             $ts = $ts === false ? 0 : $ts;
             if ($ts > 0 && $ts < time()) {
-                $this->addError('username', Yii::t('app', 'License expired for this group.'));
+                $this->addError('username', Yii::t('app', 'License expired for this group hierarchy.'));
                 return false;
             }
         }
 
-        $heartbeat = (int)$licenseRow['heartbeat_seconds'];
-        if ($heartbeat <= 0) {
-            $heartbeat = 600; // fallback
-        }
-
-        // Limite de usuários
-        $limit = (int)$licenseRow['limit_users'];
+        // Limite de usuários (da licença efetiva, com fallback para Configuration)
+        $limit = (int)($effective['limit_users'] ?? 0);
         if ($limit <= 0) {
-            $cfg = \croacworks\essentials\models\Configuration::get();
+            $cfg   = \croacworks\essentials\models\Configuration::get();
             $limit = (int)($cfg->max_user ?? 0);
         }
 
-        // Contar SESSÕES ativas antes de registrar a nova
+        // === (2) Contabilizar sessões na SUBÁRVORE do grupo licenciado ===
+        $gids = $this->collectSubtreeGroupIds($licenseGroupId); // inclui o licenseGroupId
+        $gids = array_values(array_unique(array_map('intval', $gids)));
+
+        // Segurança: evita IN() vazio
+        if (empty($gids)) $gids = [$licenseGroupId];
+
+        $inList = implode(',', $gids);
         $activeCount = 0;
         try {
             $hb = max(1, (int)$heartbeat);
             $sql = "
             SELECT COUNT(DISTINCT uas.session_id)
             FROM {{%user_active_sessions}} uas
-            WHERE uas.group_id = :gid
+            WHERE uas.group_id IN ({$inList})
               AND uas.is_active = 1
               AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
         ";
-            $activeCount = (int)$db->createCommand($sql, [':gid' => $groupId])->queryScalar();
+            $activeCount = (int)$db->createCommand($sql)->queryScalar();
         } catch (\Throwable $e) {
             $activeCount = 0;
         }
 
         if ($limit > 0 && $activeCount >= $limit) {
-            $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
+            $this->addError('username', Yii::t('app', 'The limit of concurrent users for this license has been reached.'));
             return false;
         }
-        // ==== END Soft License-Limit Gate ====
 
-        // Faz o login do Yii
+        // === Login Yii ===
         $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;
         if (!Yii::$app->user->login($user, $duration)) {
             $this->addError('username', Yii::t('app', 'Login failed.'));
             return false;
         }
 
-        // ==== BEGIN Register/Activate session in user_active_sessions ====
+        // === Registrar/ativar sessão ===
         try {
             $sessionId = Yii::$app->session->id;
             $ip        = Yii::$app->request->userIP;
@@ -182,26 +248,25 @@ class LoginForm extends Model
         ', [
                 ':sid' => $sessionId,
                 ':uid' => (int)$user->id,
-                ':gid' => $groupId,
+                ':gid' => $groupId, // mantém o grupo real do usuário
                 ':ip'  => $ip,
                 ':ua'  => $ua,
             ])->execute();
         } catch (\Throwable $e) {
-            // Ignora se tabela ainda não existir
+            // silencioso (tabela pode não existir ainda)
         }
-        // ==== END Register/Activate session ====
 
-        // ==== RECHECK após registrar a sessão (anti-corrida) ====
+        // === (3) RECHECK anti-condição de corrida, ainda na SUBÁRVORE ===
         try {
             $hb = max(1, (int)$heartbeat);
             $sqlRecheck = "
             SELECT COUNT(DISTINCT uas.session_id)
             FROM {{%user_active_sessions}} uas
-            WHERE uas.group_id = :gid
+            WHERE uas.group_id IN ({$inList})
               AND uas.is_active = 1
               AND uas.last_seen_at > (NOW() - INTERVAL {$hb} SECOND)
         ";
-            $activeAfter = (int)$db->createCommand($sqlRecheck, [':gid' => $groupId])->queryScalar();
+            $activeAfter = (int)$db->createCommand($sqlRecheck)->queryScalar();
 
             if ($limit > 0 && $activeAfter > $limit) {
                 // estourou após registrar -> desativar esta sessão e sair
@@ -210,7 +275,7 @@ class LoginForm extends Model
                 ])->execute();
 
                 Yii::$app->user->logout(false);
-                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this group’s plan has been reached.'));
+                $this->addError('username', Yii::t('app', 'The limit of concurrent users for this license has been reached.'));
                 return false;
             }
         } catch (\Throwable $e) {
@@ -219,7 +284,6 @@ class LoginForm extends Model
 
         return true;
     }
-
 
     /**
      * Finds user by [[username]]
