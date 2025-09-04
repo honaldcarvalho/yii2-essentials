@@ -1,6 +1,8 @@
 <?php
 
 use croacworks\essentials\controllers\RoleController;
+use croacworks\essentials\models\Group;
+use croacworks\essentials\models\User;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
