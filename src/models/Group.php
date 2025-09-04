@@ -255,7 +255,6 @@ class Group extends ModelCommon
     /**
      * Helper direto para o usuário.
      */
-    use yii\db\Query;
 
     public static function familyIdsFromUser(\croacworks\essentials\models\User $user): array
     {
@@ -270,7 +269,7 @@ class Group extends ModelCommon
         }
 
         // mapa id => parent_id (1 query)
-        $rows = (new Query())
+        $rows = (new \yii\db\Query())
             ->from(static::tableName())
             ->select(['id', 'parent_id'])
             ->all();
