@@ -36,10 +36,10 @@ class Group extends ModelCommon
     public function rules()
     {
         return [
-            [['name'], 'required','on' => ['create','update']],
+            [['name'], 'required', 'on' => ['create', 'update']],
             [['parent_id'], 'default', 'value' => null],
             [['parent_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['parent_id' => 'id']],
-            [['status','parent_id'], 'integer'],
+            [['status', 'parent_id'], 'integer'],
             [['name'], 'string', 'max' => 255],
             ['name', 'unique', 'targetClass' => 'croacworks\essentials\models\Group'],
         ];
@@ -204,7 +204,7 @@ class Group extends ModelCommon
             // FALLBACK: sem CTE (MariaDB muito antiga)
             $all = (new Query())
                 ->from(static::tableName())
-                ->select(['id','parent_id'])
+                ->select(['id', 'parent_id'])
                 ->all($db);
 
             $byParent = [];
@@ -253,110 +253,52 @@ class Group extends ModelCommon
     }
 
     /**
-     * Retorna todos os grupos “da família” a partir de um usuário:
-     * - grupos do próprio usuário (group_id e users_groups)
-     * - ancestrais (subindo parent_id até a raiz)
-     * - descendentes (todos os filhos recursivamente)
-     * - irmãos (mesmo parent_id) – opcional
+     * Helper direto para o usuário.
      */
-    public static function familyIdsFromUser($user, bool $includeSiblings = true): array
-    {
-        $seed = [];
+    use yii\db\Query;
 
-        // 1) grupo principal do usuário (coluna group_id)
+    public static function familyIdsFromUser(\croacworks\essentials\models\User $user): array
+    {
+        // semente: grupos do pivot + grupo principal do usuário
+        $ids = array_map('intval', (array)$user->getUserGroupsId());
         if (!empty($user->group_id)) {
-            $seed[] = (int)$user->group_id;
+            $ids[] = (int)$user->group_id;
+        }
+        $ids = array_values(array_unique($ids));
+        if (empty($ids)) {
+            return [];
         }
 
-        // 2) grupos via pivot users_groups
-        try {
-            $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
-                ? \croacworks\essentials\models\UsersGroup::tableName()
-                : '{{%users_groups}}';
+        // mapa id => parent_id (1 query)
+        $rows = (new Query())
+            ->from(static::tableName())
+            ->select(['id', 'parent_id'])
+            ->all();
 
-            $rows = (new \yii\db\Query())
-                ->from($ugTable)
-                ->select('group_id')
-                ->where(['user_id' => (int)$user->id])
-                ->column();
+        $parentOf = [];
+        foreach ($rows as $r) {
+            $parentOf[(int)$r['id']] = $r['parent_id'] === null ? null : (int)$r['parent_id'];
+        }
 
-            foreach ($rows as $gid) {
-                if ($gid !== null) $seed[] = (int)$gid;
+        // inclui ancestrais (subindo até a raiz)
+        $seen = array_fill_keys($ids, true);
+        foreach ($ids as $gid) {
+            $cur = $gid;
+            while ($cur && !empty($parentOf[$cur]) && !isset($seen[$parentOf[$cur]])) {
+                $cur = $parentOf[$cur];
+                $seen[$cur] = true;
             }
-        } catch (\Throwable $e) {
-            // Se não existir a tabela/pivot, segue só com o group_id
         }
 
-        $seed = array_values(array_unique(array_map('intval', $seed)));
-        if (empty($seed)) return [];
+        $ids = array_map('intval', array_keys($seen));
 
-        // 3) expande família
-        return self::expandFamilyIds($seed, $includeSiblings);
+        // opcional: manter grupo público (1)
+        if (!in_array(1, $ids, true)) {
+            $ids[] = 1;
+        }
+
+        return static::familyIdsFromMany($ids);
     }
-
-    /**
-     * Expande uma lista de grupos para incluir ancestrais, descendentes e (opcionalmente) irmãos.
-     */
-    public static function expandFamilyIds(array $seedIds, bool $includeSiblings = true): array
-    {
-        $seen = [];
-        $queue = array_values(array_unique(array_map('intval', $seedIds)));
-
-        // marca semente
-        foreach ($queue as $id) $seen[$id] = true;
-
-        // — ancestrais (sobe parent_id)
-        foreach ($queue as $id) {
-            $cur = self::findOne($id);
-            while ($cur && $cur->parent_id) {
-                $pid = (int)$cur->parent_id;
-                if (!isset($seen[$pid])) {
-                    $seen[$pid] = true;
-                }
-                $cur = self::findOne($pid);
-            }
-        }
-
-        // — descendentes (todos os filhos recursivamente)
-        $toVisit = array_keys($seen);
-        while (!empty($toVisit)) {
-            $chunk = array_splice($toVisit, 0, 50); // evita consultas gigantes
-            $children = self::find()
-                ->where(['parent_id' => $chunk])
-                ->all();
-
-            foreach ($children as $child) {
-                $cid = (int)$child->id;
-                if (!isset($seen[$cid])) {
-                    $seen[$cid] = true;
-                    $toVisit[] = $cid;
-                }
-            }
-        }
-
-        // — irmãos (opcional)
-        if ($includeSiblings) {
-            // pega todos os pais presentes
-            $parents = (new \yii\db\Query())
-                ->from(self::tableName())
-                ->select('DISTINCT parent_id')
-                ->where(['id' => array_keys($seen)])
-                ->andWhere('parent_id IS NOT NULL')
-                ->column();
-
-            if (!empty($parents)) {
-                $siblings = self::find()
-                    ->where(['parent_id' => $parents])
-                    ->all();
-
-                foreach ($siblings as $sib) {
-                    $seen[(int)$sib->id] = true;
-                }
-            }
-        }
-
-        return array_values(array_map('intval', array_keys($seen)));
-    }    
 
     /**
      * find() com escopo de família para não-admin.
@@ -414,7 +356,7 @@ class Group extends ModelCommon
             'pagination' => ['pageSize' => (int)($options['pageSize'] ?? 10)],
             'sort'       => [
                 'defaultOrder' => $options['orderBy'] ?? ['id' => SORT_DESC],
-                'attributes'   => ['id','name','level','status','parent_id','created_at','updated_at'],
+                'attributes'   => ['id', 'name', 'level', 'status', 'parent_id', 'created_at', 'updated_at'],
             ],
         ]);
 
@@ -424,13 +366,12 @@ class Group extends ModelCommon
         }
 
         $t = static::tableName();
-        $query->andFilterWhere([$t.'.id' => $this->id])
-              ->andFilterWhere([$t.'.level' => $this->level])
-              ->andFilterWhere([$t.'.status' => $this->status])
-              ->andFilterWhere([$t.'.parent_id' => $this->parent_id])
-              ->andFilterWhere(['like', $t.'.name', $this->name]);
+        $query->andFilterWhere([$t . '.id' => $this->id])
+            ->andFilterWhere([$t . '.level' => $this->level])
+            ->andFilterWhere([$t . '.status' => $this->status])
+            ->andFilterWhere([$t . '.parent_id' => $this->parent_id])
+            ->andFilterWhere(['like', $t . '.name', $this->name]);
 
         return $dataProvider;
     }
-
 }
