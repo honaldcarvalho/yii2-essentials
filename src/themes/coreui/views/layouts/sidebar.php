@@ -136,7 +136,7 @@ $nodes[] = ['divider' => true];
 
     <!-- Bloco de usuário (opcional) -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
-        <a href="/user/{$user->id}" class="flex-shrink-0">
+        <a href="/user/<?= $user->id; ?>" class="flex-shrink-0">
             <?php if ($user->profile && $user->profile->file): ?>
                 <img src="<?= $user->profile->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
             <?php else: ?>
@@ -146,7 +146,7 @@ $nodes[] = ['divider' => true];
             <?php endif; ?>
         </a>
         <div class="flex-grow-1">
-            <a href="/user/{$user->id}" class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></a>
+            <a href="/user/<?= $user->id; ?>" class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></a>
             <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
         </div>
     </div>
