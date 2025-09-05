@@ -78,17 +78,6 @@ class UserController extends AuthorizationController
         $model = $this->findModel($id);
         $user_group =  new UserGroup();
 
-        if (AuthorizationController::isMaster() || (AuthorizationController::isAdmin())) {
-            $model->scenario = 'profile';
-            return $this->render(
-                'profile',
-                ['model' => $model]
-            );
-        }
-
-
-
-
         $groups_free_arr = [];
         $group_selecteds = [];
 
@@ -200,7 +189,11 @@ class UserController extends AuthorizationController
     public function actionUpdate($id)
     {
         $user = $this->findModel($id);
+        $isAdmin = AuthorizationController::isMaster() || (AuthorizationController::isAdmin());
         $user->scenario = 'update';
+        if ($isAdmin) {
+            $user->scenario = 'profile';
+        }
 
         $profile = $user->profile ?: new UserProfile(['user_id' => $user->id]);
 
@@ -244,7 +237,7 @@ class UserController extends AuthorizationController
             }
         }
 
-        return $this->render('update', [
+        return $this->render($isAdmin ? 'update' : 'profile', [
             'model' => $user,
             'profile' => $profile,
         ]);
