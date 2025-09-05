@@ -66,7 +66,7 @@ class FileController extends AuthorizationController
             'model' => $model,
         ]);
     }
-    
+
     public function actionMove()
     {
         $moved = '';
@@ -200,19 +200,6 @@ class FileController extends AuthorizationController
         return ['allowed' => empty($refs), 'refs' => $refs];
     }
 
-    /** Group-aware loader (same logic from StorageController). */
-    protected function findFileByAccess($id): ?File
-    {
-        $users_groups = AuthorizationController::getUserGroups();
-
-        if (!AuthorizationController::isMaster()) {
-            return File::find()->where(['id' => $id])
-                ->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
-        }
-        return File::find()->where(['id' => $id])
-            ->andWhere(['or', ['in', 'group_id', $users_groups], ['in', 'group_id', [null, 1]]])->one();
-    }
-
     /** DELETE single (JSON) */
     public function actionDelete($id)
     {
@@ -280,11 +267,6 @@ class FileController extends AuthorizationController
 
         foreach ($ids as $id) {
             $id = (int)$id;
-            $model = $this->findFileByAccess($id);
-            if (!$model) {
-                $failed[] = ['id' => $id, 'error' => 'not found/denied'];
-                continue;
-            }
 
             $check = $this->canDeleteFile($model);
             if (!$check['allowed']) {
@@ -333,7 +315,7 @@ class FileController extends AuthorizationController
                 'file_id'   => $file->id ?? null,
                 'path'      => $file->path ?? null,
                 'webroot'   => Yii::getAlias('@webroot'),
-                'candidates'=> $this->lastPathCandidates ?? [],
+                'candidates' => $this->lastPathCandidates ?? [],
             ], __METHOD__);
 
             throw new NotFoundHttpException('Arquivo indisponível.');
@@ -352,7 +334,7 @@ class FileController extends AuthorizationController
         $res = Yii::$app->response;
         $res->format = \yii\web\Response::FORMAT_RAW;
         $res->headers->set('Content-Type', $mime);
-        $res->headers->set('Content-Disposition', 'inline; filename="'.basename($abs).'"');
+        $res->headers->set('Content-Disposition', 'inline; filename="' . basename($abs) . '"');
         $res->headers->set('Cache-Control', 'no-store, private, max-age=0');
         $res->headers->set('Pragma', 'no-cache');
 
