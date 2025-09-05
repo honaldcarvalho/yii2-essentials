@@ -57,7 +57,7 @@ class User extends Account
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_PROFILE] = ['file_id','theme','language_id','fullname','cpf_cnpj','phone','password','password_confirm'];
+        $scenarios[self::SCENARIO_PROFILE] = ['file_id','theme','email','language_id','fullname','cpf_cnpj','phone','password','password_confirm'];
         return $scenarios;
     }
 
