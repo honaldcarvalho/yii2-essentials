@@ -9,7 +9,8 @@ use croacworks\essentials\models\SysMenu;
 
 $config     = Configuration::get();
 $assetDir   = CommonController::getAssetsDir();
-$name_split = explode(' ', Yii::$app->user->identity->username);
+$user = Yii::$app->user->identity;
+$name_split = explode(' ', $user->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 /**
@@ -135,18 +136,18 @@ $nodes[] = ['divider' => true];
 
     <!-- Bloco de usuário (opcional) -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
-        <div class="flex-shrink-0">
-            <?php if (Yii::$app->user->identity->profile && Yii::$app->user->identity->profile->file): ?>
-                <img src="<?= Yii::$app->user->identity->profile->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
+        <a href="/user/{$user->id}" class="flex-shrink-0">
+            <?php if ($user->profile && $user->profile->file): ?>
+                <img src="<?= $user->profile->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
             <?php else: ?>
                 <svg width="32" height="32">
                     <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                 </svg>
             <?php endif; ?>
-        </div>
+        </a>
         <div class="flex-grow-1">
-            <div class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></div>
-            <div class="small text-white-50"><?= htmlspecialchars($config->group->name) ?></div>
+            <a href="/user/{$user->id}" class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></a>
+            <a href="/user/{$user->id}" class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></a>
         </div>
     </div>
 
