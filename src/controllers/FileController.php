@@ -212,11 +212,6 @@ class FileController extends AuthorizationController
         }
 
         try {
-            $model = $this->findFileByAccess($id);
-            if (!$model) {
-                Yii::$app->response->statusCode = 404;
-                return ['success' => false, 'error' => 'Not found or access denied', 'id' => (int)$id];
-            }
 
             $check = $this->canDeleteFile($model);
             if (!($check['allowed'] ?? false)) {
