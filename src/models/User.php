@@ -36,7 +36,7 @@ class User extends Account
     /** Virtuals (não existem na tabela) */
     public $password;
     public $password_confirm;
-    const SCENARIO_PROFILE= 'profile';
+    const SCENARIO_PROFILE = 'profile';
 
     public static function tableName()
     {
@@ -57,7 +57,7 @@ class User extends Account
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_PROFILE] = ['file_id','theme','email','language_id','fullname','cpf_cnpj','phone','password','password_confirm'];
+        $scenarios[self::SCENARIO_PROFILE] = ['file_id', 'theme', 'email', 'language_id', 'fullname', 'cpf_cnpj', 'phone', 'password', 'password_confirm'];
         return $scenarios;
     }
 
@@ -172,10 +172,29 @@ class User extends Account
             ->viaTable('users_groups', ['user_id' => 'id']);
     }
 
-    public function getUserGroupsId()
+    public function getUserGroupsId(): array
     {
-        $groupIds = $this->getGroups()->select('id')->column();
-        return Group::getAllDescendantIds($groupIds);
+        // grupos vindos da tabela pivot users_groups (se existir relation getGroups())
+        $ids = [];
+        try {
+            $ids = $this->getGroups()->select('id')->column();
+        } catch (\Throwable $e) {
+            // se não houver relation, não quebra; segue vazio
+        }
+
+        // inclui SEMPRE o group principal do usuário
+        if (!empty($this->group_id)) {
+            $ids[] = (int)$this->group_id;
+        }
+
+        // normaliza
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if (empty($ids)) {
+            return [];
+        }
+
+        // Expande descendentes (mantém tua API e compatibilidade)
+        return \croacworks\essentials\models\Group::getAllDescendantIds($ids);
     }
 
     /**

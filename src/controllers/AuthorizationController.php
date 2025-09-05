@@ -64,21 +64,83 @@ class AuthorizationController extends CommonController
      * Agora ele só devolve o último grupo como antes (não quebramos nada),
      * mas internamente passamos a usar getAllUserGroupIds() para autorização.
      */
-    public static function userGroup()
+    public static function userGroup(): ?int
     {
-        $users_groups = [];
-
-        $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
-        if (!$authHeader || !preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
-            if (!self::isGuest())
-                return Yii::$app->user->identity->group_id;
+        // 1) Tenta obter o usuário: via bearer token OU sessão
+        $user = self::getUserByToken() ?: Yii::$app->user->identity ?? null;
+        if (!$user) {
+            return null;
         }
 
-        $user = self::getUserByToken();
-        if ($user)
-            $users_groups = $user->getUserGroupsId();
+        // 2) Colete TODOS os grupos do usuário (pivot + principal)
+        //    Obs: se o método já existia, manter o nome pra não quebrar nada.
+        $ids = $user->getUserGroupsId(); // garantiremos que inclui $user->group_id (ver passo 3)
 
-        return end($users_groups);
+        // 3) Se não há nenhum id (usuário órfão?), caia pro principal
+        if (empty($ids)) {
+            return (int)($user->group_id ?? 0) ?: null;
+        }
+
+        // 4) Se a flag de rollout estiver ativa, preferir o ROOT (pai). Senão, manter comportamento legado.
+        $preferRoot = (bool)(Yii::$app->params['auth.preferRootGroup'] ?? true);
+
+        if ($preferRoot) {
+            // preferir o ancestral raiz
+            return self::preferRootGroupId($ids, (int)$user->group_id);
+        }
+
+        // comportamento legado (o “end()” antigo)
+        // ⚠️ Não use mais end($ids) direto: seja explícito.
+        $last = null;
+        foreach ($ids as $id) {
+            $last = $id;
+        }
+        return $last ?: (int)$user->group_id;
+    }
+
+    /**
+     * Encontra o id raiz (ancestral mais alto) dentro do conjunto $candidateIds.
+     * Se não for possível determinar pela árvore, cai no $fallback (group principal do usuário).
+     */
+    private static function preferRootGroupId(array $candidateIds, int $fallback = 0): ?int
+    {
+        $candidateIds = array_values(array_unique(array_map('intval', $candidateIds)));
+        if (empty($candidateIds)) {
+            return $fallback ?: null;
+        }
+
+        // Carrega pares id=>parent_id para os candidatos
+        $rows = (new \yii\db\Query())
+            ->select(['id', 'parent_id'])
+            ->from(\croacworks\essentials\models\Group::tableName())
+            ->where(['id' => $candidateIds])
+            ->all();
+
+        // Monte um mapa id => parent_id
+        $parentById = [];
+        foreach ($rows as $r) {
+            $parentById[(int)$r['id']] = $r['parent_id'] !== null ? (int)$r['parent_id'] : null;
+        }
+
+        // Um "root" é aquele cujo parent_id NÃO está no conjunto
+        $candidateSet = array_flip($candidateIds);
+        $roots = [];
+        foreach ($candidateIds as $id) {
+            $pid = $parentById[$id] ?? null;
+            if ($pid === null || !isset($candidateSet[$pid])) {
+                $roots[] = $id;
+            }
+        }
+
+        if (!empty($roots)) {
+            // Se houver múltiplos roots, escolha o mais ancestral determinístico.
+            // Critério simples e estável: o menor id (evita efeitos colaterais de ordem).
+            sort($roots, SORT_NUMERIC);
+            return (int)$roots[0];
+        }
+
+        // Se não achou root claro (ciclo, dados ruins, etc.), usa fallback
+        return $fallback ?: (int)reset($candidateIds);
     }
 
     public static function getUserGroups()
