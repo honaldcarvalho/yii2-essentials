@@ -683,7 +683,9 @@ class StorageController extends ControllerRest
             $options['file_name']     = $post['file_name']     ?? false;
             $options['description']   = $post['description']   ?? $temp_file->name;
             $options['folder_id']     = $post['folder_id']     ?? 1;
-            $options['group_id']      = $post['group_id']      ?? 1;
+            $isMaster         = AuthorizationController::isMaster();
+            $userGroupId      = (int) AuthorizationController::userGroup();
+            $options['group_id']      =  $isMaster ? ($post['group_id']      ?? 1) : $userGroupId;
             $options['save']          = $post['save']          ?? 0;
             $options['attact_model']  = $post['attact_model']  ?? false;
             $options['convert_video'] = $post['convert_video'] ?? true;
