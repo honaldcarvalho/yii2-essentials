@@ -212,6 +212,7 @@ class FileController extends AuthorizationController
         }
 
         try {
+            $model = $this->findModel($id);
 
             $check = $this->canDeleteFile($model);
             if (!($check['allowed'] ?? false)) {
@@ -262,6 +263,7 @@ class FileController extends AuthorizationController
 
         foreach ($ids as $id) {
             $id = (int)$id;
+            $model = $this->findModel($id);
 
             $check = $this->canDeleteFile($model);
             if (!$check['allowed']) {
