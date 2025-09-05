@@ -78,6 +78,17 @@ class UserController extends AuthorizationController
         $model = $this->findModel($id);
         $user_group =  new UserGroup();
 
+        if (AuthorizationController::isMaster() || (AuthorizationController::isAdmin())) {
+            $model->scenario = 'profile';
+            return $this->render(
+                'profile',
+                ['model' => $model]
+            );
+        }
+
+
+
+
         $groups_free_arr = [];
         $group_selecteds = [];
 

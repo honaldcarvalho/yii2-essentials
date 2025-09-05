@@ -36,6 +36,7 @@ class User extends Account
     /** Virtuals (não existem na tabela) */
     public $password;
     public $password_confirm;
+    const SCENARIO_PROFILE= 'profile';
 
     public static function tableName()
     {
@@ -52,6 +53,12 @@ class User extends Account
                 'value' => new Expression('NOW()'),
             ],
         ]);
+    }
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_PROFILE] = ['file_id','theme','language_id','fullname','cpf_cnpj','phone','password','password_confirm'];
+        return $scenarios;
     }
 
     public function rules()

@@ -66,25 +66,12 @@ class DefaultButtons extends Widget
             return;
         }
 
-        // Se desejar um pré-cheque de grupo no registro (além do feito no AuthorizationController)
-        $renderForRecord = true;
-        if ($this->verGroup && $this->model && $this->model->hasAttribute('group_id')) {
-            $userGroups = AuthorizationController::getUserGroups() ?? [];
-            if (
-                $this->model->group_id !== null &&
-                !in_array((int)$this->model->group_id, array_map('intval', $userGroups), true) &&
-                !(AuthorizationController::isMaster())
-            ) {
-                $renderForRecord = false;
-            }
-        }
-
         $this->buttons .= Html::beginTag('div', ['class' => 'btn-group']);
 
         // INDEX
         if (
             in_array('index', $this->show, true) &&
-            $renderForRecord &&
+            
             (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'index', null))
         ) {
@@ -98,7 +85,7 @@ class DefaultButtons extends Widget
         // CREATE
         if (
             in_array('create', $this->show, true) &&
-            $renderForRecord &&
+            
             (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'create', null))
         ) {
@@ -112,7 +99,7 @@ class DefaultButtons extends Widget
         // UPDATE
         if (
             in_array('update', $this->show, true) &&
-            $renderForRecord && $this->model &&
+             $this->model &&
             (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'update', $this->model))
         ) {
@@ -128,7 +115,7 @@ class DefaultButtons extends Widget
         // DELETE
         if (
             in_array('delete', $this->show, true) &&
-            $renderForRecord && $this->model &&
+             $this->model &&
             (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'delete', $this->model))
         ) {
@@ -150,7 +137,7 @@ class DefaultButtons extends Widget
         // CLONE
         if (
             in_array('clone', $this->show, true) &&
-            $renderForRecord && $this->model &&
+             $this->model &&
             (AuthorizationController::isMaster() ||
              AuthorizationController::verAuthorization($this->currentControllerFQCN, 'clone', $this->model))
         ) {
