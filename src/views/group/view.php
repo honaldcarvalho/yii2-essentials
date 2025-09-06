@@ -129,6 +129,7 @@ $js = <<<JS
 JS;
 
 $this->registerJs($js,$this::POS_END);
+dd($model->getUsers());
 ?>
 
 <div class="user-update">
