@@ -104,7 +104,6 @@ $(function () {
         $('#multiselect').html(html);
         if (window.Swal) {
           Swal.close();
-          Swal.fire({icon:'success', title:'Pronto', text:'Actions carregadas.'});
         }
       } else {
         if (window.Swal) {
