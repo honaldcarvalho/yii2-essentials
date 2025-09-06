@@ -164,6 +164,14 @@ $this->registerJs($js,$this::POS_END);
             'query' => $model->getUsers(),
         ]),
         'showFields' => [
+            [
+                'attribute' => 'via',
+                'label' => 'Via',
+                'value' => function ($model) {
+                    return $model->via === 'User' ? 'via User' : 'via UserGroup';
+                },
+                'contentOptions' => ['style' => 'white-space:nowrap'],
+            ],
             'profile.fullname',
             'email',
             [

@@ -4,6 +4,7 @@ namespace croacworks\essentials\models;
 
 use Yii;
 use yii\db\Query;
+use yii\db\Expression;
 use yii\data\ActiveDataProvider;
 use croacworks\essentials\controllers\AuthorizationController;
 
@@ -83,16 +84,26 @@ class Group extends ModelCommon
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getUsers()
-    {
-        $direct = User::find()->where(['group_id' => $this->id]);
 
-        $via = User::find()
+    public function getUsers() 
+    {
+        $ugTable = UserGroup::tableName();
+
+        // Direto pelo group_id
+        $direct = User::find()
             ->alias('u')
-            ->innerJoin('{{%user_groups}} ug', 'ug.user_id = u.id')
+            ->select(['u.*', new Expression("'User' AS via")])
+            ->where(['u.group_id' => $this->id]);
+
+        // Via tabela pivô user_groups
+        $viaPivot = User::find()
+            ->alias('u')
+            ->select(['u.*', new Expression("'UserGroup' AS via")])
+            ->innerJoin("$ugTable ug", 'ug.user_id = u.id')
             ->andWhere(['ug.group_id' => $this->id]);
 
-        return $direct->union($via, true);
+        // Une as duas (DISTINCT para evitar duplicados quando o user está nos dois)
+        return $direct->union($viaPivot, true);
     }
 
     public function getParent()
