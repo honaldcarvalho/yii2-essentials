@@ -27,7 +27,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <div class="row mb-2">
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                'controller' => 'Role','show' => ['create'],
+                                'show' => ['create'],
                                 'buttons_name' => ['create' => Yii::t('app', 'Create Role')],
                                 'verGroup'=>false
                                 ])?>
