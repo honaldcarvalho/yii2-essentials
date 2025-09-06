@@ -12,7 +12,7 @@ class m230425_124535_create_users_groups_table extends Migration
      */
     public function safeUp()
     {
-        $this->createTable('{{%users_groups}}', [
+        $this->createTable('{{%user_groups}}', [
             'id' => $this->primaryKey(),
             'user_id' => $this->integer(),
             'group_id' => $this->integer(),
@@ -20,8 +20,8 @@ class m230425_124535_create_users_groups_table extends Migration
 
         // add foreign keys for table `user_group`
         $this->addForeignKey(
-            'fk-users_groups-user_id',
-            'users_groups',
+            'fk-user_groups-user_id',
+            'user_groups',
             'user_id',
             'users',
             'id',
@@ -29,8 +29,8 @@ class m230425_124535_create_users_groups_table extends Migration
         );
         
         $this->addForeignKey(
-            'fk-users_groups-group_id',
-            'users_groups',
+            'fk-user_groups-group_id',
+            'user_groups',
             'group_id',
             'groups',
             'id',

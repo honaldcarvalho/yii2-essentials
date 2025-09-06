@@ -208,7 +208,7 @@ class AuthorizationController extends CommonController
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
             ? \croacworks\essentials\models\UsersGroup::tableName()
-            : '{{%users_groups}}'; // fallback
+            : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)
         $directGroupId = null;
@@ -216,13 +216,13 @@ class AuthorizationController extends CommonController
             $directGroupId = $identity->group_id ?: null;
         }
 
-        // Subquery: todos os grupos ligados via users_groups
+        // Subquery: todos os grupos ligados via user_groups
         $subUserGroups = (new \yii\db\Query())
             ->select('ug.group_id')
             ->from("$ugTable ug")
             ->where(['ug.user_id' => $userId]);
 
-        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN users_groups)
+        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN user_groups)
         $orCondition = ['or'];
         if ($directGroupId) {
             $orCondition[] = ['g.id' => (int)$directGroupId];
@@ -258,7 +258,7 @@ class AuthorizationController extends CommonController
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
             ? \croacworks\essentials\models\UsersGroup::tableName()
-            : '{{%users_groups}}'; // fallback
+            : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)
         $directGroupId = null;
@@ -266,13 +266,13 @@ class AuthorizationController extends CommonController
             $directGroupId = $identity->group_id ?: null;
         }
 
-        // Subquery: todos os grupos ligados via users_groups
+        // Subquery: todos os grupos ligados via user_groups
         $subUserGroups = (new \yii\db\Query())
             ->select('ug.group_id')
             ->from("$ugTable ug")
             ->where(['ug.user_id' => $userId]);
 
-        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN users_groups)
+        // Condição: grupo master se (g.id = group_id direto) OU (g.id IN user_groups)
         $orCondition = ['or'];
         if ($directGroupId) {
             $orCondition[] = ['g.id' => (int)$directGroupId];

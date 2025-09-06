@@ -135,14 +135,14 @@ class User extends Account
     /**
      * Retorna true se o usuário for master (admin global), considerando:
      *  - group_id base do usuário (users.group_id)
-     *  - vínculos na tabela users_groups
+     *  - vínculos na tabela user_groups
      */
     public static function isMasterByUserId(int $userId, ?int $baseGroupId, \yii\db\Connection $db): bool
     {
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
             ? \croacworks\essentials\models\UsersGroup::tableName()
-            : '{{%users_groups}}';
+            : '{{%user_groups}}';
 
         // 1) base group_id é master?
         if ($baseGroupId && $baseGroupId > 0) {
@@ -154,7 +154,7 @@ class User extends Account
             if ($isBaseMaster) return true;
         }
 
-        // 2) existe algum vínculo em users_groups com grupo master?
+        // 2) existe algum vínculo em user_groups com grupo master?
         $isMemberMaster = (new \yii\db\Query())
             ->from("$ugTable ug")
             ->innerJoin("$groupsTable g", 'g.id = ug.group_id')
@@ -169,12 +169,12 @@ class User extends Account
     public function getGroups()
     {
         return $this->hasMany(Group::class, ['id' => 'group_id'])
-            ->viaTable('users_groups', ['user_id' => 'id']);
+            ->viaTable('user_groups', ['user_id' => 'id']);
     }
 
     public function getUserGroupsId(): array
     {
-        // grupos vindos da tabela pivot users_groups (se existir relation getGroups())
+        // grupos vindos da tabela pivot user_groups (se existir relation getGroups())
         $ids = [];
         try {
             $ids = $this->getGroups()->select('id')->column();

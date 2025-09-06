@@ -18,10 +18,10 @@ class GrantScopeService
         $user = Yii::$app->user->identity;
         if (!$user) return [];
 
-        // 1) Descobrir todos os groups do usuário (group_id direto + users_groups)
+        // 1) Descobrir todos os groups do usuário (group_id direto + user_groups)
         $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
             ? \croacworks\essentials\models\UsersGroup::tableName()
-            : '{{%users_groups}}';
+            : '{{%user_groups}}';
         $groupsTable = \croacworks\essentials\models\Group::tableName();
         $rolesTable  = \croacworks\essentials\models\Role::tableName();
 

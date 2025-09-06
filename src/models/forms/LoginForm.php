@@ -144,7 +144,7 @@ class LoginForm extends Model
         $userId  = (int)$user->id;
         $groupId = (int)$user->group_id;
 
-        // BYPASS: master/admin (considera base group_id e users_groups)
+        // BYPASS: master/admin (considera base group_id e user_groups)
         try {
             if (User::isMasterByUserId($userId, $groupId, $db)) {
                 $duration = $this->rememberMe ? (3600 * 24 * 30) : 0;

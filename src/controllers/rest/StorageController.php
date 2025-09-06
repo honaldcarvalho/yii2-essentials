@@ -130,14 +130,14 @@ class StorageController extends ControllerRest
                 $description = $post['description'] ?? false;
                 $id = $post['id'] ?? false;
                 $file = null;
-                $users_groups =  AuthorizationController::getUserGroups();
+                $user_groups =  AuthorizationController::getUserGroups();
 
                 if ($file_name) {
-                    $file = File::find()->where(['name' => $file_name])->andWhere('or', ['in', 'group_id', $users_groups], ['group_id' => 1])->one();
+                    $file = File::find()->where(['name' => $file_name])->andWhere('or', ['in', 'group_id', $user_groups], ['group_id' => 1])->one();
                 } else if ($description) {
-                    $file = File::find()->where(['description' => $description])->andWhere('or', ['in', 'group_id', $users_groups], ['group_id' => 1])->one();
+                    $file = File::find()->where(['description' => $description])->andWhere('or', ['in', 'group_id', $user_groups], ['group_id' => 1])->one();
                 } else if ($id) {
-                    $file = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups], ['group_id' => 1]])->one();
+                    $file = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups], ['group_id' => 1]])->one();
                 }
 
                 if ($file !== null) {
@@ -183,12 +183,12 @@ class StorageController extends ControllerRest
     public function actionListFolder($id)
     {
         try {
-            $users_groups = AuthorizationController::getUserByToken()->getUserGroupsId();
-            $folder = Folder::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups], ['folder_id' => null]])->one();
+            $user_groups = AuthorizationController::getUserByToken()->getUserGroupsId();
+            $folder = Folder::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups], ['folder_id' => null]])->one();
 
             if ($folder !== null) {
-                $folders = Folder::find()->where(['folder_id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
-                $files = File::find()->where(['folder_id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups]])->all();
+                $folders = Folder::find()->where(['folder_id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups]])->one();
+                $files = File::find()->where(['folder_id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups]])->all();
                 return [
                     'folder' => $folder,
                     'folders' => $folders,
@@ -822,12 +822,12 @@ class StorageController extends ControllerRest
         try {
             $file = false;
             $success = false;
-            $users_groups =  AuthorizationController::getUserGroups();
+            $user_groups =  AuthorizationController::getUserGroups();
 
             if (!AuthorizationController::isMaster()) {
-                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups]])->one();
+                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups]])->one();
             } else {
-                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $users_groups], ['in', 'group_id', [null, 1]]])->one();
+                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups], ['in', 'group_id', [null, 1]]])->one();
             }
 
             if ($model !== null) {

@@ -80,7 +80,7 @@ class m250819_000003_seed_default_user_and_roles extends Migration
             'phone' => null
         ]);
 
-        $this->insert('users_groups', [
+        $this->insert('user_groups', [
             'user_id' => 1,
             'group_id' => 2,
         ]);

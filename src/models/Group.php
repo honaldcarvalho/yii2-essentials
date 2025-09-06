@@ -94,7 +94,7 @@ class Group extends ModelCommon
 
         return $direct->union($via, true);
     }
-    
+
     public function getParent()
     {
         return $this->hasOne(Group::class, ['id' => 'parent_id']);
