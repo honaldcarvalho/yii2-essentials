@@ -185,7 +185,7 @@ $this->registerJs($js,$this::POS_END);
                 'value' => $model->id
             ],
             [
-                'name' => 'user_id',
+                'name' => 'id',
                 'value' => yii\helpers\ArrayHelper::map(
                     User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
                     'id', 'name'
