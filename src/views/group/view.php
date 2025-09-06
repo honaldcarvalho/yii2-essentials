@@ -204,20 +204,6 @@ $this->registerJs($js, $this::POS_END);
             ],
         ],
         'fields' => [
-            [
-                'name' => 'group_id',
-                'type' => 'hidden',
-                'value' => $model->id
-            ],
-            [
-                'name' => 'id',
-                'value' => yii\helpers\ArrayHelper::map(
-                    User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
-                    'id',
-                    'name'
-                ),
-                'type' => 'select2'
-            ],
         ]
     ]); ?>
 
