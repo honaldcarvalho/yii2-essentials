@@ -10,7 +10,7 @@ use yii\web\Response;
 use croacworks\essentials\models\File;
 use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\controllers\rest\StorageController;
-
+use croacworks\essentials\controllers\AuthorizationController as Authz;
 /**
  * FileController implements the CRUD actions for File model.
  */
@@ -213,19 +213,25 @@ class FileController extends AuthorizationController
 
         try {
             $model = $this->findModel($id);
+            if (!$model) {
+                Yii::$app->response->statusCode = 404;
+                return ['success' => false, 'error' => 'Not found', 'id' => (int)$id];
+            }
 
-            $check = $this->canDeleteFile($model);
+            // Pré-checagem global (FK reais + heurística file_id)
+            $check = Authz::canDeleteModel($model, ['file_id']);
             if (!($check['allowed'] ?? false)) {
-                Yii::$app->response->statusCode = 409; // Conflict (referenciado)
+                Yii::$app->response->statusCode = 409; // Conflict
                 return [
                     'success' => false,
                     'blocked' => true,
                     'id'      => (int)$model->id,
                     'refs'    => $check['refs'] ?? [],
-                    'message' => 'File is referenced and cannot be removed.'
+                    'message' => 'File is referenced and cannot be removed.',
                 ];
             }
 
+            // Mantém sua rotina atual de remoção (disco + DB)
             $res = StorageController::removeFile($model->id);
             $ok  = (bool)($res['success'] ?? false);
 
@@ -238,6 +244,17 @@ class FileController extends AuthorizationController
                 'id'      => (int)$model->id,
                 'result'  => $res,
             ];
+        } catch (\yii\db\IntegrityException $e) {
+            // Se o BD bloquear, re-escaneia com o helper global para informar onde está referenciado
+            $refs = Authz::findReferences($model::tableName(), 'id', $model->id, ['file_id']);
+            Yii::$app->response->statusCode = 409; // Conflict
+            return [
+                'success' => false,
+                'blocked' => true,
+                'id'      => (int)$model->id,
+                'refs'    => $refs,
+                'message' => 'File is referenced and cannot be removed.',
+            ];
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
             Yii::$app->response->statusCode = 500;
@@ -245,15 +262,20 @@ class FileController extends AuthorizationController
         }
     }
 
+
     /** BULK delete (JSON) - expects file_selected[] in POST */
     public function actionDeleteFiles()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         if (!Yii::$app->request->isPost) {
+            Yii::$app->response->statusCode = 400;
             return ['success' => false, 'error' => 'Bad Request'];
         }
 
         $ids = (array)Yii::$app->request->post('file_selected', []);
         if (!$ids) {
+            Yii::$app->response->statusCode = 400;
             return ['success' => false, 'error' => 'No files selected'];
         }
 
@@ -261,21 +283,37 @@ class FileController extends AuthorizationController
         $blocked = []; // has refs
         $failed  = []; // unexpected error or access denied
 
-        foreach ($ids as $id) {
-            $id = (int)$id;
-            $model = $this->findModel($id);
+        foreach ($ids as $rawId) {
+            $id = (int)$rawId;
 
-            $check = $this->canDeleteFile($model);
-            if (!$check['allowed']) {
-                $blocked[] = ['id' => $id, 'refs' => $check['refs']];
-                continue;
-            }
+            try {
+                $model = $this->findModel($id);
+                if (!$model) {
+                    $failed[] = ['id' => $id, 'error' => 'not_found'];
+                    continue;
+                }
 
-            $res = StorageController::removeFile($model->id);
-            if (!empty($res['success'])) {
-                $deleted[] = $id;
-            } else {
-                $failed[] = ['id' => $id, 'error' => $res['message'] ?? 'unknown'];
+                // Pré-checagem global (FK reais + heurística file_id)
+                $check = Authz::canDeleteModel($model, ['file_id']);
+                if (!($check['allowed'] ?? false)) {
+                    $blocked[] = ['id' => $id, 'refs' => $check['refs'] ?? []];
+                    continue;
+                }
+
+                // Remove (disco + DB) via sua rotina atual
+                $res = StorageController::removeFile($model->id);
+                if (!empty($res['success'])) {
+                    $deleted[] = $id;
+                } else {
+                    $failed[] = ['id' => $id, 'error' => $res['message'] ?? 'unknown'];
+                }
+            } catch (\yii\db\IntegrityException $e) {
+                // Caso algum passe na pré-checada (raro) e ainda assim falhe no BD
+                $refs = Authz::findReferences($model::tableName(), 'id', $model->id, ['file_id']);
+                $blocked[] = ['id' => $id, 'refs' => $refs];
+            } catch (\Throwable $e) {
+                Yii::error($e->getMessage(), __METHOD__);
+                $failed[] = ['id' => $id, 'error' => 'exception'];
             }
         }
 
@@ -291,6 +329,7 @@ class FileController extends AuthorizationController
             'failed'      => $failed,
         ];
     }
+
 
     /**
      * Ex.: GET /f/<slug>

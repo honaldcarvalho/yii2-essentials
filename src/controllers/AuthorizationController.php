@@ -4,17 +4,18 @@ namespace croacworks\essentials\controllers;
 
 use Yii;
 
-use croacworks\essentials\models\License;
 use croacworks\essentials\models\Log;
 use croacworks\essentials\models\Role;
 use croacworks\essentials\models\User;
-use croacworks\essentials\models\UserGroup;
 
 use yii\behaviors\TimestampBehavior;
 use yii\filters\AccessControl;
-use yii\filters\auth\HttpBearerAuth;
 use yii\filters\VerbFilter;
 use yii\web\NotFoundHttpException;
+
+use yii\db\Query;
+use yii\db\IntegrityException;
+use yii\db\ActiveRecord;
 
 class AuthorizationController extends CommonController
 {
@@ -301,6 +302,212 @@ class AuthorizationController extends CommonController
         return null;
     }
 
+    /* ============================================================
+     *  GLOBAL FK CHECKS / DELETE GUARD
+     * ============================================================ */
+
+    /**
+     * Scan DB for references to a given record.
+     * - Detects real FKs referencing $refTable.$refPk
+     * - Optionally checks heuristic columns (e.g. ['file_id']) across all tables
+     *
+     * @param string $refTable     e.g. File::tableName()
+     * @param string $refPk        e.g. 'id'
+     * @param int|string $value    primary key value
+     * @param string[] $heuristicColumns columns to probe by equality (optional)
+     * @return array [['table'=>..., 'column'=>..., 'count'=>int], ...]
+     */
+    public static function findReferences(string $refTable, string $refPk, $value, array $heuristicColumns = []): array
+    {
+        $db = Yii::$app->db;
+        $schema = $db->schema;
+        $tables = $schema->getTableSchemas();
+        $refs = [];
+
+        // 1) Real foreign keys referencing $refTable.$refPk
+        foreach ($tables as $tbl) {
+            foreach ($tbl->foreignKeys as $fk) {
+                $fkRefTable = $fk[0] ?? null;
+                if ($fkRefTable !== $refTable) {
+                    continue;
+                }
+                foreach ($fk as $localCol => $refCol) {
+                    if ($localCol === 0) continue;
+                    if ($refCol === $refPk) {
+                        $exists = (new Query())
+                            ->from($tbl->name)
+                            ->where([$localCol => $value])
+                            ->limit(1)->exists('*', $db);
+                        if ($exists) {
+                            $refs[] = [
+                                'table'  => $tbl->name,
+                                'column' => $localCol,
+                                'count'  => 1,
+                                'type'   => 'fk',
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2) Heuristic columns (e.g. 'file_id')
+        if (!empty($heuristicColumns)) {
+            foreach ($tables as $tbl) {
+                foreach ($heuristicColumns as $col) {
+                    // skip if column doesn't exist
+                    if ($tbl->getColumn($col) === null) {
+                        continue;
+                    }
+                    // avoid duplicates if already captured via FK
+                    $already = array_filter($refs, fn($r) =>
+                        $r['table'] === $tbl->name && $r['column'] === $col
+                    );
+                    if ($already) continue;
+
+                    $exists = (new Query())
+                        ->from($tbl->name)
+                        ->where([$col => $value])
+                        ->limit(1)->exists('*', $db);
+
+                    if ($exists) {
+                        $refs[] = [
+                            'table'  => $tbl->name,
+                            'column' => $col,
+                            'count'  => 1,
+                            'type'   => 'heuristic',
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $refs;
+    }
+
+    /**
+     * Shortcut to check if a model can be deleted.
+     *
+     * @param ActiveRecord $model
+     * @param string[] $heuristicColumns e.g. ['file_id'] when deleting File
+     * @param string|null $pkAttr defaults to 'id'
+     * @return array ['allowed'=>bool, 'refs'=>array]
+     */
+    public static function canDeleteModel(ActiveRecord $model, array $heuristicColumns = [], ?string $pkAttr = 'id'): array
+    {
+        $table = $model::tableName();
+        $pkAttr = $pkAttr ?? 'id';
+        $pkValue = $model->getAttribute($pkAttr);
+
+        // Nota: suporte a PK composta não está contemplado neste helper
+        $refs = self::findReferences($table, $pkAttr, $pkValue, $heuristicColumns);
+        return ['allowed' => empty($refs), 'refs' => $refs];
+    }
+
+    /**
+     * Standard JSON response for blocked deletions.
+     *
+     * @param array $refs result from findReferences()
+     * @param string|null $friendly What the record is (for message), e.g. 'Arquivo'
+     * @return array
+     */
+    public static function blockedDeleteResponse(array $refs, ?string $friendly = null): array
+    {
+        $label = $friendly ?: Yii::t('app', 'Record');
+        $list  = array_map(
+            fn($r) => "{$r['table']}.{$r['column']}" . (isset($r['type']) ? " ({$r['type']})" : ''),
+            $refs
+        );
+        $message = Yii::t('app',
+            '{item} está em uso por outras tabelas. Remova os vínculos antes de excluir.',
+            ['item' => $label]
+        );
+
+        return [
+            'success' => false,
+            'error'   => [
+                'type'    => 'db.foreign_key',
+                'message' => $message,
+                'refs'    => $refs,
+                'hints'   => [
+                    Yii::t('app', 'Referências encontradas: {refs}', ['refs' => implode(', ', $list)]),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Guard a delete operation:
+     *  - Pre-check references
+     *  - Try delete in a transaction
+     *  - On IntegrityException, re-scan references and return blocked response
+     *
+     * @param ActiveRecord $model
+     * @param string[] $heuristicColumns e.g. ['file_id'] for File deletion
+     * @param callable|null $beforeDelete optional hook: fn(ActiveRecord $model){...}
+     * @param callable|null $afterDelete  optional hook: fn(ActiveRecord $model){...}
+     * @param string|null $friendlyLabel  e.g. 'Arquivo'
+     * @return array JSON payload
+     */
+    public static function guardDelete(
+        ActiveRecord $model,
+        array $heuristicColumns = [],
+        ?callable $beforeDelete = null,
+        ?callable $afterDelete  = null,
+        ?string $friendlyLabel  = null
+    ): array
+    {
+        $check = self::canDeleteModel($model, $heuristicColumns);
+        if (!($check['allowed'] ?? false)) {
+            return self::blockedDeleteResponse($check['refs'], $friendlyLabel);
+        }
+
+        $db = Yii::$app->db;
+        $tx = $db->beginTransaction();
+        try {
+            if ($beforeDelete) {
+                $beforeDelete($model);
+            }
+
+            if ($model->delete() === false) {
+                $tx->rollBack();
+                return [
+                    'success' => false,
+                    'error'   => [
+                        'type'    => 'db.delete_failed',
+                        'message' => Yii::t('app', 'Falha ao excluir.'),
+                        'model'   => $model::class,
+                        'id'      => $model->getPrimaryKey(),
+                    ],
+                ];
+            }
+
+            if ($afterDelete) {
+                $afterDelete($model);
+            }
+
+            $tx->commit();
+            return ['success' => true];
+        } catch (IntegrityException $e) {
+            $tx->rollBack();
+            // Re-scan to inform precisely where it’s referenced
+            $table = $model::tableName();
+            $pkAttr = is_array($model->primaryKey()) ? 'id' : $model->primaryKey()[0] ?? 'id';
+            $refs = self::findReferences($table, $pkAttr, $model->getAttribute($pkAttr), $heuristicColumns);
+
+            return self::blockedDeleteResponse($refs, $friendlyLabel);
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            Yii::error($e->getMessage(), __METHOD__);
+            return [
+                'success' => false,
+                'error'   => [
+                    'type'    => 'server.error',
+                    'message' => Yii::t('app', 'Erro inesperado ao excluir.'),
+                ],
+            ];
+        }
+    }
     /* ===== Behaviors (apenas adições, sem remover o que você já usa) ===== */
 
     public function behaviors()
