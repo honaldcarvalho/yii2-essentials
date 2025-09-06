@@ -170,7 +170,7 @@ $this->registerJs($js,$this::POS_END);
                 'label' => 'Via',
                 'value' => function ($model) {
                     $via = $model->getAttribute('via'); // lê a coluna extra do SELECT
-                    return $via === 'User' ? 'via User' : 'via UserGroup';
+                    return $via;
                 },
                 'contentOptions' => ['style' => 'white-space:nowrap'],
             ],
