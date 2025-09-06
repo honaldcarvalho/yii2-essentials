@@ -111,8 +111,7 @@ class Group extends ModelCommon
             // só adiciona a linha da pivô se for do grupo alvo (evita duplicar)
             ->leftJoin("$ugTable ug", 'ug.user_id = u.id AND ug.group_id = :gid', [':gid' => $gid])
             // pega quem está direto no grupo OU vinculado via pivô
-            ->where(['or', ['u.group_id' => $gid], ['not', ['ug.user_id' => null]]])
-            ->distinct(); // evita duplicatas caso exista mais de um registro na pivô
+            ->where(['or', ['u.group_id' => $gid], ['not', ['ug.user_id' => null]]]);
     }
 
     public function getParent()
