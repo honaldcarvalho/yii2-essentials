@@ -37,7 +37,12 @@ class User extends Account
     public $password;
     public $password_confirm;
     const SCENARIO_PROFILE = 'profile';
-
+    public $via;
+    public function attributes()
+    {
+        return array_merge(parent::attributes(), ['via']);
+    }
+    
     public static function tableName()
     {
         return 'users';
