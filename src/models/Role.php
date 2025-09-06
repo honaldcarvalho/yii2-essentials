@@ -14,7 +14,7 @@ use Yii;
  * @property int|null $user_id
  * @property string|null $name
  * @property string $controller
- * @property string $action
+ * @property string $actions
  * @property int $status
  * @property int $created_at
  * @property int $updated_at
@@ -51,7 +51,7 @@ class Role extends ModelCommon
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
 
             // Validador de escopo de concessão (não aplica para master)
-            ['action', function($attribute) {
+            ['actions', function($attribute) {
                 $user = Yii::$app->user->identity;
                 if (!$user) return;
 
@@ -62,10 +62,10 @@ class Role extends ModelCommon
                 }
 
                 $controller = $this->controller;
-                $action     = $this->action ?: '*';
+                $actions     = $this->actions ?: '*';
 
                 // Se o usuário tentar criar wildcard '*', valide se ele pode conceder todas as actions
-                if ($action === '*') {
+                if ($actions === '*') {
                     // mínimo: precisa ter wildcard no mesmo controller
                     if (!GrantScopeService::canGrant($controller, '*')) {
                         $this->addError($attribute, Yii::t('app', 'Você não pode conceder acesso total a este controller.'));
@@ -73,10 +73,10 @@ class Role extends ModelCommon
                     return;
                 }
 
-                if (!GrantScopeService::canGrant($controller, $action)) {
+                if (!GrantScopeService::canGrant($controller, $actions)) {
                     $this->addError($attribute, Yii::t('app', 'Você não tem permissão para conceder {ctrl}::{act}.', [
                         'ctrl' => $controller,
-                        'act'  => $action
+                        'act'  => $actions
                     ]));
                 }
             }],
@@ -93,7 +93,7 @@ class Role extends ModelCommon
             'user_id' => Yii::t('app', 'User ID'),
             'name' => Yii::t('app', 'Name'),
             'controller' => Yii::t('app', 'Controller'),
-            'actions' => Yii::t('app', 'actions'),
+            'actions' => Yii::t('app', 'Actions'),
             'status' => Yii::t('app', 'Status'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
