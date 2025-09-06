@@ -78,6 +78,23 @@ class Group extends ModelCommon
         return $this->hasMany(UserGroup::class, ['group_id' => 'id']);
     }
 
+    /**
+     * Gets query for [[User]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUsers()
+    {
+        $direct = User::find()->where(['group_id' => $this->id]);
+
+        $via = User::find()
+            ->alias('u')
+            ->innerJoin('{{%user_groups}} ug', 'ug.user_id = u.id')
+            ->andWhere(['ug.group_id' => $this->id]);
+
+        return $direct->union($via, true);
+    }
+    
     public function getParent()
     {
         return $this->hasOne(Group::class, ['id' => 'parent_id']);
