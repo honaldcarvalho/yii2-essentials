@@ -85,33 +85,25 @@ class Group extends ModelCommon
      * @return \yii\db\ActiveQuery
      */
 
-    /**
-     * Retorna uma \yii\db\Query com usuários ligados ao grupo
-     * tanto direto (User.group_id) quanto via pivô (user_groups),
-     * adicionando a coluna 'via' = 'User' | 'UserGroup'.
-     */
-
-    public function getUsers() // retorna ActiveQuery (User AR), compatível com seu Grid
+    public function getUsers() 
     {
-        $gid = (int)$this->id;
         $ugTable = UserGroup::tableName();
 
-        return User::find()
+        // Direto pelo group_id
+        $direct = User::find()
             ->alias('u')
-            // marca a origem da ligação
-            ->select([
-                'u.*',
-                'via' => new Expression(
-                    "CASE WHEN u.group_id = :gid THEN 'User'
-                      WHEN ug.user_id IS NOT NULL THEN 'UserGroup'
-                      ELSE NULL END",
-                    [':gid' => $gid]
-                ),
-            ])
-            // só adiciona a linha da pivô se for do grupo alvo (evita duplicar)
-            ->leftJoin("$ugTable ug", 'ug.user_id = u.id AND ug.group_id = :gid', [':gid' => $gid])
-            // pega quem está direto no grupo OU vinculado via pivô
-            ->where(['or', ['u.group_id' => $gid], ['not', ['ug.user_id' => null]]]);
+            ->select(['u.*', new Expression("'User' AS via")])
+            ->where(['u.group_id' => $this->id]);
+
+        // Via tabela pivô user_groups
+        $viaPivot = User::find()
+            ->alias('u')
+            ->select(['u.*', new Expression("'UserGroup' AS via")])
+            ->innerJoin("$ugTable ug", 'ug.user_id = u.id')
+            ->andWhere(['ug.group_id' => $this->id]);
+
+        // Une as duas (DISTINCT para evitar duplicados quando o user está nos dois)
+        return $direct->union($viaPivot, true);
     }
 
     public function getParent()
