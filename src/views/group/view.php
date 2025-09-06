@@ -128,7 +128,7 @@ $js = <<<JS
 })();
 JS;
 
-$this->registerJs($js, $this::POS_END);
+$this->registerJs($js,$this::POS_END);
 
 ?>
 
@@ -163,45 +163,30 @@ $this->registerJs($js, $this::POS_END);
         'attactClass' => 'croacworks\\essentials\\models\\User',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getUsers()
-
         ]),
-
         'showFields' => [
             [
                 'attribute' => 'via',
                 'label' => 'Via',
-                'value' => function ($row) { // $row é array
-                    return $row['via'] === 'User' ? 'via User' : 'via UserGroup';
+                'value' => function ($model) {
+                    $via = $model->getAttribute('via'); // lê a coluna extra do SELECT
+                    return $via;
                 },
                 'contentOptions' => ['style' => 'white-space:nowrap'],
             ],
-            [
-                'attribute' => 'fullname',
-                'label' => 'Fullname',
-                'value' => fn($row) => $row['fullname'] ?? '',
-            ],
-            [
-                'attribute' => 'email',
-                'label' => 'Email',
-                'value' => fn($row) => $row['email'] ?? '',
-            ],
+            'profile.fullname',
+            'email',
             [
                 'attribute' => 'created_at',
                 'format' => 'date',
                 'label' => Yii::t('app', 'Created At'),
-                'value' => fn($row) => $row['created_at'] ?? null,
             ],
             [
                 'attribute' => 'updated_at',
                 'format' => 'date',
                 'label' => Yii::t('app', 'Updated At'),
-                'value' => fn($row) => $row['updated_at'] ?? null,
             ],
-            [
-                'attribute' => 'status',
-                'format' => 'boolean',
-                'value' => fn($row) => $row['status'] ?? 0,
-            ],
+            'status:boolean',
         ],
         'fields' => [
         ]
@@ -210,7 +195,7 @@ $this->registerJs($js, $this::POS_END);
     <?php
     // NÃO envolver em PJAX extra — o AppendModel já cria um PJAX interno com id #list-rolesAppend-grid
     echo AppendModel::widget([
-        'new_button' => false,
+        'new_button'=> false,
         'title' => Yii::t('app', 'Roles'),
         'attactModel' => 'Role',
         'uniqueId' => 'rolesAppend',   // <- usado no container interno: #list-rolesAppend-grid
@@ -226,8 +211,8 @@ $this->registerJs($js, $this::POS_END);
             'group.name:text:' . Yii::t('app', 'Role'),
             'controller',
             [
-                'attribute' => 'actions',
-                'value' => function ($data) {
+                'attribute'=>'actions',
+                'value'=> function($data){
                     return str_replace(';', ' | ', $data->actions);
                 }
             ],

@@ -90,45 +90,29 @@ class Group extends ModelCommon
      * tanto direto (User.group_id) quanto via pivô (user_groups),
      * adicionando a coluna 'via' = 'User' | 'UserGroup'.
      */
-    public function getUsers(): Query
+
+    public function getUsers() // retorna ActiveQuery (User AR), compatível com seu Grid
     {
-        $userTable    = \croacworks\essentials\models\User::tableName();
-        $profileTable = '{{%user_profiles}}'; // ajuste se tiver classe específica
-        $ugTable      = \croacworks\essentials\models\UserGroup::tableName();
+        $gid = (int)$this->id;
+        $ugTable = UserGroup::tableName();
 
-        // Direto pelo group_id
-        $direct = (new Query())
-            ->from("$userTable u")
-            ->leftJoin("$profileTable p", 'p.user_id = u.id')
+        return User::find()
+            ->alias('u')
+            // marca a origem da ligação
             ->select([
-                'id'         => 'u.id',
-                'email'      => 'u.email',
-                'status'     => 'u.status',
-                'created_at' => 'u.created_at',
-                'updated_at' => 'u.updated_at',
-                'fullname'   => 'p.fullname',
-                'via'        => new Expression("'User'"),
+                'u.*',
+                'via' => new Expression(
+                    "CASE WHEN u.group_id = :gid THEN 'User'
+                      WHEN ug.user_id IS NOT NULL THEN 'UserGroup'
+                      ELSE NULL END",
+                    [':gid' => $gid]
+                ),
             ])
-            ->where(['u.group_id' => $this->id]);
-
-        // Via tabela pivô user_groups
-        $viaPivot = (new Query())
-            ->from("$userTable u")
-            ->leftJoin("$profileTable p", 'p.user_id = u.id')
-            ->innerJoin("$ugTable ug", 'ug.user_id = u.id')
-            ->select([
-                'id'         => 'u.id',
-                'email'      => 'u.email',
-                'status'     => 'u.status',
-                'created_at' => 'u.created_at',
-                'updated_at' => 'u.updated_at',
-                'fullname'   => 'p.fullname',
-                'via'        => new Expression("'UserGroup'"),
-            ])
-            ->where(['ug.group_id' => $this->id]);
-
-        // Envolve o UNION para poder continuar encadeando (ex.: sort/paginate)
-        return (new Query())->from(['x' => $direct->union($viaPivot, true)]);
+            // só adiciona a linha da pivô se for do grupo alvo (evita duplicar)
+            ->leftJoin("$ugTable ug", 'ug.user_id = u.id AND ug.group_id = :gid', [':gid' => $gid])
+            // pega quem está direto no grupo OU vinculado via pivô
+            ->where(['or', ['u.group_id' => $gid], ['not', ['ug.user_id' => null]]])
+            ->distinct(); // evita duplicatas caso exista mais de um registro na pivô
     }
 
     public function getParent()
