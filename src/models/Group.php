@@ -23,6 +23,12 @@ use croacworks\essentials\controllers\AuthorizationController;
 class Group extends ModelCommon
 {
     public $verGroup = false;
+    /** Origem do vínculo: 'User' ou 'UserGroup' */
+    public $via;
+    public function attributes()
+    {
+        return array_merge(parent::attributes(), ['via']);
+    }
     /**
      * {@inheritdoc}
      */
