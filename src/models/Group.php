@@ -85,25 +85,50 @@ class Group extends ModelCommon
      * @return \yii\db\ActiveQuery
      */
 
-    public function getUsers() 
+    /**
+     * Retorna uma \yii\db\Query com usuários ligados ao grupo
+     * tanto direto (User.group_id) quanto via pivô (user_groups),
+     * adicionando a coluna 'via' = 'User' | 'UserGroup'.
+     */
+    public function getUsersQuery(): Query
     {
-        $ugTable = UserGroup::tableName();
+        $userTable    = \croacworks\essentials\models\User::tableName();
+        $profileTable = '{{%user_profiles}}'; // ajuste se tiver classe específica
+        $ugTable      = \croacworks\essentials\models\UserGroup::tableName();
 
         // Direto pelo group_id
-        $direct = User::find()
-            ->alias('u')
-            ->select(['u.*', new Expression("'User' AS via")])
+        $direct = (new Query())
+            ->from("$userTable u")
+            ->leftJoin("$profileTable p", 'p.user_id = u.id')
+            ->select([
+                'id'         => 'u.id',
+                'email'      => 'u.email',
+                'status'     => 'u.status',
+                'created_at' => 'u.created_at',
+                'updated_at' => 'u.updated_at',
+                'fullname'   => 'p.fullname',
+                'via'        => new Expression("'User'"),
+            ])
             ->where(['u.group_id' => $this->id]);
 
         // Via tabela pivô user_groups
-        $viaPivot = User::find()
-            ->alias('u')
-            ->select(['u.*', new Expression("'UserGroup' AS via")])
+        $viaPivot = (new Query())
+            ->from("$userTable u")
+            ->leftJoin("$profileTable p", 'p.user_id = u.id')
             ->innerJoin("$ugTable ug", 'ug.user_id = u.id')
-            ->andWhere(['ug.group_id' => $this->id]);
+            ->select([
+                'id'         => 'u.id',
+                'email'      => 'u.email',
+                'status'     => 'u.status',
+                'created_at' => 'u.created_at',
+                'updated_at' => 'u.updated_at',
+                'fullname'   => 'p.fullname',
+                'via'        => new Expression("'UserGroup'"),
+            ])
+            ->where(['ug.group_id' => $this->id]);
 
-        // Une as duas (DISTINCT para evitar duplicados quando o user está nos dois)
-        return $direct->union($viaPivot, true);
+        // Envolve o UNION para poder continuar encadeando (ex.: sort/paginate)
+        return (new Query())->from(['x' => $direct->union($viaPivot, true)]);
     }
 
     public function getParent()
