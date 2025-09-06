@@ -129,7 +129,7 @@ $js = <<<JS
 JS;
 
 $this->registerJs($js,$this::POS_END);
-
+dd($model->getUsers()->all());
 ?>
 
 <div class="user-update">
@@ -163,6 +163,7 @@ $this->registerJs($js,$this::POS_END);
         'attactClass' => 'croacworks\\essentials\\models\\User',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getUsers()
+
         ]),
         'showFields' => [
             [
@@ -189,6 +190,19 @@ $this->registerJs($js,$this::POS_END);
             'status:boolean',
         ],
         'fields' => [
+            [
+                'name' => 'group_id',
+                'type' => 'hidden',
+                'value' => $model->id
+            ],
+            [
+                'name' => 'id',
+                'value' => yii\helpers\ArrayHelper::map(
+                    User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
+                    'id', 'name'
+                ),
+                'type' => 'select2'
+            ],
         ]
     ]); ?>
 
