@@ -49,47 +49,89 @@ if(!$model->isNewRecord){
 
 }
 
-
 $js = <<<JS
 $(function () {
-    // Inicializa multiselect
-    $('#multiselect').multiselect();
+  // plugins
+  $('#multiselect').multiselect();
+  $('#role-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});
+  $('#role-origin').select2({width:'100%',allowClear:true,placeholder:'',multiple:true});
 
-    $('#role-controller').on('change', function () {
-        let controller = $(this).val();
-        $('#multiselect').html('');
-        $('#multiselect_to').html('');
+  // enter para adicionar origin
+  $('#add_origin').on('keyup', function(e){
+    if (e.keyCode === 13) {
+      var v = $('#add_origin').val();
+      if (!v) return;
+      var opt = new Option(v, v, true, true);
+      $('#role-origin').append(opt).trigger('change');
+      $('#add_origin').val('');
+    }
+  });
 
-        if (!controller) return;
+  function resolveFQCN(selectEl){
+    var \$opt = $(selectEl).find('option:selected');
+    var v = \$opt.data('fqcn') || \$opt.val();
+    // se vier índice numérico ou 'index', usa o texto (label) do option
+    if (!v || v === 'index' || /^\\d+$/.test(v)) {
+      v = (\$opt.text() || '').trim();
+    }
+    return v;
+  }
 
-        $.post('{$actionUrl}', { controller }, function(res) {
-            if (res.success) {
-                let options = '';
-                res.actions.forEach(function(action) {
-                    options += `<option value="\${action}">\${action}</option>`;
-                });
-                $('#multiselect').html(options);
-            } else {
-                Swal.fire("Erro", res.message || "Não foi possível carregar as actions", "error");
-            }
-        }, 'json');
-    });
-        $('#add_origin').keyup(function( event ) {
+  $('#role-controller').on('change', function () {
+    // limpa listas
+    $('#multiselect').empty();
+    $('#multiselect_to').empty();
 
-            if (event.keyCode === 13) {
-                 var newOption = new Option($('#add_origin').val(),$('#add_origin').val(), true, true);
-                 $('#role-origin').append(newOption).trigger('change');
-                 //$('#role-origin').val(null).trigger('change');
-                 $('#add_origin').val('');
-            }
+    var fqcn = resolveFQCN(this);
+    if (!fqcn) return;
+
+    if (window.Swal) {
+      Swal.fire({
+        title: 'Carregando...',
+        text: 'Listando actions do controller',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+    }
+
+    $.post('{$actionUrl}', { controller: fqcn }, function(res) {
+      if (res && res.success) {
+        var html = '';
+        res.actions.forEach(function(a){
+          html += '<option value="'+a+'">'+a+'</option>';
         });
-        
-    $('#role-controller').select2({width:'100%',allowClear:true,placeholder:'-- Select one Controller --'});
-    $('#role-origin').select2({width:'100%',allowClear:true,placeholder:'',multiple:true});
+        $('#multiselect').html(html);
+        if (window.Swal) {
+          Swal.close();
+          Swal.fire({icon:'success', title:'Pronto', text:'Actions carregadas.'});
+        }
+      } else {
+        if (window.Swal) {
+          Swal.close();
+          Swal.fire({icon:'error', title:'Ops', text: (res && res.message) || 'Não foi possível carregar as actions'});
+        } else {
+          alert('Erro ao carregar actions');
+        }
+      }
+    }, 'json').fail(function(xhr){
+      if (window.Swal) {
+        Swal.close();
+        Swal.fire({icon:'error', title:'Erro', text: xhr.responseText || 'Falha na requisição'});
+      } else {
+        alert('Falha na requisição');
+      }
+    });
+  });
+
+  // se já houver um valor selecionado (edição), dispara para popular as actions
+  if ($('#role-controller').val()) {
+    $('#role-controller').trigger('change');
+  }
 });
 JS;
 
-$this->registerJs($js);
+$this->registerJs($js, $this::POS_END);
 
 ?>
 
