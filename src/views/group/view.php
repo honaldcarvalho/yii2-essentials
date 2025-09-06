@@ -155,28 +155,28 @@ $this->registerJs($js,$this::POS_END);
 
     <?= AppendModel::widget([
         'title' => Yii::t('app', 'Users'),
-        'attactModel' => 'UserGroup',
+        'attactModel' => 'User',
         'uniqueId' => 'UserAppend',
         'controller' => 'configuration',
         'template' => '{edit}{remove}',
-        'attactClass' => 'croacworks\\essentials\\models\\UserGroup',
+        'attactClass' => 'croacworks\\essentials\\models\\User',
         'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getUserGroups(),
+            'query' => $model->getChildren(),
         ]),
         'showFields' => [
-            'user.profile.fullname',
-            'user.email',
+            'profile.fullname',
+            'email',
             [
-                'attribute' => 'user.created_at',
+                'attribute' => 'created_at',
                 'format' => 'date',
                 'label' => Yii::t('app', 'Created At'),
             ],
             [
-                'attribute' => 'user.updated_at',
+                'attribute' => 'updated_at',
                 'format' => 'date',
                 'label' => Yii::t('app', 'Updated At'),
             ],
-            'user.status:boolean',
+            'status:boolean',
         ],
         'fields' => [
             [
