@@ -162,6 +162,8 @@ $this->registerJs($js,$this::POS_END);
         'attactClass' => 'croacworks\\essentials\\models\\User',
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getUsers(),
+            'sort'  => ['attributes' => ['fullname', 'email', 'via']],
+
         ]),
         'showFields' => [
             [
