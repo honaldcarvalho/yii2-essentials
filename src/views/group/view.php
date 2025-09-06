@@ -161,8 +161,7 @@ $this->registerJs($js,$this::POS_END);
         'template' => '{edit}{remove}',
         'attactClass' => 'croacworks\\essentials\\models\\User',
         'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getUsers(),
-            'sort'  => ['attributes' => ['fullname', 'email', 'via']],
+            'query' => $model->getUsers()
 
         ]),
         'showFields' => [
@@ -170,7 +169,8 @@ $this->registerJs($js,$this::POS_END);
                 'attribute' => 'via',
                 'label' => 'Via',
                 'value' => function ($model) {
-                    return $model->via === 'User' ? 'via User' : 'via UserGroup';
+                    $via = $model->getAttribute('via'); // lê a coluna extra do SELECT
+                    return $via === 'User' ? 'via User' : 'via UserGroup';
                 },
                 'contentOptions' => ['style' => 'white-space:nowrap'],
             ],
