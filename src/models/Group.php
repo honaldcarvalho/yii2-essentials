@@ -90,7 +90,7 @@ class Group extends ModelCommon
      * tanto direto (User.group_id) quanto via pivô (user_groups),
      * adicionando a coluna 'via' = 'User' | 'UserGroup'.
      */
-    public function getUsersQuery(): Query
+    public function getUsers(): Query
     {
         $userTable    = \croacworks\essentials\models\User::tableName();
         $profileTable = '{{%user_profiles}}'; // ajuste se tiver classe específica
