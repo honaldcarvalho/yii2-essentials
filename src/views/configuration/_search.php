@@ -21,9 +21,9 @@ use yii\bootstrap5\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
     <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
-    <?= $form->field($model, 'group_id')->dropdownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
-    <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name')) ?>
-    <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description')) ?>
+    <?= $form->field($model, 'group_id')->dropdownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'),['prompt'=>'']) ?>
+    <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name'),['prompt'=>'']) ?>
+    <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description'),['prompt'=>'']) ?>
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'status')->checkbox() ?>
