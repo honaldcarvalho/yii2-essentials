@@ -96,7 +96,7 @@ $this::registerJs($script, $this::POS_END);
         </button>
     </p>
 
-    <?php echo $this->render('/_parts/filter', ['view' => '/menu', 'searchModel' => $searchModel]); ?>
+    <?php //echo $this->render('/_parts/filter', ['view' => '/menu', 'searchModel' => $searchModel]); ?>
     <?php Pjax::begin(['id' => 'grid-menu']); ?>
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
