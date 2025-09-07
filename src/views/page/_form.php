@@ -1,7 +1,7 @@
 <?php
 
 use croacworks\essentials\models\Language;
-use croacworks\essentials\models\Section;
+use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use croacworks\essentials\controllers\AuthController;
@@ -21,7 +21,7 @@ use croacworks\essentials\widgets\TinyMCE;
     ->asArray()->all(), 'id', 'name'), ['class'=>'form-control'])->label(Yii::t('app','Group')) ?>
 
     <?= $form->field($model, 'section_id')->dropDownList(
-        yii\helpers\ArrayHelper::map(Section::find()->where(['in','group_id',AuthController::userGroups()])->all(), 'id', 'name'), 
+        yii\helpers\ArrayHelper::map(PageSection::find()->where(['in','group_id',AuthController::userGroups()])->all(), 'id', 'name'), 
         ['prompt' => '-- selecione uma secção --']) ?>
 
     <?= $form->field($model, 'language_id')->dropDownList(

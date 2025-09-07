@@ -47,7 +47,7 @@ class m250829_000001_seed_sys_menus extends Migration
                 [40,25,'Licenses','fas fa-certificate','fas','/license/index',6,0,1,1,'croacworks\\essentials\\controllers\\LicenseController','index',null,'index'],
 
                 // Dinamic Pages children (parent_id = 26)
-                [41,26,'Sections','fas fa-ellipsis-v','fas','/section/index',3,0,1,1,'croacworks\\essentials\\controllers\\SectionController','index',null,'index'],
+                [41,26,'Sections','fas fa-ellipsis-v','fas','/section/index',3,0,1,1,'croacworks\\essentials\\controllers\\PageSectionController','index',null,'index'],
                 [42,26,'Pages','fas fa-file','fas','/page/index',5,0,1,1,'croacworks\\essentials\\controllers\\PageController','index',null,'index'],
 
                 // Storage children (parent_id = 27)

@@ -27,7 +27,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'attributes' => [
                             'id',
                             'group.name:text:'.Yii::t('app', 'Group'),
-                            'section.name:text:'.Yii::t('app', 'Section'),
+                            'section.name:text:'.Yii::t('app', 'Page Section'),
                             'slug',
                             'title',
                             'description',

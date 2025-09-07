@@ -24,7 +24,7 @@ use Yii;
  * @property int|null $status
  *
  * @property PageFiles[] $pageFiles
- * @property Section $section
+ * @property PageSection $section
  * @property Group $group
  */
 class Page extends ModelCommon
@@ -50,7 +50,7 @@ class Page extends ModelCommon
             [['created_at','updated_at'], 'safe'],
             [['slug', 'title'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 300],
-            [['section_id'], 'exist', 'skipOnError' => true, 'targetClass' => Section::class, 'targetAttribute' => ['section_id' => 'id']],
+            [['section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['section_id' => 'id']],
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [['slug'], 'unique', 'targetAttribute' => ['slug', 'language_id','group_id'], 'message' => Yii::t('app', 'This slug is already used for this language.')],
@@ -74,7 +74,7 @@ class Page extends ModelCommon
     {
         return [
             'id' => 'ID',
-            'section_id' => Yii::t('app', 'Section'),
+            'section_id' => Yii::t('app', 'Page Section'),
             'slug' => Yii::t('app', 'Slug'),
             'language' => Yii::t('app', 'Language'),
             'title' => Yii::t('app', 'Title'),
@@ -101,18 +101,18 @@ class Page extends ModelCommon
     }
 
     /**
-     * Gets query for [[Section]].
+     * Gets query for [[PageSection]].
      *
      * @return \yii\db\ActiveQuery
      */
     public function getSection()
     {
-        return $this->hasOne(Section::class, ['id' => 'section_id']);
+        return $this->hasOne(PageSection::class, ['id' => 'section_id']);
     }
 
 
     /**
-     * Gets query for [[Section]].
+     * Gets query for [[PageSection]].
      *
      * @return \yii\db\ActiveQuery
      */

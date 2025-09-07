@@ -5,7 +5,7 @@ use yii\widgets\Pjax;
 use yii\grid\GridView;
 
 /** @var yii\web\View $this */
-/** @var croacworks\essentials\models\PageSearch $searchModel */
+/** @var croacworks\essentials\models\Page $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = 'Pages';
@@ -34,7 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'columns' => [
                             'id',
                             'group.name:text:'.Yii::t('app', 'Group'),
-                            'section.name:text:'.Yii::t('app', 'Section'),
+                            'section.name:text:'.Yii::t('app', 'Page Section'),
                             'slug',
                             'title',
                             'description',
@@ -53,7 +53,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'filter' =>Html::input('date',ucfirst(Yii::$app->controller->id).'Search[updated_at]',$searchModel->updated_at,['class'=>'form-control dateandtime'])
                             ],
                             'status:boolean',
-                            ['class'=>croacworks\essentials\components\gridview\ActionColumn::class,]
+                            ['class'=>croacworks\essentials\components\gridview\ActionColumnCustom::class,]
                             
                         ],
                     ]); ?>

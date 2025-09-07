@@ -2,23 +2,23 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\Section;
+use croacworks\essentials\models\PageSection;
 use yii\web\NotFoundHttpException;
 
 /**
- * SectionController implements the CRUD actions for Section model.
+ * PageSectionController implements the CRUD actions for PageSection model.
  */
-class SectionController extends AuthorizationController
+class PageSectionController extends AuthorizationController
 {
     /**
-     * Lists all Section models.
+     * Lists all PageSection models.
      *
      * @return string
      */
     public function actionIndex()
     {
-        $searchModel = new Section();
-        $searchModel->scenario = Section::SCENARIO_SEARCH;
+        $searchModel = new PageSection();
+        $searchModel->scenario = PageSection::SCENARIO_SEARCH;
         $dataProvider = $searchModel->search($this->request->queryParams);
 
         return $this->render('index', [
@@ -28,7 +28,7 @@ class SectionController extends AuthorizationController
     }
 
     /**
-     * Displays a single Section model.
+     * Displays a single PageSection model.
      * @param int $id ID
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
@@ -41,13 +41,13 @@ class SectionController extends AuthorizationController
     }
 
     /**
-     * Creates a new Section model.
+     * Creates a new PageSection model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
     public function actionCreate()
     {
-        $model = new Section();
+        $model = new PageSection();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post())  && ($model->group_id = $this::userGroup()) && $model->save()) {
@@ -63,7 +63,7 @@ class SectionController extends AuthorizationController
     }
 
     /**
-     * Updates an existing Section model.
+     * Updates an existing PageSection model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param int $id ID
      * @return string|\yii\web\Response
@@ -83,7 +83,7 @@ class SectionController extends AuthorizationController
     }
 
     /**
-     * Deletes an existing Section model.
+     * Deletes an existing PageSection model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
      * @return \yii\web\Response
