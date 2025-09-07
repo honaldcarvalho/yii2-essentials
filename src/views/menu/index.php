@@ -1,9 +1,6 @@
 <?php
 
 use yii\grid\GridView;
-use croacworks\essentials\widgets\DefaultButtons;
-use croacworks\essentials\components\gridview\ActionColumnCustom;
-use croacworks\essentials\controllers\AuthController;
 use croacworks\essentials\controllers\RoleController;
 use yii\bootstrap5\Html;
 use yii\widgets\Pjax;
@@ -82,72 +79,58 @@ $controllers = RoleController::getAllControllers(); // FQCNs
 $this::registerJs($script, $this::POS_END);
 
 ?>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-md-12">
-                            <div class="btn-group">
-                                <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                    'controller' => Yii::$app->controller->id,
-                                    'show' => ['create'],
-                                    'verGroup' => false
-                                ]) ?>
 
-                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-auto-add">
-                                    <i class="fas fa-plus-circle"></i> Adicionar Automático
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+<div class="menu-index">
 
-                    <?php // echo $this->render('_search', ['model' => $searchModel]); 
-                    ?>
-                    <?php Pjax::begin(['id' => 'grid-menu']); ?>
-                    <?= GridView::widget([
-                        'dataProvider' => $dataProvider,
-                        'columns' => [
-                            [
-                                'attribute' => 'label',
-                                'label' => 'Menu',
-                                'format' => 'raw',
-                                'value' => function ($model) {
-                                    /** @var \croacworks\essentials\models\SysMenu $model */
-                                    $count = $model->getChildren()->count();
-                                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
-                                    return \yii\helpers\Html::a(
-                                        \yii\helpers\Html::encode($model->label) . $badge,
-                                        ['view', 'id' => $model->id]
-                                    );
-                                }
-                            ],
-                            'icon',
-                            'order',
-                            'url:url',
-                            'status:boolean',
-                            [
-                                'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                                'template' => '{status} {view} {update} {delete}',
-                                'uniqueId' => 'menu'
-                            ],
-                        ],
-                        'summaryOptions' => ['class' => 'summary mb-2'],
-                        'pager' => ['class' => 'yii\bootstrap5\LinkPager'],
-                    ]); ?>
-                    <?php Pjax::end(); ?>
+    <h1><?= Html::encode($this->title) ?></h1>
 
-                </div>
-                <!--.card-body-->
-            </div>
-            <!--.card-->
-        </div>
-        <!--.col-md-12-->
-    </div>
-    <!--.row-->
+    <p>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget([
+            'controller' => Yii::$app->controller->id,
+            'show' => ['create'],
+            'verGroup' => false
+        ]) ?>
+
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-auto-add">
+            <i class="fas fa-plus-circle"></i> <?= Yii::t('app', 'Add Automatic Menu'); ?>
+        </button>
+    </p>
+
+    <?php echo $this->render('/_parts/filter', ['view' => '/role-template', 'searchModel' => $searchModel]); ?>
+    <?php Pjax::begin(['id' => 'grid-menu']); ?>
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'columns' => [
+            [
+                'attribute' => 'label',
+                'label' => 'Menu',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    /** @var \croacworks\essentials\models\SysMenu $model */
+                    $count = $model->getChildren()->count();
+                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
+                    return \yii\helpers\Html::a(
+                        \yii\helpers\Html::encode($model->label) . $badge,
+                        ['view', 'id' => $model->id]
+                    );
+                }
+            ],
+            'icon',
+            'order',
+            'url:url',
+            'status:boolean',
+            [
+                'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
+                'template' => '{status} {view} {update} {delete}',
+                'uniqueId' => 'menu'
+            ],
+        ],
+        'summaryOptions' => ['class' => 'summary mb-2'],
+        'pager' => ['class' => 'yii\bootstrap5\LinkPager'],
+    ]); ?>
+    <?php Pjax::end(); ?>
+
 </div>
-
 
 <div class="modal fade" id="modal-auto-add" tabindex="-1" aria-labelledby="modalAutoAddLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
