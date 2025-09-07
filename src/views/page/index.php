@@ -1,61 +1,64 @@
 <?php
 
 use yii\helpers\Html;
+use yii\widgets\Pjax;
 use yii\grid\GridView;
 
-/* @var $this yii\web\View */
-/* @var $searchModel croacworks\essentials\models\FolderSearch */
-/* @var $dataProvider yii\data\ActiveDataProvider */
+/** @var yii\web\View $this */
+/** @var croacworks\essentials\models\PageSearch $searchModel */
+/** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->title = Yii::t('app', 'Folders');
+$this->title = 'Pages';
 $this->params['breadcrumbs'][] = $this->title;
+
 ?>
+
 <div class="container-fluid">
-    
-    <h1><?= Html::encode($this->title) ?></h1>
-    
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show'=>['create'],'buttons_name'=>['create'=>'Create Folder']]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['create'],'buttons_name' => ['create' => Yii::t('app', 'New User')],])?>
                         </div>
                     </div>
-                    
-                    <?php echo $this->render('/_parts/filter', ['view' =>'/folder','searchModel' => $searchModel]); ?>
+
+
+                    <?php Pjax::begin(); ?>
+                    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
+                        'filterModel' => $searchModel,
                         'columns' => [
-       
                             'id',
-                            'name',
+                            'group.name:text:'.Yii::t('app', 'Group'),
+                            'section.name:text:'.Yii::t('app', 'Section'),
+                            'slug',
+                            'title',
                             'description',
-                            'external:boolean',
+                            //'content:ntext',
+                            //'keywords:ntext',
                             [
                                 'attribute'=>'created_at',
                                 'format' => 'date',
-                                'label' => Yii::t('app', 'Created At'),
+                                'label' => Yii::t('app', 'Created at'),
                                 'filter' =>Html::input('date', ucfirst(Yii::$app->controller->id).'Search[created_at]',$searchModel->created_at,['class'=>'form-control dateandtime'])
                             ],
                             [
                                 'attribute'=>'updated_at',
                                 'format' => 'date',
-                                'label' => Yii::t('app', 'Updated At'),
+                                'label' => Yii::t('app', 'Updated at'),
                                 'filter' =>Html::input('date',ucfirst(Yii::$app->controller->id).'Search[updated_at]',$searchModel->updated_at,['class'=>'form-control dateandtime'])
                             ],
                             'status:boolean',
-
-                            ['class' =>'croacworks\essentials\components\gridview\ActionColumnCustom',],
+                            ['class'=>croacworks\essentials\components\gridview\ActionColumn::class,]
+                            
                         ],
-                        'summaryOptions' => ['class' => 'summary mb-2'],
-                        'pager' => [
-                            'class' => 'yii\bootstrap5\LinkPager',
-                        ]
                     ]); ?>
 
+                    <?php Pjax::end(); ?>
 
                 </div>
                 <!--.card-body-->

@@ -21,16 +21,15 @@ $this->params['breadcrumbs'][] = $this->title;
                     <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget(
                             [
-                                'controller' => Yii::$app->controller->id,'show' => ['create'],'verGroup'=>false
+                                'show' => ['create'],'verGroup'=>false
                             ]) ?>
                         </div>
                     </div>
 
-                    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/license','searchModel' => $searchModel]); ?>
 
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
-                        'filterModel' => $searchModel,
                         'columns' => [
                             'id',
                             'licenseType.name:text:'.Yii::t('app','License Type'),

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model weebz\yii2basics\models\Role */
+/* @var $model croacworks\essentials\models\Role */
 
 $this->title = Yii::t('app', 'Role').': ' .$model->id;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Roles'), 'url' => ['index']];

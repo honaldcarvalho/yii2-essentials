@@ -184,7 +184,7 @@ $delete_files_button[] =
               ) ?>
             </div>
           </div>
-
+          <?php echo $this->render('/_parts/filter', ['view' =>'/file','searchModel' => $searchModel]); ?>
           <?php Pjax::begin([
               'id'=>'grid-pjax',
               'timeout'=>8000,
@@ -194,7 +194,6 @@ $delete_files_button[] =
 
           <?= GridView::widget([
               'dataProvider' => $dataProvider,
-              'filterModel'  => $searchModel,
               'tableOptions' => ['class'=>'table table-striped table-bordered'],
               'columns' => [
                   ['class' => 'yii\grid\CheckboxColumn', // <-- resolve seleção múltipla

@@ -18,8 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <p>
         <?= Html::a(Yii::t('app', 'Create Group'), ['create'], ['class' => 'btn btn-success']) ?>
     </p>
-    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); 
-    ?>
+    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); ?>
     <?php Pjax::begin(); ?>
 
 

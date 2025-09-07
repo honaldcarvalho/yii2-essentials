@@ -16,10 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
     <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget([
-            'show' => ['create'],
-            'buttons_name' => ['create' => Yii::t('app', 'New User')],
-            ])?>
+        <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['create'],'buttons_name' => ['create' => Yii::t('app', 'New User')],])?>
     </p>
     <?php Pjax::begin(); ?>
     <?php echo $this->render('/_parts/filter', ['view' =>'/user','searchModel' => $searchModel]); ?>
