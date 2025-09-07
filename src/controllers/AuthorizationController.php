@@ -337,7 +337,8 @@ class AuthorizationController extends CommonController
                         $exists = (new Query())
                             ->from($tbl->name)
                             ->where([$localCol => $value])
-                            ->limit(1)->exists('*', $db);
+                            ->limit(1)
+                            ->exists($db);
                         if ($exists) {
                             $refs[] = [
                                 'table'  => $tbl->name,
@@ -368,7 +369,8 @@ class AuthorizationController extends CommonController
                     $exists = (new Query())
                         ->from($tbl->name)
                         ->where([$col => $value])
-                        ->limit(1)->exists('*', $db);
+                        ->limit(1)
+                        ->exists($db);
 
                     if ($exists) {
                         $refs[] = [
