@@ -18,7 +18,6 @@ JS;
 
 $this->registerJs($script);
 
-
 ?>
 
 <div class="row mt-2">
