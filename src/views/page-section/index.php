@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
 
 
-                    <?php echo $this->render('_search', ['model' => $searchModel]); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/page-section','searchModel' => $searchModel]); ?>
                     <?php Pjax::begin(); ?>
 
                     <?= GridView::widget([
