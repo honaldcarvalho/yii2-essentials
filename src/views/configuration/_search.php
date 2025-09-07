@@ -26,7 +26,7 @@ use yii\bootstrap5\ActiveForm;
     <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description'),['prompt'=>'']) ?>
     <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
-    <?= $form->field($model, 'status')->checkbox() ?>
+    <?= $form->field($model, 'status')->dropdownList([''=>'',0=>Yii::t('app','Disabled'),1=>Yii::t('app','Enabled')]) ?>
 
     <div class="form-group">
         <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
