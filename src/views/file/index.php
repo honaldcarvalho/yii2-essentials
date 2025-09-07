@@ -205,7 +205,8 @@ $delete_files_button[] =
                   ],
                   'id',
                   'name',
-                  'folder.name:text:Folder',
+                  'group.name:text:'.Yii::t('app', 'Group'),
+                  'folder.name:text:'.Yii::t('app', 'Folder'),
                   [
                       'attribute'=>'folder_id',
                       'format'=>'raw',
