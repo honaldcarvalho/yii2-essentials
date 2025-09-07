@@ -15,7 +15,7 @@ $controllers = RoleController::getAllControllers();
 $text_select_controller = Yii::t('app', 'Select a controller');
 
 $script = <<< JS
-$('#controller-select').select2({ width: '100%', placeholder: $text_select_controller });
+$('#controller-select').select2({ width: '100%', placeholder: '$text_select_controller' });
 JS;
 
 $this->registerJs($script);
