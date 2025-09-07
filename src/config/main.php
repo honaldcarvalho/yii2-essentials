@@ -160,7 +160,7 @@ $config = [
                     'log',
                     'folder',
                     'file',
-                    'section',
+                    'page-section',
                     'page',
                     'notification',
                     'notification-message',
