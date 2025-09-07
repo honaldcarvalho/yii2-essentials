@@ -1,5 +1,7 @@
 <?php
 
+use croacworks\essentials\controllers\CommonController;
+use croacworks\essentials\controllers\RoleController;
 use croacworks\essentials\models\SysMenu;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
