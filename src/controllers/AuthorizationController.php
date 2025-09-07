@@ -841,30 +841,34 @@ class AuthorizationController extends CommonController
 
     /* ===== findModel (mantido, só usando getAllUserGroupIds) ===== */
 
-    protected function findModel($id, $model_name = null)
-    {
-        $modelClass = $model_name ?? str_replace(['controllers', 'Controller'], ['models', ''], static::getClassPath());
-        $model = $modelClass::find()->where(['id' => $id]);
-        $modelObj = new $modelClass;
+protected function findModel($id, $model_name = null)
+{
+    $modelClass = $model_name ?? str_replace(['controllers', 'Controller'], ['models', ''], static::getClassPath());
 
-        if (property_exists($modelObj, 'verGroup') && $modelObj->verGroup && !self::isMaster()) {
-
-            $groups = \croacworks\essentials\models\Group::familyIdsFromUser(self::User());
-            $groups = array_map('intval', (array)$groups);
-
-            if (Yii::$app->controller->action->id === 'view') {
-                $groups[] = 1; // público
-            }
-
-            $model->andFilterWhere(['in', 'group_id', $groups]);
-        }
-
-        if (($instance = $model->one()) !== null) {
-            return $instance;
-        }
-
-        throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+    if (!class_exists($modelClass)) {
+        throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Model class not found.'));
     }
+
+    // MASTER: ignora qualquer escopo de grupo (usa find(false))
+    if (self::isMaster()) {
+        
+        $instance = $modelClass::find(false)->where(['id' => (int)$id])->limit(1)->one();
+        if ($instance !== null) return $instance;
+        throw new \yii\web\NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+    }
+
+    // NÃO-MASTER: deixa o ModelCommon aplicar o escopo; não duplique filtros aqui
+    $query = $modelClass::find()->where(['id' => (int)$id])->limit(1);
+
+    // Se você realmente quer liberar o grupo público (1) só no "view",
+    // isso já é tratado no seu ModelCommon (você adiciona 1 ao array). 
+    // Evite refazer aqui para não divergir do escopo global.
+
+    $instance = $query->one();
+    if ($instance !== null) return $instance;
+
+    throw new \yii\web\NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+}
 
     /** 
      * Heartbeat SOFT: registra/atualiza presença por sessão usando SEMPRE user.group_id.

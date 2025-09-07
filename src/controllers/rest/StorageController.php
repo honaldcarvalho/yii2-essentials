@@ -817,56 +817,81 @@ class StorageController extends ControllerRest
         }
     }
 
-    public static function removeFile($id)
+    public static function removeFile($id, array $opts = [])
     {
         try {
-            $file = false;
-            $success = false;
-            $user_groups =  AuthorizationController::getUserGroups();
+            $force         = (bool)($opts['force'] ?? false);   // permite forçar bypass (ex.: para master)
+            $ignoreMissing = (bool)($opts['ignoreMissing'] ?? true); // não falhar se arquivo físico não existir
+            $deleteThumb   = (bool)($opts['deleteThumb'] ?? true);
 
-            if (!AuthorizationController::isMaster()) {
-                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups]])->one();
+            // ===== 1) Localiza o modelo =====
+            if ($force || AuthorizationController::isMaster()) {
+                // Bypass total de escopo/grupo
+                $model = \croacworks\essentials\models\File::find(false)
+                    ->where(['id' => (int)$id])->one();
             } else {
-                $model = File::find()->where(['id' => $id])->andWhere(['or', ['in', 'group_id', $user_groups], ['in', 'group_id', [null, 1]]])->one();
+                // Respeita os grupos do usuário
+                $user_groups = AuthorizationController::getUserGroups();
+                $model = \croacworks\essentials\models\File::find()
+                    ->where(['id' => (int)$id])
+                    ->andWhere(['in', 'group_id', (array)$user_groups])
+                    ->one();
             }
 
-            if ($model !== null) {
-                $id = $model->name;
-                $file_name = $model->name;
+            if ($model === null) {
+                return ['code' => 404, 'success' => false, 'message' => 'file_not_found_or_access_denied'];
+            }
 
-                $message = Yii::t('app', "Could not remove model #{id}", ['id' => $id]);
-                $thumb = Yii::t('app', "Could not remove thumb file {file}.", ['file' => $file_name]);
-                $file = Yii::t('app', "Could not remove file {file}.", ['file' => $file_name]);
+            // Guarda nomes/caminhos antes do delete
+            $fileName   = $model->name;
+            $absPath    = Yii::getAlias('@webroot') . ($model->path ?? '');
+            $absThumb   = $model->pathThumb ? Yii::getAlias('@webroot') . $model->pathThumb : null;
 
-                if ($model->delete() !== false) {
+            $message = Yii::t('app', "Could not remove model #{id}", ['id' => $fileName]);
+            $thumb   = Yii::t('app', "Could not remove thumb file {file}.", ['file' => $fileName]);
+            $file    = Yii::t('app', "Could not remove file {file}.", ['file' => $fileName]);
 
-                    $message = Yii::t('app', "Model #{id} removed.", ['id' => $id]);
-
-                    if (@unlink(Yii::getAlias('@webroot') . $model->path))
-                        $file = Yii::t('app', "File {file} removed.", ['file' => $file_name]);
-
-                    if ($model->pathThumb) {
-                        if (@unlink(Yii::getAlias('@webroot') . $model->pathThumb))
-                            $thumb = Yii::t('app', "Thumb file {file} removed.", ['file' => $file_name]);
-                    }
-                } else {
-                    return [
-                        'code' => 500,
-                        'success' => false,
-                        'message' => $model->getErrors(),
-                    ];
-                }
-
+            // ===== 2) Remove do banco (mantendo sua ordem original) =====
+            if ($model->delete() === false) {
                 return [
-                    'code' => 200,
-                    'success' => true,
-                    'message' => $message,
-                    'file' => $file,
-                    'thumb' => $thumb
+                    'code'    => 500,
+                    'success' => false,
+                    'message' => $model->getErrors(),
                 ];
-            } else {
-                return ['code' => 404, 'success' => false];
             }
+
+            $message = Yii::t('app', "Model #{id} removed.", ['id' => $fileName]);
+
+            // ===== 3) Remove arquivo físico (ignora se não existir quando $ignoreMissing=true) =====
+            if (is_string($absPath) && $absPath !== '') {
+                if (is_file($absPath)) {
+                    if (@unlink($absPath)) {
+                        $file = Yii::t('app', "File {file} removed.", ['file' => $fileName]);
+                    }
+                } elseif ($ignoreMissing) {
+                    // ok, mantém sucesso mesmo sem arquivo físico
+                    $file = Yii::t('app', "File {file} not found, skipped.", ['file' => $fileName]);
+                }
+            }
+
+            // ===== 4) Remove thumb (se existir) =====
+            if ($deleteThumb && $absThumb) {
+                if (is_file($absThumb)) {
+                    if (@unlink($absThumb)) {
+                        $thumb = Yii::t('app', "Thumb file {file} removed.", ['file' => $fileName]);
+                    }
+                } elseif ($ignoreMissing) {
+                    $thumb = Yii::t('app', "Thumb file {file} not found, skipped.", ['file' => $fileName]);
+                }
+            }
+
+            return [
+                'code'    => 200,
+                'success' => true,
+                'message' => $message,
+                'file'    => $file,
+                'thumb'   => $thumb,
+            ];
         } catch (\Throwable $th) {
             return ['code' => 500, 'success' => false, 'data' => $th];
         }

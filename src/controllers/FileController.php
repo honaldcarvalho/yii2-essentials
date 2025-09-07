@@ -232,7 +232,11 @@ class FileController extends AuthorizationController
             }
 
             // Mantém sua rotina atual de remoção (disco + DB)
-            $res = StorageController::removeFile($model->id);
+            $res = StorageController::removeFile($model->id, [
+                'force' => \croacworks\essentials\controllers\AuthorizationController::isMaster(),
+                // 'ignoreMissing' => true,   // opcional
+                // 'deleteThumb'   => true,   // opcional
+            ]);
             $ok  = (bool)($res['success'] ?? false);
 
             if (!$ok) {
