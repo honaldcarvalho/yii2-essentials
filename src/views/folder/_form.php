@@ -13,6 +13,8 @@ use yii\bootstrap5\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
+    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
+    
     <?= $form->field($model, 'folder_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Folder::find()
     ->where(['in','group_id', AuthController::userGroups()])
     ->asArray()->all(), 'id', 'name'), ['class'=>'form-control', 'prompt' => Yii::t('app','-- Select Folder --')]) ?>

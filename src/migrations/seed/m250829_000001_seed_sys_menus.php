@@ -20,7 +20,6 @@ class m250829_000001_seed_sys_menus extends Migration
                 [14,null,'Development','fas fa-file-code','fas','#',14,1,1,1,null,null,null,null],
 
                 // System children (alguns são pais de outros)
-                [15,13,'Page Header','', 'fas','/page-header/index',0,0,1,1,'app\\controllers\\PageHeaderController','index','page-header','index'],
                 [16,13,'Menus','fas fa-bars','fas','/menu/index',2,0,1,1,'croacworks\\essentials\\controllers\\MenuController','index','menu','index'],
                 [17,13,'Configurations','fas fa-clipboard-check','fas','/configuration/index',2,0,1,1,'croacworks\\essentials\\controllers\\ConfigurationController','index',null,'index'],
 

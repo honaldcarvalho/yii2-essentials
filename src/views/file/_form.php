@@ -14,7 +14,9 @@ use yii\bootstrap5\BootstrapAsset;
 <div class="file-form">
 
   <?php $form = ActiveForm::begin(); ?>
-    
+  
+    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name'), ['prompt' => '-- selecione um grupo --']) ?>
+
     <?= $form->field($model, 'folder_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Folder::find()->asArray()->all(), 
             'id', 'name'), ['prompt' => Yii::t('app','-- Select Folder --')]) ?>
     
