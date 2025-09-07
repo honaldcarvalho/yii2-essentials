@@ -17,44 +17,13 @@ use yii\bootstrap5\ActiveForm;
     ]); ?>
 
     <?= $form->field($model, 'id') ?>
-
-    <?= $form->field($model, 'description') ?>
-
-    <?= $form->field($model, 'file_id') ?>
-
-    <?= $form->field($model, 'meta_viewport') ?>
-
-    <?= $form->field($model, 'meta_author') ?>
-
-    <?php // echo $form->field($model, 'meta_robots') ?>
-
-    <?php // echo $form->field($model, 'meta_googlebot') ?>
-
-    <?php // echo $form->field($model, 'meta_keywords') ?>
-
-    <?php // echo $form->field($model, 'meta_description') ?>
-
-    <?php // echo $form->field($model, 'canonical') ?>
-
-    <?php // echo $form->field($model, 'host') ?>
-
-    <?php // echo $form->field($model, 'title') ?>
-
-    <?php // echo $form->field($model, 'bussiness_name') ?>
-
-    <?php // echo $form->field($model, 'email') ?>
-
-    <?php // echo $form->field($model, 'fone') ?>
-
-    <?php // echo $form->field($model, 'address') ?>
-
-    <?php // echo $form->field($model, 'postal_code') ?>
-
-    <?php // echo $form->field($model, 'created_at') ?>
-
-    <?php // echo $form->field($model, 'updated_at') ?>
-
-    <?php // echo $form->field($model, 'status') ?>
+    <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'group_id')->dropdownList(yii\helpers\ArrayHelper::map(Group::find()->asArray()->all(), 'id', 'name')) ?>
+    <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name')) ?>
+    <?= $form->field($model, 'email_service_id')->dropdownList(yii\helpers\ArrayHelper::map(EmailService::find()->asArray()->all(), 'id', 'description')) ?>
+    <?= $form->field($model, 'host')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group">
         <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
