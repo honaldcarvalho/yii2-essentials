@@ -7,7 +7,7 @@ use croacworks\essentials\controllers\RoleController; // pode reutilizar este he
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use croacworks\essentials\widgets\form\ActiveForm;
+use yii\widgets\ActiveForm;
 
 PluginAsset::register($this)->add(['multiselect']);
 
@@ -160,7 +160,7 @@ $this->registerJs($js);
     ?>
 
     <!-- ACTIONS Dual List -->
-    <div class="form-group">
+    <div class="form-group mb-3">
         <div class="row">
             <div class="col-md-5">
                 <label for="multiselect"><?= Yii::t('app', 'Available actions') ?></label>

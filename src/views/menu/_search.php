@@ -4,7 +4,7 @@ use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\controllers\RoleController;
 use croacworks\essentials\models\SysMenu;
 use yii\helpers\Html;
-use croacworks\essentials\widgets\form\ActiveForm;
+use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Menu */
@@ -50,7 +50,7 @@ $this->registerJs($script);
 
         <?= $form->field($model, 'status')->dropdownList([''=>'',0=>Yii::t('app','Disabled'),1=>Yii::t('app','Enabled')]) ?>
 
-        <div class="form-group">
+        <div class="form-group mb-3">
             <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
             <?= Html::resetButton('<i class="fas fa-broom mr-2 btn-reset"></i>' . Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
         </div>

@@ -9,7 +9,7 @@ use croacworks\essentials\models\User;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\web\View;
-use croacworks\essentials\widgets\form\ActiveForm;
+use yii\widgets\ActiveForm;
 
 ?>
 
@@ -29,7 +29,7 @@ use croacworks\essentials\widgets\form\ActiveForm;
 
     <?= $form->field($model, 'status')->checkbox() ?>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
     </div>
 

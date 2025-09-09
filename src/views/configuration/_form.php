@@ -56,7 +56,7 @@ if(!empty($model->file_id && $model->file != null)){
         <?= $form->field($model, 'status')->checkbox() ?>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
     </div>
 

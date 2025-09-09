@@ -25,7 +25,7 @@ use croacworks\essentials\models\Group;
     
 
 
-  <div class="form-group">
+  <div class="form-group mb-3">
     <?= Html::submitButton('Salvar', ['class' => 'btn btn-success']) ?>
   </div>
 

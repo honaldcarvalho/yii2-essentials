@@ -3,7 +3,7 @@
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
-use croacworks\essentials\widgets\form\ActiveForm;
+use yii\widgets\ActiveForm;
 use croacworks\essentials\controllers\AuthController;
 use croacworks\essentials\controllers\ControllerCommon;
 use croacworks\essentials\widgets\TinyMCE;
@@ -46,7 +46,7 @@ use croacworks\essentials\widgets\TinyMCE;
 
     <?= $form->field($model, 'status')->checkbox() ?>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('croacworks\essentials','Save'), ['class' => 'btn btn-success']) ?>
     </div>
 

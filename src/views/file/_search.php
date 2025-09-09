@@ -38,7 +38,7 @@ use yii\bootstrap5\ActiveForm;
 
     <?php // echo $form->field($model, 'updated_at') ?>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
         <?= Html::resetButton('<i class="fas fa-broom mr-2"></i>' .Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary btn-reset']) ?>
     </div>

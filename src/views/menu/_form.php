@@ -125,7 +125,7 @@ $this->registerJs($script);
 
     <?= $form->field($model, 'status')->checkbox() ?>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
     </div>
 

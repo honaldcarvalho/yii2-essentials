@@ -90,7 +90,7 @@ use yii\bootstrap5\ActiveForm;
         </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <?= Html::submitButton(Yii::t('app', $model->isNewRecord ? 'Create' : 'Save'), ['class' => 'btn btn-primary']) ?>
         <?= Html::a(Yii::t('app', 'Cancel'), $model->isNewRecord ? ['index'] : ['view', 'id' => $model->id], ['class' => 'btn btn-secondary']) ?>
     </div>

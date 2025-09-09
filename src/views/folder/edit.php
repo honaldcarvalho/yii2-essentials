@@ -63,7 +63,7 @@ $this::registerJs($script);
 
                         <?= $form->field($model, 'status')->checkbox() ?>
 
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <a id="btn-save-slide" class="btn btn-success"><i class="fas fa-save"></i> <?= Yii::t('app', 'Save'); ?></a>
                             <a class="btn btn-secondary" data-dismiss="modal" id="btn-save-slide" href="javascript:window.parent.postMessage('close', '*');">
                                 <i class="fas fa-close"></i>
