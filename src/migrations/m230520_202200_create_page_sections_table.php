@@ -22,7 +22,7 @@ class m230520_202200_create_page_sections_table extends Migration
         ]);
 
         $this->addForeignKey(
-            'fk-page_sections-section_id',
+            'fk-page_sections-page_section_id',
             'page_sections',
             'page_section_id',
             'page_sections',

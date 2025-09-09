@@ -20,7 +20,7 @@ use croacworks\essentials\widgets\TinyMCE;
     <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Group::find()
     ->asArray()->all(), 'id', 'name'), ['class'=>'form-control'])->label(Yii::t('app','Group')) ?>
 
-    <?= $form->field($model, 'section_id')->dropDownList(
+    <?= $form->field($model, 'page_section_id')->dropDownList(
         yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'), 
         ['prompt' => '-- selecione uma secção --']) ?>
 

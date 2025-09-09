@@ -10,7 +10,7 @@ use Yii;
  *
  * @property int $id
  * @property int|null $group_id
- * @property int|null $section_id
+ * @property int|null $page_section_id
  * @property string $language_id
  * @property string $slug
  * @property string $title
@@ -44,13 +44,13 @@ class Page extends ModelCommon
     public function rules()
     {
         return [
-            [['section_id', 'status'], 'integer'],
+            [['page_section_id', 'status'], 'integer'],
             [['slug', 'title'], 'required','on'=> self::SCENARIO_DEFAULT],
             [['content', 'keywords','custom_js','custom_css','language_id'], 'string'],
             [['created_at','updated_at'], 'safe'],
             [['slug', 'title'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 300],
-            [['section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['section_id' => 'id']],
+            [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [['slug'], 'unique', 'targetAttribute' => ['slug', 'language_id','group_id'], 'message' => Yii::t('app', 'This slug is already used for this language.')],
@@ -74,7 +74,7 @@ class Page extends ModelCommon
     {
         return [
             'id' => 'ID',
-            'section_id' => Yii::t('app', 'Page Section'),
+            'page_section_id' => Yii::t('app', 'Page Section'),
             'slug' => Yii::t('app', 'Slug'),
             'language' => Yii::t('app', 'Language'),
             'title' => Yii::t('app', 'Title'),
@@ -107,7 +107,7 @@ class Page extends ModelCommon
      */
     public function getSection()
     {
-        return $this->hasOne(PageSection::class, ['id' => 'section_id']);
+        return $this->hasOne(PageSection::class, ['id' => 'page_section_id']);
     }
 
 

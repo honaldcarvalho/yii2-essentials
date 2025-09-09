@@ -21,7 +21,7 @@ use croacworks\essentials\widgets\form\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'section_id') ?>
+    <?= $form->field($model, 'page_section_id') ?>
 
     <?= $form->field($model, 'slug') ?>
 

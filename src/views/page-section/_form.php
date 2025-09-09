@@ -14,7 +14,7 @@ use yii\bootstrap5\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'section_id')->dropDownList(
+    <?= $form->field($model, 'page_section_id')->dropDownList(
         yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'), 
         ['prompt' => '-- selecione uma secção --']) ?>
 
