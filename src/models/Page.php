@@ -89,16 +89,18 @@ class Page extends ModelCommon
         ];
     }
 
-    /**
-     * Gets query for [[PageFiles]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+        public function getPageFiles()
+        {
+            return $this->hasMany(PageFile::class, ['page_id' => 'id'])
+                ->inverseOf('page')
+                ->with('file');
+        }
 
-    public function getFiles() {
-        return $this->hasMany(File::class, ['id' => 'file_id'])
-          ->viaTable('page_files', ['page_id' => 'id']);
-    }
+        public function getFiles()
+        {
+            return $this->hasMany(File::class, ['id' => 'file_id'])
+                ->via('pageFiles');
+        }
 
     /**
      * Gets query for [[PageSection]].

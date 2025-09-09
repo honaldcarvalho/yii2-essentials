@@ -56,7 +56,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="col-md-12">
                     <?= StorageUploadMultiple::widget([
                         'attact_model'=>[
-                            'class_name'=> 'weebz\\yii2basics\\models\\PageFile',
+                            'class_name' => \croacworks\essentials\models\PageFile::class,
                             'id'=> $model->id,
                             'fields'=> ['page_id','file_id']
                         ],
@@ -73,7 +73,7 @@ $this->params['breadcrumbs'][] = $this->title;
     
     <?= ListFiles::widget([
         'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getFiles()
+            'query' => $model->getPageFiles(),
         ]),
     ]); ?>
 </div>
