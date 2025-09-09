@@ -1,5 +1,7 @@
 <?php
 
+use croacworks\essentials\models\Language;
+use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
 
@@ -21,7 +23,13 @@ use croacworks\essentials\widgets\form\ActiveForm;
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'page_section_id') ?>
+    <?= $form->field($model, 'page_section_id')->dropDownList(
+        yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'), 
+        ['prompt' => '-- selecione uma secção --']) ?>
+
+    <?= $form->field($model, 'language_id')->dropDownList(
+        yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'), 
+        ['prompt' => '-- selecione uma lingua --']) ?>
 
     <?= $form->field($model, 'slug') ?>
 

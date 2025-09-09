@@ -4,9 +4,7 @@ use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
-use croacworks\essentials\controllers\AuthorizationController;
-use croacworks\essentials\controllers\ControllerCommon;
-use croacworks\essentials\widgets\TinyMCE;
+use croacworks\essentials\widgets\form\TinyMCE;
 
 /** @var yii\web\View $this */
 /** @var croacworks\essentials\models\Page $model */
@@ -34,7 +32,7 @@ use croacworks\essentials\widgets\TinyMCE;
 
     <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'content')->widget(\croacworks\essentials\widgets\TinyMCE::class, [
+    <?= $form->field($model, 'content')->widget(TinyMCE::class, [
         'options' => ['rows' => 20]
     ]); ?>
 
