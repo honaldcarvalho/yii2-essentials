@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\Folder;
 use croacworks\essentials\widgets\AppendModel;
 use croacworks\essentials\widgets\ListFiles;

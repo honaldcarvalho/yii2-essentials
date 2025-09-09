@@ -3,7 +3,7 @@
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Folder */
 
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 

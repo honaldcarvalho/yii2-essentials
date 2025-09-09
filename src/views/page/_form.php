@@ -4,7 +4,7 @@ use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\controllers\ControllerCommon;
 use croacworks\essentials\widgets\TinyMCE;
 

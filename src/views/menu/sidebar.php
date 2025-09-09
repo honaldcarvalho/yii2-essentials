@@ -1,7 +1,7 @@
 <?php
 
 use croacworks\essentials\controllers\CommonController;
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\SysMenu;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\widgets\Menu as WidgetsMenu;

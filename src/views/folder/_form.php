@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\Group;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;

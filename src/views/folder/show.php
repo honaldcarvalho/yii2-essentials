@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
-use croacworks\essentials\controllers\AuthController;
+use croacworks\essentials\controllers\AuthorizationController;
 use yii\widgets\Pjax;
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Folder */
