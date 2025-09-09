@@ -73,6 +73,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <!--.card-->
     
     <?= ListFiles::widget([
-        'dataProvider' => $dataProvider,
+        'dataProvider' => new \yii\data\ActiveDataProvider([
+            'query' => $model->getFiles()
+        ]),
     ]); ?>
 </div>
