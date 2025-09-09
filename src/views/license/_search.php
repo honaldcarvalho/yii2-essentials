@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use croacworks\essentials\widgets\form\SearchActiveField;
+use croacworks\essentials\widgets\SearchActiveField;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\LicenseSearch */

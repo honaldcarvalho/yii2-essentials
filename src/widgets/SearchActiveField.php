@@ -1,5 +1,5 @@
 <?php
-namespace croacworks\essentials\widgets\form;
+namespace croacworks\essentials\widgets;
 
 use Yii;
 use yii\helpers\Html;
@@ -12,7 +12,7 @@ class SearchActiveField extends BaseActiveField
      *
      * Exemplos:
      * 
-        use croacworks\essentials\widgets\form\SearchActiveField;
+        use croacworks\essentials\widgets\SearchActiveField;
         use yii\widgets\ActiveForm;
 
         $form = ActiveForm::begin([
