@@ -71,50 +71,34 @@ class PageController extends AuthorizationController
      * @return string
      * @throws NotFoundHttpException
      */
-    public function actionPublic(string $slug, $lang = null, $group = null, $modal = null)
+    public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
     {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // Monta query base
         $q = Page::find()->alias('p')
             ->andWhere(['p.slug' => $slug])
-            ->andWhere(['p.status' => 1]); // apenas páginas ativas
+            ->andWhere(['p.status' => 1]);
 
-        // Filtra por GROUP se informado
-        if ($group !== null && $group !== '') {
-            $q->andWhere(['p.group_id' => (int)$group]);
-        }
+        // group padrão = 1 (coringa)
+        $q->andWhere(['p.group_id' => (int)$group]);
 
-        // Resolver linguagem:
-        // - Se $lang for numérico: usa como ID.
-        // - Se for string: tenta casar com 'code' ou 'locale' da tabela languages.
         if ($lang !== null && $lang !== '') {
             if (is_numeric($lang)) {
                 $q->andWhere(['p.language_id' => (int)$lang]);
             } else {
-                // Join com Language para aceitar code/locale
-                $langTable = Language::tableName();
+                $langTable = \croacworks\essentials\models\Language::tableName();
                 $q->innerJoin("$langTable l", 'l.id = p.language_id')
-                  ->andWhere([
-                      'or',
-                      ['l.code' => (string)$lang],
-                      ['l.locale' => (string)$lang],
-                  ]);
+                    ->andWhere(['or', ['l.code' => (string)$lang], ['l.locale' => (string)$lang]]);
             }
         }
 
-        // Importante: não dependemos do verGroup aqui — filtramos explicitamente.
-        // Isso evita que um filtro global de grupo esconda a página pública.
-
         $model = $q->one();
-
         if (!$model) {
-            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
+            throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
         }
 
-        // Renderiza usando a mesma view 'page' para reaproveitar template
         return $this->render('page', ['model' => $model]);
     }
 
@@ -171,10 +155,10 @@ class PageController extends AuthorizationController
     public function actionClone($id)
     {
         $model = new Page();
-        
-        if(!$this->request->isPost){
+
+        if (!$this->request->isPost) {
             $model = $this->findModel($id);
-        }else if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+        } else if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
@@ -195,11 +179,10 @@ class PageController extends AuthorizationController
     {
         $model = $this->findModel($id);
         $files = $model->getFiles()->all();
-        foreach($files as $file){
+        foreach ($files as $file) {
             $ok = Yii::$app->storage->deleteById($id);
         }
         $this->findModel($id)->delete();
         return $this->redirect(['index']);
     }
-
 }
