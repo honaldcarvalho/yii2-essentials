@@ -6,7 +6,7 @@ use Yii;
 use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\widgets\InputWidget;
-use croacworks\essentials\themes\adminlte3\assets\PluginAsset;
+use croacworks\essentials\themes\coreui\assets\PluginAsset;
 
 class TinyMCE extends InputWidget
 {
