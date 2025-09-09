@@ -23,7 +23,7 @@ use yii\bootstrap5\Widget;
  * Attact file to model
     <?= StorageUploadMultiple::widget([
     'group_id' => AuthorizationController::userGroup(),
-    'attact_model'=>[
+    'attach_model'=>[
         'class_name'=> 'weebz\\yii2basics\\models\\PageFile',
         'id'=> $model->id,
         'fields'=> ['page_id','file_id']
@@ -44,7 +44,7 @@ class StorageUploadMultiple extends Widget
     /** Folder group id */
     public $group_id = 1;
     /** Model name to attact files */
-    public $attact_model = 0;
+    public $attach_model = 0;
     /** Model id to attact files */
     public $grid_reload = 0;
     /** ID of GridView will reload */
@@ -59,7 +59,7 @@ class StorageUploadMultiple extends Widget
     public function init(): void
     {
         parent::init();
-        $this->attact_model = json_encode($this->attact_model);
+        $this->attach_model = json_encode($this->attach_model);
         $this->token =  AuthorizationController::User()->access_token;
         $this->random =  CommonController::generateRandomString(6);
         PluginAsset::register(Yii::$app->view)->add(['axios', 'jquery-cropper']);
@@ -240,7 +240,7 @@ class StorageUploadMultiple extends Widget
         fd.append('folder_id', {$this->folder_id});
         fd.append('group_id', {$this->group_id});
         // já vem json_encode do PHP → NÃO usar JSON.stringify aqui!
-        fd.append('attact_model', {$this->attact_model});
+        fd.append('attach_model', {$this->attach_model});
         fd.append('thumb_aspect', "{$this->thumb_aspect}");
         fd.append('save', 1);
 

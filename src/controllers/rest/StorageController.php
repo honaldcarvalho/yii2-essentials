@@ -274,7 +274,7 @@ class StorageController extends ControllerRest
             'description'     => null,
             'folder_id'       => 1,
             'group_id'        => 1,
-            'attact_model'    => 0,
+            'attach_model'    => 0,
             'attact_fields'   => 0,
             'attact_model_id' => 0,
             'save'            => 0,
@@ -311,7 +311,7 @@ class StorageController extends ControllerRest
             $folder_id     = null;
             $duration      = 0;
             $save          = 0;
-            $attact_model  = 0;
+            $attach_model  = 0;
             $name          = '';
             $description   = '';
             $filePath      = '';
@@ -332,7 +332,7 @@ class StorageController extends ControllerRest
             $file_name     = $options['file_name']       ?? false;
             $description   = $options['description']     ?? $temp_file->name;
             $folder_id     = $options['folder_id']       ?? 1;
-            $attact_model  = isset($options['attact_model']) ? json_decode($options['attact_model']) : 0;
+            $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
             $save          = $options['save']            ?? 0;
             $convert_video = $options['convert_video']   ?? true;
             $thumb_aspect  = $options['thumb_aspect']    ?? 1;
@@ -628,10 +628,10 @@ class StorageController extends ControllerRest
                     );
                 }
 
-                if ($attact_model) {
-                    $attact = new $attact_model->class_name([
-                        $attact_model->fields[0] => $attact_model->id,
-                        $attact_model->fields[1] => $model->id
+                if ($attach_model) {
+                    $attact = new $attach_model->class_name([
+                        $attach_model->fields[0] => $attach_model->id,
+                        $attach_model->fields[1] => $model->id
                     ]);
                     if (!$attact->save()) {
                         Yii::warning(['attach_error' => $attact->getErrors()], __METHOD__);
@@ -685,7 +685,7 @@ class StorageController extends ControllerRest
             $options['folder_id']     = $post['folder_id']     ?? 1;
             $options['group_id']      = $post['group_id']      ?? 1;
             $options['save']          = $post['save']          ?? 0;
-            $options['attact_model']  = $post['attact_model']  ?? false;
+            $options['attach_model']  = $post['attach_model']  ?? false;
             $options['convert_video'] = $post['convert_video'] ?? true;
             $options['thumb_aspect']  = $post['thumb_aspect']  ?? 1;
             $options['quality']       = $post['quality']       ?? 80;

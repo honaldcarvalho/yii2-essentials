@@ -45,7 +45,7 @@ use yii\helpers\Url;
  * • sendUrl                                (modo instant; padrão: /rest/storage/send)
  * • linkModelOnSend: bool                  (instant → envia model_* p/ vincular no StorageController)
  * • deleteOldOnReplace: bool               (instant → remove file antigo ao trocar no server)
- * • attactModelClass, attactModelFields    (opcional; cria pivot via attact_model junto do upload)
+ * • attactModelClass, attactModelFields    (opcional; cria pivot via attach_model junto do upload)
  * • removeFlagParam, removeFlagScoped      (integração com AttachFileBehavior p/ remoção no submit)
  * • authToken / meta api-token / storage 'token' / cookie 'token'
  *
@@ -120,7 +120,7 @@ use yii\helpers\Url;
  * • Vínculo direto ao modelo:
  *     model_class, model_id, model_field, delete_old(0/1)
  * • Pivot opcional:
- *     attact_model (JSON: {class_name, fields:['model_id','file_id'], id:<PK do seu modelo>})
+ *     attach_model (JSON: {class_name, fields:['model_id','file_id'], id:<PK do seu modelo>})
  *
  * DICAS / TROUBLESHOOTING
  * ───────────────────────
@@ -158,7 +158,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
   /** (Opcional) se quiser forçar o id do input file do modelo (ex.: 'captive-file_id') */
   public ?string $fileInputId = null;
 
-  /** (Opcional) pivot via attact_model (usado no 'instant') */
+  /** (Opcional) pivot via attach_model (usado no 'instant') */
   public ?string $attactModelClass = null;
   public array $attactModelFields = [];
 
@@ -246,7 +246,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
       ? Html::getInputName($this->model, $this->removeFlagParam)
       : $this->removeFlagParam;
 
-    // attact_model opcional
+    // attach_model opcional
     $attactClass  = $this->attactModelClass ? addslashes($this->attactModelClass) : '';
     $attactFields = $this->attactModelFields;
 
@@ -517,7 +517,7 @@ CSS;
 
     if (attactClass && attactFields.length === 2 && MODEL_ID) {
       const payload = { class_name: attactClass, fields: attactFields, id: MODEL_ID };
-      fd.append('attact_model', JSON.stringify(payload));
+      fd.append('attach_model', JSON.stringify(payload));
     }
 
     let urlSend = withAccessToken(SEND_URL);

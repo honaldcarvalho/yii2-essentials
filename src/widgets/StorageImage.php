@@ -110,7 +110,7 @@ class StorageImage extends \yii\bootstrap5\Widget
   /** (Opcional) se quiser forçar o id do input file do modelo (ex.: 'captive-file_id') */
   public ?string $fileInputId = null;
 
-  /** (Opcional) pivot via attact_model (usado no 'instant') */
+  /** (Opcional) pivot via attach_model (usado no 'instant') */
   public ?string $attactModelClass = null;
   public array $attactModelFields = []; // ex.: ['model_id','file_id']
 
@@ -192,7 +192,7 @@ class StorageImage extends \yii\bootstrap5\Widget
       ? Html::getInputName($this->model, $this->removeFlagParam)
       : $this->removeFlagParam;
 
-    // attact_model opcional
+    // attach_model opcional
     $attactClass  = $this->attactModelClass ? addslashes($this->attactModelClass) : '';
     $attactFields = $this->attactModelFields;
 
