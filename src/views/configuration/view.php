@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'Configuration','model'=>$model,'verGroup'=>false]) ?>
+                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model,'verGroup'=>false]) ?>
                         <?= Html::a(
                             Yii::t('app', 'Preview Email Template'),
                             [
