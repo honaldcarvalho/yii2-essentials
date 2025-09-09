@@ -73,25 +73,30 @@ class PageController extends AuthorizationController
      */
     public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
     {
-        
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        $q = Page::find()->alias('p')
-            ->andWhere(['p.slug' => $slug])
-            ->andWhere(['p.status' => 1]);
+        // NÃO use alias 'p'. Deixe o padrão (pages) ou alias explicito 'pages'.
+        $q = Page::find()
+            ->andWhere(['slug' => $slug])
+            ->andWhere(['status' => 1]);
 
         // group padrão = 1 (coringa)
-        $q->andWhere(['p.group_id' => (int)$group]);
+        $q->andWhere(['group_id' => (int)$group]);
 
         if ($lang !== null && $lang !== '') {
             if (is_numeric($lang)) {
-                $q->andWhere(['p.language_id' => (int)$lang]);
+                $q->andWhere(['language_id' => (int)$lang]);
             } else {
-                $langTable = \croacworks\essentials\models\Language::tableName();
-                $q->innerJoin("$langTable l", 'l.id = p.language_id')
-                    ->andWhere(['or', ['l.code' => (string)$lang], ['l.locale' => (string)$lang]]);
+                $langTable = \croacworks\essentials\models\Language::tableName(); // 'languages'
+                // usa o nome da tabela principal explicitamente para evitar ambiguidade
+                $q->innerJoin("$langTable l", "l.id = " . Page::tableName() . ".language_id")
+                    ->andWhere([
+                        'or',
+                        ['l.code' => (string)$lang],
+                        ['l.locale' => (string)$lang],
+                    ]);
             }
         }
 
