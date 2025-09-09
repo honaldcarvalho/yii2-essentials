@@ -160,7 +160,7 @@ $this->registerJs($js);
     ?>
 
     <!-- ACTIONS Dual List -->
-    <div class="form-group mb-3">
+    <div class="form-group mb-3 mt-3">
         <div class="row">
             <div class="col-md-5">
                 <label for="multiselect"><?= Yii::t('app', 'Available actions') ?></label>

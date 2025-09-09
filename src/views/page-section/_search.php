@@ -25,7 +25,7 @@ use croacworks\essentials\widgets\form\ActiveForm;
 
     <?= $form->field($model, 'status') ?>
 
-    <div class="form-group mb-3">
+    <div class="form-group mb-3 mt-3">
         <?= Html::submitButton('<i class="fas fa-search  mr-2"></i>' . Yii::t('app', 'Search'), ['class' => 'btn btn-primary']) ?>
         <?= Html::resetButton('<i class="fas fa-broom mr-2"></i>' .Yii::t('app', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
     </div>

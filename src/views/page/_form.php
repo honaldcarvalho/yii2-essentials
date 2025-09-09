@@ -46,7 +46,7 @@ use croacworks\essentials\widgets\TinyMCE;
 
     <?= $form->field($model, 'status')->checkbox() ?>
 
-    <div class="form-group mb-3">
+    <div class="form-group mb-3 mt-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('croacworks\essentials','Save'), ['class' => 'btn btn-success']) ?>
     </div>
 
