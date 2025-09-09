@@ -185,7 +185,7 @@ $this->registerJs($js, \yii\web\View::POS_END);
 
 ?>
 
-<div class="card">
+<div class="card mb-3">
   <div class="card-header">
     <button
       type="button"
