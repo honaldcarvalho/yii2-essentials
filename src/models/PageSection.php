@@ -15,7 +15,7 @@ use Yii;
  *
  * @property Pages[] $pages
  * @property Group $group
- * @property PageSection $page_section
+ * @property PageSection $pageSection
  * @property PageSection[] $page_sections
  */
 class PageSection extends ModelCommon
