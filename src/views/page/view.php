@@ -56,7 +56,6 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="row">
                 <div class="col-md-12">
                     <?= StorageUploadMultiple::widget([
-                        'group_id' => AuthorizationController::userGroup(),
                         'attact_model'=>[
                             'class_name'=> 'weebz\\yii2basics\\models\\PageFile',
                             'id'=> $model->id,
