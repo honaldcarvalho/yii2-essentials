@@ -37,9 +37,6 @@ class PageController extends AuthorizationController
     public function actionView($id)
     {
         $model = $this->findModel($id);
-        $dataProvider = new \yii\data\ActiveDataProvider([
-            'query' => $model->getFiles(),
-        ]);
 
         return $this->render('view', [
             'model' => $model,
