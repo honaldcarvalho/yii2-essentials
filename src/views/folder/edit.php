@@ -52,7 +52,6 @@ $this::registerJs($script);
                         <?php $form = ActiveForm::begin(['id' => 'form-file']); ?>
 
                         <?= $form->field($model, 'folder_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Folder::find()
-                            ->where(['in', 'group_id',  AuthorizationController::userGroups()])
                             ->asArray()->all(), 'id', 'name'), ['class' => 'form-control', 'prompt' => Yii::t('app', '-- Select Folder --')]) ?>
 
                         <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>

@@ -21,7 +21,7 @@ use croacworks\essentials\widgets\TinyMCE;
     ->asArray()->all(), 'id', 'name'), ['class'=>'form-control'])->label(Yii::t('app','Group')) ?>
 
     <?= $form->field($model, 'section_id')->dropDownList(
-        yii\helpers\ArrayHelper::map(PageSection::find()->where(['in','group_id',AuthorizationController::userGroups()])->all(), 'id', 'name'), 
+        yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'), 
         ['prompt' => '-- selecione uma secção --']) ?>
 
     <?= $form->field($model, 'language_id')->dropDownList(
