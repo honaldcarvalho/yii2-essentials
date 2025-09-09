@@ -94,8 +94,7 @@ class PageController extends AuthorizationController
                 $q->innerJoin("$langTable l", "l.id = " . Page::tableName() . ".language_id")
                     ->andWhere([
                         'or',
-                        ['l.code' => (string)$lang],
-                        ['l.locale' => (string)$lang],
+                        ['l.code' => (string)$lang]
                     ]);
             }
         }
