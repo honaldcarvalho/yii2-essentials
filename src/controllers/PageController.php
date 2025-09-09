@@ -1,188 +1,125 @@
 <?php
 
-namespace croacworks\essentials\controllers;
+namespace croacworks\essentials\models;
 
-use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\models\Language;
-use croacworks\essentials\models\Page;
-use yii\web\NotFoundHttpException;
+use Yii;
 
 /**
- * PageController implements the CRUD actions for Page model.
+ * This is the model class for table "pages".
+ *
+ * @property int $id
+ * @property int|null $group_id
+ * @property int|null $page_section_id
+ * @property string $language_id
+ * @property string $slug
+ * @property string $title
+ * @property string $description
+ * @property string|null $content
+ * @property string|null $keywords
+ * @property string|null $custom_css
+ * @property string|null $custom_js
+ * @property datetime|null $created_at
+ * @property datetime|null $updated_at
+ * @property int|null $status
+ *
+ * @property PageFiles[] $pageFiles
+ * @property PageSection $section
+ * @property Group $group
  */
-class PageController extends AuthorizationController
+class Page extends ModelCommon
 {
-
-    public $free = ['login', 'signup', 'error', 'public'];
+    public $verGroup = true;
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'pages';
+    }
 
     /**
-     * Lists all Page models.
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['page_section_id', 'status'], 'integer'],
+            [['slug', 'title'], 'required','on'=> self::SCENARIO_DEFAULT],
+            [['content', 'keywords','custom_js','custom_css','language_id'], 'string'],
+            [['created_at','updated_at'], 'safe'],
+            [['slug', 'title'], 'string', 'max' => 255],
+            [['description'], 'string', 'max' => 300],
+            [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
+            [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
+            [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
+            [['slug'], 'unique', 'targetAttribute' => ['slug', 'language_id','group_id'], 'message' => Yii::t('app', 'This slug is already used for this language.')],
+        ];
+    }
+
+    /**
+     * Gets query for [[Group]].
      *
-     * @return string
+     * @return \yii\db\ActiveQuery
      */
-    public function actionIndex()
+    public function getGroup()
     {
-        $searchModel = new Page();
-        $searchModel->scenario = Page::SCENARIO_SEARCH;
-        $dataProvider = $searchModel->search($this->request->queryParams);
-
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return $this->hasOne(Group::class, ['id' => 'group_id']);
     }
 
     /**
-     * Displays a single Page model.
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * {@inheritdoc}
      */
-    public function actionView($id)
+    public function attributeLabels()
     {
-        $model = $this->findModel($id);
-
-        return $this->render('view', [
-            'model' => $model
-        ]);
+        return [
+            'id' => 'ID',
+            'page_section_id' => Yii::t('app', 'Page Section'),
+            'slug' => Yii::t('app', 'Slug'),
+            'language' => Yii::t('app', 'Language'),
+            'title' => Yii::t('app', 'Title'),
+            'description' => Yii::t('app', 'Description'),
+            'content' => Yii::t('app', 'Content'),
+            'custom_js' => Yii::t('app', 'Custom Javascript'),
+            'custom_css' => Yii::t('app', 'Custom Style'),
+            'keywords' => Yii::t('app', 'Keywords'),
+            'created_at' =>Yii::t('app', 'Created at'),
+            'updated_at' =>Yii::t('app', 'Updated at'),
+            'status' => Yii::t('app', 'Active'),
+        ];
     }
 
-    public function actionShow($page, $language = 2, $modal = null)
-    {
-        $model = $this->findModel(['slug' => $page, 'language_id' => $language]);
-
-        if ($modal && (int)$modal === 1) {
-            $this->layout = 'main-blank';
+        public function getPageFiles()
+        {
+            return $this->hasMany(PageFile::class, ['page_id' => 'id'])
+                ->inverseOf('page')
+                ->with('file');
         }
 
-        return $this->render('page', ['model' => $model]);
-    }
+        public function getFiles()
+        {
+            return $this->hasMany(File::class, ['id' => 'file_id'])
+                ->via('pageFiles');
+        }
 
     /**
-     * Action PÚBLICA para servir páginas por slug + linguagem + grupo (opcional).
-     * URL exemplos:
-     *   /page/public?slug=home&lang=pt-BR&group=12
-     *   /p/12/pt-BR/home
+     * Gets query for [[PageSection]].
      *
-     * @param string      $slug   Slug da página
-     * @param string|int  $lang   ID numérico da language OU código/locale (ex.: 'pt-BR', 'en', 'pt')
-     * @param int|null    $group  ID do grupo (opcional). Se omitido, não filtra por grupo.
-     * @param int|null    $modal  Se 1, usa layout 'main-blank'
-     * @return string
-     * @throws NotFoundHttpException
+     * @return \yii\db\ActiveQuery
      */
-    public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
+    public function getSection()
     {
-        if ($modal && (int)$modal === 1) {
-            $this->layout = 'main-blank';
-        }
-
-        $q = Page::find()->alias('p')
-            ->andWhere(['p.slug' => $slug])
-            ->andWhere(['p.status' => 1]);
-
-        // group padrão = 1 (coringa)
-        $q->andWhere(['p.group_id' => (int)$group]);
-
-        if ($lang !== null && $lang !== '') {
-            if (is_numeric($lang)) {
-                $q->andWhere(['p.language_id' => (int)$lang]);
-            } else {
-                $langTable = \croacworks\essentials\models\Language::tableName();
-                $q->innerJoin("$langTable l", 'l.id = p.language_id')
-                    ->andWhere(['or', ['l.code' => (string)$lang], ['l.locale' => (string)$lang]]);
-            }
-        }
-
-        $model = $q->one();
-        if (!$model) {
-            throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
-        }
-
-        return $this->render('page', ['model' => $model]);
-    }
-
-    /**
-     * Creates a new Page model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|\yii\web\Response
-     */
-    public function actionCreate()
-    {
-        $model = new Page();
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && ($model->group_id = $this::userGroup()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        } else {
-            $model->loadDefaultValues();
-        }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Updates an existing Page model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Updates an existing Page model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-
-    public function actionClone($id)
-    {
-        $model = new Page();
-
-        if (!$this->request->isPost) {
-            $model = $this->findModel($id);
-        } else if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->hasOne(PageSection::class, ['id' => 'page_section_id']);
     }
 
 
     /**
-     * Deletes an existing Page model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * Gets query for [[PageSection]].
+     *
+     * @return \yii\db\ActiveQuery
      */
-    public function actionDelete($id)
+    public function getLanguage()
     {
-        $model = $this->findModel($id);
-        $files = $model->getFiles()->all();
-        foreach ($files as $file) {
-            $ok = Yii::$app->storage->deleteById($id);
-        }
-        $this->findModel($id)->delete();
-        return $this->redirect(['index']);
-    }
+        return $this->hasOne(Language::class, ['id' => 'language_id']);
+    }    
 }

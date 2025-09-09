@@ -176,21 +176,21 @@ $config = [
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
-                    // Completa (com group explícito): /p/<group>/<lang>/<slug>
-                    'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'page/public',
+                    // /p/<group>/<lang>/<slug>
+                    'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
 
-                    // Sem group → usa defaults group=1: /p/<lang>/<slug>
+                    // /p/<lang>/<slug>  -> group=1 por padrão
                     [
-                        'pattern' => 'p/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>',
-                        'route'   => 'page/public',
-                        'defaults'=> ['group' => 1],
+                        'pattern'  => 'p/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>',
+                        'route'    => 'common/page/public',
+                        'defaults' => ['group' => 1],
                     ],
 
-                    // Só slug (lang via querystring, se quiser) → também cai com group=1
+                    // /p/<slug> (se usar) -> group=1 por padrão
                     [
-                        'pattern' => 'p/<slug:[A-Za-z0-9\-\_]+>',
-                        'route'   => 'page/public',
-                        'defaults'=> ['group' => 1],
+                        'pattern'  => 'p/<slug:[A-Za-z0-9\-\_]+>',
+                        'route'    => 'common/page/public',
+                        'defaults' => ['group' => 1],
                     ],
                     '<controller:\w+>/<id:\d+>' => '<controller>/view',
                     '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
