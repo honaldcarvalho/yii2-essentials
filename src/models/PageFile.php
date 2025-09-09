@@ -16,6 +16,7 @@ use Yii;
  */
 class PageFile extends ModelCommon
 {
+    public $verGroup;
     /**
      * {@inheritdoc}
      */
