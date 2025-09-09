@@ -15,7 +15,7 @@ use yii\bootstrap5\ActiveForm;
     <?php $form = ActiveForm::begin(); ?>
 
     <?= $form->field($model, 'section_id')->dropDownList(
-        yii\helpers\ArrayHelper::map(PageSection::find()->where(['in','group_id',AuthController::userGroups()])->all(), 'id', 'name'), 
+        yii\helpers\ArrayHelper::map(PageSection::find()->where(['in','group_id',AuthorizationController::userGroups()])->all(), 'id', 'name'), 
         ['prompt' => '-- selecione uma secção --']) ?>
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>

@@ -88,7 +88,7 @@ if(!empty($params->file_id) && $params->file != null){
                             }else {
 
                                 if(count($visible_parts) > 1){
-                                    $isVisible =  AuthController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
+                                    $isVisible =  AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
                                 }else if(count($visible_parts) === 1){
                                     //verify if someone item is visible, case yes, show menu item 
                                     foreach($item_nodes as $item_node){
@@ -116,7 +116,7 @@ if(!empty($params->file_id) && $params->file != null){
                                 $node['active'] = ($controller_id == "{$item['active']}") || ($controller_id."/".Yii::$app->controller->action->id  == "{$item['active']}");
                             }
 
-                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isMaster()) {
+                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isMaster()) {
                                 $nodes[] = $node;
                             }
                                     
@@ -125,12 +125,12 @@ if(!empty($params->file_id) && $params->file != null){
                             $isVisible = true;
                             
                             if(count($visible_parts) > 1){
-                                $isVisible =  AuthController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
+                                $isVisible =  AuthorizationController::verAuthorization($visible_parts[0],$visible_parts[1],null,$item['path']);
                             }else if(empty($visible_parts)){
                                 $isVisible = false;
                             }
 
-                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthController::isMaster()) {
+                            if(!$item['only_admin'] || $item['only_admin'] &&  AuthorizationController::isMaster()) {
                                 $nodes[] = [
                                     'label' => Yii::t('app', $item['label']),
                                     'icon'=> "{$item['icon']}",
