@@ -29,6 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'dataProvider' => $dataProvider,
                         'columns' => [
                             'id',
+                            'section.name:text:'.Yii::t('app', 'Page Section'),
                             'name',
                             'status:boolean',
 
