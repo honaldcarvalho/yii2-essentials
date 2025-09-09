@@ -21,7 +21,7 @@ $this->registerJs($js);
 <div class="row mt-2">
     <div class="col-md-12">
 
-    <?php $form = croacworks\essentials\widgets\form\ActiveForm::begin([
+    <?php $form = ActiveForm::begin([
         'action' => ['index'],
         'method' => 'get',
         'options' => [

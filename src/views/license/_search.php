@@ -4,7 +4,6 @@ use croacworks\essentials\models\Group;
 use croacworks\essentials\models\LicenseType;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
-use croacworks\essentials\widgets\SearchActiveField;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\LicenseSearch */
@@ -14,7 +13,7 @@ use croacworks\essentials\widgets\SearchActiveField;
 <div class="row mt-2">
     <div class="col-md-12">
 
-    <?php $form = croacworks\essentials\widgets\form\ActiveForm::begin([
+    <?php $form = ActiveForm::begin([
         'action' => ['index'],
         'method' => 'get',
     ]); ?>
