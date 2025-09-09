@@ -1,6 +1,5 @@
 <?php
 
-use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\widgets\ListFiles;
 use croacworks\essentials\widgets\StorageUploadMultiple;
 use yii\widgets\DetailView;

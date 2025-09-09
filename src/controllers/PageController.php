@@ -39,8 +39,7 @@ class PageController extends AuthorizationController
         $model = $this->findModel($id);
 
         return $this->render('view', [
-            'model' => $model,
-            'dataProvider'=>$dataProvider
+            'model' => $model
         ]);
     }
 
