@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\SearchActiveField;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\LicenseSearch */
@@ -14,19 +15,23 @@ use yii\widgets\ActiveForm;
     <?php $form = ActiveForm::begin([
         'action' => ['index'],
         'method' => 'get',
+        'fieldClass' => SearchActiveField::class,
+
     ]); ?>
 
     <?= $form->field($model, 'id') ?>
 
-    <?= $form->field($model, 'license_type_id') ?>
+    <?= $form->field($model, 'license_type_id')->dropDownList(yii\helpers\ArrayHelper::map(LicenseType::find()
+            ->select('id,name')->asArray()->all(), 
+            'id', 'name'),['prompt'=>' -- License Type --']) ?>
 
-    <?= $form->field($model, 'group_id') ?>
+    <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(Group::find()
+            ->select('id,name')->asArray()->all(), 
+            'id', 'name'),['prompt'=>' -- Group --']) ?>
 
-    <?= $form->field($model, 'validate') ?>
+    <?= $form->field($model, 'validate')->search('date', '>='); ?>
 
-    <?= $form->field($model, 'created_at') ?>
-
-    <?php // echo $form->field($model, 'updated_at') ?>
+    <?= $form->field($model, 'created_at')->search('date', '>='); ?>
 
     <?= $form->field($model, 'status')->dropdownList([''=>'',0=>Yii::t('app','Disabled'),1=>Yii::t('app','Enabled')]) ?>
 
