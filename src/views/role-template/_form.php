@@ -7,7 +7,7 @@ use croacworks\essentials\controllers\RoleController; // pode reutilizar este he
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\ActiveForm;
 
 PluginAsset::register($this)->add(['multiselect']);
 

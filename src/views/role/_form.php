@@ -12,7 +12,7 @@ use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\web\View;
-use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\ActiveForm;
 
 $origins = [];
 $savedActions = [];

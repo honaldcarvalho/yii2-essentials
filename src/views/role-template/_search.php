@@ -2,7 +2,7 @@
 
 use croacworks\essentials\controllers\RoleController;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\RoleTemplate */
