@@ -337,6 +337,10 @@ class StorageController extends ControllerRest
             $convert_video = $options['convert_video']   ?? true;
             $thumb_aspect  = $options['thumb_aspect']    ?? 1;
             $quality       = $options['quality']         ?? 80;
+            $group_id = (int)($options['group_id'] ?? 1);
+            if (!AuthorizationController::isMaster()) {
+                $group_id = AuthorizationController::userGroup(); // ou resolveParentGroupId(...), se preferir
+            }
 
             $ext = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
 
@@ -629,12 +633,22 @@ class StorageController extends ControllerRest
                 }
 
                 if ($attach_model) {
-                    $attact = new $attach_model->class_name([
-                        $attach_model->fields[0] => $attach_model->id,
-                        $attach_model->fields[1] => $model->id
-                    ]);
-                    if (!$attact->save()) {
-                        Yii::warning(['attach_error' => $attact->getErrors()], __METHOD__);
+                    $className = $attach_model->class_name ?? null;
+                    $fieldA    = $attach_model->fields[0] ?? null; // ex.: 'page_id'
+                    $fieldB    = $attach_model->fields[1] ?? null; // ex.: 'file_id'
+                    $targetId  = (int)($attach_model->id ?? 0);
+
+                    if ($className && $fieldA && $fieldB && $targetId > 0) {
+                        /** @var \yii\db\ActiveRecord $attact */
+                        $attact = new $className([
+                            $fieldA => $targetId,
+                            $fieldB => $model->id,
+                        ]);
+                        if (!$attact->save()) {
+                            Yii::warning(['attach_error' => $attact->getErrors()], __METHOD__);
+                        }
+                    } else {
+                        Yii::warning(['attach_error' => 'attach_model incompleto'], __METHOD__);
                     }
                 }
 

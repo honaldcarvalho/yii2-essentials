@@ -240,7 +240,7 @@ class StorageUploadMultiple extends Widget
         fd.append('folder_id', {$this->folder_id});
         fd.append('group_id', {$this->group_id});
         // já vem json_encode do PHP → NÃO usar JSON.stringify aqui!
-        fd.append('attach_model', {$this->attach_model});
+        fd.append('attach_model', JSON.stringify(attachModel));
         fd.append('thumb_aspect', "{$this->thumb_aspect}");
         fd.append('save', 1);
 
