@@ -176,7 +176,14 @@ $config = [
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
-                    "page/show/<id:\w+>" => "page/show",
+                    // Forma curta: /p/<group>/<lang>/<slug>
+                    'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'page/public',
+                    // Sem grupo: /p/<lang>/<slug>
+                    'p/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>'            => 'page/public',
+                    // Apenas slug (lang/group opcionais via querystring): /p/<slug>
+                    'p/<slug:[A-Za-z0-9\-\_]+>'                                   => 'page/public',
+                    // Opcionalmente, rota explícita:
+                    'page/public' => 'page/public',
                     '<controller:\w+>/<id:\d+>' => '<controller>/view',
                     '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                     '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

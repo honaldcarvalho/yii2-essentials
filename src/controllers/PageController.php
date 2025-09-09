@@ -3,6 +3,7 @@
 namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
 use yii\web\NotFoundHttpException;
 
@@ -11,6 +12,9 @@ use yii\web\NotFoundHttpException;
  */
 class PageController extends AuthorizationController
 {
+
+    public $free = ['login', 'signup', 'error', 'public'];
+
     /**
      * Lists all Page models.
      *
@@ -43,37 +47,77 @@ class PageController extends AuthorizationController
         ]);
     }
 
+    public function actionShow($page, $language = 2, $modal = null)
+    {
+        $model = $this->findModel(['slug' => $page, 'language_id' => $language]);
+
+        if ($modal && (int)$modal === 1) {
+            $this->layout = 'main-blank';
+        }
+
+        return $this->render('page', ['model' => $model]);
+    }
+
     /**
-     * Displays a single Page model.
-     * @param int $id ID
+     * Action PÚBLICA para servir páginas por slug + linguagem + grupo (opcional).
+     * URL exemplos:
+     *   /page/public?slug=home&lang=pt-BR&group=12
+     *   /p/12/pt-BR/home
+     *
+     * @param string      $slug   Slug da página
+     * @param string|int  $lang   ID numérico da language OU código/locale (ex.: 'pt-BR', 'en', 'pt')
+     * @param int|null    $group  ID do grupo (opcional). Se omitido, não filtra por grupo.
+     * @param int|null    $modal  Se 1, usa layout 'main-blank'
      * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
-    public function renderPage($id)
+    public function actionPublic(string $slug, $lang = null, $group = null, $modal = null)
     {
-        $model = $this->findModel($id);
-        
-        if(isset($_GET['modal']) && $_GET['modal'] == 1){
+        if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        return $this->render('view', [
-            'model' =>$model,
-        ]);
-    }
+        // Monta query base
+        $q = Page::find()->alias('p')
+            ->andWhere(['p.slug' => $slug])
+            ->andWhere(['p.status' => 1]); // apenas páginas ativas
 
-    public function actionShow($page,$language = 2,$modal = null)
-    {
-        $model = $this->findModel(['slug'=>$page,'language_id'=>$language]);
-        
-        if($modal && $modal == 1){
-            $this->layout = 'main-blank';
+        // Filtra por GROUP se informado
+        if ($group !== null && $group !== '') {
+            $q->andWhere(['p.group_id' => (int)$group]);
         }
 
-        return $this->render('view', [
-            'model' =>$model,
-        ]);
+        // Resolver linguagem:
+        // - Se $lang for numérico: usa como ID.
+        // - Se for string: tenta casar com 'code' ou 'locale' da tabela languages.
+        if ($lang !== null && $lang !== '') {
+            if (is_numeric($lang)) {
+                $q->andWhere(['p.language_id' => (int)$lang]);
+            } else {
+                // Join com Language para aceitar code/locale
+                $langTable = Language::tableName();
+                $q->innerJoin("$langTable l", 'l.id = p.language_id')
+                  ->andWhere([
+                      'or',
+                      ['l.code' => (string)$lang],
+                      ['l.locale' => (string)$lang],
+                  ]);
+            }
+        }
+
+        // Importante: não dependemos do verGroup aqui — filtramos explicitamente.
+        // Isso evita que um filtro global de grupo esconda a página pública.
+
+        $model = $q->one();
+
+        if (!$model) {
+            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
+        }
+
+        // Renderiza usando a mesma view 'page' para reaproveitar template
+        return $this->render('page', ['model' => $model]);
     }
+
     /**
      * Creates a new Page model.
      * If creation is successful, the browser will be redirected to the 'view' page.
