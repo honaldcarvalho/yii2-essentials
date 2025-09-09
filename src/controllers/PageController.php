@@ -85,23 +85,14 @@ class PageController extends AuthorizationController
         // group padrão = 1 (coringa)
         $q->andWhere(['group_id' => (int)$group]);
 
-        if ($lang !== null && $lang !== '') {
-            if (is_numeric($lang)) {
-                $q->andWhere(['pages.language_id' => (int)$lang]);
-            } else {
-                $langTable = \croacworks\essentials\models\Language::tableName(); // 'languages'
-                // usa o nome da tabela principal explicitamente para evitar ambiguidade
-                $q->innerJoin("$langTable l", "l.id = " . Page::tableName() . ".language_id")
-                    ->andWhere([
-                        'or',
-                        ['l.code' => (string)$lang]
-                    ]);
-            }
+        $lang = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
+        $q->andWhere(['group_id' => (int)$group]);
+        if ($lang) {
+            $q->andWhere(['language_id' => $lang->id]);
         }
-
         $model = $q->one();
         if (!$model) {
-            throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
+            throw new \yii\web\NotFoundHttpException(\Yii::t('app', 'Page not found or inactive.'));
         }
 
         return $this->render('page', ['model' => $model]);
