@@ -10,9 +10,6 @@ class ModelCommon extends \yii\db\ActiveRecord
 {
 
     public $verGroup = false;
-    public $created_atFDTsod;
-    public $created_atFDTeod;
-
     const SCENARIO_CREATE = 'create';
     const SCENARIO_UPDATE = 'update';
     const SCENARIO_STATUS = 'status';
@@ -135,8 +132,7 @@ class ModelCommon extends \yii\db\ActiveRecord
     {
         return [
             [['id', 'status'], 'integer'],
-            [['created_at', 'updated_at'], 'safe'],
-            [['created_atFDTsod', 'created_atFDTeod'], 'safe'],
+            [['created_at', 'updated_at'], 'safe']
         ];
     }
 
