@@ -3,7 +3,7 @@
 use croacworks\essentials\models\Group;
 use croacworks\essentials\models\LicenseType;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\ActiveForm;
 use croacworks\essentials\widgets\SearchActiveField;
 
 /* @var $this yii\web\View */

@@ -4,7 +4,7 @@ use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\controllers\RoleController;
 use croacworks\essentials\models\SysMenu;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use croacworks\essentials\widgets\form\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Menu */
