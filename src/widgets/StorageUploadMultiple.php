@@ -338,7 +338,7 @@ class StorageUploadMultiple extends Widget
             cType.textContent = originalFile.type || 'N/A';
 
             const desc = document.createElement('input');
-            desc.type='text'; desc.className='form-control';
+            desc.type='text'; desc.className='form-control'; desc.value = originalFile.name;
             desc.placeholder='Descrição do arquivo'; desc.name=`description-\${index}`;
             cDesc.append(desc);
 
