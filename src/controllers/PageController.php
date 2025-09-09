@@ -79,15 +79,15 @@ class PageController extends AuthorizationController
 
         // NÃO use alias 'p'. Deixe o padrão (pages) ou alias explicito 'pages'.
         $q = Page::find()
-            ->andWhere(['slug' => $slug])
-            ->andWhere(['status' => 1]);
+            ->andWhere(['pages.slug' => $slug])
+            ->andWhere(['pages.status' => 1]);
 
         // group padrão = 1 (coringa)
         $q->andWhere(['group_id' => (int)$group]);
 
         if ($lang !== null && $lang !== '') {
             if (is_numeric($lang)) {
-                $q->andWhere(['language_id' => (int)$lang]);
+                $q->andWhere(['pages.language_id' => (int)$lang]);
             } else {
                 $langTable = \croacworks\essentials\models\Language::tableName(); // 'languages'
                 // usa o nome da tabela principal explicitamente para evitar ambiguidade
