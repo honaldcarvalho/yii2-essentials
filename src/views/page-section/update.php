@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\Section */
+/* @var $model croacworks\essentials\models\PageSection */
 
 $this->title = Yii::t('app', 'Update Section: {name}', [
     'name' => $model->name,

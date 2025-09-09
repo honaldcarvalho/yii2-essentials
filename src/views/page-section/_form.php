@@ -1,12 +1,12 @@
 <?php
 
 use croacworks\essentials\controllers\AuthController;
-use croacworks\essentials\models\Section;
+use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\Section */
+/* @var $model croacworks\essentials\models\PageSection */
 /* @var $form yii\bootstrap5\ActiveForm */
 ?>
 
