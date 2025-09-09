@@ -235,11 +235,12 @@ class StorageUploadMultiple extends Widget
 
         const fd = new FormData();
         const descInput = el(`row_\${index}`)?.querySelector(`input[name="description-\${index}"]`);
+        const attachModel = {$this->attach_model};
+
         fd.append('description', descInput ? descInput.value : '');
         fd.append('file', file);
         fd.append('folder_id', {$this->folder_id});
         fd.append('group_id', {$this->group_id});
-        // já vem json_encode do PHP → NÃO usar JSON.stringify aqui!
         fd.append('attach_model', JSON.stringify(attachModel));
         fd.append('thumb_aspect', "{$this->thumb_aspect}");
         fd.append('save', 1);
