@@ -26,6 +26,8 @@ $this->params['breadcrumbs'][] = $this->title;
                             'id',
                             'section.name',
                             'name',
+                            'slug',
+                            'uri',
                             'status:boolean',
                         ],
                     ]) ?>
