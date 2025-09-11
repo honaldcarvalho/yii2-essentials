@@ -54,8 +54,35 @@ $this->params['breadcrumbs'][] = $this->title;
                             ],
                             'status:boolean',
                             [
+                                'label' => Yii::t('app', 'Public URL'),
+                                'format' => 'raw',
+                                'value' => function ($model) {
+                                    $group = (int)($model->group_id ?: 1);
+
+                                    // tenta pegar código/locale, senão usa ID
+                                    $lang = $model->language->code
+                                        ?? $model->language->locale
+                                        ?? $model->language_id;
+
+                                    // monta URL curta no formato /p/<group>/<lang>/<slug>
+                                    $url = Yii::$app->urlManager->createUrl([
+                                        "/p/{$group}/{$lang}/{$model->slug}"
+                                    ]);
+
+                                    return Html::a(
+                                        $url,   // o texto exibido será a própria URL
+                                        $url,   // destino
+                                        [
+                                            'target' => '_blank',
+                                            'data-pjax' => 0,
+                                            'class' => 'text-decoration-none', // estilize como quiser
+                                        ]
+                                    );
+                                },
+                            ],
+                            [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                                'template' => '{view} {update} {delete} {public}', // adiciona o placeholder
+                                'template' => '{view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $model, $key) {
                                         // group padrão 1 (coringa) se vier vazio
