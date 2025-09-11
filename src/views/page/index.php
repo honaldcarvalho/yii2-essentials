@@ -85,8 +85,8 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                         ?? $model->language_id;
 
                                     // monta URL curta no formato /p/<group>/<lang>/<slug>
-                                    $url = Yii::$app->urlManager->createUrl([
-                                        "{$config->homepage}/p/{$group}/{$lang}/{$model->slug}"
+                                    $url = $config->homepage . Yii::$app->urlManager->createUrl([
+                                        "/p/{$group}/{$lang}/{$model->slug}"
                                     ]);
 
                                     return Html::a(
@@ -114,8 +114,8 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                             ?? $model->language_id;
 
                                         // monta URL curta no formato /p/<group>/<lang>/<slug>
-                                        $url = Yii::$app->urlManager->createUrl([
-                                            "{$config->homepage}/p/{$group}/{$lang}/{$model->slug}"
+                                        $url = $config->homepage . Yii::$app->urlManager->createUrl([
+                                            "/p/{$group}/{$lang}/{$model->slug}"
                                         ]);
                                         // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
                                         return Html::a(
