@@ -156,24 +156,46 @@ class Configuration extends ModelCommon
      */
     public static function get()
     {
-        $hostName = Yii::$app->request->hostName;
+        $model = null;
 
-        // Tenta buscar pela coluna "host"
-        $model = self::find(false)->where(['host' => $hostName])->one();
-
-        // Se não encontrar, busca pelo grupo do usuário
-        if (!$model) {
-            $model = self::find(false)->where(['id' => AuthorizationController::userGroup()])->one();
+        // 1) Tenta pela URL (host)
+        $hostName = Yii::$app->request->hostName ?? null;
+        if ($hostName) {
+            $model = self::find(false)->where(['host' => $hostName])->one();
+            if ($model) {
+                return $model;
+            }
         }
 
-        // Se ainda não encontrar, tenta buscar o id 1
-        if (!$model) {
-            $model = self::find(false)->where(['id' => 1])->one();
+        // 2) Regra por grupo: se tiver pai, usa o do pai; senão usa o próprio
+        $userGroupId = \croacworks\essentials\controllers\AuthorizationController::userGroup();
+        if ($userGroupId) {
+            $parentId = (int) \croacworks\essentials\models\Group::find()
+                ->select('parent_id')
+                ->where(['id' => (int) $userGroupId])
+                ->scalar();
+
+            // 2.a) Tenta config do grupo pai (se existir)
+            if (!empty($parentId)) {
+                $model = self::find(false)->where(['group_id' => (int)$parentId])->one();
+                if ($model) {
+                    return $model;
+                }
+            }
+
+            // 2.b) Tenta config do próprio grupo
+            $model = self::find(false)->where(['group_id' => (int)$userGroupId])->one();
+            if ($model) {
+                return $model;
+            }
         }
 
-        // Retorna o encontrado ou uma nova instância
+        // 3) Fallback: configuração do grupo master (id = 1)
+        $model = self::find(false)->where(['id' => 1])->one();
+
         return $model ?? new static();
     }
+
 
     public function getParameters()
     {

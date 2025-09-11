@@ -5,6 +5,7 @@ namespace croacworks\essentials\controllers;
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
+use Yii;
 use yii\web\NotFoundHttpException;
 
 /**
