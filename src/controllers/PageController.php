@@ -90,82 +90,80 @@ class PageController extends AuthorizationController
         return $this->render('page', ['model' => $model]);
     }
 
-public function actionPublic(
-    string $slug,      // page.slug
-    int $group,        // <group> da URL
-    $section = null,   // section.slug (ou ID) opcional
-    $lang = null,      // id OU code (ex.: 'en-US') opcional
-    $modal = null
-) {
-    if ($modal && (int)$modal === 1) {
-        $this->layout = 'main-blank';
-    }
-
-    // 1) LANGUAGE (id ou code). Se não vier, pega de Configuration::get()
-    if ($lang === null || $lang === '') {
-        $conf   = Configuration::get();
-        $langId = (int)$conf->language_id;
-    } else {
-        if (is_numeric($lang)) {
-            $langModel = Language::findOne((int)$lang);
-        } else {
-            $langModel = Language::find()->where(['code' => (string)$lang])->one();
+    public function actionPublic(
+        string $slug,      // page.slug
+        int $group,        // <group> da URL
+        $section = null,   // section.slug (ou ID) opcional
+        $lang = null,      // id OU code (ex.: 'en-US') opcional
+        $modal = null
+    ) {
+        if ($modal && (int)$modal === 1) {
+            $this->layout = 'main-blank';
         }
-        if (!$langModel) {
-            throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
-        }
-        $langId = (int)$langModel->id;
-    }
 
-    // 2) SECTION por (slug, group) OU por ID; se não vier, fica NULL
-    $sectionId = null;
-    if ($section !== null && $section !== '') {
-        if (ctype_digit((string)$section)) {
-            $sectionId = (int)$section;
+        // 1) LANGUAGE (id ou code). Se não vier, pega de Configuration::get()
+        if ($lang === null || $lang === '') {
+            $conf   = Configuration::get();
+            $langId = (int)$conf->language_id;
         } else {
-            $sectionId = (new \yii\db\Query())
-                ->select('id')
-                ->from('{{%page_sections}}')
-                ->where([
-                    'slug'     => (string)$section,
-                    'group_id' => (int)$group,
-                ])
-                ->scalar() ?: null;
+            if (is_numeric($lang)) {
+                $langModel = Language::findOne((int)$lang);
+            } else {
+                $langModel = Language::find()->where(['code' => (string)$lang])->one();
+            }
+            if (!$langModel) {
+                throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
+            }
+            $langId = (int)$langModel->id;
+        }
 
-            if ($sectionId === null) {
-                throw new NotFoundHttpException(Yii::t('app', 'Section not found.'));
+        // 2) SECTION por (slug, group) OU por ID; se não vier, fica NULL
+        $sectionId = null;
+        if ($section !== null && $section !== '') {
+            if (ctype_digit((string)$section)) {
+                $sectionId = (int)$section;
+            } else {
+                $sectionId = (new \yii\db\Query())
+                    ->select('id')
+                    ->from('{{%page_sections}}')
+                    ->where([
+                        'slug'     => (string)$section,
+                        'group_id' => (int)$group,
+                    ])
+                    ->scalar() ?: null;
+
+                if ($sectionId === null) {
+                    throw new NotFoundHttpException(Yii::t('app', 'Section not found.'));
+                }
             }
         }
+
+        // 3) PAGE – sem prefixo "pages." nas colunas!
+        $q = Page::find()->andWhere([
+            'slug'        => $slug,
+            'group_id'    => (int)$group,
+            'language_id' => $langId,
+        ]);
+
+        // aplica status=1 apenas se a coluna existir
+        $pagesSchema = Page::getTableSchema();
+        if ($pagesSchema && isset($pagesSchema->columns['status'])) {
+            $q->andWhere(['status' => 1]);
+        }
+
+        if ($pagesSchema && isset($pagesSchema->columns['page_section_id'])) {
+            $sectionId === null
+                ? $q->andWhere(['page_section_id' => null])
+                : $q->andWhere(['page_section_id' => (int)$sectionId]);
+        }
+
+        $model = $q->one();
+        if (!$model) {
+            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
+        }
+
+        return $this->render('page', ['model' => $model]);
     }
-
-    // 3) PAGE – sem prefixo "pages." nas colunas!
-    $q = Page::find()->andWhere([
-        'slug'        => $slug,
-        'group_id'    => (int)$group,
-        'language_id' => $langId,
-    ]);
-
-    // aplica status=1 apenas se a coluna existir
-    $pagesSchema = Page::getTableSchema();
-    if ($pagesSchema && isset($pagesSchema->columns['status'])) {
-        $q->andWhere(['status' => 1]);
-    }
-
-    if ($pagesSchema && isset($pagesSchema->columns['page_section_id'])) {
-        $sectionId === null
-            ? $q->andWhere(['page_section_id' => null])
-            : $q->andWhere(['page_section_id' => (int)$sectionId]);
-    }
-
-    $model = $q->one();
-    if (!$model) {
-        throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
-    }
-
-    return $this->render('page', ['model' => $model]);
-}
-
-
     /**
      * Creates a new Page model.
      * If creation is successful, the browser will be redirected to the 'view' page.
