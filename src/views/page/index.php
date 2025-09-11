@@ -114,7 +114,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
 
                                         // monta URL curta no formato /p/<group>/<lang>/<slug>
                                         $url = Yii::$app->urlManager->createUrl([
-                                            "{$config->homeurl}/p/{$group}/{$lang}/{$model->slug}"
+                                            "{$config->homepage}/p/{$group}/{$lang}/{$model->slug}"
                                         ]);
                                         // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
                                         return Html::a(
