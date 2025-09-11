@@ -176,22 +176,17 @@ $config = [
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
-                    // /p/<group>/<lang>/<slug>
-                    'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
+                    // COM lang + COM section: /p/<group>/<lang>/<section>/<page>
+                    'p/<group:\d+>/<lang:[\w\-]+>/<section:[\w\-]+>/<slug:[\w\-]+>' => 'page/public',
 
-                    // /p/<lang>/<slug>  -> group=1 por padrão
-                    [
-                        'pattern'  => 'p/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>',
-                        'route'    => 'common/page/public',
-                        'defaults' => ['group' => 1],
-                    ],
+                    // COM lang + SEM section: /p/<group>/<lang>/<page>
+                    'p/<group:\d+>/<lang:[\w\-]+>/<slug:[\w\-]+>' => 'page/public',
 
-                    // /p/<slug> (se usar) -> group=1 por padrão
-                    [
-                        'pattern'  => 'p/<slug:[A-Za-z0-9\-\_]+>',
-                        'route'    => 'common/page/public',
-                        'defaults' => ['group' => 1],
-                    ],
+                    // SEM lang + COM section: /p/<group>/<section>/<page>
+                    'p/<group:\d+>/<section:[\w\-]+>/<slug:[\w\-]+>' => 'page/public',
+
+                    // SEM lang + SEM section: /p/<group>/<page>
+                    'p/<group:\d+>/<slug:[\w\-]+>' => 'page/public',
                     '<controller:\w+>/<id:\d+>' => '<controller>/view',
                     '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                     '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

@@ -3,6 +3,7 @@
 namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
 use Yii;
@@ -48,52 +49,109 @@ class PageController extends AuthorizationController
         ]);
     }
 
-    public function actionShow($page, $language = 2, $modal = null)
+    protected function findByKey(string $slug, int $groupId, int $languageId, int $sectionId): Page
     {
-        $model = $this->findModel(['slug' => $page, 'language_id' => $language]);
+        $model = Page::find()
+            ->andWhere([
+                'slug'        => $slug,
+                'group_id'    => $groupId,
+                'language_id' => $languageId,
+                'section_id'  => $sectionId,
+                'status'      => 1,
+            ])
+            ->one();
 
+        if (!$model) {
+            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
+        }
+
+        return $model;
+    }
+
+    public function actionShow(
+        string $page,
+        int $language = 2,
+        ?int $section = 1,
+        ?int $group = null,
+        $modal = null
+    ) {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
+
+        // group: se não vier, usa do usuário; se guest, usa 1
+        $groupId = $group ?? (self::isGuest() ? 1 : (int) self::userGroup());
+
+        $sectionId = (int)($section ?: 1);
+        $languageId = (int)$language;
+
+        $model = $this->findByKey($page, $groupId, $languageId, $sectionId);
 
         return $this->render('page', ['model' => $model]);
     }
 
-    /**
-     * Action PÚBLICA para servir páginas por slug + linguagem + grupo (opcional).
-     * URL exemplos:
-     *   /page/public?slug=home&lang=pt-BR&group=12
-     *   /p/12/pt-BR/home
-     *
-     * @param string      $slug   Slug da página
-     * @param string|int  $lang   ID numérico da language OU código/locale (ex.: 'pt-BR', 'en', 'pt')
-     * @param int|null    $group  ID do grupo (opcional). Se omitido, não filtra por grupo.
-     * @param int|null    $modal  Se 1, usa layout 'main-blank'
-     * @return string
-     * @throws NotFoundHttpException
-     */
-    public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
-    {
+    public function actionPublic(
+        string $slug,           // page.slug
+        int $group,             // sempre na URL
+        $section = null, // section.slug opcional
+        $lang = null,           // id OU code (pt-BR), opcional
+        $modal = null
+    ) {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // NÃO use alias 'p'. Deixe o padrão (pages) ou alias explicito 'pages'.
-        $q = Page::find()
-            ->andWhere(['pages.slug' => $slug])
-            ->andWhere(['pages.status' => 1]);
-
-        // group padrão = 1 (coringa)
-        $q->andWhere(['group_id' => (int)$group]);
-
-        $lang = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
-        $q->andWhere(['group_id' => (int)$group]);
-        if ($lang) {
-            $q->andWhere(['language_id' => $lang->id]);
+        // 1) Resolve idioma (ID)
+        if ($lang === null || $lang === '') {
+            $conf = Configuration::get();
+            $langId = (int)$conf->language_id;
+        } else {
+            $langModel = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
+            if (!$langModel) {
+                throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
+            }
+            $langId = (int)$langModel->id;
         }
+
+        // 2) Resolve section_id (ou NULL)
+        $sectionId = null;
+        if ($section !== null && $section !== '') {
+            if (ctype_digit($section)) {
+                // aceita ID numérico na URL (opcional)
+                $sectionId = (int)$section;
+            } else {
+                $sectionId = (new \yii\db\Query())
+                    ->select('id')
+                    ->from('{{%page_sections}}')
+                    ->where([
+                        'slug'        => $section,
+                        'group_id'    => (int)$group,
+                        'language_id' => $langId,
+                    ])
+                    ->scalar() ?: null;
+
+                if ($sectionId === null) {
+                    throw new NotFoundHttpException(Yii::t('app', 'Section not found.'));
+                }
+            }
+        }
+
+        // 3) Busca PAGE pela chave composta (slug, group, language, section|null)
+        $q = Page::find()
+            ->andWhere([
+                'pages.slug'        => $slug,
+                'pages.group_id'    => (int)$group,
+                'pages.language_id' => $langId,
+                'pages.status'      => 1,
+            ]);
+
+        $sectionId === null
+            ? $q->andWhere(['pages.section_id' => null])
+            : $q->andWhere(['pages.section_id' => (int)$sectionId]);
+
         $model = $q->one();
         if (!$model) {
-            throw new \yii\web\NotFoundHttpException(\Yii::t('app', 'Page not found or inactive.'));
+            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
         }
 
         return $this->render('page', ['model' => $model]);
@@ -109,38 +167,36 @@ class PageController extends AuthorizationController
         $model = new Page();
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && ($model->group_id = $this::userGroup()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            if ($model->load($this->request->post())) {
+                $model->group_id   = (int) self::userGroup();
+                $model->section_id = (int)($model->section_id ?: 1);
+
+                if ($model->save()) {
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
             }
         } else {
             $model->loadDefaultValues();
+            $model->group_id   = (int) self::userGroup();
+            $model->section_id = (int)($model->section_id ?: 1);
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->render('create', ['model' => $model]);
     }
 
-    /**
-     * Updates an existing Page model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost && $model->load($this->request->post())) {
+            $model->section_id = (int)($model->section_id ?: 1);
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', ['model' => $model]);
     }
-
     /**
      * Updates an existing Page model.
      * If update is successful, the browser will be redirected to the 'view' page.

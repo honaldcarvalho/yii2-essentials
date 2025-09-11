@@ -11,6 +11,7 @@ use Yii;
  * @property int|null $page_section_id
  * @property int|null $group_id
  * @property string|null $name
+ * @property string $slug
  * @property int|null $status
  *
  * @property Pages[] $pages
@@ -36,6 +37,12 @@ class PageSection extends ModelCommon
         return [
             [['status'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [
+                ['slug', 'group_id', 'language_id'],
+                'unique',
+                'targetAttribute' => ['slug', 'group_id', 'language_id'],
+                'message' => Yii::t('app', 'Already exists a section with this Slug/Group/Language combination.')
+            ],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
         ];
