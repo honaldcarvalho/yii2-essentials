@@ -24,7 +24,7 @@ use Yii;
  * @property int|null $status
  *
  * @property PageFiles[] $pageFiles
- * @property PageSection $section
+ * @property PageSection $pageSection
  * @property Group $group
  */
 class Page extends ModelCommon
@@ -112,7 +112,7 @@ class Page extends ModelCommon
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getSection()
+    public function getPageSection()
     {
         return $this->hasOne(PageSection::class, ['id' => 'page_section_id']);
     }
