@@ -164,6 +164,7 @@ class PageController extends AuthorizationController
 
         return $this->render('page', ['model' => $model]);
     }
+
     /**
      * Creates a new Page model.
      * If creation is successful, the browser will be redirected to the 'view' page.
