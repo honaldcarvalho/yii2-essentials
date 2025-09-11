@@ -90,25 +90,41 @@ class PageController extends AuthorizationController
     }
 
     /**
-     * Ex.: /page/public?slug=home&lang=pt-BR&group=12&section=1
-     *      /p/12/pt-BR/home?section=2
+     * Action PÚBLICA para servir páginas por slug + linguagem + grupo (opcional).
+     * URL exemplos:
+     *   /page/public?slug=home&lang=pt-BR&group=12
+     *   /p/12/pt-BR/home
+     *
+     * @param string      $slug   Slug da página
+     * @param string|int  $lang   ID numérico da language OU código/locale (ex.: 'pt-BR', 'en', 'pt')
+     * @param int|null    $group  ID do grupo (opcional). Se omitido, não filtra por grupo.
+     * @param int|null    $modal  Se 1, usa layout 'main-blank'
+     * @return string
+     * @throws NotFoundHttpException
      */
-    public function actionPublic(string $slug, $lang = null, $group = 1, ?int $section = 1, $modal = null)
+    public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
     {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // Resolve language (id numérico ou code)
-        $langModel = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
-        if (!$langModel) {
-            throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
+        // NÃO use alias 'p'. Deixe o padrão (pages) ou alias explicito 'pages'.
+        $q = Page::find()
+            ->andWhere(['pages.slug' => $slug])
+            ->andWhere(['pages.status' => 1]);
+
+        // group padrão = 1 (coringa)
+        $q->andWhere(['group_id' => (int)$group]);
+
+        $lang = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
+        $q->andWhere(['group_id' => (int)$group]);
+        if ($lang) {
+            $q->andWhere(['language_id' => $lang->id]);
         }
-
-        $groupId   = (int)($group ?: 1);
-        $sectionId = (int)($section ?: 1);
-
-        $model = $this->findByKey($slug, $groupId, (int)$langModel->id, $sectionId);
+        $model = $q->one();
+        if (!$model) {
+            throw new \yii\web\NotFoundHttpException(\Yii::t('app', 'Page not found or inactive.'));
+        }
 
         return $this->render('page', ['model' => $model]);
     }
@@ -123,36 +139,38 @@ class PageController extends AuthorizationController
         $model = new Page();
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post())) {
-                $model->group_id   = (int) self::userGroup();
-                $model->section_id = (int)($model->section_id ?: 1);
-
-                if ($model->save()) {
-                    return $this->redirect(['view', 'id' => $model->id]);
-                }
+            if ($model->load($this->request->post()) && ($model->group_id = $this::userGroup()) && $model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
             }
         } else {
             $model->loadDefaultValues();
-            $model->group_id   = (int) self::userGroup();
-            $model->section_id = (int)($model->section_id ?: 1);
         }
 
-        return $this->render('create', ['model' => $model]);
+        return $this->render('create', [
+            'model' => $model,
+        ]);
     }
 
+    /**
+     * Updates an existing Page model.
+     * If update is successful, the browser will be redirected to the 'view' page.
+     * @param int $id ID
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
 
-        if ($this->request->isPost && $model->load($this->request->post())) {
-            $model->section_id = (int)($model->section_id ?: 1);
-            if ($model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
+        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        return $this->render('update', ['model' => $model]);
+        return $this->render('update', [
+            'model' => $model,
+        ]);
     }
+
     /**
      * Updates an existing Page model.
      * If update is successful, the browser will be redirected to the 'view' page.
