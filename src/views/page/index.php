@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\models\Configuration;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 use yii\grid\GridView;
@@ -103,6 +104,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                 'template' => '{view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $model, $key) {
+                                        $config = Configuration::get();
                                         $group = (int)($model->group_id ?: 1);
 
                                         // tenta pegar código/locale, senão usa ID
@@ -112,7 +114,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
 
                                         // monta URL curta no formato /p/<group>/<lang>/<slug>
                                         $url = Yii::$app->urlManager->createUrl([
-                                            "/p/{$group}/{$lang}/{$model->slug}"
+                                            "{$config->homeurl}/p/{$group}/{$lang}/{$model->slug}"
                                         ]);
                                         // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
                                         return Html::a(
