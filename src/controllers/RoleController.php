@@ -99,15 +99,22 @@ class RoleController extends AuthorizationController
     {
         $all = self::getAllControllers();
 
-        if(AuthorizationController::isMaster())
+        if (AuthorizationController::isMaster()) {
             return $all;
+        }
 
         $scope = GrantScopeService::currentUserGrantScope();
-        // Se tiver '*' global, retorna tudo
-        if (isset($scope['*']) || in_array('*', array_keys($scope), true)) return $all;
 
-        // Só controllers que o usuário tem no escopo
-        return array_values(array_intersect($all, array_keys($scope)));
+        // Se tiver '*' global, retorna tudo
+        if (isset($scope['*']) || array_key_exists('*', $scope)) {
+            return $all;
+        }
+
+        // Preserva FQCN => FQCN nas chaves
+        $scopeKeys = array_keys($scope);
+        $scopeMap  = array_fill_keys($scopeKeys, true);
+
+        return array_intersect_key($all, $scopeMap);
     }
 
     private static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
