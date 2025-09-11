@@ -54,9 +54,9 @@ class Page extends ModelCommon
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
             [
-                ['slug', 'group_id', 'language_id', 'section_id'],
+                ['slug', 'group_id', 'language_id', 'page_section_id'],
                 'unique',
-                'targetAttribute' => ['slug', 'group_id', 'language_id', 'section_id'],
+                'targetAttribute' => ['slug', 'group_id', 'language_id', 'page_section_id'],
                 'message' => Yii::t('app', 'Already exists a page with this Slug/Group/Language/Section combination.')
             ],
         ];

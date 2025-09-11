@@ -56,7 +56,7 @@ class PageController extends AuthorizationController
                 'slug'        => $slug,
                 'group_id'    => $groupId,
                 'language_id' => $languageId,
-                'section_id'  => $sectionId,
+                'page_section_id'  => $sectionId,
                 'status'      => 1,
             ])
             ->one();
@@ -113,7 +113,7 @@ class PageController extends AuthorizationController
             $langId = (int)$langModel->id;
         }
 
-        // 2) Resolve section_id (ou NULL)
+        // 2) Resolve page_section_id (ou NULL)
         $sectionId = null;
         if ($section !== null && $section !== '') {
             if (ctype_digit($section)) {
@@ -146,8 +146,8 @@ class PageController extends AuthorizationController
             ]);
 
         $sectionId === null
-            ? $q->andWhere(['pages.section_id' => null])
-            : $q->andWhere(['pages.section_id' => (int)$sectionId]);
+            ? $q->andWhere(['pages.page_section_id' => null])
+            : $q->andWhere(['pages.page_section_id' => (int)$sectionId]);
 
         $model = $q->one();
         if (!$model) {
@@ -169,7 +169,7 @@ class PageController extends AuthorizationController
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
                 $model->group_id   = (int) self::userGroup();
-                $model->section_id = (int)($model->section_id ?: 1);
+                $model->page_section_id = (int)($model->page_section_id ?: 1);
 
                 if ($model->save()) {
                     return $this->redirect(['view', 'id' => $model->id]);
@@ -178,7 +178,7 @@ class PageController extends AuthorizationController
         } else {
             $model->loadDefaultValues();
             $model->group_id   = (int) self::userGroup();
-            $model->section_id = (int)($model->section_id ?: 1);
+            $model->page_section_id = (int)($model->page_section_id ?: 1);
         }
 
         return $this->render('create', ['model' => $model]);
@@ -189,7 +189,7 @@ class PageController extends AuthorizationController
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post())) {
-            $model->section_id = (int)($model->section_id ?: 1);
+            $model->page_section_id = (int)($model->page_section_id ?: 1);
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
             }
