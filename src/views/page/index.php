@@ -67,22 +67,22 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                 },
                             ],
                             [
-                                'attribute' => 'section_id',
+                                'attribute' => 'page_section_id',
                                 'label' => Yii::t('app', 'Page Section'),
                                 'value' => function ($model) {
                                     // mostra nome (ou slug) e indica quando não há section
-                                    if (!$model->section_id) {
+                                    if (!$model->page_section_id) {
                                         return Yii::t('app', '(no section)');
                                     }
                                     return $model->pageSection->name
                                         ?? $model->pageSection->slug
-                                        ?? ('#' . $model->section_id);
+                                        ?? ('#' . $model->page_section_id);
                                 },
                             ],
                             [
                                 'label' => Yii::t('app', 'Section Slug'),
                                 'value' => function ($model) {
-                                    return $model->section_id ? ($model->pageSection->slug ?? null) : null;
+                                    return $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
                                 },
                             ],
                             'slug',
@@ -121,7 +121,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                     $base        = rtrim($config->homepage, '/');
                                     $group       = (int)($model->group_id ?: 1);
                                     $langCode    = $model->language->code ?? $model->language->locale ?? null;
-                                    $sectionSlug = $model->section_id ? ($model->pageSection->slug ?? null) : null;
+                                    $sectionSlug = $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
 
                                     // monta path conforme presença de lang e section
                                     if ($sectionSlug) {
@@ -158,7 +158,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                         $base        = rtrim($config->homepage, '/');
                                         $group       = (int)($model->group_id ?: 1);
                                         $langCode    = $model->language->code ?? $model->language->locale ?? null;
-                                        $sectionSlug = $model->section_id ? ($model->pageSection->slug ?? null) : null;
+                                        $sectionSlug = $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
 
                                         if ($sectionSlug) {
                                             $path = $langCode
