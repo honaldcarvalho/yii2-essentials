@@ -91,42 +91,44 @@ class PageController extends AuthorizationController
     }
 
     public function actionPublic(
-        string $slug,           // page.slug
-        int $group,             // sempre na URL
-        $section = null, // section.slug opcional
-        $lang = null,           // id OU code (pt-BR), opcional
+        string $slug,   // page.slug
+        int $group,     // sempre na URL
+        $section = null, // section.slug (opcional) OU id numérico
+        $lang = null,   // id OU code (ex.: 'pt-BR') opcional
         $modal = null
     ) {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // 1) Resolve idioma (ID)
+        // 1) LANGUAGE: id OU code; se não vier, usa Configuration::get()->language_id
         if ($lang === null || $lang === '') {
-            $conf = Configuration::get();
+            $conf   = Configuration::get();
             $langId = (int)$conf->language_id;
         } else {
-            $langModel = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
+            if (is_numeric($lang)) {
+                $langModel = Language::findOne((int)$lang);
+            } else {
+                $langModel = Language::find()->where(['code' => (string)$lang])->one();
+            }
             if (!$langModel) {
                 throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
             }
             $langId = (int)$langModel->id;
         }
 
-        // 2) Resolve page_section_id (ou NULL)
+        // 2) SECTION: pela chave real do seu projeto -> (slug, group_id)  OU ID numérico  OU NULL
         $sectionId = null;
         if ($section !== null && $section !== '') {
-            if (ctype_digit($section)) {
-                // aceita ID numérico na URL (opcional)
+            if (ctype_digit((string)$section)) {
                 $sectionId = (int)$section;
             } else {
                 $sectionId = (new \yii\db\Query())
                     ->select('id')
                     ->from('{{%page_sections}}')
                     ->where([
-                        'slug'        => $section,
-                        'group_id'    => (int)$group,
-                        'language_id' => $langId,
+                        'slug'     => (string)$section,
+                        'group_id' => (int)$group,
                     ])
                     ->scalar() ?: null;
 
@@ -136,14 +138,13 @@ class PageController extends AuthorizationController
             }
         }
 
-        // 3) Busca PAGE pela chave composta (slug, group, language, section|null)
-        $q = Page::find()
-            ->andWhere([
-                'pages.slug'        => $slug,
-                'pages.group_id'    => (int)$group,
-                'pages.language_id' => $langId,
-                'pages.status'      => 1,
-            ]);
+        // 3) PAGE: chave composta correta do seu AR
+        $q = Page::find()->andWhere([
+            'pages.slug'        => $slug,
+            'pages.group_id'    => (int)$group,
+            'pages.language_id' => $langId,
+            'pages.status'      => 1,
+        ]);
 
         $sectionId === null
             ? $q->andWhere(['pages.page_section_id' => null])
