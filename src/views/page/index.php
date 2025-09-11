@@ -12,17 +12,21 @@ use yii\helpers\Url;
 $this->title = 'Pages';
 $this->params['breadcrumbs'][] = $this->title;
 $js = <<< JS
-    // copia URL ao clicar no link
-    document.querySelectorAll('.copy-url-link').forEach(function(element) {
-        element.addEventListener('click', function(event) {
-            event.preventDefault();
-            var url = this.getAttribute('data-url');
-            navigator.clipboard.writeText(url).then(function() {
-                alert('URL copied to clipboard: ' + url);
-            }, function(err) {
-                console.error('Could not copy text: ', err);
-            });
+    document.addEventListener('click', function (e) {
+        const target = e.target.closest('.copy-url-link');
+        if (!target) return;
+
+        const url = target.getAttribute('data-url');
+        if (!url) return;
+
+        navigator.clipboard.writeText(url).then(() => {
+            toastr.success('URL copiada!', '', {timeOut: 2000});
+        }).catch(err => {
+            toastr.error('Erro ao copiar URL', '', {timeOut: 3000});
+            console.error(err);
         });
+
+        e.preventDefault();
     });
 JS;
 $this->registerJs($js, \yii\web\View::POS_READY);
