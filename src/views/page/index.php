@@ -70,12 +70,12 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ]);
 
                                     return Html::a(
-                                        $url,   // o texto exibido será a própria URL
-                                        $url,   // destino
+                                        $url,
+                                        'javascript:void(0);',
                                         [
-                                            'target' => '_blank',
-                                            'data-pjax' => 0,
-                                            'class' => 'text-decoration-none', // estilize como quiser
+                                            'class' => 'copy-url-link text-decoration-none',
+                                            'data-url' => $url,
+                                            'title' => Yii::t('app', 'Click to copy URL'),
                                         ]
                                     );
                                 },
@@ -85,26 +85,21 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'template' => '{view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $model, $key) {
-                                        // group padrão 1 (coringa) se vier vazio
                                         $group = (int)($model->group_id ?: 1);
 
-                                        // lang pode ser ID (ex.: 2) ou code (ex.: 'en')
-                                        // se tiver relação Language carregada, prefira o code/locale
+                                        // tenta pegar código/locale, senão usa ID
                                         $lang = $model->language->code
                                             ?? $model->language->locale
                                             ?? $model->language_id;
 
-                                        $publicUrl = Url::to([
-                                            'common/page/public',
-                                            'group' => $group,
-                                            'lang'  => $lang,
-                                            'slug'  => $model->slug,
+                                        // monta URL curta no formato /p/<group>/<lang>/<slug>
+                                        $url = Yii::$app->urlManager->createUrl([
+                                            "/p/{$group}/{$lang}/{$model->slug}"
                                         ]);
-
                                         // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
                                         return Html::a(
-                                            '<i class="cil-external-link"></i>',
-                                            $publicUrl,
+                                            '<i class="fas fa-link"></i>',
+                                            $url,
                                             [
                                                 'class' => 'btn btn-sm btn-outline-primary',
                                                 'title' => Yii::t('app', 'Open public page'),
