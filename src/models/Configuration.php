@@ -162,9 +162,9 @@ class Configuration extends ModelCommon
         $model = self::find(false)->where(['host' => $hostName])->one();
 
         // Se não encontrar, busca pelo grupo do usuário
-        // if (!$model) {
-        //     $model = self::find(false)->where(['id' => AuthorizationController::userGroup()])->one();
-        // }
+        if (!$model) {
+            $model = self::find(false)->where(['id' => AuthorizationController::userGroup()])->one();
+        }
 
         // Se ainda não encontrar, tenta buscar o id 1
         if (!$model) {
