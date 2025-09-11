@@ -176,10 +176,8 @@ $config = [
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
-                    // COM section: /p/<group>/<lang>/<section>/<page>
-                    'p/<group:\d+>/<lang:[\w\-]+>/<section:[\w\-]+>/<slug:[\w\-]+>' => 'page/public',
-                    // SEM section: /p/<group>/<lang>/<page>
-                    'p/<group:\d+>/<lang:[\w\-]+>/<slug:[\w\-]+>' => 'page/public',
+                    // /p/<group>/<lang>/<slug>
+                    'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
 
                     // /p/<lang>/<slug>  -> group=1 por padrão
                     [
