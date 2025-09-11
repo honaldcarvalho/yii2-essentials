@@ -38,9 +38,9 @@ class PageSection extends ModelCommon
             [['status'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [
-                ['slug', 'group_id', 'language_id'],
+                ['slug', 'group_id'],
                 'unique',
-                'targetAttribute' => ['slug', 'group_id', 'language_id'],
+                'targetAttribute' => ['slug', 'group_id'],
                 'message' => Yii::t('app', 'Already exists a section with this Slug/Group/Language combination.')
             ],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
