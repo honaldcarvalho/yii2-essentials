@@ -52,89 +52,42 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                         'dataProvider' => $dataProvider,
                         'columns' => [
                             'id',
-                            [
-                                'attribute' => 'group_id',
-                                'label' => Yii::t('app', 'Group'),
-                                'value' => 'group.name',
-                            ],
-                            [
-                                'attribute' => 'language_id',
-                                'label' => Yii::t('app', 'Language'),
-                                'value' => function ($model) {
-                                    return $model->language->code
-                                        ?? $model->language->locale
-                                        ?? $model->language_id;
-                                },
-                            ],
-                            [
-                                'attribute' => 'page_section_id',
-                                'label' => Yii::t('app', 'Page Section'),
-                                'value' => function ($model) {
-                                    // mostra nome (ou slug) e indica quando não há section
-                                    if (!$model->page_section_id) {
-                                        return Yii::t('app', '(no section)');
-                                    }
-                                    return $model->pageSection->name
-                                        ?? $model->pageSection->slug
-                                        ?? ('#' . $model->page_section_id);
-                                },
-                            ],
-                            [
-                                'label' => Yii::t('app', 'Section Slug'),
-                                'value' => function ($model) {
-                                    return $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
-                                },
-                            ],
+                            'group.name:text:' . Yii::t('app', 'Group'),
+                            'pageSection.name:text:' . Yii::t('app', 'Page Section'),
                             'slug',
                             'title',
                             'description',
+                            //'content:ntext',
+                            //'keywords:ntext',
                             [
                                 'attribute' => 'created_at',
                                 'format' => 'date',
                                 'label' => Yii::t('app', 'Created at'),
-                                'filter' => Html::input(
-                                    'date',
-                                    ucfirst(Yii::$app->controller->id) . 'Search[created_at]',
-                                    $searchModel->created_at,
-                                    ['class' => 'form-control dateandtime']
-                                )
+                                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[created_at]', $searchModel->created_at, ['class' => 'form-control dateandtime'])
                             ],
                             [
                                 'attribute' => 'updated_at',
                                 'format' => 'date',
                                 'label' => Yii::t('app', 'Updated at'),
-                                'filter' => Html::input(
-                                    'date',
-                                    ucfirst(Yii::$app->controller->id) . 'Search[updated_at]',
-                                    $searchModel->updated_at,
-                                    ['class' => 'form-control dateandtime']
-                                )
+                                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[updated_at]', $searchModel->updated_at, ['class' => 'form-control dateandtime'])
                             ],
                             'status:boolean',
-
-                            // ==== Public URL (copia) ====
                             [
                                 'label' => Yii::t('app', 'Public URL'),
                                 'format' => 'raw',
                                 'value' => function ($model) {
-                                    $config      = Configuration::get();
-                                    $base        = rtrim($config->homepage, '/');
-                                    $group       = (int)($model->group_id ?: 1);
-                                    $langCode    = $model->language->code ?? $model->language->locale ?? null;
-                                    $sectionSlug = $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
+                                    $config = Configuration::get();
+                                    $group = (int)($model->group_id ?: 1);
 
-                                    // monta path conforme presença de lang e section
-                                    if ($sectionSlug) {
-                                        $path = $langCode
-                                            ? "/p/{$group}/{$langCode}/{$sectionSlug}/{$model->slug}"
-                                            : "/p/{$group}/{$sectionSlug}/{$model->slug}";
-                                    } else {
-                                        $path = $langCode
-                                            ? "/p/{$group}/{$langCode}/{$model->slug}"
-                                            : "/p/{$group}/{$model->slug}";
-                                    }
+                                    // tenta pegar código/locale, senão usa ID
+                                    $lang = $model->language->code
+                                        ?? $model->language->locale
+                                        ?? $model->language_id;
 
-                                    $url = $base . $path;
+                                    // monta URL curta no formato /p/<group>/<lang>/<slug>
+                                    $url = $config->homepage . Yii::$app->urlManager->createUrl([
+                                        "/p/{$group}/{$lang}/{$model->slug}"
+                                    ]);
 
                                     return Html::a(
                                         $url,
@@ -147,31 +100,24 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                     );
                                 },
                             ],
-
-                            // ==== ActionColumn com botão "public" que abre em nova aba ====
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
                                 'template' => '{view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $model, $key) {
-                                        $config      = Configuration::get();
-                                        $base        = rtrim($config->homepage, '/');
-                                        $group       = (int)($model->group_id ?: 1);
-                                        $langCode    = $model->language->code ?? $model->language->locale ?? null;
-                                        $sectionSlug = $model->page_section_id ? ($model->pageSection->slug ?? null) : null;
+                                        $config = Configuration::get();
+                                        $group = (int)($model->group_id ?: 1);
 
-                                        if ($sectionSlug) {
-                                            $path = $langCode
-                                                ? "/p/{$group}/{$langCode}/{$sectionSlug}/{$model->slug}"
-                                                : "/p/{$group}/{$sectionSlug}/{$model->slug}";
-                                        } else {
-                                            $path = $langCode
-                                                ? "/p/{$group}/{$langCode}/{$model->slug}"
-                                                : "/p/{$group}/{$model->slug}";
-                                        }
+                                        // tenta pegar código/locale, senão usa ID
+                                        $lang = $model->language->code
+                                            ?? $model->language->locale
+                                            ?? $model->language_id;
 
-                                        $url = $base . $path;
-
+                                        // monta URL curta no formato /p/<group>/<lang>/<slug>
+                                        $url = $config->homepage . Yii::$app->urlManager->createUrl([
+                                            "/p/{$group}/{$lang}/{$model->slug}"
+                                        ]);
+                                        // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
                                         return Html::a(
                                             '<i class="fas fa-link"></i>',
                                             $url,
@@ -185,12 +131,13 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                     },
                                 ],
                                 'visibleButtons' => [
+                                    // só mostra se a página estiver ativa
                                     'public' => fn($model) => (int)$model->status === 1,
                                 ],
-                            ],
+                            ]
+
                         ],
                     ]); ?>
-
 
                     <?php Pjax::end(); ?>
 

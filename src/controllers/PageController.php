@@ -3,7 +3,6 @@
 namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\controllers\rest\StorageController;
-use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
 use Yii;
@@ -56,7 +55,7 @@ class PageController extends AuthorizationController
                 'slug'        => $slug,
                 'group_id'    => $groupId,
                 'language_id' => $languageId,
-                'page_section_id'  => $sectionId,
+                'section_id'  => $sectionId,
                 'status'      => 1,
             ])
             ->one();
@@ -90,77 +89,26 @@ class PageController extends AuthorizationController
         return $this->render('page', ['model' => $model]);
     }
 
-    public function actionPublic(
-        string $slug,      // page.slug
-        int $group,        // <group> da URL
-        $section = null,   // section.slug (ou ID) opcional
-        $lang = null,      // id OU code (ex.: 'en-US') opcional
-        $modal = null
-    ) {
+    /**
+     * Ex.: /page/public?slug=home&lang=pt-BR&group=12&section=1
+     *      /p/12/pt-BR/home?section=2
+     */
+    public function actionPublic(string $slug, $lang = null, $group = 1, ?int $section = 1, $modal = null)
+    {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // 1) LANGUAGE (id ou code). Se não vier, pega de Configuration::get()
-        if ($lang === null || $lang === '') {
-            $conf   = Configuration::get();
-            $langId = (int)$conf->language_id;
-        } else {
-            if (is_numeric($lang)) {
-                $langModel = Language::findOne((int)$lang);
-            } else {
-                $langModel = Language::find()->where(['code' => (string)$lang])->one();
-            }
-            if (!$langModel) {
-                throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
-            }
-            $langId = (int)$langModel->id;
+        // Resolve language (id numérico ou code)
+        $langModel = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
+        if (!$langModel) {
+            throw new NotFoundHttpException(Yii::t('app', 'Language not found.'));
         }
 
-        // 2) SECTION por (slug, group) OU por ID; se não vier, fica NULL
-        $sectionId = null;
-        if ($section !== null && $section !== '') {
-            if (ctype_digit((string)$section)) {
-                $sectionId = (int)$section;
-            } else {
-                $sectionId = (new \yii\db\Query())
-                    ->select('id')
-                    ->from('{{%page_sections}}')
-                    ->where([
-                        'slug'     => (string)$section,
-                        'group_id' => (int)$group,
-                    ])
-                    ->scalar() ?: null;
+        $groupId   = (int)($group ?: 1);
+        $sectionId = (int)($section ?: 1);
 
-                if ($sectionId === null) {
-                    throw new NotFoundHttpException(Yii::t('app', 'Section not found.'));
-                }
-            }
-        }
-
-        // 3) PAGE – sem prefixo "pages." nas colunas!
-        $q = Page::find()->andWhere([
-            'slug'        => $slug,
-            'group_id'    => (int)$group,
-            'language_id' => $langId,
-        ]);
-
-        // aplica status=1 apenas se a coluna existir
-        $pagesSchema = Page::getTableSchema();
-        if ($pagesSchema && isset($pagesSchema->columns['status'])) {
-            $q->andWhere(['status' => 1]);
-        }
-
-        if ($pagesSchema && isset($pagesSchema->columns['page_section_id'])) {
-            $sectionId === null
-                ? $q->andWhere(['page_section_id' => null])
-                : $q->andWhere(['page_section_id' => (int)$sectionId]);
-        }
-
-        $model = $q->one();
-        if (!$model) {
-            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
-        }
+        $model = $this->findByKey($slug, $groupId, (int)$langModel->id, $sectionId);
 
         return $this->render('page', ['model' => $model]);
     }
@@ -177,7 +125,7 @@ class PageController extends AuthorizationController
         if ($this->request->isPost) {
             if ($model->load($this->request->post())) {
                 $model->group_id   = (int) self::userGroup();
-                $model->page_section_id = (int)($model->page_section_id ?: 1);
+                $model->section_id = (int)($model->section_id ?: 1);
 
                 if ($model->save()) {
                     return $this->redirect(['view', 'id' => $model->id]);
@@ -186,7 +134,7 @@ class PageController extends AuthorizationController
         } else {
             $model->loadDefaultValues();
             $model->group_id   = (int) self::userGroup();
-            $model->page_section_id = (int)($model->page_section_id ?: 1);
+            $model->section_id = (int)($model->section_id ?: 1);
         }
 
         return $this->render('create', ['model' => $model]);
@@ -197,7 +145,7 @@ class PageController extends AuthorizationController
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post())) {
-            $model->page_section_id = (int)($model->page_section_id ?: 1);
+            $model->section_id = (int)($model->section_id ?: 1);
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
             }
