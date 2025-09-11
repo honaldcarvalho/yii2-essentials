@@ -102,7 +102,7 @@ class PageController extends AuthorizationController
      * @return string
      * @throws NotFoundHttpException
      */
-    public function actionPublic(string $slug, $lang = null, $group = 1, $modal = null)
+    public function actionPublic(string $slug,string $section = null, $lang = null, $group = 1, $modal = null)
     {
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';

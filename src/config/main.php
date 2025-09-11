@@ -176,7 +176,9 @@ $config = [
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
-                    // /p/<group>/<lang>/<slug>
+
+                    'p/<group:\d+>/<section:\d+><lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
+
                     'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
 
                     // /p/<lang>/<slug>  -> group=1 por padrão
