@@ -27,11 +27,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
 
 
-                    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/source-message','searchModel' => $searchModel]); ?>
 
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
-                        'filterModel' => $searchModel,
                         'columns' => [
                              'id',
                             'category',
