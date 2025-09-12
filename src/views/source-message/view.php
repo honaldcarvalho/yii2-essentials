@@ -164,85 +164,75 @@ $this::registerJs($script, $this::POS_END);
     </div>
 </div>
 
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => Yii::$app->controller->id, 'model' => $model, 'verGroup' => false]) ?>
-                        <button class="btn btn-success" onclick="javascript:modal.show();">
-                            <i class="fas fa-plus-square"></i> <?= Yii::t('app', 'New Translate'); ?>
-                        </button>
-                    </p>
-                    <?= DetailView::widget([
-                        'model' => $model,
-                        'attributes' => [
-                            'id',
-                            'category',
-                            'message:ntext',
-                        ],
-                    ]) ?>
-                </div>
 
-            </div>
-            <!--.row-->
-        </div>
-        <!--.card-body-->
+<div class="row">
+    <div class="col-md-12">
+        <p>
+            <?= croacworks\essentials\widgets\DefaultButtons::widget(['controller' => Yii::$app->controller->id, 'model' => $model, 'verGroup' => false]) ?>
+            <button class="btn btn-success" onclick="javascript:modal.show();">
+                <i class="fas fa-plus-square"></i> <?= Yii::t('app', 'New Translate'); ?>
+            </button>
+        </p>
+        <?= DetailView::widget([
+            'model' => $model,
+            'attributes' => [
+                'id',
+                'category',
+                'message:ntext',
+            ],
+        ]) ?>
     </div>
-    <!--.card-->
+
 </div>
 
+<div class="row">
+    <div class="col-md-12">
 
-
-<div class="card">
-    <div class="card-header">
         <h4><?= Yii::t('app', 'Translates') ?></h4>
-    </div>
-    <div class="card-body">
-        <div class="row">
+        <?php Pjax::begin(['id' => 'list-translates-grid', 'options' => ['class' => 'col-md-12']]) ?>
 
-            <?php Pjax::begin(['id' => 'list-translates-grid', 'options' => ['class' => 'col-md-12']]) ?>
+        <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            'columns' => [
+                [
+                    'header' => Yii::t('app', 'Source Message'),
+                    'header' => 'Mensage',
+                    'value' => function ($data) {
+                        return $data->sourceMessage->message;
+                    },
+                ],
+                'language',
+                'translation:ntext',
 
-                <?= GridView::widget([
-                    'dataProvider' => $dataProvider,
-                    'columns' => [
-                        [
-                            'header' => Yii::t('app', 'Source Message'),
-                            'header' => 'Mensage',
-                            'value' => function ($data) {
-                                return $data->sourceMessage->message;
-                            },
-                        ],
-                        'language',
-                        'translation:ntext',
-
-                        ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom', 'verGroup' => false, 'controller'=>'message',
-                            'template' => '{view}{remove}',
-                            'buttons' => [  
-                                'remove' => function ($url, $model, $key) {
-                                    return Html::a('<i class="fas fa-trash"></i>','javascript:;',
-                                     [
-                                        'onclick'=>'removeTranslate(this);', 
-                                        'data-link'=> "/message/del/{$model->id}?language={$model->language}",
-                                        'class'=>'btn btn-outline-secondary remove',"data-toggle"=>"tooltip","data-placement"=>"top", 
-                                        "title"=>\Yii::t('app','Remove from folder')
-                                    ]);
-                                },    
-                            ]
-                        ],
-                    ],
-                    'summaryOptions' => ['class' => 'summary mb-2'],
-                    'pager' => [
-                        'class' => 'yii\bootstrap5\LinkPager',
+                [
+                    'class' => 'croacworks\essentials\components\gridview\ActionColumnCustom',
+                    'verGroup' => false,
+                    'controller' => 'message',
+                    'template' => '{view}{remove}',
+                    'buttons' => [
+                        'remove' => function ($url, $model, $key) {
+                            return Html::a(
+                                '<i class="fas fa-trash"></i>',
+                                'javascript:;',
+                                [
+                                    'onclick' => 'removeTranslate(this);',
+                                    'data-link' => "/message/del/{$model->id}?language={$model->language}",
+                                    'class' => 'btn btn-outline-secondary remove',
+                                    "data-toggle" => "tooltip",
+                                    "data-placement" => "top",
+                                    "title" => \Yii::t('app', 'Remove from folder')
+                                ]
+                            );
+                        },
                     ]
-                ]); ?>
-            <?php Pjax::end() ?>
+                ],
+            ],
+            'summaryOptions' => ['class' => 'summary mb-2'],
+            'pager' => [
+                'class' => 'yii\bootstrap5\LinkPager',
+            ]
+        ]); ?>
+        <?php Pjax::end() ?>
 
-        </div>
     </div>
-    <!--.card-body-->
 </div>
-<!--.card-->
-</div>
-<!--.col-md-12-->
