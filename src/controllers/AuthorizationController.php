@@ -844,14 +844,10 @@ class AuthorizationController extends CommonController
         $method  = strtoupper($request->method ?? 'GET');
 
         // Só loga operações de escrita
-        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
-            return;
-        }
+        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) return;
 
-        // Utilitários locais (sem helpers externos)
-        $maskKeys   = ['password', 'senha', 'token', 'secret', 'authorization', 'access_token'];
-        $ignoreKeys = ['_csrf', '_csrf-frontend', '_csrf-backend', '_method'];
-        $ignoreAttrs = ['created_at', 'updated_at', 'created_by', 'updated_by']; // ruído comum
+        $maskKeys    = ['password', 'senha', 'token', 'secret', 'authorization', 'access_token'];
+        $ignoreAttrs = ['created_at', 'updated_at', 'created_by', 'updated_by'];
 
         $isSensitive = static function (string $key) use ($maskKeys): bool {
             $lk = mb_strtolower($key);
@@ -859,92 +855,117 @@ class AuthorizationController extends CommonController
             return false;
         };
         $normalize = static function ($v) {
+            if (is_string($v)) {
+                $v = trim($v);
+                if ($v === '') return null;
+                return $v;
+            }
             if (is_bool($v)) return $v ? '1' : '0';
+            if (is_numeric($v)) return (string)$v;
             if ($v === '' || $v === []) return null;
             if (is_array($v) || is_object($v)) return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             return $v === null ? null : (string)$v;
         };
 
         try {
-            // POST completo
             $payload = $request->post();
             if (empty($payload)) return;
 
-            // Encontrar o "form" principal (primeiro array no nível raiz)
-            $formKey  = null;
+            // 1) Detecta form principal (primeiro array no root)
+            $formKey = null;
             $formData = null;
             foreach ($payload as $k => $v) {
-                if (in_array($k, $ignoreKeys, true)) continue;
                 if (is_array($v)) {
                     $formKey = (string)$k;
                     $formData = $v;
                     break;
                 }
             }
-            // Se não achou, cai fora — sem diff útil
             if (!is_array($formData)) return;
 
-            // Remover chaves ignoradas e mascarar sensíveis
-            foreach ($formData as $k => &$v) {
-                if (in_array($k, $ignoreKeys, true)) {
-                    unset($formData[$k]);
-                    continue;
-                }
-                if ($isSensitive((string)$k)) {
-                    $v = '***';
-                }
+            // mascara sensíveis no formulário
+            foreach ($formData as $k => &$v) if ($isSensitive($k)) {
+                $v = '***';
             }
             unset($v);
 
-            // Descobrir id (GET tem precedência)
+            // 2) Descobre id
             $id = $request->get('id') ?? ($formData['id'] ?? $payload['id'] ?? null);
+            if ($id !== null && ctype_digit((string)$id)) $id = (int)$id;
 
-            // Descobrir modelClass a partir do controller (padrão em CRUDs)
-            $modelClass = property_exists(Yii::$app->controller, 'modelClass')
-                ? Yii::$app->controller->modelClass
-                : null;
-
-            $changes = [];
-            $modelFound = false;
-
-            if (
-                $modelClass
-                && class_exists($modelClass)
-                && is_subclass_of($modelClass, \yii\db\ActiveRecord::class)
-            ) {
-                /** @var \yii\db\ActiveRecord|null $oldModel */
-                $oldModel = $id ? $modelClass::findOne($id) : null;
-                $modelFound = (bool)$oldModel;
-
-                $oldAttrs = $oldModel ? $oldModel->getAttributes() : [];
-
-                foreach ($formData as $attr => $newVal) {
-                    if (in_array($attr, $ignoreAttrs, true)) continue;
-
-                    $to   = $isSensitive((string)$attr) ? '***' : $normalize($newVal);
-                    $from = $isSensitive((string)$attr) ? '***' : $normalize($oldAttrs[$attr] ?? null);
-
-                    // Em criação (sem $oldModel), 'from' normalmente null
-                    if ($from === $to) continue; // só registra se mudou
-
-                    $changes[] = ['attr' => (string)$attr, 'from' => $from, 'to' => $to];
+            // 3) Resolve modelClass
+            $modelClass = null;
+            if (property_exists(Yii::$app->controller, 'modelClass')) {
+                $tmp = Yii::$app->controller->modelClass;
+                if ($tmp && class_exists($tmp) && is_subclass_of($tmp, \yii\db\ActiveRecord::class)) {
+                    $modelClass = $tmp;
                 }
-            } else {
-                // Sem modelClass: registra diff mínimo (from=null → to=valor) apenas do form
-                foreach ($formData as $attr => $newVal) {
-                    if (in_array($attr, $ignoreAttrs, true)) continue;
-                    $to = $isSensitive((string)$attr) ? '***' : $normalize($newVal);
-                    if ($to === null || $to === '') continue;
-                    $changes[] = ['attr' => (string)$attr, 'from' => null, 'to' => $to];
+            }
+            if ($modelClass === null && $formKey) {
+                // tenta namespaces comuns (simples e sem helpers)
+                foreach (
+                    [
+                        'app\\models\\',
+                        'common\\models\\',
+                        'croacworks\\essentials\\models\\',
+                        'weebz\\yii2basics\\models\\',
+                    ] as $ns
+                ) {
+                    $cand = $ns . $formKey;
+                    if (class_exists($cand) && is_subclass_of($cand, \yii\db\ActiveRecord::class)) {
+                        $modelClass = $cand;
+                        break;
+                    }
                 }
             }
 
-            // Se não houve mudança real, não salva log
-            if (empty($changes)) return;
+            $changes = [];
+            if ($modelClass) {
+                // 4) Busca "old" com 2 tentativas:
+                // 4a) via AR (respeita escopos)
+                /** @var \yii\db\ActiveRecord|null $oldModel */
+                $oldModel = $id ? $modelClass::findOne($id) : null;
+                $oldAttrs = $oldModel ? $oldModel->getAttributes() : [];
 
-            // Monta payload mínimo só com o DIFF
+                // 4b) fallback SQL direto (ignora escopos)
+                if (!$oldModel && $id !== null) {
+                    /** @var \yii\db\ActiveRecord $mc */
+                    $mc = $modelClass;
+                    $table = $mc::tableName();                          // ex: {{%page}}
+                    $pk    = $mc::primaryKey()[0] ?? 'id';
+
+                    $oldRow = (new \yii\db\Query())
+                        ->from($table)
+                        ->where([$pk => $id])
+                        ->one();
+
+                    if (is_array($oldRow)) $oldAttrs = $oldRow;
+                }
+
+                // 5) Monta diffs só de atributos que realmente mudaram
+                foreach ($formData as $attr => $newVal) {
+                    if (in_array($attr, $ignoreAttrs, true)) continue;
+
+                    $to   = $isSensitive($attr) ? '***' : $normalize($newVal);
+                    $from = $isSensitive($attr) ? '***' : $normalize($oldAttrs[$attr] ?? null);
+
+                    if ($from !== $to) {
+                        $changes[] = ['attr' => (string)$attr, 'from' => $from, 'to' => $to];
+                    }
+                }
+            } else {
+                // sem modelClass: from vai ser null por não ter fonte "old"
+                foreach ($formData as $attr => $newVal) {
+                    if (in_array($attr, $ignoreAttrs, true)) continue;
+                    $to = $isSensitive($attr) ? '***' : $normalize($newVal);
+                    if ($to !== null) $changes[] = ['attr' => (string)$attr, 'from' => null, 'to' => $to];
+                }
+            }
+
+            if (empty($changes)) return; // nada mudou → não grava
+
             $diffPayload = [
-                'model'   => $modelClass ?: $formKey,  // dá uma pista do contexto
+                'model'   => $modelClass ?: $formKey,
                 'id'      => $id,
                 'changes' => $changes,
                 'action'  => Yii::$app->controller->action->id ?? '',
@@ -952,13 +973,9 @@ class AuthorizationController extends CommonController
                 'method'  => $method,
             ];
 
-            // Serializa e limita tamanho
             $dataJson = json_encode($diffPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            if (strlen($dataJson) > 8192) {
-                $dataJson = substr($dataJson, 0, 8192) . '…';
-            }
+            if (strlen($dataJson) > 8192) $dataJson = substr($dataJson, 0, 8192) . '…';
 
-            // Cria e salva o Log (apenas 1 por requisição de escrita)
             $log = new Log();
             $log->action     = $diffPayload['action'];
             $log->ip         = $this->getUserIP();
@@ -968,10 +985,9 @@ class AuthorizationController extends CommonController
             $log->data       = $dataJson;
             $log->save(false);
         } catch (\Throwable $e) {
-            // silencia para não quebrar o fluxo
+            // silencioso
         }
     }
-
 
     /* ===== findModel (mantido, só usando getAllUserGroupIds) ===== */
 
