@@ -217,7 +217,7 @@ $this::registerJs($script, $this::POS_END);
                         'language',
                         'translation:ntext',
 
-                        ['class' => 'croacworks\essentials\components\gridview\ActionColumn', 'verGroup' => false, 'controller'=>'message',
+                        ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom', 'verGroup' => false, 'controller'=>'message',
                             'template' => '{view}{remove}',
                             'buttons' => [  
                                 'remove' => function ($url, $model, $key) {

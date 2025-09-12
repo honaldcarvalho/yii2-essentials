@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = $this->title;
                              'id',
                             'category',
                             'message:ntext',
-                            ['class' =>'croacworks\essentials\components\gridview\ActionColumn','verGroup'=>false]
+                            ['class' =>'croacworks\essentials\components\gridview\ActionColumnCustom','verGroup'=>false]
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [
