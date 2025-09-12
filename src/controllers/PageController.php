@@ -92,17 +92,14 @@ class PageController extends AuthorizationController
     }
 
     /**
-     * Action PÚBLICA para servir páginas por slug + linguagem + grupo (opcional).
-     * URL exemplos:
-     *   /page/public?slug=home&lang=pt-BR&group=12
-     *   /p/12/pt-BR/home
-     *
-     * @param string      $slug   Slug da página
-     * @param string|int  $lang   ID numérico da language OU código/locale (ex.: 'pt-BR', 'en', 'pt')
-     * @param int|null    $group  ID do grupo (opcional). Se omitido, não filtra por grupo.
-     * @param int|null    $modal  Se 1, usa layout 'main-blank'
+     * Displays public page.
+     * @param string $slug
+     * @param string|null $section
+     * @param string|int|null $lang
+     * @param int $group
+     * @param int|null $modal
      * @return string
-     * @throws NotFoundHttpException
+     * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionPublic(string $slug, string $section = null, $lang = null, $group = 1, $modal = null)
     {
