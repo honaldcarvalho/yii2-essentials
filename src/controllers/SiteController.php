@@ -157,6 +157,8 @@ class SiteController extends CommonController
     public function actionLogin()
     {
 
+        $request = Yii::$app->request;
+
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
@@ -164,11 +166,16 @@ class SiteController extends CommonController
         $this->layout = 'main-login';
 
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            AuthorizationController::logLogin($model->username, true);
-            return $this->goBack();
+
+        if ($model->load($request->post()) && $model->validate()) {
+            if ($model->login()) {
+                AuthorizationController::logAuth('login', $model->username, true, null);
+                return $this->goBack();
+            }
+            // senha inválida ou auth falhou
+            AuthorizationController::logAuth('login', $model->username, false, 'Invalid credentials');
         } else {
-            AuthorizationController::logLogin($model->username, false, 'Invalid password');
+            AuthorizationController::logAuth('login', $model->username ?? null, false, 'Validation error');
         }
 
         $model->password = '';
@@ -197,8 +204,13 @@ class SiteController extends CommonController
             // ignora se tabela ainda não existir
         }
         // ==== END deactivate session ====
+        $user = Yii::$app->user->identity;
+        $username = $user->username ?? $user->email ?? (string)$user->id ?? '(unknown)';
 
+        // Loga ANTES de encerrar a sessão (para ter user_id/username)
+        AuthorizationController::logAuth('logout', $username, true, null);
         Yii::$app->user->logout();
+        
         return $this->goHome();
     }
 

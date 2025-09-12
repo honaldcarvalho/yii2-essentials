@@ -801,35 +801,25 @@ class AuthorizationController extends CommonController
         return self::verifyLicense() !== null;
     }
 
-    public static function logLogin(?string $username, bool $success, ?string $reason = null): void
+    public static function logAuth(string $type, ?string $username, bool $success, ?string $reason = null): void
     {
+        // $type: 'login' | 'logout'
         try {
             $req = \Yii::$app->request;
 
-            // Normaliza username nulo/vazio
             $uname = trim((string)$username);
             if ($uname === '') {
-                // tenta extrair do POST do form de login
                 $post = $req->post();
-                if (isset($post['LoginForm']['username'])) {
-                    $uname = (string)$post['LoginForm']['username'];
-                } elseif (isset($post['username'])) {
-                    $uname = (string)$post['username'];
-                } else {
-                    $uname = '(unknown)';
-                }
+                $uname = (string)($post['LoginForm']['username'] ?? $post['username'] ?? '(unknown)');
             }
 
             $log = new \croacworks\essentials\models\Log();
-            $log->action     = 'login';
+            $log->action     = $type; // 'login' ou 'logout'
             $log->controller = \Yii::$app->controller?->id ?? 'site';
             $log->ip         = $req->userIP;
-            // Se tiver o método getOS() no controller base, opcional:
             $log->device     = method_exists(\Yii::$app->controller, 'getOS')
                 ? \Yii::$app->controller->getOS()
                 : ($req->userAgent ?? '');
-
-            // Em falha, pode não haver usuário autenticado
             $log->user_id    = \Yii::$app->user->id ?? null;
 
             $log->data = json_encode([
@@ -842,10 +832,9 @@ class AuthorizationController extends CommonController
 
             $log->save(false);
         } catch (\Throwable $e) {
-            // não quebra o fluxo de login
+            // silencioso
         }
     }
-
 
     /* ===== Log seguro (mantido, com máscara leve) ===== */
 
