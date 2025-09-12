@@ -1,8 +1,7 @@
 <?php
 
-use croacworks\essentials\widgets\DefaultButtons;
-use yii\helpers\Html;
 use yii\grid\GridView;
+use croacworks\essentials\widgets\DefaultButtons;
 
 /* @var $this yii\web\View */
 /* @var $searchModel croacworks\essentials\models\LanguageSearch */
@@ -28,11 +27,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
 
 
-                    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); ?>
 
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
-                        'filterModel' => $searchModel,
                         'columns' => [
 
                             'id',

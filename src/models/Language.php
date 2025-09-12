@@ -29,7 +29,7 @@ class Language extends ModelCommon
     public function rules()
     {
         return [
-            [['code', 'name'], 'required'],
+            [['code', 'name'], 'required','on'=>['create','update']],
             [['status'], 'integer'],
             [['code'], 'string', 'max' => 10],
             [['name'], 'string', 'max' => 255],
