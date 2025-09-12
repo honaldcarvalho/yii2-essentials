@@ -6,6 +6,7 @@ use Yii;
 use croacworks\essentials\models\Log;
 use croacworks\essentials\models\LogSearch;
 use yii\web\NotFoundHttpException;
+
 /**
  * LogController implements the CRUD actions for Log model.
  */
@@ -23,6 +24,39 @@ class LogController extends AuthorizationController
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+        ]);
+    }
+    
+    public function actionLoginLogs(): string
+    {
+        $q = \croacworks\essentials\models\Log::find()
+            ->where(['action' => 'login'])
+            ->orderBy(['id' => SORT_DESC]);
+
+        // filtros simples via GET (?username=...&success=0|1)
+        $req = \Yii::$app->request;
+        $username = trim((string)$req->get('username', ''));
+        $success  = $req->get('success', '');
+
+        if ($username !== '') {
+            // filtra pelo username dentro do JSON (data)
+            // MySQL/MariaDB: usa LIKE simples no campo data
+            $q->andWhere(['like', 'data', '"username":"' . addslashes($username) . '"', false]);
+        }
+
+        if ($success !== '' && ($success === '0' || $success === '1')) {
+            $q->andWhere(['like', 'data', '"success":' . ($success === '1' ? 'true' : 'false'), false]);
+        }
+
+        $dataProvider = new \yii\data\ActiveDataProvider([
+            'query' => $q,
+            'pagination' => ['pageSize' => 20],
+        ]);
+
+        return $this->render('login-logs', [
+            'dataProvider' => $dataProvider,
+            'username'     => $username,
+            'success'      => $success,
         ]);
     }
 

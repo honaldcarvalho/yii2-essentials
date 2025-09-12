@@ -165,7 +165,10 @@ class SiteController extends CommonController
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            AuthorizationController::logLogin($model->username, true);
             return $this->goBack();
+        } else {
+            AuthorizationController::logLogin($model->username, false, 'Invalid password');
         }
 
         $model->password = '';

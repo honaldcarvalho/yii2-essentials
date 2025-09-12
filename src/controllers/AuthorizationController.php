@@ -801,6 +801,28 @@ class AuthorizationController extends CommonController
         return self::verifyLicense() !== null;
     }
 
+    public static function logLogin(string $username, bool $success, ?string $reason = null): void
+    {
+        try {
+            $log = new Log();
+            $log->action     = 'login';
+            $log->controller = Yii::$app->controller->id;
+            $log->ip         = Yii::$app->request->userIP;
+            $log->device     = $this->getOS();
+            $log->user_id    = Yii::$app->user->id ?? null; // pode ser null em falha
+
+            $log->data = json_encode([
+                'username' => $username,
+                'success'  => $success,
+                'reason'   => $reason,
+            ], JSON_UNESCAPED_UNICODE);
+
+            $log->save(false);
+        } catch (\Throwable $e) {
+            // não quebra login
+        }
+    }
+    
     /* ===== Log seguro (mantido, com máscara leve) ===== */
 
     protected function logRequestSafe(): void
