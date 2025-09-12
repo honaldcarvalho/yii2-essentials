@@ -806,160 +806,137 @@ class AuthorizationController extends CommonController
     protected function logRequestSafe(): void
     {
         $request = Yii::$app->request;
+        $method  = strtoupper($request->method ?? 'GET');
 
-        // Mini util local (sem helpers externos)
-        $maskKeys = ['password', 'senha', 'token', 'secret', 'authorization', 'access_token'];
+        // Só loga operações de escrita
+        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+            return;
+        }
+
+        // Utilitários locais (sem helpers externos)
+        $maskKeys   = ['password', 'senha', 'token', 'secret', 'authorization', 'access_token'];
+        $ignoreKeys = ['_csrf', '_csrf-frontend', '_csrf-backend', '_method'];
+        $ignoreAttrs = ['created_at', 'updated_at', 'created_by', 'updated_by']; // ruído comum
+
         $isSensitive = static function (string $key) use ($maskKeys): bool {
             $lk = mb_strtolower($key);
-            foreach ($maskKeys as $s) {
-                if (str_contains($lk, $s)) return true;
-            }
+            foreach ($maskKeys as $s) if (str_contains($lk, $s)) return true;
             return false;
         };
-        $maskRecursive = static function (&$data) use (&$maskRecursive, $isSensitive) {
-            if (is_array($data)) {
-                foreach ($data as $k => &$v) {
-                    if ($isSensitive((string)$k)) {
-                        $v = '***';
-                        continue;
-                    }
-                    $maskRecursive($v);
-                }
-            } elseif (is_object($data)) {
-                foreach ($data as $k => &$v) {
-                    if ($isSensitive((string)$k)) {
-                        $v = '***';
-                        continue;
-                    }
-                    $maskRecursive($v);
-                }
-            }
-        };
-        $normalizeScalar = static function ($v) {
+        $normalize = static function ($v) {
             if (is_bool($v)) return $v ? '1' : '0';
-            if (is_null($v)) return null;
-            if (is_array($v) || is_object($v)) return json_encode($v, JSON_UNESCAPED_UNICODE);
-            return (string)$v;
+            if ($v === '' || $v === []) return null;
+            if (is_array($v) || is_object($v)) return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return $v === null ? null : (string)$v;
         };
 
         try {
+            // POST completo
+            $payload = $request->post();
+            if (empty($payload)) return;
+
+            // Encontrar o "form" principal (primeiro array no nível raiz)
+            $formKey  = null;
+            $formData = null;
+            foreach ($payload as $k => $v) {
+                if (in_array($k, $ignoreKeys, true)) continue;
+                if (is_array($v)) {
+                    $formKey = (string)$k;
+                    $formData = $v;
+                    break;
+                }
+            }
+            // Se não achou, cai fora — sem diff útil
+            if (!is_array($formData)) return;
+
+            // Remover chaves ignoradas e mascarar sensíveis
+            foreach ($formData as $k => &$v) {
+                if (in_array($k, $ignoreKeys, true)) {
+                    unset($formData[$k]);
+                    continue;
+                }
+                if ($isSensitive((string)$k)) {
+                    $v = '***';
+                }
+            }
+            unset($v);
+
+            // Descobrir id (GET tem precedência)
+            $id = $request->get('id') ?? ($formData['id'] ?? $payload['id'] ?? null);
+
+            // Descobrir modelClass a partir do controller (padrão em CRUDs)
+            $modelClass = property_exists(Yii::$app->controller, 'modelClass')
+                ? Yii::$app->controller->modelClass
+                : null;
+
+            $changes = [];
+            $modelFound = false;
+
+            if (
+                $modelClass
+                && class_exists($modelClass)
+                && is_subclass_of($modelClass, \yii\db\ActiveRecord::class)
+            ) {
+                /** @var \yii\db\ActiveRecord|null $oldModel */
+                $oldModel = $id ? $modelClass::findOne($id) : null;
+                $modelFound = (bool)$oldModel;
+
+                $oldAttrs = $oldModel ? $oldModel->getAttributes() : [];
+
+                foreach ($formData as $attr => $newVal) {
+                    if (in_array($attr, $ignoreAttrs, true)) continue;
+
+                    $to   = $isSensitive((string)$attr) ? '***' : $normalize($newVal);
+                    $from = $isSensitive((string)$attr) ? '***' : $normalize($oldAttrs[$attr] ?? null);
+
+                    // Em criação (sem $oldModel), 'from' normalmente null
+                    if ($from === $to) continue; // só registra se mudou
+
+                    $changes[] = ['attr' => (string)$attr, 'from' => $from, 'to' => $to];
+                }
+            } else {
+                // Sem modelClass: registra diff mínimo (from=null → to=valor) apenas do form
+                foreach ($formData as $attr => $newVal) {
+                    if (in_array($attr, $ignoreAttrs, true)) continue;
+                    $to = $isSensitive((string)$attr) ? '***' : $normalize($newVal);
+                    if ($to === null || $to === '') continue;
+                    $changes[] = ['attr' => (string)$attr, 'from' => null, 'to' => $to];
+                }
+            }
+
+            // Se não houve mudança real, não salva log
+            if (empty($changes)) return;
+
+            // Monta payload mínimo só com o DIFF
+            $diffPayload = [
+                'model'   => $modelClass ?: $formKey,  // dá uma pista do contexto
+                'id'      => $id,
+                'changes' => $changes,
+                'action'  => Yii::$app->controller->action->id ?? '',
+                'route'   => Yii::$app->requestedRoute,
+                'method'  => $method,
+            ];
+
+            // Serializa e limita tamanho
+            $dataJson = json_encode($diffPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (strlen($dataJson) > 8192) {
+                $dataJson = substr($dataJson, 0, 8192) . '…';
+            }
+
+            // Cria e salva o Log (apenas 1 por requisição de escrita)
             $log = new Log();
-            $log->action     = Yii::$app->controller->action->id ?? '';
+            $log->action     = $diffPayload['action'];
             $log->ip         = $this->getUserIP();
             $log->device     = $this->getOS();
             $log->controller = Yii::$app->controller->id;
             $log->user_id    = Yii::$app->user->identity->id ?? null;
-
-            // Caso GET id simples
-            if ($request->get('id') && !$request->post()) {
-                $log->data = (string)$request->get('id');
-                $log->save();
-                return;
-            }
-
-            if ($request->post()) {
-                $payload = $request->post();
-
-                // 1) Sanitize/mask recursivo
-                $safePayload = $payload;
-                $maskRecursive($safePayload);
-
-                // 2) Detectar form principal (ex.: Post => $_POST['Post'] = [...])
-                $formKey   = null;
-                $formData  = null;
-                foreach ($safePayload as $k => $v) {
-                    if (is_array($v) && !empty($v)) {
-                        // Heurística simples: primeira entrada array de nível raiz é o form
-                        $formKey  = (string)$k;
-                        $formData = $v;
-                        break;
-                    }
-                }
-
-                // 3) ID candidato (GET tem precedência)
-                $id = $request->get('id')
-                    ?? ($formData['id'] ?? $safePayload['id'] ?? null);
-
-                // 4) Tentar resolver AR pela propriedade $modelClass do controller (se existir)
-                $modelClass = property_exists(Yii::$app->controller, 'modelClass')
-                    ? Yii::$app->controller->modelClass
-                    : null;
-
-                $diffPayload = null;
-
-                if (
-                    $modelClass
-                    && class_exists($modelClass)
-                    && is_subclass_of($modelClass, \yii\db\ActiveRecord::class)
-                    && $id
-                    && is_array($formData)
-                ) {
-                    /** @var \yii\db\ActiveRecord|null $model */
-                    $model = $modelClass::findOne($id);
-
-                    if ($model) {
-                        $old = $model->getAttributes();
-                        $changes = [];
-
-                        // Só comparam-se chaves que estão chegando no POST do form
-                        foreach ($formData as $attr => $newVal) {
-                            if ($isSensitive((string)$attr)) {
-                                // já está *** por causa do mask, então pula ou registra como ***
-                                $changes[] = [
-                                    'attr' => (string)$attr,
-                                    'from' => '***',
-                                    'to'   => '***',
-                                ];
-                                continue;
-                            }
-
-                            $oldValN = $normalizeScalar($old[$attr] ?? null);
-                            $newValN = $normalizeScalar($newVal);
-
-                            // Ignora se não mudou (normalizado)
-                            if ($oldValN === $newValN) {
-                                continue;
-                            }
-
-                            $changes[] = [
-                                'attr' => (string)$attr,
-                                'from' => $oldValN,
-                                'to'   => $newValN,
-                            ];
-                        }
-
-                        $diffPayload = [
-                            'model'   => $modelClass,
-                            'id'      => $id,
-                            'changes' => $changes,
-                            // Opcional: contexto resumido
-                            'action'  => $log->action,
-                            'route'   => Yii::$app->requestedRoute,
-                        ];
-                    }
-                }
-
-                // 5) Montar JSON final (diff se disponível; senão payload sanitizado)
-                if ($diffPayload !== null) {
-                    $data_json = json_encode($diffPayload, JSON_UNESCAPED_UNICODE);
-                } else {
-                    // Fallback: salva o payload sanitizado
-                    $data_json = json_encode($safePayload, JSON_UNESCAPED_UNICODE);
-                }
-
-                // 6) Truncar (campo data com 8 KB máx., ajuste se quiser)
-                if (strlen($data_json) > 8192) {
-                    $data_json = substr($data_json, 0, 8192) . '…';
-                }
-
-                $log->data = $data_json;
-            }
-
-            $log->save();
+            $log->data       = $dataJson;
+            $log->save(false);
         } catch (\Throwable $e) {
-            // não quebra o fluxo
+            // silencia para não quebrar o fluxo
         }
     }
+
 
     /* ===== findModel (mantido, só usando getAllUserGroupIds) ===== */
 
