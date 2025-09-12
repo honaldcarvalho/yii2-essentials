@@ -801,28 +801,52 @@ class AuthorizationController extends CommonController
         return self::verifyLicense() !== null;
     }
 
-    public static function logLogin(string $username, bool $success, ?string $reason = null): void
+    public static function logLogin(?string $username, bool $success, ?string $reason = null): void
     {
         try {
-            $log = new Log();
+            $req = \Yii::$app->request;
+
+            // Normaliza username nulo/vazio
+            $uname = trim((string)$username);
+            if ($uname === '') {
+                // tenta extrair do POST do form de login
+                $post = $req->post();
+                if (isset($post['LoginForm']['username'])) {
+                    $uname = (string)$post['LoginForm']['username'];
+                } elseif (isset($post['username'])) {
+                    $uname = (string)$post['username'];
+                } else {
+                    $uname = '(unknown)';
+                }
+            }
+
+            $log = new \croacworks\essentials\models\Log();
             $log->action     = 'login';
-            $log->controller = Yii::$app->controller->id;
-            $log->ip         = Yii::$app->request->userIP;
-            $log->device     = $this->getOS();
-            $log->user_id    = Yii::$app->user->id ?? null; // pode ser null em falha
+            $log->controller = \Yii::$app->controller?->id ?? 'site';
+            $log->ip         = $req->userIP;
+            // Se tiver o método getOS() no controller base, opcional:
+            $log->device     = method_exists(\Yii::$app->controller, 'getOS')
+                ? \Yii::$app->controller->getOS()
+                : ($req->userAgent ?? '');
+
+            // Em falha, pode não haver usuário autenticado
+            $log->user_id    = \Yii::$app->user->id ?? null;
 
             $log->data = json_encode([
-                'username' => $username,
-                'success'  => $success,
+                'username' => $uname,
+                'success'  => (bool)$success,
                 'reason'   => $reason,
-            ], JSON_UNESCAPED_UNICODE);
+                'route'    => \Yii::$app->requestedRoute,
+                'method'   => strtoupper($req->method ?? 'GET'),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
             $log->save(false);
         } catch (\Throwable $e) {
-            // não quebra login
+            // não quebra o fluxo de login
         }
     }
-    
+
+
     /* ===== Log seguro (mantido, com máscara leve) ===== */
 
     protected function logRequestSafe(): void
