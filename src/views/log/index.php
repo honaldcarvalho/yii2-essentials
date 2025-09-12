@@ -30,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'attribute'=>'user_id',
                                 'header'=>Yii::t('app','User'),
                                 'filter'=>yii\helpers\ArrayHelper::map(User::find()->asArray()->all(), 'id', 'fullname'),
-                                'value'=> function($data){return $data->user->fullname;}
+                                'value'=> function($data){return $data->user->username;}
                             ],
                             // [   
                             //     'attribute'=>'controller',
