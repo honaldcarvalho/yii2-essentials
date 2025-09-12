@@ -361,7 +361,9 @@ class AuthorizationController extends CommonController
                         continue;
                     }
                     // avoid duplicates if already captured via FK
-                    $already = array_filter($refs, fn($r) =>
+                    $already = array_filter(
+                        $refs,
+                        fn($r) =>
                         $r['table'] === $tbl->name && $r['column'] === $col
                     );
                     if ($already) continue;
@@ -420,7 +422,8 @@ class AuthorizationController extends CommonController
             fn($r) => "{$r['table']}.{$r['column']}" . (isset($r['type']) ? " ({$r['type']})" : ''),
             $refs
         );
-        $message = Yii::t('app',
+        $message = Yii::t(
+            'app',
             '{item} está em uso por outras tabelas. Remova os vínculos antes de excluir.',
             ['item' => $label]
         );
@@ -457,8 +460,7 @@ class AuthorizationController extends CommonController
         ?callable $beforeDelete = null,
         ?callable $afterDelete  = null,
         ?string $friendlyLabel  = null
-    ): array
-    {
+    ): array {
         $check = self::canDeleteModel($model, $heuristicColumns);
         if (!($check['allowed'] ?? false)) {
             return self::blockedDeleteResponse($check['refs'], $friendlyLabel);
@@ -804,33 +806,153 @@ class AuthorizationController extends CommonController
     protected function logRequestSafe(): void
     {
         $request = Yii::$app->request;
+
+        // Mini util local (sem helpers externos)
+        $maskKeys = ['password', 'senha', 'token', 'secret', 'authorization', 'access_token'];
+        $isSensitive = static function (string $key) use ($maskKeys): bool {
+            $lk = mb_strtolower($key);
+            foreach ($maskKeys as $s) {
+                if (str_contains($lk, $s)) return true;
+            }
+            return false;
+        };
+        $maskRecursive = static function (&$data) use (&$maskRecursive, $isSensitive) {
+            if (is_array($data)) {
+                foreach ($data as $k => &$v) {
+                    if ($isSensitive((string)$k)) {
+                        $v = '***';
+                        continue;
+                    }
+                    $maskRecursive($v);
+                }
+            } elseif (is_object($data)) {
+                foreach ($data as $k => &$v) {
+                    if ($isSensitive((string)$k)) {
+                        $v = '***';
+                        continue;
+                    }
+                    $maskRecursive($v);
+                }
+            }
+        };
+        $normalizeScalar = static function ($v) {
+            if (is_bool($v)) return $v ? '1' : '0';
+            if (is_null($v)) return null;
+            if (is_array($v) || is_object($v)) return json_encode($v, JSON_UNESCAPED_UNICODE);
+            return (string)$v;
+        };
+
         try {
             $log = new Log();
-            $log->action = Yii::$app->controller->action->id ?? '';
-            $log->ip = $this->getUserIP();
-            $log->device = $this->getOS();
+            $log->action     = Yii::$app->controller->action->id ?? '';
+            $log->ip         = $this->getUserIP();
+            $log->device     = $this->getOS();
             $log->controller = Yii::$app->controller->id;
-            $log->user_id = Yii::$app->user->identity->id;
+            $log->user_id    = Yii::$app->user->identity->id ?? null;
 
-            if ($request->get('id')) {
-                $log->data = $request->get('id');
-            } elseif ($request->post()) {
+            // Caso GET id simples
+            if ($request->get('id') && !$request->post()) {
+                $log->data = (string)$request->get('id');
+                $log->save();
+                return;
+            }
+
+            if ($request->post()) {
                 $payload = $request->post();
-                foreach ($payload as $k => &$v) {
-                    $lk = mb_strtolower((string)$k);
-                    if (
-                        str_contains($lk, 'password') || str_contains($lk, 'senha') ||
-                        str_contains($lk, 'token')    || str_contains($lk, 'secret') ||
-                        str_contains($lk, 'authorization') || str_contains($lk, 'access_token')
-                    ) {
-                        $v = '***';
+
+                // 1) Sanitize/mask recursivo
+                $safePayload = $payload;
+                $maskRecursive($safePayload);
+
+                // 2) Detectar form principal (ex.: Post => $_POST['Post'] = [...])
+                $formKey   = null;
+                $formData  = null;
+                foreach ($safePayload as $k => $v) {
+                    if (is_array($v) && !empty($v)) {
+                        // Heurística simples: primeira entrada array de nível raiz é o form
+                        $formKey  = (string)$k;
+                        $formData = $v;
+                        break;
                     }
                 }
-                $data_json = json_encode($payload);
-                if (strlen($data_json) > 8192) $data_json = substr($data_json, 0, 8192) . '…';
-                if (!str_contains($data_json, 'password')) {
-                    $log->data = $data_json;
+
+                // 3) ID candidato (GET tem precedência)
+                $id = $request->get('id')
+                    ?? ($formData['id'] ?? $safePayload['id'] ?? null);
+
+                // 4) Tentar resolver AR pela propriedade $modelClass do controller (se existir)
+                $modelClass = property_exists(Yii::$app->controller, 'modelClass')
+                    ? Yii::$app->controller->modelClass
+                    : null;
+
+                $diffPayload = null;
+
+                if (
+                    $modelClass
+                    && class_exists($modelClass)
+                    && is_subclass_of($modelClass, \yii\db\ActiveRecord::class)
+                    && $id
+                    && is_array($formData)
+                ) {
+                    /** @var \yii\db\ActiveRecord|null $model */
+                    $model = $modelClass::findOne($id);
+
+                    if ($model) {
+                        $old = $model->getAttributes();
+                        $changes = [];
+
+                        // Só comparam-se chaves que estão chegando no POST do form
+                        foreach ($formData as $attr => $newVal) {
+                            if ($isSensitive((string)$attr)) {
+                                // já está *** por causa do mask, então pula ou registra como ***
+                                $changes[] = [
+                                    'attr' => (string)$attr,
+                                    'from' => '***',
+                                    'to'   => '***',
+                                ];
+                                continue;
+                            }
+
+                            $oldValN = $normalizeScalar($old[$attr] ?? null);
+                            $newValN = $normalizeScalar($newVal);
+
+                            // Ignora se não mudou (normalizado)
+                            if ($oldValN === $newValN) {
+                                continue;
+                            }
+
+                            $changes[] = [
+                                'attr' => (string)$attr,
+                                'from' => $oldValN,
+                                'to'   => $newValN,
+                            ];
+                        }
+
+                        $diffPayload = [
+                            'model'   => $modelClass,
+                            'id'      => $id,
+                            'changes' => $changes,
+                            // Opcional: contexto resumido
+                            'action'  => $log->action,
+                            'route'   => Yii::$app->requestedRoute,
+                        ];
+                    }
                 }
+
+                // 5) Montar JSON final (diff se disponível; senão payload sanitizado)
+                if ($diffPayload !== null) {
+                    $data_json = json_encode($diffPayload, JSON_UNESCAPED_UNICODE);
+                } else {
+                    // Fallback: salva o payload sanitizado
+                    $data_json = json_encode($safePayload, JSON_UNESCAPED_UNICODE);
+                }
+
+                // 6) Truncar (campo data com 8 KB máx., ajuste se quiser)
+                if (strlen($data_json) > 8192) {
+                    $data_json = substr($data_json, 0, 8192) . '…';
+                }
+
+                $log->data = $data_json;
             }
 
             $log->save();
@@ -841,34 +963,34 @@ class AuthorizationController extends CommonController
 
     /* ===== findModel (mantido, só usando getAllUserGroupIds) ===== */
 
-protected function findModel($id, $model_name = null)
-{
-    $modelClass = $model_name ?? str_replace(['controllers', 'Controller'], ['models', ''], static::getClassPath());
+    protected function findModel($id, $model_name = null)
+    {
+        $modelClass = $model_name ?? str_replace(['controllers', 'Controller'], ['models', ''], static::getClassPath());
 
-    if (!class_exists($modelClass)) {
-        throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Model class not found.'));
-    }
+        if (!class_exists($modelClass)) {
+            throw new \yii\web\NotFoundHttpException(Yii::t('app', 'Model class not found.'));
+        }
 
-    // MASTER: ignora qualquer escopo de grupo (usa find(false))
-    if (self::isMaster()) {
-        
-        $instance = $modelClass::find(false)->where(['id' => (int)$id])->limit(1)->one();
+        // MASTER: ignora qualquer escopo de grupo (usa find(false))
+        if (self::isMaster()) {
+
+            $instance = $modelClass::find(false)->where(['id' => (int)$id])->limit(1)->one();
+            if ($instance !== null) return $instance;
+            throw new \yii\web\NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+        }
+
+        // NÃO-MASTER: deixa o ModelCommon aplicar o escopo; não duplique filtros aqui
+        $query = $modelClass::find()->where(['id' => (int)$id])->limit(1);
+
+        // Se você realmente quer liberar o grupo público (1) só no "view",
+        // isso já é tratado no seu ModelCommon (você adiciona 1 ao array). 
+        // Evite refazer aqui para não divergir do escopo global.
+
+        $instance = $query->one();
         if ($instance !== null) return $instance;
+
         throw new \yii\web\NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
     }
-
-    // NÃO-MASTER: deixa o ModelCommon aplicar o escopo; não duplique filtros aqui
-    $query = $modelClass::find()->where(['id' => (int)$id])->limit(1);
-
-    // Se você realmente quer liberar o grupo público (1) só no "view",
-    // isso já é tratado no seu ModelCommon (você adiciona 1 ao array). 
-    // Evite refazer aqui para não divergir do escopo global.
-
-    $instance = $query->one();
-    if ($instance !== null) return $instance;
-
-    throw new \yii\web\NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
-}
 
     /** 
      * Heartbeat SOFT: registra/atualiza presença por sessão usando SEMPRE user.group_id.
