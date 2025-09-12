@@ -33,6 +33,8 @@ class m250829_000001_seed_sys_menus extends Migration
                 // Demais filhos de System
                 [32,13,'Email Services','fas fa-envelope','fas','/email-service/index',8,0,1,1,'croacworks\\essentials\\controllers\\EmailServiceController','index',null,'index'],
                 [33,13,'Logs','fas fa-keyboard','fas','/log/index',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','index',null,'index'],
+                [49,33,'Geral','fas fa-dot','fas','/log/index',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','index',null,'index'],
+                [50,33,'Autentication','fas fa-sign-in-alt','fas','/log/auth',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','auth',null,'index'],
 
                 // Development children
                 [34,14,'Debug','fas fa-file-code','fas','debug/default/view',0,1,1,1,'app\\controllers\\DebugController','default',null,null],

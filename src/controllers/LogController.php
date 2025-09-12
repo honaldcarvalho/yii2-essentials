@@ -26,8 +26,8 @@ class LogController extends AuthorizationController
             'dataProvider' => $dataProvider,
         ]);
     }
-    
-    public function actionLoginLogs(): string
+
+    public function actionAuth(): string
     {
         $q = \croacworks\essentials\models\Log::find()
             ->where(['action' => 'login'])
