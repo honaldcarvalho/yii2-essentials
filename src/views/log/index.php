@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card">
                 <div class="card-body">
 
-                    <?php echo $this->render('/_parts/filter', ['view' =>'/language','searchModel' => $searchModel]); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/log','searchModel' => $searchModel]); ?>
 
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
