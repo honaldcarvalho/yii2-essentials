@@ -56,6 +56,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             'pageSection.name:text:' . Yii::t('app', 'Page Section'),
                             'slug',
                             'title',
+                            'language.code:text:' . Yii::t('app', 'Language'),
                             'description',
                             //'content:ntext',
                             //'keywords:ntext',
@@ -75,67 +76,47 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             [
                                 'label' => Yii::t('app', 'Public URL'),
                                 'format' => 'raw',
-                                'value' => function ($model) {
-                                    $config = Configuration::get();
-                                    $group = (int)($model->group_id ?: 1);
+                                'value' => function ($m) {
+                                    $home = rtrim(Configuration::get()->homepage, '/');
+                                    $g = (int)($m->group_id ?: 1);
+                                    $l = $m->language->code ?? $m->language->locale ?? $m->language_id ?? '';
+                                    $sec = $m->pageSection->slug ?? '';  // ajuste o nome da relação se for diferente
+                                    $slug = $m->slug;
 
-                                    // tenta pegar código/locale, senão usa ID
-                                    $lang = $model->language->code
-                                        ?? $model->language->locale
-                                        ?? $model->language_id;
+                                    $path = "/p/{$g}" . ($sec ? "/" . rawurlencode($sec) : '') . ($l ? "/" . rawurlencode($l) : '') . "/" . rawurlencode($slug);
+                                    $url  = $home . $path;
 
-                                    // monta URL curta no formato /p/<group>/<lang>/<slug>
-                                    $url = $config->homepage . Yii::$app->urlManager->createUrl([
-                                        "/p/{$group}/{$lang}/{$model->slug}"
+                                    return Html::a($url, 'javascript:void(0);', [
+                                        'class' => 'copy-url-link text-decoration-none',
+                                        'data-url' => $url,
+                                        'title' => Yii::t('app', 'Click to copy URL'),
                                     ]);
-
-                                    return Html::a(
-                                        $url,
-                                        'javascript:void(0);',
-                                        [
-                                            'class' => 'copy-url-link text-decoration-none',
-                                            'data-url' => $url,
-                                            'title' => Yii::t('app', 'Click to copy URL'),
-                                        ]
-                                    );
                                 },
                             ],
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
                                 'template' => '{view} {update} {delete} {public}',
                                 'buttons' => [
-                                    'public' => function ($url, $model, $key) {
-                                        $config = Configuration::get();
-                                        $group = (int)($model->group_id ?: 1);
+                                    'public' => function ($url, $m) {
+                                        $home = rtrim(Configuration::get()->homepage, '/');
+                                        $g = (int)($m->group_id ?: 1);
+                                        $l = $m->language->code ?? $m->language->locale ?? $m->language_id ?? '';
+                                        $sec = $m->pageSection->slug ?? '';
+                                        $slug = $m->slug;
 
-                                        // tenta pegar código/locale, senão usa ID
-                                        $lang = $model->language->code
-                                            ?? $model->language->locale
-                                            ?? $model->language_id;
+                                        $path = "/p/{$g}" . ($sec ? "/" . rawurlencode($sec) : '') . ($l ? "/" . rawurlencode($l) : '') . "/" . rawurlencode($slug);
+                                        $publicUrl = $home . $path;
 
-                                        // monta URL curta no formato /p/<group>/<lang>/<slug>
-                                        $url = $config->homepage . Yii::$app->urlManager->createUrl([
-                                            "/p/{$group}/{$lang}/{$model->slug}"
+                                        return Html::a('<i class="fas fa-link"></i>', $publicUrl, [
+                                            'class' => 'btn btn-sm btn-outline-primary',
+                                            'title' => Yii::t('app', 'Open public page'),
+                                            'target' => '_blank',
+                                            'data-pjax' => 0,
                                         ]);
-                                        // ícone/estilo: adapte para seu tema (CoreUI/Bootstrap)
-                                        return Html::a(
-                                            '<i class="fas fa-link"></i>',
-                                            $url,
-                                            [
-                                                'class' => 'btn btn-sm btn-outline-primary',
-                                                'title' => Yii::t('app', 'Open public page'),
-                                                'target' => '_blank',
-                                                'data-pjax' => 0,
-                                            ]
-                                        );
                                     },
                                 ],
-                                'visibleButtons' => [
-                                    // só mostra se a página estiver ativa
-                                    'public' => fn($model) => (int)$model->status === 1,
-                                ],
+                                'visibleButtons' => ['public' => fn($m) => (int)$m->status === 1],
                             ]
-
                         ],
                     ]); ?>
 

@@ -177,9 +177,14 @@ $config = [
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
 
-                    'p/<group:\d+>/<section:\d+><lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
+                    //--- REGRAS PAGE START ---//
+                    'p/<group:\d+>/<section:[^/]+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
+
+                    'p/<group:\d+>/<section:[^/]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
 
                     'p/<group:\d+>/<lang:[A-Za-z0-9\-\_]+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
+
+                    'p/<group:\d+>/<slug:[A-Za-z0-9\-\_]+>' => 'common/page/public',
 
                     // /p/<lang>/<slug>  -> group=1 por padrão
                     [
@@ -194,6 +199,8 @@ $config = [
                         'route'    => 'common/page/public',
                         'defaults' => ['group' => 1],
                     ],
+                    //--- REGRAS PAGE END ---//
+                    
                     '<controller:\w+>/<id:\d+>' => '<controller>/view',
                     '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                     '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

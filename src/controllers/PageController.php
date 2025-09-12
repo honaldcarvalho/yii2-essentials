@@ -3,8 +3,10 @@
 namespace croacworks\essentials\controllers;
 
 use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
+use croacworks\essentials\models\PageSection;
 use Yii;
 use yii\web\NotFoundHttpException;
 
@@ -102,26 +104,42 @@ class PageController extends AuthorizationController
      * @return string
      * @throws NotFoundHttpException
      */
-    public function actionPublic(string $slug,string $section = null, $lang = null, $group = 1, $modal = null)
+    public function actionPublic(string $slug, string $section = null, $lang = null, $group = 1, $modal = null)
     {
+        $language = null;
+
         if ($modal && (int)$modal === 1) {
             $this->layout = 'main-blank';
         }
 
-        // NÃO use alias 'p'. Deixe o padrão (pages) ou alias explicito 'pages'.
         $q = Page::find()
             ->andWhere(['pages.slug' => $slug])
-            ->andWhere(['pages.status' => 1]);
+            ->andWhere(['pages.status' => 1])
+            ->andWhere(['group_id' => (int)$group]);
+            
 
-        // group padrão = 1 (coringa)
-        $q->andWhere(['group_id' => (int)$group]);
+        $section = PageSection::findOne(['slug' => $section]);
 
-        $lang = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang]);
-        $q->andWhere(['group_id' => (int)$group]);
-        if ($lang) {
-            $q->andWhere(['language_id' => $lang->id]);
+        if ($section) {
+            $q->andWhere(['page_section_id' => $section?->id]);
+        } else { 
+            $q->andWhere(['IS', 'page_section_id', null]);
         }
+
+        if ($lang && ($language = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang])) !== null) {
+            $q->andWhere(['language_id' => $language->id]);
+        } else {
+            $query = $q;
+            $query->andWhere(['IS', 'language_id', null]);
+            
+            if (!$query->one()) {
+                $lang = Configuration::get()->language;
+                $q->andWhere(['language_id' => $lang->id]);
+            }
+        }
+
         $model = $q->one();
+
         if (!$model) {
             throw new \yii\web\NotFoundHttpException(\Yii::t('app', 'Page not found or inactive.'));
         }

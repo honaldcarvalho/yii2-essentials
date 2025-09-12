@@ -14,7 +14,7 @@ class m230520_203121_create_pages_table extends Migration
             'group_id' => $this->integer(),      
             'language_id' => $this->integer(),
             'page_section_id' => $this->integer(),
-            'slug' => $this->string()->notNull()->unique(),
+            'slug' => $this->string()->notNull(),
             'title' => $this->string()->notNull(),
             'description' => $this->string(300),
             'content' => $this->text(),
