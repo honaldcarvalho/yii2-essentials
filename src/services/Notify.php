@@ -18,8 +18,8 @@ class Notify extends Component
         string $type = 'system',
         ?string $url = null,
         ?int $groupId = null
-    ): ?Notification {
-        $n = new Notification([
+    ): ?\croacworks\essentials\models\Notification {
+        $n = new \croacworks\essentials\models\Notification([
             'group_id'       => $groupId,
             'recipient_id'   => $toUserId,
             'recipient_type' => 'user',
@@ -29,7 +29,18 @@ class Notify extends Component
             'url'            => $url,
         ]);
 
-        return $n->save() ? $n : null;
+        // Valida primeiro para termos os erros sem exception
+        if (!$n->validate()) {
+            \Yii::error(['notifyCreate.validate'=>false, 'errors'=>$n->errors, 'attrs'=>$n->attributes], 'notify');
+            return null;
+        }
+
+        if (!$n->save(false)) { // false = já validado acima
+            \Yii::error(['notifyCreate.save'=>false, 'errors'=>$n->errors, 'attrs'=>$n->attributes], 'notify');
+            return null;
+        }
+
+        return $n;
     }
 
     /**

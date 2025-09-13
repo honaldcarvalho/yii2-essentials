@@ -144,17 +144,24 @@ class ConfigurationController extends AuthorizationController
         if ($model->validate() && $model->load($post)) {
 
             if ($model->save()) {
+
                 /** @var \croacworks\essentials\services\Notify $notify */
-                $notify = Yii::$app->get('notify'); // registre no container/config como um componente
+                $notify = Yii::$app->get('notify');
+
                 $result = $notify->create(
-                    Yii::$app->user->id,
-                    Yii::t('app','Configurations'),
-                    Yii::t('app','Configurations Updated'),
+                    Yii::$app->user->id ?: 0,                  // garante inteiro
+                    Yii::t('app','Configurations'),            // título
+                    Yii::t('app','Configurations Updated'),    // conteúdo
                     'system',
                     "/configuration/{$model->id}",
                     \croacworks\essentials\controllers\AuthorizationController::userGroup()
                 );
-                dd($result);
+
+                if ($result === null) {
+                    // Vai cair aqui se falhar validação. Veja o log em runtime/logs/app.log (categoria "notify")
+                    dd('Notify::create retornou null — veja runtime/logs/* (categoria notify). Provável validação falhou.');
+                }
+                
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
