@@ -7,9 +7,138 @@ use yii\grid\GridView;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 use croacworks\essentials\models\Notification;
+use yii\helpers\Json;
+use yii\helpers\Url;
+use yii\web\View;
 
 $this->title = Yii::t('app', 'Notificações');
+$config = [
+    'csrfToken'    => Yii::$app->request->getCsrfToken(),
+    'deleteUrl'    => Url::to(['delete']),
+    'deleteAllUrl' => Url::to(['delete-all']),
+    'pjaxContainer'=> '#pjax-notifications',
+];
 
+// expõe config com escaping seguro (JSON + HTML-safe)
+$this->registerJs(
+    'window.notifConfig = ' . Json::htmlEncode($config) . ';',
+    View::POS_HEAD
+);
+
+$js = <<<JS
+(function(){
+  var cfg           = window.notifConfig || {};
+  var csrfToken     = cfg.csrfToken;
+  var deleteUrl     = cfg.deleteUrl;
+  var deleteAllUrl  = cfg.deleteAllUrl;
+  var pjaxContainer = cfg.pjaxContainer || '#pjax-notifications';
+  var inFlight      = false;
+  function confirmSwal(msg) {
+    if (typeof Swal === 'undefined') {
+      return Promise.resolve( confirm(msg) ? { isConfirmed: true } : { isConfirmed: false } );
+    }
+    return Swal.fire({title: msg, icon:'warning', showCancelButton:true, confirmButtonText:'Sim', cancelButtonText:'Cancelar'});
+  }
+
+  function postJson(url, payload) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {'Content-Type':'application/json','X-CSRF-Token': csrfToken},
+      body: JSON.stringify(payload || {})
+    }).then(function(r){ return r.json(); });
+  }
+
+  function safeReload() {
+    if (inFlight) return;
+    inFlight = true;
+    $.pjax.reload({container: pjaxContainer, timeout: 0, scrollTo: false})
+      .always(function(){ inFlight = false; });
+  }
+
+  // Delegação: funciona mesmo após PJAX
+  document.addEventListener('click', function(ev){
+    var t = ev.target;
+
+    // apagar 1
+    if (t.closest && t.closest('.js-notif-delete')) {
+      ev.preventDefault();
+      var btn = t.closest('.js-notif-delete');
+      var id = btn.getAttribute('data-id');
+      if (!id) return;
+
+      confirmSwal('Apagar esta notificação?').then(function(res){
+        if (!res.isConfirmed) return;
+        postJson(deleteUrl + '?id=' + encodeURIComponent(id), {})
+          .then(function(resp){
+            if (resp && resp.ok) {
+              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Notificação apagada.','success');
+              safeReload();
+            } else {
+              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+            }
+          })
+          .catch(function(){
+            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+          });
+      });
+      return;
+    }
+
+    // apagar lidas
+    if (t.id === 'btn-delete-read') {
+      ev.preventDefault();
+      confirmSwal('Apagar TODAS as notificações lidas?').then(function(res){
+        if (!res.isConfirmed) return;
+        postJson(deleteAllUrl, {onlyRead: 1})
+          .then(function(resp){
+            if (resp && resp.ok) {
+              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Lidas apagadas.','success');
+              safeReload();
+            } else {
+              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+            }
+          })
+          .catch(function(){
+            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+          });
+      });
+      return;
+    }
+
+    // apagar todas
+    if (t.id === 'btn-delete-all') {
+      ev.preventDefault();
+      confirmSwal('Apagar TODAS as notificações (lidas e não lidas)?').then(function(res){
+        if (!res.isConfirmed) return;
+        postJson(deleteAllUrl, {})
+          .then(function(resp){
+            if (resp && resp.ok) {
+              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Todas apagadas.','success');
+              safeReload();
+            } else {
+              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+            }
+          })
+          .catch(function(){
+            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+          });
+      });
+      return;
+    }
+  });
+
+  // Evita loop de reload quando o PJAX terminar
+  document.addEventListener('pjax:end', function(e){
+    if (e.target && ('#' + e.target.id) === pjaxContainer) {
+      // noop aqui — delegação já mantém os handlers vivos.
+      // Se quiser, pode atualizar o badge do header chamando seu fetch da dropdown.
+    }
+  });
+})();
+JS;
+
+$this->registerJs($js, View::POS_END);
 ?>
 
 <div class="card">
@@ -139,122 +268,3 @@ $this->title = Yii::t('app', 'Notificações');
         <?php Pjax::end(); ?>
     </div>
 </div>
-
-<?php
-// CSRF
-$csrfParam = Yii::$app->request->csrfParam;
-$csrfToken = Yii::$app->request->csrfToken;
-$deleteUrl = \yii\helpers\Url::to(['delete']);
-$deleteAllUrl = \yii\helpers\Url::to(['delete-all']);
-$this->registerJs(<<<JS
-(function(){
-  var csrfToken   = '<?= \yii\helpers\Html::encode(Yii::$app->request->csrfToken) ?>';
-  var deleteUrl   = '<?= \yii\helpers\Url::to(['delete']) ?>';
-  var deleteAllUrl= '<?= \yii\helpers\Url::to(['delete-all']) ?>';
-  var pjaxContainer = '#pjax-notifications';
-  var inFlight = false; // evita duplo clique / duplo reload
-
-  function confirmSwal(msg) {
-    if (typeof Swal === 'undefined') {
-      return Promise.resolve( confirm(msg) ? { isConfirmed: true } : { isConfirmed: false } );
-    }
-    return Swal.fire({title: msg, icon:'warning', showCancelButton:true, confirmButtonText:'Sim', cancelButtonText:'Cancelar'});
-  }
-
-  function postJson(url, payload) {
-    return fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {'Content-Type':'application/json','X-CSRF-Token': csrfToken},
-      body: JSON.stringify(payload || {})
-    }).then(function(r){ return r.json(); });
-  }
-
-  function safeReload() {
-    if (inFlight) return;
-    inFlight = true;
-    $.pjax.reload({container: pjaxContainer, timeout: 0, scrollTo: false})
-      .always(function(){ inFlight = false; });
-  }
-
-  // Delegação: funciona mesmo após PJAX
-  document.addEventListener('click', function(ev){
-    var t = ev.target;
-
-    // apagar 1
-    if (t.closest && t.closest('.js-notif-delete')) {
-      ev.preventDefault();
-      var btn = t.closest('.js-notif-delete');
-      var id = btn.getAttribute('data-id');
-      if (!id) return;
-
-      confirmSwal('Apagar esta notificação?').then(function(res){
-        if (!res.isConfirmed) return;
-        postJson(deleteUrl + '?id=' + encodeURIComponent(id), {})
-          .then(function(resp){
-            if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Notificação apagada.','success');
-              safeReload();
-            } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
-            }
-          })
-          .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
-          });
-      });
-      return;
-    }
-
-    // apagar lidas
-    if (t.id === 'btn-delete-read') {
-      ev.preventDefault();
-      confirmSwal('Apagar TODAS as notificações lidas?').then(function(res){
-        if (!res.isConfirmed) return;
-        postJson(deleteAllUrl, {onlyRead: 1})
-          .then(function(resp){
-            if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Lidas apagadas.','success');
-              safeReload();
-            } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
-            }
-          })
-          .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
-          });
-      });
-      return;
-    }
-
-    // apagar todas
-    if (t.id === 'btn-delete-all') {
-      ev.preventDefault();
-      confirmSwal('Apagar TODAS as notificações (lidas e não lidas)?').then(function(res){
-        if (!res.isConfirmed) return;
-        postJson(deleteAllUrl, {})
-          .then(function(resp){
-            if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Todas apagadas.','success');
-              safeReload();
-            } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
-            }
-          })
-          .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
-          });
-      });
-      return;
-    }
-  });
-
-  // Evita loop de reload quando o PJAX terminar
-  document.addEventListener('pjax:end', function(e){
-    if (e.target && ('#' + e.target.id) === pjaxContainer) {
-      // noop aqui — delegação já mantém os handlers vivos.
-      // Se quiser, pode atualizar o badge do header chamando seu fetch da dropdown.
-    }
-  });
-})();
-JS);
