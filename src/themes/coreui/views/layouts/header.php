@@ -121,34 +121,17 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
         <!-- NOTIFICATION -->
         <ul class="header-nav ms-auto">
             <li class="nav-item dropdown">
-                <a class="nav-link" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" id="notif-toggle">
-                    <i class="cil-bell"></i>
-                    <span class="badge bg-danger" id="notif-badge" style="display:none;">0</span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
-                    <div class="dropdown-header bg-light fw-bold py-2"><?=Yii::t('app','Notifications')?></div>
-                    <div id="notif-list" style="max-height: 360px; overflow:auto;"></div>
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item text-center" id="notif-mark-all"><?=Yii::t('app','Mark all as read')?></button>
-                </div>
-            </li>
-            <li class="nav-item dropdown">
                 <a class="nav-link position-relative" href="#" id="notifDropdown" data-coreui-toggle="dropdown" aria-expanded="false">
                     <svg class="icon icon-lg">
                         <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
                     </svg>
                     <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
                 </a>
-
-                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notifDropdown" style="min-width:360px">
-                    <div class="p-2 border-bottom fw-bold d-flex align-items-center justify-content-between">
-                        <span>Notificações</span>
-                        <small class="text-muted" id="notif-updated-at"></small>
-                    </div>
-                    <div id="notif-list" class="list-group list-group-flush" style="max-height:360px; overflow:auto"></div>
-                    <div class="p-2 text-center">
-                        <a class="small text-decoration-none" href="/notification/list">Ver todas</a>
-                    </div>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
+                    <div class="dropdown-header bg-light fw-bold py-2"><?=Yii::t('app','Notifications')?></div>
+                    <div id="notif-list" style="max-height: 360px; overflow:auto;"></div>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item text-center" id="notif-mark-all"><?=Yii::t('app','Mark all as read')?></button>
                 </div>
             </li>
         </ul>
