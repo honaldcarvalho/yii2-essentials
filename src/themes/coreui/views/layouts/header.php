@@ -1,18 +1,135 @@
 <?php
 
 use yii\bootstrap5\Breadcrumbs;
+
 $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
-    const header = document.querySelector('header.header');
-    document.addEventListener('scroll', () => {
-    if (header) {
-        header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
+  // ---- Badge + lista de notificações ----
+  const badge = document.getElementById('notif-badge');
+  const list  = document.getElementById('notif-list');
+  const updatedAt = document.getElementById('notif-updated-at');
+
+  function setBadge(n) {
+    if (!badge) return;
+    badge.textContent = n;
+    badge.style.display = n > 0 ? 'inline-block' : 'none';
+  }
+
+  function asDateLabel(dt) {
+    if (!dt) return '';
+    // aceita 'YYYY-MM-DD HH:MM:SS' ou ISO
+    const s = dt.toString().includes(' ') ? dt.replace(' ', 'T') : dt;
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString();
+  }
+
+  function render(items) {
+    if (!list) return;
+    list.innerHTML = '';
+    if (!items || items.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'p-3 text-center text-muted';
+      empty.textContent = 'Sem notificações';
+      list.appendChild(empty);
+      return;
     }
+
+    items.forEach(item => {
+      const a = document.createElement('a');
+      a.href = item.url || item.link || item.href || '#';
+      a.className = 'list-group-item list-group-item-action';
+
+      const title = item.title || item.subject || item.name || '(sem título)';
+      const body  = item.body || item.message || item.content || '';
+      const when  = asDateLabel(item.created_at || item.createdAt);
+
+      a.innerHTML = `
+        <div class="d-flex w-100 justify-content-between">
+          <strong class="text-truncate" style="max-width:75%">${title}</strong>
+          <small class="text-nowrap">${when}</small>
+        </div>
+        <div class="small text-muted text-truncate">${body}</div>
+      `;
+
+      a.addEventListener('click', () => {
+        if (item.id) {
+          // marca como lida usando status (feito no servidor)
+          fetch('/notification/read?id=' + item.id, { credentials: 'include' })
+            .then(r => r.json())
+            .then(j => {
+              if (j && typeof j.unread !== 'undefined') setBadge(j.unread);
+            })
+            .catch(() => {});
+        }
+      });
+
+      list.appendChild(a);
     });
+  }
+
+    let lastUnread = 0;
+
+    async function loadNotifications() {
+        try {
+            const r = await fetch('/notification/list?limit=20', { credentials: 'include' });
+            const j = await r.json();
+            if (!j || !j.success) return;
+
+            const unread = j.unread || 0;
+
+            // Se há novas notificações em relação à última contagem
+            if (unread > lastUnread) {
+                const diff = unread - lastUnread;
+
+                // --- Toastr ---
+                if (window.toastr) {
+                    toastr.options = {
+                    closeButton: true,
+                    newestOnTop: true,
+                    progressBar: true,
+                    positionClass: 'toast-bottom-right',
+                    timeOut: 4000
+                    };
+                    toastr.info(
+                    diff === 1
+                        ? 'Você recebeu 1 nova notificação'
+                        : `Você recebeu ${diff} novas notificações`,
+                    'Notificações'
+                    );
+                }
+            }
+
+            lastUnread = unread;
+
+            setBadge(unread);
+            render(j.items || []);
+            if (updatedAt) updatedAt.textContent = new Date().toLocaleTimeString();
+        } catch (e) {
+            // silencioso
+        }
+    }
+
+  // Atualiza ao abrir o dropdown
+  const dd = document.getElementById('notifDropdown');
+  if (dd) {
+    dd.addEventListener('click', () => {
+      // pequeno debounce visual
+      setTimeout(loadNotifications, 50);
+    });
+  }
+
+  // Carrega agora e a cada 20s
+  loadNotifications();
+  const notifInterval = setInterval(loadNotifications, 20000);
+
+  // Se a página usar PJAX e destruir elementos, limpe o interval quando precisar
+  document.addEventListener('pjax:beforeSend', () => clearInterval(notifInterval), { once: true });
 });
+
 JS);
 
 if (!empty($config->file_id) && $config->file !== null) {
@@ -23,7 +140,6 @@ if (!empty($config->file_id) && $config->file !== null) {
 
 ?>
 
-
 <header class="header header-sticky p-0 mb-4">
     <div class="container-fluid border-bottom px-4">
         <button class="header-toggler" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()" style="margin-inline-start: -14px;">
@@ -32,23 +148,30 @@ if (!empty($config->file_id) && $config->file !== null) {
             </svg>
         </button>
         <ul class="header-nav d-none d-lg-flex">
-            <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Settings</a></li>
+            <li class="nav-item"><a class="nav-link" href="/site/dashboard">Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
+            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $config->id; ?>">Settings</a></li>
         </ul>
         <ul class="header-nav ms-auto">
-            <li class="nav-item"><a class="nav-link" href="#">
+            <li class="nav-item dropdown">
+                <a class="nav-link position-relative" href="#" id="notifDropdown" data-coreui-toggle="dropdown" aria-expanded="false">
                     <svg class="icon icon-lg">
                         <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
-                    </svg></a></li>
-            <li class="nav-item"><a class="nav-link" href="#">
-                    <svg class="icon icon-lg">
-                        <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-list-rich"></use>
-                    </svg></a></li>
-            <li class="nav-item"><a class="nav-link" href="#">
-                    <svg class="icon icon-lg">
-                        <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-envelope-open"></use>
-                    </svg></a></li>
+                    </svg>
+                    <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                </a>
+
+                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notifDropdown" style="min-width:360px">
+                    <div class="p-2 border-bottom fw-bold d-flex align-items-center justify-content-between">
+                        <span>Notificações</span>
+                        <small class="text-muted" id="notif-updated-at"></small>
+                    </div>
+                    <div id="notif-list" class="list-group list-group-flush" style="max-height:360px; overflow:auto"></div>
+                    <div class="p-2 text-center">
+                        <a class="small text-decoration-none" href="/notification/list">Ver todas</a>
+                    </div>
+                </div>
+            </li>
         </ul>
         <ul class="header-nav">
             <li class="nav-item py-1">

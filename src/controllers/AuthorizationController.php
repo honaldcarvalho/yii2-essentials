@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\controllers;
 
+use croacworks\essentials\models\Group;
 use Yii;
 
 use croacworks\essentials\models\Log;

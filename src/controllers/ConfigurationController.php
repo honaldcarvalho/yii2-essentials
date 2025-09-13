@@ -7,6 +7,7 @@ use croacworks\essentials\models\MetaTag;
 use croacworks\essentials\models\Parameter;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\services\Notify;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -162,6 +163,8 @@ class ConfigurationController extends AuthorizationController
                 // if ($changed) {
                 //     StorageController::removeFile($old);
                 // }
+                Notify::create($model->id, Yii::t('app','Configurations'), Yii::t('app','Configurations Updated'), '/configuration/view?id='.$model->id);
+
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }

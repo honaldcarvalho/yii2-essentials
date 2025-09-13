@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\ModelCommon;
 use Yii;
 
@@ -86,5 +87,16 @@ class Notification extends ModelCommon
     public function getUser()
     {
         return $this->hasOne(User::class, ['id' => 'user_id']);
+    }
+
+    public static function unreadCountForUser(?int $userId=null): int
+    {
+        $userId = $userId ?: (int)Yii::$app->user->id;
+        $groups = AuthorizationController::getUserGroups();
+
+        return (int)static::find()
+            ->andWhere(['user_id' => $userId, 'is_read' => 0])
+            ->andWhere(['group_id' => $groups])
+            ->count();
     }
 }

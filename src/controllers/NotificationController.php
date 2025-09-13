@@ -4,7 +4,9 @@ namespace croacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\Notification;
+use croacworks\essentials\services\Notify;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 
 /**
  * NotificationController implements the CRUD actions for Notification model.
@@ -111,4 +113,46 @@ class NotificationController extends AuthorizationController
         return $this->redirect(['index']);
     }
 
+
+    public function actionList(int $limit = 20)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $cls = \croacworks\essentials\services\Notify::$modelClass;
+        /** @var \yii\db\ActiveRecord $model */
+        $model = new $cls;
+        $schema = Yii::$app->db->schema->getTableSchema($cls::tableName(), true);
+
+        $q = $cls::find();
+
+        // filtros seguros por usuário/grupo, se colunas existirem
+        if ($schema && isset($schema->columns['user_id'])) {
+            $q->andWhere(['user_id' => (int)Yii::$app->user->id]);
+        }
+        if ($schema && isset($schema->columns['group_id'])) {
+            $q->andWhere(['group_id' => self::getUserGroups()]);
+        }
+
+        $items = $q->orderBy(['id' => SORT_DESC])
+            ->limit($limit)
+            ->asArray()
+            ->all();
+
+        return [
+            'success' => true,
+            'unread'  => Notify::unreadCount(),
+            'items'   => $items,
+        ];
+    }
+
+    public function actionRead(int $id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $ok = Notify::markRead($id);
+        return [
+            'success' => $ok,
+            'unread'  => Notify::unreadCount(),
+        ];
+    }
 }
