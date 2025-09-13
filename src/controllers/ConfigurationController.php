@@ -143,28 +143,18 @@ class ConfigurationController extends AuthorizationController
 
         if ($model->validate() && $model->load($post)) {
 
-            // $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
-            // if (!empty($file) && $file !== null) {
-            //     $file = StorageController::uploadFile($file, ['save' => true]);
-            //     if ($file['success'] === true) {
-            //         $model->file_id = $file['data']['id'];
-            //         $changed = true;
-            //     }
-            // } else if (isset($post['remove']) && $post['remove'] == 1) {
-            //     $model->file_id = null;
-            //     $changed = true;
-            // }
-
-            // if (!$changed) {
-            //     $model->file_id = $old;
-            // }
-
             if ($model->save()) {
-                // if ($changed) {
-                //     StorageController::removeFile($old);
-                // }
-                Notify::create($model->id, Yii::t('app','Configurations'), Yii::t('app','Configurations Updated'), '/configuration/view?id='.$model->id);
+                /** @var \croacworks\essentials\services\Notify $notify */
+                $notify = Yii::$app->get('notify'); // registre no container/config como um componente
 
+                $notify->create(
+                    Yii::$app->user->id,
+                    Yii::t('app','Configurations'),
+                    Yii::t('app','Configurations Updated'),
+                    'system',
+                    "/configuration/{$model->id}",
+                    \croacworks\essentials\controllers\AuthorizationController::userGroup()
+                );
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }

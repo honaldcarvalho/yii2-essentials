@@ -39,6 +39,9 @@ $config = [
         ]
     ],
     'components' => [
+        'notify' => [
+            'class' => \croacworks\essentials\services\Notify::class,
+        ],
         'mutex' => [
             'class' => \yii\mutex\MysqlMutex::class,
             // 'db' => 'db',           // opcional (default 'db')

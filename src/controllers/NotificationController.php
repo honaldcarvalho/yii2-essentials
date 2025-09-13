@@ -4,7 +4,7 @@ namespace croacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\Notification;
-use croacworks\essentials\services\Notify;
+use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -13,6 +13,8 @@ use yii\web\Response;
  */
 class NotificationController extends AuthorizationController
 {
+    public $enableCsrfValidation = false; // se for usar via fetch; habilite se enviar CSRF
+
     /**
      * Lists all Notification models.
      * @return mixed
@@ -113,46 +115,70 @@ class NotificationController extends AuthorizationController
         return $this->redirect(['index']);
     }
 
-
-    public function actionList(int $limit = 20)
+    /**
+     * GET /notification/list?limit=10
+     * Retorna {count, items[]} para o usuário logado.
+     */
+    public function actionList(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $cls = \croacworks\essentials\services\Notify::$modelClass;
-        /** @var \yii\db\ActiveRecord $model */
-        $model = new $cls;
-        $schema = Yii::$app->db->schema->getTableSchema($cls::tableName(), true);
+        $userId = Yii::$app->user->id;
+        if (!$userId) throw new BadRequestHttpException('Not authenticated.');
 
-        $q = $cls::find();
+        $limit = (int)Yii::$app->request->get('limit', 10);
 
-        // filtros seguros por usuário/grupo, se colunas existirem
-        if ($schema && isset($schema->columns['user_id'])) {
-            $q->andWhere(['user_id' => (int)Yii::$app->user->id]);
-        }
-        if ($schema && isset($schema->columns['group_id'])) {
-            $q->andWhere(['group_id' => self::getUserGroups()]);
-        }
+        $query = Notification::find()
+            ->where(['recipient_type'=>'user','recipient_id'=>$userId])
+            ->orderBy(['created_at'=>SORT_DESC])
+            ->limit($limit);
 
-        $items = $q->orderBy(['id' => SORT_DESC])
-            ->limit($limit)
-            ->asArray()
-            ->all();
+        $items = array_map(function(Notification $n){
+            return [
+                'id'          => (int)$n->id,
+                'title'       => (string)$n->description,
+                'content'     => (string)($n->content ?? ''),
+                'url'         => (string)($n->url ?? ''),
+                'status'      => (int)$n->status,
+                'created_at'  => (string)$n->created_at,
+                'read_at'     => (string)($n->read_at ?? ''),
+            ];
+        }, $query->all());
 
-        return [
-            'success' => true,
-            'unread'  => Notify::unreadCount(),
-            'items'   => $items,
-        ];
+        $countUnread = (int) Notification::find()
+            ->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD])
+            ->count();
+
+        return ['count'=>$countUnread,'items'=>$items];
     }
 
-    public function actionRead(int $id)
+    /**
+     * POST /notification/read
+     * Body: {id: number} ou {ids: number[]} ou {all: 1}
+     */
+    public function actionRead(): array
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $ok = Notify::markRead($id);
-        return [
-            'success' => $ok,
-            'unread'  => Notify::unreadCount(),
-        ];
+        $userId = Yii::$app->user->id;
+        if (!$userId) throw new BadRequestHttpException('Not authenticated.');
+
+        $body = Yii::$app->request->post();
+        $ids = [];
+        if (isset($body['id']))  $ids = [(int)$body['id']];
+        if (isset($body['ids']) && is_array($body['ids'])) $ids = array_map('intval', $body['ids']);
+        $all = (int)($body['all'] ?? 0) === 1;
+
+        $q = Notification::find()->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD]);
+        if (!$all && $ids) $q->andWhere(['id'=>$ids]);
+
+        $rows = $q->all();
+        foreach ($rows as $n) { $n->markAsRead(); }
+
+        $countUnread = (int) Notification::find()
+            ->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD])
+            ->count();
+
+        return ['ok'=>true,'count'=>$countUnread];
     }
 }

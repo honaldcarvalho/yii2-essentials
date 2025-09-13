@@ -7,128 +7,93 @@ $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) :
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
-  // ---- Badge + lista de notificações ----
+    const header = document.querySelector('header.header');
+    document.addEventListener('scroll', () => {
+    if (header) {
+        header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
+    }
+    });
+});
+
+(function(){
   const badge = document.getElementById('notif-badge');
   const list  = document.getElementById('notif-list');
-  const updatedAt = document.getElementById('notif-updated-at');
+  const markAll = document.getElementById('notif-mark-all');
 
-  function setBadge(n) {
-    if (!badge) return;
-    badge.textContent = n;
-    badge.style.display = n > 0 ? 'inline-block' : 'none';
+  async function fetchList() {
+    try {
+      const res = await fetch('/notification/list?limit=10', {credentials:'same-origin'});
+      if (!res.ok) return;
+      const data = await res.json();
+      render(data);
+    } catch(e) { /* opcional: console.error(e); */ }
   }
 
-  function asDateLabel(dt) {
-    if (!dt) return '';
-    // aceita 'YYYY-MM-DD HH:MM:SS' ou ISO
-    const s = dt.toString().includes(' ') ? dt.replace(' ', 'T') : dt;
-    const d = new Date(s);
-    if (Number.isNaN(d.getTime())) return '';
-    return d.toLocaleString();
-  }
+  function render(data){
+    const count = data.count || 0;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
 
-  function render(items) {
-    if (!list) return;
-    list.innerHTML = '';
-    if (!items || items.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'p-3 text-center text-muted';
-      empty.textContent = 'Sem notificações';
-      list.appendChild(empty);
-      return;
-    }
-
-    items.forEach(item => {
-      const a = document.createElement('a');
-      a.href = item.url || item.link || item.href || '#';
-      a.className = 'list-group-item list-group-item-action';
-
-      const title = item.title || item.subject || item.name || '(sem título)';
-      const body  = item.body || item.message || item.content || '';
-      const when  = asDateLabel(item.created_at || item.createdAt);
-
-      a.innerHTML = `
-        <div class="d-flex w-100 justify-content-between">
-          <strong class="text-truncate" style="max-width:75%">\${title}</strong>
-          <small class="text-nowrap">\${when}</small>
+    const items = data.items || [];
+    list.innerHTML = items.map(item => `
+      <a href="\${item.url || '#'}" class="dropdown-item d-flex align-items-start notif-item" data-id="\${item.id}">
+        <div class="me-2">
+          <span class="avatar bg-secondary text-white">
+            <i class="cil-bell"></i>
+          </span>
         </div>
-        <div class="small text-muted text-truncate">\${body}</div>
-      `;
+        <div class="flex-grow-1">
+          <div class="small text-muted">\${new Date(item.created_at.replace(' ','T')).toLocaleString()}</div>
+          <div class="fw-semibold \${item.status === 0 ? '' : 'text-muted'}">\${escapeHtml(item.title)}</div>
+          \${item.content ? `<div class="small text-muted">\${escapeHtml(item.content)}</div>` : ''}
+        </div>
+        \${item.status === 0 ? '<span class="ms-2 badge bg-primary">novo</span>' : ''}
+      </a>
+    `).join('') || '<div class="dropdown-item text-muted">Sem notificações</div>';
 
-      a.addEventListener('click', () => {
-        if (item.id) {
-          // marca como lida usando status (feito no servidor)
-          fetch('/notification/read?id=' + item.id, { credentials: 'include' })
-            .then(r => r.json())
-            .then(j => {
-              if (j && typeof j.unread !== 'undefined') setBadge(j.unread);
-            })
-            .catch(() => {});
-        }
+    // click marca como lida (e segue o link, se houver)
+    const anchors = list.querySelectorAll('.notif-item');
+    anchors.forEach(a => {
+      a.addEventListener('click', async (ev) => {
+        const id = Number(a.getAttribute('data-id'));
+        try { await markRead([id]); } catch(e) {}
+        // deixa navegar normalmente se tiver URL
       });
-
-      list.appendChild(a);
     });
   }
 
-    let lastUnread = 0;
-
-    async function loadNotifications() {
-        try {
-            const r = await fetch('/notification/list?limit=20', { credentials: 'include' });
-            const j = await r.json();
-            if (!j || !j.success) return;
-
-            const unread = j.unread || 0;
-
-            // Se há novas notificações em relação à última contagem
-            if (unread > lastUnread) {
-                const diff = unread - lastUnread;
-
-                // --- Toastr ---
-                if (window.toastr) {
-                    toastr.options = {
-                    closeButton: true,
-                    newestOnTop: true,
-                    progressBar: true,
-                    positionClass: 'toast-bottom-right',
-                    timeOut: 4000
-                    };
-                    toastr.info(
-                    diff === 1
-                        ? 'Você recebeu 1 nova notificação'
-                        : `Você recebeu \${diff} novas notificações`,
-                    'Notificações'
-                    );
-                }
-            }
-
-            lastUnread = unread;
-
-            setBadge(unread);
-            render(j.items || []);
-            if (updatedAt) updatedAt.textContent = new Date().toLocaleTimeString();
-        } catch (e) {
-            // silencioso
-        }
-    }
-
-  // Atualiza ao abrir o dropdown
-  const dd = document.getElementById('notifDropdown');
-  if (dd) {
-    dd.addEventListener('click', () => {
-      // pequeno debounce visual
-      setTimeout(loadNotifications, 50);
+  async function markRead(ids, all=false){
+    const body = all ? {all:1} : {ids};
+    await fetch('/notification/read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
+    }).then(r=>r.json()).then(data=>{
+      badge.textContent = data.count || 0;
+      badge.style.display = (data.count||0) > 0 ? 'inline-block' : 'none';
+      // atualiza lista sem piscar
+      fetchList();
     });
   }
 
-  // Carrega agora e a cada 20s
-  loadNotifications();
-  const notifInterval = setInterval(loadNotifications, 20000);
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
 
-  // Se a página usar PJAX e destruir elementos, limpe o interval quando precisar
-  document.addEventListener('pjax:beforeSend', () => clearInterval(notifInterval), { once: true });
-});
+  // marcar todas
+  if (markAll) {
+    markAll.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await markRead([], true);
+    });
+  }
+
+  // polling
+  fetchList();
+  setInterval(fetchList, 30000);
+})();
+
 
 JS);
 
@@ -149,27 +114,20 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
         </button>
         <ul class="header-nav d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/site/dashboard">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
-            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>">Settings</a></li>
+            <li class="nav-item"><a class="nav-link" href="/users"><?=Yii::t('app','Users')?></a></li>
+            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>"><?=Yii::t('app','Settings')?></a></li>
         </ul>
         <ul class="header-nav ms-auto">
             <li class="nav-item dropdown">
-                <a class="nav-link position-relative" href="#" id="notifDropdown" data-coreui-toggle="dropdown" aria-expanded="false">
-                    <svg class="icon icon-lg">
-                        <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
-                    </svg>
-                    <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                <a class="nav-link" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" id="notif-toggle">
+                    <i class="cil-bell"></i>
+                    <span class="badge bg-danger" id="notif-badge" style="display:none;">0</span>
                 </a>
-
-                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notifDropdown" style="min-width:360px">
-                    <div class="p-2 border-bottom fw-bold d-flex align-items-center justify-content-between">
-                        <span>Notificações</span>
-                        <small class="text-muted" id="notif-updated-at"></small>
-                    </div>
-                    <div id="notif-list" class="list-group list-group-flush" style="max-height:360px; overflow:auto"></div>
-                    <div class="p-2 text-center">
-                        <a class="small text-decoration-none" href="/notification/list">Ver todas</a>
-                    </div>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
+                    <div class="dropdown-header bg-light fw-bold py-2"><?=Yii::t('app','Notifications')?></div>
+                    <div id="notif-list" style="max-height: 360px; overflow:auto;"></div>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item text-center" id="notif-mark-all"><?=Yii::t('app','Mark all as read')?></button>
                 </div>
             </li>
         </ul>
