@@ -13,11 +13,14 @@ use yii\web\View;
 
 $this->title = Yii::t('app', 'Notificações');
 $config = [
-    'csrfToken'    => Yii::$app->request->getCsrfToken(),
-    'deleteUrl'    => Url::to(['delete']),
-    'deleteAllUrl' => Url::to(['delete-all']),
-    'pjaxContainer'=> '#pjax-notifications',
+    'csrfToken'     => Yii::$app->request->getCsrfToken(),
+    'readUrl'       => Url::to(['read']),
+    'deleteUrl'     => Url::to(['delete']),
+    'deleteAllUrl'  => Url::to(['delete-all']),
+    'pjaxContainer' => '#pjax-notifications',
 ];
+
+$this->registerJsVar('notifConfig', $config, View::POS_HEAD);
 
 // expõe config com escaping seguro (JSON + HTML-safe)
 $this->registerJs(
@@ -29,10 +32,12 @@ $js = <<<JS
 (function(){
   var cfg           = window.notifConfig || {};
   var csrfToken     = cfg.csrfToken;
+  var readUrl       = cfg.readUrl;
   var deleteUrl     = cfg.deleteUrl;
   var deleteAllUrl  = cfg.deleteAllUrl;
   var pjaxContainer = cfg.pjaxContainer || '#pjax-notifications';
-  var inFlight      = false;
+  var inFlight      = false; // evita duplo reload
+
   function confirmSwal(msg) {
     if (typeof Swal === 'undefined') {
       return Promise.resolve( confirm(msg) ? { isConfirmed: true } : { isConfirmed: false } );
@@ -56,26 +61,31 @@ $js = <<<JS
       .always(function(){ inFlight = false; });
   }
 
-  // Delegação: funciona mesmo após PJAX
+  function updateHeaderBadge(count) {
+    var badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    var n = Number(count || 0);
+    badge.textContent = n;
+    badge.style.display = n > 0 ? 'inline-block' : 'none';
+  }
+
+  // Delegação de eventos (funciona após PJAX)
   document.addEventListener('click', function(ev){
     var t = ev.target;
 
-    // apagar 1
-    if (t.closest && t.closest('.js-notif-delete')) {
+    // 3.1) Marcar todas como lidas
+    if (t.id === 'btn-mark-all-read') {
       ev.preventDefault();
-      var btn = t.closest('.js-notif-delete');
-      var id = btn.getAttribute('data-id');
-      if (!id) return;
-
-      confirmSwal('Apagar esta notificação?').then(function(res){
+      confirmSwal('Marcar TODAS as notificações como lidas?').then(function(res){
         if (!res.isConfirmed) return;
-        postJson(deleteUrl + '?id=' + encodeURIComponent(id), {})
+        postJson(readUrl, {all: 1})
           .then(function(resp){
-            if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Notificação apagada.','success');
+            if (resp && (resp.ok === true || typeof resp.count !== 'undefined')) {
+              if (typeof Swal !== 'undefined') Swal.fire('Pronto!','Todas marcadas como lidas.','success');
+              updateHeaderBadge(resp.count);
               safeReload();
             } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível marcar como lidas.','error');
             }
           })
           .catch(function(){
@@ -85,7 +95,7 @@ $js = <<<JS
       return;
     }
 
-    // apagar lidas
+    // 3.2) Apagar lidas
     if (t.id === 'btn-delete-read') {
       ev.preventDefault();
       confirmSwal('Apagar TODAS as notificações lidas?').then(function(res){
@@ -106,7 +116,7 @@ $js = <<<JS
       return;
     }
 
-    // apagar todas
+    // 3.3) Apagar todas
     if (t.id === 'btn-delete-all') {
       ev.preventDefault();
       confirmSwal('Apagar TODAS as notificações (lidas e não lidas)?').then(function(res){
@@ -115,6 +125,7 @@ $js = <<<JS
           .then(function(resp){
             if (resp && resp.ok) {
               if (typeof Swal !== 'undefined') Swal.fire('Feito!','Todas apagadas.','success');
+              updateHeaderBadge(0);
               safeReload();
             } else {
               if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
@@ -126,13 +137,29 @@ $js = <<<JS
       });
       return;
     }
-  });
 
-  // Evita loop de reload quando o PJAX terminar
-  document.addEventListener('pjax:end', function(e){
-    if (e.target && ('#' + e.target.id) === pjaxContainer) {
-      // noop aqui — delegação já mantém os handlers vivos.
-      // Se quiser, pode atualizar o badge do header chamando seu fetch da dropdown.
+    // 3.4) Apagar 1 (se você já trocou o ActionColumn para botão .js-notif-delete)
+    if (t.closest && t.closest('.js-notif-delete')) {
+      ev.preventDefault();
+      var btn = t.closest('.js-notif-delete');
+      var id = btn.getAttribute('data-id');
+      if (!id) return;
+      confirmSwal('Apagar esta notificação?').then(function(res){
+        if (!res.isConfirmed) return;
+        postJson(deleteUrl + '?id=' + encodeURIComponent(id), {})
+          .then(function(resp){
+            if (resp && resp.ok) {
+              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Notificação apagada.','success');
+              safeReload();
+            } else {
+              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+            }
+          })
+          .catch(function(){
+            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+          });
+      });
+      return;
     }
   });
 })();
@@ -148,16 +175,25 @@ $this->registerJs($js, View::POS_END);
             <div class="small text-muted"><?= Yii::t('app', 'Gerencie suas notificações') ?></div>
         </div>
         <div class="d-flex gap-2">
-            <?= \yii\helpers\Html::button(Yii::t('app', 'Apagar lidas'), [
+            <div class="d-flex gap-2">
+            <?= Html::button(Yii::t('app','Marcar todas como lidas'), [
+                'class' => 'btn btn-outline-primary',
+                'id'    => 'btn-mark-all-read',
+                'type'  => 'button',
+            ]) ?>
+
+            <?= Html::button(Yii::t('app','Apagar lidas'), [
                 'class' => 'btn btn-outline-secondary',
                 'id'    => 'btn-delete-read',
                 'type'  => 'button',
             ]) ?>
-            <?= \yii\helpers\Html::button(Yii::t('app', 'Apagar todas'), [
+
+            <?= Html::button(Yii::t('app','Apagar todas'), [
                 'class' => 'btn btn-outline-danger',
                 'id'    => 'btn-delete-all',
                 'type'  => 'button',
             ]) ?>
+            </div>
         </div>
     </div>
 
