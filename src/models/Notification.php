@@ -49,4 +49,14 @@ class Notification extends ModelCommon
     {
         return $this->hasOne(NotificationMessage::class, ['id' => 'notification_message_id']);
     }
+
+    public function markAsRead(): bool
+    {
+        if ((int)$this->status !== self::STATUS_READ) {
+            $this->status = self::STATUS_READ;
+            $this->read_at = date('Y-m-d H:i:s');
+            return $this->save(false, ['status','read_at']);
+        }
+        return true;
+    }
 }
