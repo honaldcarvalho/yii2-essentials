@@ -117,6 +117,8 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
             <li class="nav-item"><a class="nav-link" href="/users"><?=Yii::t('app','Users')?></a></li>
             <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>"><?=Yii::t('app','Settings')?></a></li>
         </ul>
+
+        <!-- NOTIFICATION -->
         <ul class="header-nav ms-auto">
             <li class="nav-item dropdown">
                 <a class="nav-link" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" id="notif-toggle">
@@ -130,7 +132,27 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
                     <button class="dropdown-item text-center" id="notif-mark-all"><?=Yii::t('app','Mark all as read')?></button>
                 </div>
             </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link position-relative" href="#" id="notifDropdown" data-coreui-toggle="dropdown" aria-expanded="false">
+                    <svg class="icon icon-lg">
+                        <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
+                    </svg>
+                    <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                </a>
+
+                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notifDropdown" style="min-width:360px">
+                    <div class="p-2 border-bottom fw-bold d-flex align-items-center justify-content-between">
+                        <span>Notificações</span>
+                        <small class="text-muted" id="notif-updated-at"></small>
+                    </div>
+                    <div id="notif-list" class="list-group list-group-flush" style="max-height:360px; overflow:auto"></div>
+                    <div class="p-2 text-center">
+                        <a class="small text-decoration-none" href="/notification/list">Ver todas</a>
+                    </div>
+                </div>
+            </li>
         </ul>
+        
         <ul class="header-nav">
             <li class="nav-item py-1">
                 <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
