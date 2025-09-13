@@ -8,11 +8,12 @@ use Yii;
 
 class Notification extends ModelCommon
 {
-    public $send_push;
+    public $send_push = false;
+    public $send_email = false;
     public $token;
     public const STATUS_UNREAD = 0;
     public const STATUS_READ   = 1;
-    
+
     public static function tableName()
     {
         return 'notifications';
