@@ -128,7 +128,7 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
                     <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
-                    <div class="dropdown-header bg-light fw-bold py-2"><?=Yii::t('app','Notifications')?></div>
+                    <a href="/notification" class="dropdown-header bg-light fw-bold py-2"><?=Yii::t('app','Notifications')?></a>
                     <div id="notif-list" style="max-height: 360px; overflow:auto;"></div>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item text-center" id="notif-mark-all"><?=Yii::t('app','Mark all as read')?></button>

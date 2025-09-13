@@ -4,6 +4,7 @@ namespace croacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\Notification;
+use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -19,14 +20,38 @@ class NotificationController extends AuthorizationController
      * Lists all Notification models.
      * @return mixed
      */
-    public function actionIndex()
+    public function actionIndex(): string
     {
-        $searchModel = new Notification();
-        $searchModel->scenario = Notification::SCENARIO_SEARCH;
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $userId = Yii::$app->user->id;
+        if (!$userId) {
+            throw new BadRequestHttpException('Not authenticated.');
+        }
+
+        $query = Notification::find()
+            ->where(['recipient_type' => 'user', 'recipient_id' => (int)$userId])
+            ->orderBy(['created_at' => SORT_DESC]);
+
+        // filtros simples opcionais
+        $req = Yii::$app->request;
+        $status = $req->get('status', null);
+        if ($status !== null && $status !== '') {
+            $query->andWhere(['status' => (int)$status]);
+        }
+        $type = $req->get('type', null);
+        if ($type !== null && $type !== '') {
+            $query->andWhere(['type' => (string)$type]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => ['pageSize' => 20],
+            'sort' => [
+                'defaultOrder' => ['created_at' => SORT_DESC],
+                'attributes' => ['created_at', 'status', 'type', 'description'],
+            ],
+        ]);
 
         return $this->render('index', [
-            'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
     }
@@ -53,7 +78,7 @@ class NotificationController extends AuthorizationController
     {
 
 
-        if(Yii::$app->request->isPost){
+        if (Yii::$app->request->isPost) {
 
             $post = Yii::$app->request->post();
             $success = 0;
@@ -64,14 +89,14 @@ class NotificationController extends AuthorizationController
                 $model->user_id = $value;
                 $model->description = $post['Notification']['description'];
                 $model->notification_message_id = $post['Notification']['notification_message_id'];
-                if($model->save()){
+                if ($model->save()) {
                     $success++;
-                }else{
+                } else {
                     dd($model->getErrors());
                     $error++;
                 }
             }
-            Yii::$app->session->setFlash("info", Yii::t('app', "Message sended to {success}. Fail send fail: {fail}",['success'=>$success,'fail'=>$error]));
+            Yii::$app->session->setFlash("info", Yii::t('app', "Message sended to {success}. Fail send fail: {fail}", ['success' => $success, 'fail' => $error]));
             return $this->redirect(['index']);
         }
 
@@ -101,18 +126,51 @@ class NotificationController extends AuthorizationController
         ]);
     }
 
-    /**
-     * Deletes an existing Notification model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionDelete($id)
+    public function actionDelete($id = null)
     {
-        $this->findModel($id)->delete();
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        return $this->redirect(['index']);
+        $userId = Yii::$app->user->id;
+        if (!$userId) {
+            throw new \yii\web\BadRequestHttpException('Not authenticated.');
+        }
+        if ($id === null || !ctype_digit((string)$id)) {
+            throw new \yii\web\BadRequestHttpException('Invalid id.');
+        }
+
+        $model = \croacworks\essentials\models\Notification::find()
+            ->where([
+                'id'             => (int)$id,
+                'recipient_type' => 'user',
+                'recipient_id'   => (int)$userId,
+            ])->one();
+
+        if (!$model) {
+            throw new \yii\web\NotFoundHttpException('Notificação não encontrada.');
+        }
+
+        $ok = (bool)$model->delete();
+        return $this->asJson(['ok' => $ok]);
+    }
+
+    public function actionDeleteAll()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $userId = Yii::$app->user->id;
+        if (!$userId) {
+            throw new \yii\web\BadRequestHttpException('Not authenticated.');
+        }
+
+        $onlyRead = (int)Yii::$app->request->post('onlyRead', 0) === 1;
+
+        $cond = ['recipient_type' => 'user', 'recipient_id' => (int)$userId];
+        if ($onlyRead) {
+            $cond['status'] = \croacworks\essentials\models\Notification::STATUS_READ;
+        }
+
+        $deleted = \croacworks\essentials\models\Notification::deleteAll($cond);
+        return $this->asJson(['ok' => true, 'deleted' => (int)$deleted]);
     }
 
     /**
@@ -129,11 +187,11 @@ class NotificationController extends AuthorizationController
         $limit = (int)Yii::$app->request->get('limit', 10);
 
         $query = Notification::find()
-            ->where(['recipient_type'=>'user','recipient_id'=>$userId])
-            ->orderBy(['created_at'=>SORT_DESC])
+            ->where(['recipient_type' => 'user', 'recipient_id' => $userId])
+            ->orderBy(['created_at' => SORT_DESC])
             ->limit($limit);
 
-        $items = array_map(function(Notification $n){
+        $items = array_map(function (Notification $n) {
             return [
                 'id'          => (int)$n->id,
                 'title'       => (string)$n->description,
@@ -146,10 +204,10 @@ class NotificationController extends AuthorizationController
         }, $query->all());
 
         $countUnread = (int) Notification::find()
-            ->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD])
+            ->where(['recipient_type' => 'user', 'recipient_id' => $userId, 'status' => Notification::STATUS_UNREAD])
             ->count();
 
-        return ['count'=>$countUnread,'items'=>$items];
+        return ['count' => $countUnread, 'items' => $items];
     }
 
     /**
@@ -169,16 +227,18 @@ class NotificationController extends AuthorizationController
         if (isset($body['ids']) && is_array($body['ids'])) $ids = array_map('intval', $body['ids']);
         $all = (int)($body['all'] ?? 0) === 1;
 
-        $q = Notification::find()->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD]);
-        if (!$all && $ids) $q->andWhere(['id'=>$ids]);
+        $q = Notification::find()->where(['recipient_type' => 'user', 'recipient_id' => $userId, 'status' => Notification::STATUS_UNREAD]);
+        if (!$all && $ids) $q->andWhere(['id' => $ids]);
 
         $rows = $q->all();
-        foreach ($rows as $n) { $n->markAsRead(); }
+        foreach ($rows as $n) {
+            $n->markAsRead();
+        }
 
         $countUnread = (int) Notification::find()
-            ->where(['recipient_type'=>'user','recipient_id'=>$userId,'status'=>Notification::STATUS_UNREAD])
+            ->where(['recipient_type' => 'user', 'recipient_id' => $userId, 'status' => Notification::STATUS_UNREAD])
             ->count();
 
-        return ['ok'=>true,'count'=>$countUnread];
+        return ['ok' => true, 'count' => $countUnread];
     }
 }
