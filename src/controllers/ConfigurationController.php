@@ -146,8 +146,7 @@ class ConfigurationController extends AuthorizationController
             if ($model->save()) {
                 /** @var \croacworks\essentials\services\Notify $notify */
                 $notify = Yii::$app->get('notify'); // registre no container/config como um componente
-
-                $notify->create(
+                $result = $notify->create(
                     Yii::$app->user->id,
                     Yii::t('app','Configurations'),
                     Yii::t('app','Configurations Updated'),
@@ -155,6 +154,7 @@ class ConfigurationController extends AuthorizationController
                     "/configuration/{$model->id}",
                     \croacworks\essentials\controllers\AuthorizationController::userGroup()
                 );
+                dd($result);
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
