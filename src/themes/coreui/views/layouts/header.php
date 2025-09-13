@@ -132,8 +132,8 @@ onPjaxReady((root) => {
 
 JS);
 
-if (!empty($config->file_id) && $config->file !== null) {
-    $avatar = Yii::getAlias('@web') . $config->file->urlThumb;
+if (!empty($configuration->file_id) && $configuration->file !== null) {
+    $avatar = Yii::getAlias('@web') . $configuration->file->urlThumb;
 } else {
     $avatar =  $assetDir . '/images/croacworks-logo-hq.png';
 }
@@ -150,7 +150,7 @@ if (!empty($config->file_id) && $config->file !== null) {
         <ul class="header-nav d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/site/dashboard">Dashboard</a></li>
             <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
-            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $config->id; ?>">Settings</a></li>
+            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>">Settings</a></li>
         </ul>
         <ul class="header-nav ms-auto">
             <li class="nav-item dropdown">
