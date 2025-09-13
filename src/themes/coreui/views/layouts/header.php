@@ -49,10 +49,10 @@ onPjaxReady((root) => {
 
       a.innerHTML = `
         <div class="d-flex w-100 justify-content-between">
-          <strong class="text-truncate" style="max-width:75%">${title}</strong>
-          <small class="text-nowrap">${when}</small>
+          <strong class="text-truncate" style="max-width:75%">\${title}</strong>
+          <small class="text-nowrap">\${when}</small>
         </div>
-        <div class="small text-muted text-truncate">${body}</div>
+        <div class="small text-muted text-truncate">\${body}</div>
       `;
 
       a.addEventListener('click', () => {
@@ -97,7 +97,7 @@ onPjaxReady((root) => {
                     toastr.info(
                     diff === 1
                         ? 'Você recebeu 1 nova notificação'
-                        : `Você recebeu ${diff} novas notificações`,
+                        : `Você recebeu \${diff} novas notificações`,
                     'Notificações'
                     );
                 }
