@@ -8,8 +8,8 @@ use Yii;
 
 class Notification extends ModelCommon
 {
-    public $send_push = false;
-    public $send_email = false;
+    public $send_push = 0;
+    public $send_email = 0;
     public $token;
     public const STATUS_UNREAD = 0;
     public const STATUS_READ   = 1;
