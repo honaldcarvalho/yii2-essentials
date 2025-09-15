@@ -67,7 +67,7 @@ $theme = Yii::$app->user->identity->profile->theme;
         });
   JS, View::POS_END);
 
-  $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_HEAD);
+  $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_END);
 
   ?>
 </head>
