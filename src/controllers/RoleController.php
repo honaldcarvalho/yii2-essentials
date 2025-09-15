@@ -117,7 +117,7 @@ class RoleController extends AuthorizationController
         return array_intersect_key($all, $scopeMap);
     }
 
-    private static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
+    public static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
     {
         $byMethod = [];
         $origins  = [];
