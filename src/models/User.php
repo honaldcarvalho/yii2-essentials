@@ -36,8 +36,10 @@ class User extends Account
     /** Virtuals (não existem na tabela) */
     public $password;
     public $password_confirm;
-    const SCENARIO_PROFILE = 'profile';
     public $via;
+
+    const SCENARIO_PROFILE = 'profile';
+
     public function attributes()
     {
         return array_merge(parent::attributes(), ['via']);
@@ -59,6 +61,7 @@ class User extends Account
             ],
         ]);
     }
+    
     public function scenarios()
     {
         $scenarios = parent::scenarios();

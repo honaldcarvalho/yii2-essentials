@@ -3,6 +3,8 @@
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\Configuration */
 
+use croacworks\essentials\models\Configuration;
+
 $this->title = Yii::t('app', 'Update Param: {name}', [
     'name' => $model->title,
 ]);
@@ -16,9 +18,18 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
         <div class="card-body">
             <div class="row">
                 <div class="col-md-12">
-                    <?=$this->render('_form', [
-                        'model' => $model
-                    ]) ?>
+                    <?php 
+                    if($model->scenario == Configuration::SCENARIO_ADMIN){
+                        echo $this->render('_form_admin', [
+                            'model' => $model
+                        ]);
+                        return;
+                    } else {
+                        echo $this->render('_form', [
+                            'model' => $model
+                        ]);
+                    }
+                    ?>
                 </div>
             </div>
         </div>

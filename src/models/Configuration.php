@@ -36,6 +36,16 @@ use yii\symfonymailer\Mailer;
 class Configuration extends ModelCommon
 {
     public $verGroup = false;
+    const SCENARIO_ADMIN = 'profile';
+    
+    public function scenarios()
+    {
+        $scenarios = parent::scenarios();
+        $scenarios[self::SCENARIO_ADMIN] = ['file_id', 'language_id', 'homepage', 'title', 'slogan', 'bussiness_name', 'email'];
+        return $scenarios;
+    }
+
+
     /**
      * {@inheritdoc}
      */
@@ -57,13 +67,7 @@ class Configuration extends ModelCommon
             ],
         ]);
     }
-
-    public function scenarios()
-    {
-        $scenarios = parent::scenarios();
-        return $scenarios;
-    }
-
+    
     /**
      * {@inheritdoc}
      */

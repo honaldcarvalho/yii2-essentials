@@ -30,7 +30,7 @@ class ConfigurationController extends AuthorizationController
     {
         $searchModel = new Configuration();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
+        
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
@@ -105,17 +105,6 @@ class ConfigurationController extends AuthorizationController
 
         if ($model->load(Yii::$app->request->post())) {
 
-            // $file = \yii\web\UploadedFile::getInstance($model, 'file_id');
-
-            // if (!empty($file) && $file !== null) {
-
-            //     $arquivo = StorageController::uploadFile($file, ['save' => true]);
-
-            //     if ($arquivo['success'] === true) {
-            //         $model->file_id = $arquivo['data']['id'];
-            //     }
-            // }
-
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
             }
@@ -137,14 +126,16 @@ class ConfigurationController extends AuthorizationController
     {
 
         $model = $this->findModel($id);
-        $old = $model->file_id;
-        $changed = false;
+
+        if(AuthorizationController::isMaster()){
+            $model->scenario = Configuration::SCENARIO_ADMIN;
+        }   
+
         $post = Yii::$app->request->post();
 
         if ($model->validate() && $model->load($post)) {
 
             if ($model->save()) {
-
                 Yii::$app->notify->createForGroup($model->group_id, Yii::t('app','Configurations'), Yii::t('app','Configurations Updated'), 'system', "/configuration/{$model->id}", true, null);
                 return $this->redirect(['view', 'id' => $model->id]);
             }
