@@ -175,15 +175,14 @@ class AuthorizationController extends CommonController
         if (!$gid) return [];
 
         $gid = (int)$gid;
-        $cacheKey = 'group-family:' . $gid;
+        $cacheKey = 'group-descendants:' . $gid;
 
         $ids = Yii::$app->cache->get($cacheKey);
         if ($ids === false) {
             try {
-                // root da árvore do grupo atual
-                $rootId = \croacworks\essentials\models\Group::getRootId($gid);
-                // todos os ids (root + descendentes). Já possui fallback sem CTE.
-                $ids = \croacworks\essentials\models\Group::familyIdsByRoot((int)$rootId);
+                // ✅ Não suba para o root! O escopo é "eu + meus filhos".
+                // familyIdsByRoot($gid) deve retornar [$gid] + descendentes de $gid.
+                $ids = \croacworks\essentials\models\Group::familyIdsByRoot($gid);
             } catch (\Throwable $e) {
                 // fail-safe: pelo menos o próprio grupo
                 $ids = [$gid];
@@ -191,9 +190,10 @@ class AuthorizationController extends CommonController
 
             // normaliza
             $ids = array_values(array_unique(array_map('intval', (array)$ids)));
-            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s
+            Yii::$app->cache->set($cacheKey, $ids, 60);
         }
 
+        // Segurança: nunca retornar vazio; garante ao menos o próprio gid.
         return !empty($ids) ? $ids : [$gid];
     }
 
@@ -711,12 +711,27 @@ class AuthorizationController extends CommonController
 
         // ⬇️ AQUI: usar família (próprio + ancestrais), não só os grupos do usuário
         if ($model && $model->verGroup) {
-            $groups = \croacworks\essentials\models\Group::familyIdsFromUser(self::User());
-            $groups = array_map('intval', (array)$groups);
+            // Constrói o escopo efetivo como união de "cada grupo do usuário + descendentes"
+            $userGroupIds = self::getAllUserGroupIds(); // principal + adicionais
+            $effective = [];
 
+            foreach ($userGroupIds as $gId) {
+                try {
+                    $branch = \croacworks\essentials\models\Group::familyIdsByRoot((int)$gId);
+                } catch (\Throwable $e) {
+                    $branch = [(int)$gId];
+                }
+                foreach ((array)$branch as $id) {
+                    $effective[(int)$id] = true;
+                }
+            }
+
+            $allowedGroupIds = array_keys($effective);
+
+            // exceção apenas para "view" de conteúdo realmente público (group_id = 1)
             if ($request_action === 'view' && (int)$model->group_id === 1) {
                 // público
-            } elseif (!in_array((int)$model->group_id, $groups, true)) {
+            } elseif (!in_array((int)$model->group_id, $allowedGroupIds, true)) {
                 return false;
             }
         }
