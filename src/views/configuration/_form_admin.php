@@ -38,9 +38,14 @@ if(!empty($model->file_id && $model->file != null)){
         ]) ?>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-4">
         <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
+    </div> 
+    <div class="col-md-4">
         <?= $form->field($model, 'language_id')->dropdownList(yii\helpers\ArrayHelper::map(Language::find()->asArray()->all(), 'id', 'name')) ?>
+    </div> 
+
+    <div class="col-md-4">
         <?= $form->field($model, 'homepage')->textInput(['maxlength' => true]) ?>
     </div> 
 
