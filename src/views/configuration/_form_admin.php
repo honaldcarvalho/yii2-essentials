@@ -52,6 +52,8 @@ if(!empty($model->file_id && $model->file != null)){
     <div class="col-md-6">
         <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
         <?= $form->field($model, 'slogan')->textInput(['maxlength' => true]) ?>
+    </div>
+    <div class="col-md-6">
         <?= $form->field($model, 'bussiness_name')->textInput(['maxlength' => true]) ?>
         <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
     </div>
