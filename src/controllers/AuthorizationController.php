@@ -2,7 +2,6 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\Group;
 use Yii;
 
 use croacworks\essentials\models\Log;
@@ -12,7 +11,6 @@ use croacworks\essentials\models\User;
 use yii\behaviors\TimestampBehavior;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\NotFoundHttpException;
 
 use yii\db\Query;
 use yii\db\IntegrityException;
