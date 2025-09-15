@@ -137,6 +137,7 @@ $this->registerJs($js);
 
     <!-- CONTROLLER -->
     <?= $form->field($model, 'controller')->dropDownList($controllers, [
+        'value' => $model?->controller,
         'multiple' => false,
         'prompt'   => '-- CONTROLLER --',
     ]) ?>

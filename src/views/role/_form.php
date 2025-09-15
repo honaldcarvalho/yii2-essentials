@@ -123,10 +123,6 @@ $(function () {
     });
   });
 
-  // se já houver um valor selecionado (edição), dispara para popular as actions
-  if ($('#role-controller').val()) {
-    $('#role-controller').trigger('change');
-  }
 });
 JS;
 
@@ -143,6 +139,7 @@ $this->registerJs($js, $this::POS_END);
     <?= $form->field($model, 'user_id')->dropDownList(yii\helpers\ArrayHelper::map(User::find()->select('id,username')->asArray()->all(), 'id', 'username'), ['prompt' => '-- selecione um usuario --']) ?>
 
     <?= $form->field($model, 'controller')->dropDownList($controllers, [
+        'value' => $model?->controller,
         'multiple' => false,
         'prompt' => '-- CONTROLLER --',
     ]) ?>
