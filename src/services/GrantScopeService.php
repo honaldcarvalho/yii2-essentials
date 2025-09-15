@@ -1,32 +1,45 @@
 <?php
 namespace croacworks\essentials\services;
 
+use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 use yii\db\Query;
 
 class GrantScopeService
 {
     /**
-     * Retorna o escopo de concessão do usuário logado, no formato:
+     * Retorna o escopo efetivo do usuário atual no formato:
      * [
-     *   'app\controllers\FileController' => ['index','view','update'] // actions
-     *   'croacworks\essentials\controllers\MenuController' => ['*'],  // wildcard
+     *   'App\\controllers\\FileController' => ['index','view','update'],
+     *   'croacworks\\essentials\\controllers\\MenuController' => ['*'],
      * ]
+     *
+     * Regras:
+     * - Junta roles por group_id (direto + tabela user_groups) E por user_id (roles diretas).
+     * - Normaliza lista de actions por ';' e suporta wildcard '*'.
      */
     public static function currentUserGrantScope(): array
     {
         $user = Yii::$app->user->identity;
         if (!$user) return [];
 
-        // 1) Descobrir todos os groups do usuário (group_id direto + user_groups)
-        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
+        // ✅ Master: acesso total (curto-circuito)
+        if (AuthorizationController::isMaster()) {
+            // Não precisamos listar tudo; quem consumir pode tratar esse sentinel
+            // ou simplesmente usar canGrant/canGrantAll que já respeitam o bypass.
+            return ['*' => ['*']];
+        }
+
+        // Tabelas
+        $ugTable      = class_exists(\croacworks\essentials\models\UserGroup::class)
             ? \croacworks\essentials\models\UserGroup::tableName()
             : '{{%user_groups}}';
-        $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $rolesTable  = \croacworks\essentials\models\Role::tableName();
+        $groupsTable  = \croacworks\essentials\models\Group::tableName();
+        $rolesTable   = \croacworks\essentials\models\Role::tableName();
 
+        // 1) Groups do usuário: principal + extras de user_groups
         $groupIds = [];
-        if ($user->group_id) $groupIds[] = (int)$user->group_id;
+        if (!empty($user->group_id)) $groupIds[] = (int)$user->group_id;
 
         $extraGroupIds = (new Query())
             ->select(['ug.group_id'])
@@ -37,36 +50,101 @@ class GrantScopeService
 
         $groupIds = array_values(array_unique(array_merge($groupIds, $extraGroupIds)));
 
-        if (!$groupIds) return [];
+        // 2) Roles efetivas (por grupo E por usuário)
+        $q = (new Query())
+            ->select(['controller', 'actions'])
+            ->from($rolesTable);
 
-        // 2) Pegar as roles efetivas desses grupos
-        $rows = (new Query())
-            ->select(['controller','actions'])
-            ->from($rolesTable)
-            ->where(['group_id' => $groupIds])
-            ->all();
+        $where = ['or'];
+        if ($groupIds) {
+            $where[] = ['group_id' => $groupIds];
+        }
+        $where[] = ['user_id' => (int)$user->id];
 
+        $rows = $q->where($where)->all();
+
+        // 3) Montar mapa normalizado
         $map = [];
         foreach ($rows as $r) {
-            $c = $r['controller'];
-            $a = $r['actions'] ?: '*';
+            $c = (string)$r['controller'];
+            $a = trim((string)($r['actions'] ?? ''));
+
+            if ($c === '') continue;
+
             if (!isset($map[$c])) $map[$c] = [];
-            // normalizar '*' (qualquer action naquele controller)
-            if ($a === '*') { $map[$c] = ['*']; continue; }
-            if ($map[$c] !== ['*']) $map[$c][] = $a;
+
+            // '*' domina
+            if ($a === '*' || $a === '') {
+                $map[$c] = ['*'];
+                continue;
+            }
+
+            // pode ter várias actions separadas por ';'
+            $parts = array_filter(array_map('trim', explode(';', $a)), fn($x) => $x !== '');
+            if ($parts) {
+                if ($map[$c] !== ['*']) {
+                    $map[$c] = array_values(array_unique(array_merge($map[$c], $parts)));
+                }
+            }
         }
-        // ordenar e remover duplicatas
-        foreach ($map as $c => $list) {
-            if ($list !== ['*']) $map[$c] = array_values(array_unique($list));
-        }
+
         return $map;
     }
 
+    /**
+     * Verifica se o usuário atual pode conceder UMA action de um controller.
+     * Bypass para master.
+     */
     public static function canGrant(string $controller, string $action): bool
     {
+        // ✅ Master concede tudo
+        if (AuthorizationController::isMaster()) return true;
+
         $scope = self::currentUserGrantScope();
+
+        // Sentinel de acesso total no escopo
+        if (isset($scope['*']) && $scope['*'] === ['*']) return true;
+
         if (!isset($scope[$controller])) return false;
         $allowed = $scope[$controller];
         return $allowed === ['*'] || in_array($action, $allowed, true);
     }
+
+    /**
+     * Verifica múltiplas actions de uma vez (todas devem ser permitidas).
+     */
+    public static function canGrantAll(string $controller, array $actions): bool
+    {
+        if (AuthorizationController::isMaster()) return true;
+        foreach ($actions as $a) {
+            if (!self::canGrant($controller, $a)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Filtra um conjunto de actions retornando apenas as que o usuário pode conceder
+     * para aquele controller. Para master, devolve todas.
+     */
+    public static function grantablesForController(string $controller, array $allActions): array
+    {
+        if (AuthorizationController::isMaster()) return array_values(array_unique($allActions));
+
+        $scope = self::currentUserGrantScope();
+
+        // Acesso total por sentinel
+        if (isset($scope['*']) && $scope['*'] === ['*']) {
+            return array_values(array_unique($allActions));
+        }
+
+        if (!isset($scope[$controller])) return [];
+
+        $allowed = $scope[$controller];
+        if ($allowed === ['*']) return array_values(array_unique($allActions));
+
+        // Interseção
+        $allowedSet = array_flip($allowed);
+        return array_values(array_filter($allActions, fn($a) => isset($allowedSet[$a])));
+    }
+
 }
