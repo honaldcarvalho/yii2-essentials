@@ -171,36 +171,30 @@ class AuthorizationController extends CommonController
      */
     public static function groupScopeIds(): array
     {
-        // Pega todos os grupos do usuário (principal + adicionais)
-        $baseIds = self::getAllUserGroupIds();
-        if (empty($baseIds)) return [];
+        $gid = static::currentGroupId();
+        if (!$gid) return [];
 
-        // Cache simples por conjunto de grupos do usuário
-        $keyParts  = array_map('intval', $baseIds);
-        sort($keyParts, SORT_NUMERIC);
-        $cacheKey = 'group-descendants:' . implode(',', $keyParts);
+        $gid = (int)$gid;
+        $cacheKey = 'group-family:' . $gid;
 
         $ids = Yii::$app->cache->get($cacheKey);
         if ($ids === false) {
-            $set = [];
-            foreach ($baseIds as $gid) {
-                try {
-                    // ❗ NÃO suba pro root. Escopo = [$gid] + descendentes de $gid
-                    $branch = \croacworks\essentials\models\Group::familyIdsByRoot((int)$gid);
-                } catch (\Throwable $e) {
-                    $branch = [(int)$gid];
-                }
-                foreach ((array)$branch as $id) {
-                    $set[(int)$id] = true;
-                }
+            try {
+                // root da árvore do grupo atual
+                $rootId = \croacworks\essentials\models\Group::getRootId($gid);
+                // todos os ids (root + descendentes). Já possui fallback sem CTE.
+                $ids = \croacworks\essentials\models\Group::familyIdsByRoot((int)$rootId);
+            } catch (\Throwable $e) {
+                // fail-safe: pelo menos o próprio grupo
+                $ids = [$gid];
             }
-            $ids = array_keys($set);
-            sort($ids, SORT_NUMERIC);
 
-            Yii::$app->cache->set($cacheKey, $ids, 60);
+            // normaliza
+            $ids = array_values(array_unique(array_map('intval', (array)$ids)));
+            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s
         }
 
-        return $ids;
+        return !empty($ids) ? $ids : [$gid];
     }
 
     public static function isMaster(): bool
@@ -717,27 +711,12 @@ class AuthorizationController extends CommonController
 
         // ⬇️ AQUI: usar família (próprio + ancestrais), não só os grupos do usuário
         if ($model && $model->verGroup) {
-            // Constrói o escopo efetivo como união de "cada grupo do usuário + descendentes"
-            $userGroupIds = self::getAllUserGroupIds(); // principal + adicionais
-            $effective = [];
+            $groups = \croacworks\essentials\models\Group::familyIdsFromUser(self::User());
+            $groups = array_map('intval', (array)$groups);
 
-            foreach ($userGroupIds as $gId) {
-                try {
-                    $branch = \croacworks\essentials\models\Group::familyIdsByRoot((int)$gId);
-                } catch (\Throwable $e) {
-                    $branch = [(int)$gId];
-                }
-                foreach ((array)$branch as $id) {
-                    $effective[(int)$id] = true;
-                }
-            }
-
-            $allowedGroupIds = array_keys($effective);
-
-            // exceção apenas para "view" de conteúdo realmente público (group_id = 1)
             if ($request_action === 'view' && (int)$model->group_id === 1) {
                 // público
-            } elseif (!in_array((int)$model->group_id, $allowedGroupIds, true)) {
+            } elseif (!in_array((int)$model->group_id, $groups, true)) {
                 return false;
             }
         }
