@@ -193,12 +193,12 @@ class RoleController extends AuthorizationController
         }
 
         try {
-            // Se quiser ver de onde veio cada action, troque para true
-            $result = self::collectControllerActions($controllerClass, false);
+            $result = self::collectControllerActions($controllerClass, true); // <-- TRUE
 
             return [
                 'success' => true,
-                'actions' => array_values($result),
+                'actions' => array_values($result['list']),
+                'origins' => $result['origins'], // actionId => FQCN (ou Controller::actions())
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
