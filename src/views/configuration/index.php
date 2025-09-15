@@ -3,6 +3,7 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use croacworks\essentials\components\gridview\ActionColumnCustom;
+use yii\web\View;
 
 /* @var $this yii\web\View */
 /* @var $searchModel croacworks\essentials\models\ParamSearch */
@@ -10,6 +11,88 @@ use croacworks\essentials\components\gridview\ActionColumnCustom;
 
 $this->title = Yii::t('app', 'Configuration');
 $this->params['breadcrumbs'][] = $this->title;
+
+$csrfParam = Yii::$app->request->csrfParam;
+$csrfToken = Yii::$app->request->getCsrfToken();
+
+$js = <<<JS
+(function(){
+  function swalLoading(title){
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: title || yii.t('app','Processing...'),
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+    } else {
+      console.log('[Clone] ' + yii.t('app','Loading...'));
+    }
+  }
+
+  function swalError(msg){
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        icon: 'error',
+        title: yii.t('app','Error'),
+        text: msg || yii.t('app','Operation failed.')
+      });
+    } else {
+      alert(msg || yii.t('app','Error'));
+    }
+  }
+
+  function swalSuccessAndGo(msg, url){
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        icon: 'success',
+        title: yii.t('app','Success'),
+        text: msg || yii.t('app','Completed.')
+      }).then(() => { if (url) window.location.href = url; });
+    } else {
+      if (url) window.location.href = url;
+    }
+  }
+
+  document.addEventListener('click', async function(ev){
+    const el = ev.target.closest('.action-clone');
+    if (!el) return;
+
+    ev.preventDefault();
+    const url = el.getAttribute('data-url');
+    if (!url) return;
+
+    swalLoading(yii.t('app','Cloning configuration...'));
+
+    try {
+      const form = new FormData();
+      form.append('{$csrfParam}', '{$csrfToken}');
+      const res = await fetch(url, {
+        method: 'POST',
+        body: form,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+
+      const isJson = (res.headers.get('content-type') || '').includes('application/json');
+      if (!isJson) {
+        window.location.reload();
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data && data.ok) {
+        swalSuccessAndGo(data.message || yii.t('app','Configuration cloned successfully.'), data.redirectUrl);
+      } else {
+        swalError((data && data.message) ? data.message : yii.t('app','Unknown error while cloning.'));
+      }
+    } catch (e) {
+      swalError(e && e.message ? e.message : yii.t('app','Network error while cloning.'));
+    }
+  }, false);
+})();
+JS;
+
+$this->registerJs($js, View::POS_END);
 ?>
 <div class="container-fluid">
     <div class="row">

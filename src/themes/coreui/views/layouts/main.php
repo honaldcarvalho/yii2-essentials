@@ -66,6 +66,9 @@ $theme = Yii::$app->user->identity->profile->theme;
             $.fancybox.hideLoading();
         });
   JS, View::POS_END);
+
+  $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_HEAD);
+
   ?>
 </head>
 

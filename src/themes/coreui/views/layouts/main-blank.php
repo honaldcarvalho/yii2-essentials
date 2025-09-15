@@ -10,6 +10,7 @@ use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
+use yii\web\View;
 
 PjaxHelperAsset::register($this);
 CoreuiAsset::register($this);
@@ -21,7 +22,7 @@ if(Yii::$app->user->identity === null){
     return (new CommonController(0,0))->redirect(['site/login']); 
 }
 $theme = Yii::$app->user->identity->profile->theme;
-
+$this->registerJs("yii.t = function(category, message){ return message; };", View::POS_HEAD);
 ?>
 <?php $this->beginPage() ?>
 <!doctype html >

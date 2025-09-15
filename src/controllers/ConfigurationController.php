@@ -9,6 +9,7 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\services\Notify;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 
 /**
  * ConfigurationController implements the CRUD actions for Configuration model.
@@ -163,62 +164,110 @@ class ConfigurationController extends AuthorizationController
     }
 
 
+    /**
+     * Clona uma Configuration com suas relações.
+     * Retorna JSON quando a requisição é AJAX (fetch), com redirectUrl.
+     */
     public function actionClone($id)
     {
+        Yii::$app->response->format = Yii::$app->request->isAjax ? Response::FORMAT_JSON : Response::FORMAT_HTML;
+
         $original = Configuration::findOne($id);
         if (!$original) {
+            if (Yii::$app->response->format === Response::FORMAT_JSON) {
+                return ['ok' => false, 'message' => 'Configuração não encontrada.'];
+            }
             throw new NotFoundHttpException('A configuração não foi encontrada.');
         }
 
-        $transaction = Yii::$app->db->beginTransaction();
-
+        $tx = Yii::$app->db->beginTransaction();
         try {
-            // Clona configuração principal
+            // Copia atributos (exceto PK e datas)
             $clone = new Configuration();
-            $clone->attributes = $original->attributes;
+            $attrs = $original->getAttributes(null, ['id','created_at','updated_at']);
+            $clone->setAttributes($attrs, false);
 
-            // Ajusta campos únicos
-            if ($clone->hasAttribute('slug')) {
-                $clone->slug .= '-clone-' . time();
+            // Ajustes de campos potencialmente únicos (se existirem no schema)
+            if ($clone->hasAttribute('slug') && $clone->slug) {
+                $clone->slug = $clone->slug . '-clone-' . time();
             }
-            if ($clone->hasAttribute('name')) {
-                $clone->name .= ' (Clone)';
+            if ($clone->hasAttribute('name') && $clone->name) {
+                $clone->name = $clone->name . ' (Clone)';
+            }
+            if ($clone->hasAttribute('title') && $clone->title) {
+                $clone->title = $clone->title . ' (Clone)';
             }
 
-            unset($clone->id);
-
+            // Tenta salvar; se houver UNIQUE (ex.: host), faz fallback suave
             if (!$clone->save()) {
-                throw new \Exception('Erro ao salvar configuração clonada.');
-            }
-
-            // Clona meta tags
-            foreach ($original->metaTags as $meta) {
-                $newMeta = new MetaTag();
-                $newMeta->attributes = $meta->attributes;
-                unset($newMeta->id);
-                $newMeta->configuration_id = $clone->id;
-                if (!$newMeta->save(false)) {
-                    throw new \Exception('Erro ao clonar meta tag.');
+                // Tentativa de fallback se 'host' for único
+                if ($clone->hasAttribute('host') && $clone->host) {
+                    $clone->host = $clone->host . '-clone-' . substr((string)time(), -5);
+                    if (!$clone->save()) {
+                        throw new \Exception('Erro ao salvar configuração clonada: ' . json_encode($clone->getFirstErrors()));
+                    }
+                } else {
+                    throw new \Exception('Erro ao salvar configuração clonada: ' . json_encode($clone->getFirstErrors()));
                 }
             }
 
-            // Clona parâmetros
-            foreach ($original->parameters as $param) {
-                $newParam = new Parameter();
-                $newParam->attributes = $param->attributes;
-                unset($newParam->id);
-                $newParam->configuration_id = $clone->id;
-                if (!$newParam->save(false)) {
-                    throw new \Exception('Erro ao clonar parâmetro.');
+            // Clona MetaTags (se relação existir)
+            if (property_exists($original, 'metaTags') || method_exists($original, 'getMetaTags')) {
+                foreach ($original->metaTags as $meta) {
+                    $newMeta = new MetaTag();
+                    $newMeta->setAttributes($meta->getAttributes(null, ['id','created_at','updated_at']), false);
+                    $newMeta->configuration_id = $clone->id;
+                    if (!$newMeta->save(false)) {
+                        throw new \Exception('Erro ao clonar meta tag.');
+                    }
                 }
             }
 
-            $transaction->commit();
+            // Clona Parameters (se relação existir)
+            if (property_exists($original, 'parameters') || method_exists($original, 'getParameters')) {
+                foreach ($original->parameters as $param) {
+                    $newParam = new Parameter();
+                    $newParam->setAttributes($param->getAttributes(null, ['id','created_at','updated_at']), false);
+                    $newParam->configuration_id = $clone->id;
+                    if (!$newParam->save(false)) {
+                        throw new \Exception('Erro ao clonar parâmetro.');
+                    }
+                }
+            }
+
+            $tx->commit();
+
+            // Notificação
+            Yii::$app->notify->createForGroup(
+                $clone->group_id,
+                Yii::t('app','Configurations'),
+                Yii::t('app','Configuration cloned'),
+                'system',
+                "/configuration/{$clone->id}",
+                true,
+                null
+            );
+
+            // Respostas
+            if (Yii::$app->response->format === Response::FORMAT_JSON) {
+                return [
+                    'ok' => true,
+                    'message' => 'Configuração clonada com sucesso.',
+                    'redirectUrl' => Yii::$app->urlManager->createUrl(['/configuration/view', 'id' => $clone->id]),
+                ];
+            }
+
             Yii::$app->session->setFlash('success', 'Configuração clonada com sucesso.');
             return $this->redirect(['view', 'id' => $clone->id]);
+
         } catch (\Throwable $e) {
-            $transaction->rollBack();
-            Yii::error("Erro ao clonar configuração: " . $e->getMessage(), __METHOD__);
+            $tx->rollBack();
+            Yii::error("Erro ao clonar configuração: {$e->getMessage()}", __METHOD__);
+
+            if (Yii::$app->response->format === Response::FORMAT_JSON) {
+                return ['ok' => false, 'message' => 'Erro ao clonar: ' . $e->getMessage()];
+            }
+
             Yii::$app->session->setFlash('error', 'Erro ao clonar a configuração: ' . $e->getMessage());
             return $this->redirect(['view', 'id' => $id]);
         }

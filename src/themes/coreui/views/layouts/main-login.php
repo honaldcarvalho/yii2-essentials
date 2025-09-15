@@ -9,6 +9,7 @@ use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
+use yii\web\View;
 
 CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
@@ -19,7 +20,7 @@ $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-es
 //     return (new CommonController(0,0))->redirect(['site/login']); 
 // }
 $theme = 'dark';//Yii::$app->user->identity->theme;
-
+$this->registerJs("yii.t = function(category, message){ return message; };", View::POS_HEAD);
 ?>
 <?php $this->beginPage() ?>
 <!doctype html >
