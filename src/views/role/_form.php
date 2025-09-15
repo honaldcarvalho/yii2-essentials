@@ -37,7 +37,7 @@ if (!$model->isNewRecord) {
 
   if (class_exists($controllerFQCN)) {
     // pega QUALIFICADAS, ex.: AuthorizationController\order-model
-    $availableActions = \croacworks\essentials\controllers\RoleController::collectQualifiedActions($controllerFQCN);
+    $availableActions = \croacworks\essentials\controllers\RoleController::collectControllerActions($controllerFQCN);
   }
 
   // Compat: se vieram ações antigas sem "\" (não qualificadas), prefixa com o short do controller atual
