@@ -64,93 +64,111 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
         }
 
         $script = <<< JS
-
-            function clearForms()
-            {
-                document.getElementById("form-{$this->uniqueId}").reset();
+            function clearForms() {
+                document.getElementById("form-{$this->uniqueId}")?.reset();
                 $(':input').not(':button, :submit, :reset, :hidden, :checkbox, :radio').val('');
-                $('#btn-add-translate').prop('disabled',false);
+                $('#btn-add-translate').prop('disabled', false);
                 $('select').val(null).trigger('change');
                 return true;
-            }   
+            }
+
+            // Mensagens em inglês + i18n
+            function toastSuccessDefault()  { toastr.success(yii.t('app','Success!')); }
+            function toastFailDefault()     { toastr.error(yii.t('app','Operation failed.')); }
+            function toastOrderUpdated()    { toastr.success(yii.t('app','Order updated.')); }
+            function toastOrderError()      { toastr.error(yii.t('app','Failed to update order. Please reload the page.')); }
+            function toastLoadError(ctrl)   { toastr.error(yii.t('app','Error loading {controller}.', {controller: ctrl || 'data'})); }
+            function toastRemoveError(ctrl) { toastr.error(yii.t('app','Error removing {controller}.', {controller: ctrl || 'data'})); }
+
+            // SweetAlert helpers (i18n)
+            function swalLoading(title) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: title || yii.t('app','Processing...'),
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                } else {
+                    console.log('[Loader] ' + (title || yii.t('app','Processing...')));
+                }
+            }
+            function swalClose() {
+                if (typeof Swal !== 'undefined') Swal.close();
+            }
 
             function get{$this->model}(e) {
-
                 let el = $(e);
-
-                object = el.children("i");
-                let old_class = el.children("i").attr('class');
-                object.removeClass(old_class);
-                object.addClass('fas fa-sync fa-spin');
+                let object = el.children("i");
+                let old_class = object.attr('class');
+                object.removeClass(old_class).addClass('fas fa-sync fa-spin');
 
                 $.ajax({
                     type: "POST",
                     url: el.data('link'),
-                }).done(function(response) {     
-                    if(response == null){
-                        toastr.error("Error on load {$this->controller}!");
+                }).done(function(response) {
+                    if (response == null) {
+                        toastLoadError("{$this->controller}");
                         return false;
                     } else {
                         Object.entries(response).forEach(([key, value]) => {
-                            var el = $(`#{$this->controller}-\${key}`);
-                            if(el.attr('type') == 'checkbox') {
-                                if (value === 1) {
-                                    el.prop('checked', true);
-                                } else {
-                                    el.prop('checked', false);
-                                }
-                            } else if(el.attr('type') == 'select') {
-                                el.val(value);
-                                el.trigger('change');
+                            var inp = $("#{$this->controller}-" + key);
+                            if (inp.attr('type') == 'checkbox') {
+                                inp.prop('checked', value === 1);
+                            } else if (inp.attr('type') == 'select') {
+                                inp.val(value).trigger('change');
                             } else {
-                                el.val(value);
+                                inp.val(value);
                             }
                         });
-                        modal_{$this->model}.show();
+                        if (typeof window['modal_{$this->model}'] !== 'undefined') {
+                            window['modal_{$this->model}'].show();
+                        }
                     }
-                }).fail(function (response) {
-                    toastr.error("Error on remove {$this->controller}!");
-                }).always(function (response) {
-                    object.removeClass('fas fa-sync fa-spin');
-                    object.attr('class',old_class);
+                }).fail(function () {
+                    toastRemoveError("{$this->controller}");
+                }).always(function () {
+                    object.removeClass('fas fa-sync fa-spin').attr('class', old_class);
                 });
             }
 
-            function callAction(e,id,action){
-                let items  = [];
-                let i = 0;
+            function callAction(e, id, action) {
                 let el = $(e);
-                let old_class = el.children("i").attr('class');
                 let object = el.children("i");
+                let old_class = object.attr('class');
 
-                el.prop('disabled',true);
-                object.removeClass(old_class);
-                object.addClass('fas fa-sync fa-spin');
-
+                el.prop('disabled', true);
+                object.removeClass(old_class).addClass('fas fa-sync fa-spin');
                 $('#overlay-{$this->uniqueId}').show();
-                $( "#grid-{$this->uniqueId} .table tbody tr" ).each(function( index ) {
-                    items[items.length] = $( this ).attr("data-key");
-                });
+
                 $.ajax({
                     method: "POST",
-                    url: `/{$this->controller}/\${action}?id=\${id}`
-                }).done(function(response) {        
-                    toastr.success("Success!");  
-                    $.pjax.reload({container: "#grid-{$this->uniqueId}", async: false}); 
-                    return false;
-                }).fail(function (response) {
-                    toastr.error("Fail!");
-                }).always(function (response) {
+                    url: "/{$this->controller}/" + action + "?id=" + id
+                }).done(function() {
+                    toastSuccessDefault();
+                    $.pjax.reload({container: "#grid-{$this->uniqueId}", async: false});
+                }).fail(function () {
+                    toastFailDefault();
+                }).always(function () {
                     $('#overlay-{$this->uniqueId}').hide();
-                    el.prop('disabled',false);
-                    object.removeClass('fas fa-sync fa-spin');
-                    object.attr('class',old_class);
+                    el.prop('disabled', false);
+                    object.removeClass('fas fa-sync fa-spin').attr('class', old_class);
                 });
             }
 
-            $(function(){
+            // 🔹 Handler UNIVERSAL do botão {clone} — usa a actionClone padrão
+            // Mostra um loading SweetAlert e redireciona (sem AJAX) para /<controller>/clone?id=<id>
+            $(document).on('click', '.action-clone', function(ev){
+                ev.preventDefault();
+                const url = this.getAttribute('data-link');
+                if (!url) return;
 
-                if($order == 1){
+                swalLoading(yii.t('app','Cloning...'));
+                // Redireciona para a actionClone universal do CommonController
+                window.location.href = url;
+            });
+
+            $(function(){
+                if({$order} == 1){
                     setSortable();
                 }
                 $(document).on('pjax:start', function() {
@@ -159,45 +177,38 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
                 $(document).on('pjax:complete', function() {
                     $('#overlay-{$this->uniqueId}').hide();
                 });
-
             });
         JS;
 
-        $script_order = <<< JS
-
+                $script_order = <<< JS
             function updateOrder(){
-                let items  = [];
-                let i = 0;
+                let items = [];
 
                 $('#overlay-{$this->uniqueId}').show();
-                $( "#grid-{$this->uniqueId} .table tbody tr" ).each(function( index ) {
-                    items[items.length] = $( this ).attr("data-key");
+                $("#grid-{$this->uniqueId} .table tbody tr").each(function(){
+                    items.push($(this).attr("data-key"));
                 });
 
                 $.ajax({
                     method: "POST",
                     url: '/{$this->controller}/order-model',
-                    data: {'items':items,'field':'{$this->orderField}','modelClass':'$this->orderModel'}
-                }).done(function(response) {        
-                    toastr.success("atualizado");  
-                    $.pjax.reload({container: "#grid-{$this->uniqueId}", async: false}); 
+                    data: {'items': items, 'field': '{$this->orderField}', 'modelClass': '$this->orderModel'}
+                }).done(function() {
+                    toastOrderUpdated();
+                    $.pjax.reload({container: "#grid-{$this->uniqueId}", async: false});
                     setSortable();
-                }).fail(function (response) {
-                    toastr.error("Error ao atualizar a ordem. Recarregue a pagina");
-                }).always(function (response) {
+                }).fail(function () {
+                    toastOrderError();
+                }).always(function () {
                     $('#overlay-{$this->uniqueId}').hide();
                 });
-
             }
 
             function setSortable(){
                 jQuery("#grid-{$this->uniqueId} .table tbody").sortable({
-                    update: function(event, ui) {
-                        updateOrder();
-                    }
+                    update: function() { updateOrder(); }
                 });
             }
-        
         JS;
 
         $view = Yii::$app->view;
@@ -205,7 +216,6 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
         if ($this->order)
             $view->registerJs($script_order, $view::POS_END);
         $view->registerJs($script, $view::POS_END);
-
     }
 
     protected function initDefaultButtons()
@@ -216,9 +226,10 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
         $this->initDefaultButton('edit', 'fa-pencil-alt');
         $this->initDefaultButton('update', 'fa-pencil-alt');
         $this->initDefaultButton('remove', 'fa-trash');
+
         $this->initDefaultButton('delete', 'fa-trash', [
-            'data-confirm' => Yii::t('yii', 'Você tem certeza que quer remover esse item?'),
-            'data-method' => 'post',
+            'data-confirm' => Yii::t('app', 'Are you sure you want to delete this item?'),
+            'data-method'  => 'post',
         ]);
 
         $this->registerScript();
@@ -282,17 +293,27 @@ class ActionColumnCustom extends \yii\grid\ActionColumn
                         $link = Html::a($icon, $url, $options);
                         break;
                     case 'clone':
-                        $icon = Html::tag('i', '', ['class' => "fas fa-clone"]);
-                        $link = Html::a($icon,  "javascript:;", ['data-link'=> "/{$this->controller}/clone?id=$model->id", 'class'=>'btn btn-default']);
+                        $icon = Html::tag('i', '', ['class' => 'fas fa-clone']);
+                        // mantém o endpoint padrão: /<controller>/clone?id=<id>
+                        $link = Html::a(
+                            $icon,
+                            'javascript:;',
+                            [
+                                'data-link' => "/{$this->controller}/clone?id={$model->id}",
+                                'class'     => 'btn btn-outline-secondary action-clone', // <- classe universal
+                                'title'     => Yii::t('app', 'Clone'),
+                                'aria-label' => Yii::t('app', 'Clone'),
+                            ]
+                        );
                         break;
                     case 'edit':
-                        $link = Html::a($icon,  "javascript:;", ['data-link'=> "/{$this->controller}/get-model?modelClass={$this->model}&id=$model->id",'onclick'=>"get{$this->model}(this);", 'class'=>'btn btn-default']);
+                        $link = Html::a($icon,  "javascript:;", ['data-link' => "/{$this->controller}/get-model?modelClass={$this->model}&id=$model->id", 'onclick' => "get{$this->model}(this);", 'class' => 'btn btn-outline-secondary']);
                         break;
                     case 'remove':
-                        $link = Html::a($icon,  "javascript:;", ['onclick'=>"callAction(this,{$model->id},'remove')", 'class'=>'btn btn-default']);
+                        $link = Html::a($icon,  "javascript:;", ['onclick' => "callAction(this,{$model->id},'remove')", 'class' => 'btn btn-outline-secondary']);
                         break;
                     case 'status':
-                        $link = Html::a('<i class="fas fa-toggle-'.(!$model->status ? 'off' : 'on').'"></i>',  "javascript:;", ['onclick'=>"callAction(this,{$model->id},'status')", 'class'=>'btn btn-default']);
+                        $link = Html::a('<i class="fas fa-toggle-' . (!$model->status ? 'off' : 'on') . '"></i>',  "javascript:;", ['onclick' => "callAction(this,{$model->id},'status')", 'class' => 'btn btn-outline-secondary']);
                         break;
                     default:
                         $link = Html::a($icon, $url, $options);

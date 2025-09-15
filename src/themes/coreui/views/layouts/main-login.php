@@ -20,7 +20,7 @@ $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-es
 //     return (new CommonController(0,0))->redirect(['site/login']); 
 // }
 $theme = 'dark';//Yii::$app->user->identity->theme;
-$this->registerJs("yii.t = function(category, message){ return message; };", View::POS_HEAD);
+$this->registerJs("yii.t = function(category, message){ return message; };", View::POS_END);
 ?>
 <?php $this->beginPage() ?>
 <!doctype html >
