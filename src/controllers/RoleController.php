@@ -97,11 +97,11 @@ class RoleController extends AuthorizationController
 
     public static function getAllControllersRestricted(): array
     {
-        $all = self::getAllControllers();
 
         if (AuthorizationController::isMaster()) {
-            return $all;
+            return ['*' => '*'];
         }
+        $all = self::getAllControllers();
 
         $scope = GrantScopeService::currentUserGrantScope();
 
