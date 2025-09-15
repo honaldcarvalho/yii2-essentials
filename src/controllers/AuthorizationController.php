@@ -207,8 +207,8 @@ class AuthorizationController extends CommonController
 
         // Tabelas (sem disparar AR::find())
         $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
-            ? \croacworks\essentials\models\UserGroup::tableName()
+        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+            ? \croacworks\essentials\models\UsersGroup::tableName()
             : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)
@@ -257,8 +257,8 @@ class AuthorizationController extends CommonController
 
         // Tabelas (sem disparar AR::find())
         $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
-            ? \croacworks\essentials\models\UserGroup::tableName()
+        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
+            ? \croacworks\essentials\models\UsersGroup::tableName()
             : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)
