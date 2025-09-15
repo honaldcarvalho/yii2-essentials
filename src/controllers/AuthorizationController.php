@@ -176,19 +176,27 @@ class AuthorizationController extends CommonController
         $gid = static::currentGroupId();
         if (!$gid) return [];
 
+        $gid = (int)$gid;
         $cacheKey = 'group-family:' . $gid;
+
         $ids = Yii::$app->cache->get($cacheKey);
         if ($ids === false) {
             try {
-                $ids = Group::familyIds($gid);
+                // root da árvore do grupo atual
+                $rootId = \croacworks\essentials\models\Group::getRootId($gid);
+                // todos os ids (root + descendentes). Já possui fallback sem CTE.
+                $ids = \croacworks\essentials\models\Group::familyIdsByRoot((int)$rootId);
             } catch (\Throwable $e) {
-                // Fallback se a instância não suporta CTE
-                $ids = Group::familyIdsNoCte($gid);
+                // fail-safe: pelo menos o próprio grupo
+                $ids = [$gid];
             }
-            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s de cache (ajuste à vontade)
+
+            // normaliza
+            $ids = array_values(array_unique(array_map('intval', (array)$ids)));
+            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s
         }
 
-        return $ids ?: [$gid];
+        return !empty($ids) ? $ids : [$gid];
     }
 
     public static function isMaster(): bool
@@ -207,8 +215,8 @@ class AuthorizationController extends CommonController
 
         // Tabelas (sem disparar AR::find())
         $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
-            ? \croacworks\essentials\models\UsersGroup::tableName()
+        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
+            ? \croacworks\essentials\models\UserGroup::tableName()
             : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)
@@ -257,8 +265,8 @@ class AuthorizationController extends CommonController
 
         // Tabelas (sem disparar AR::find())
         $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
-            ? \croacworks\essentials\models\UsersGroup::tableName()
+        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
+            ? \croacworks\essentials\models\UserGroup::tableName()
             : '{{%user_groups}}'; // fallback
 
         // Pega o group_id direto do identity (não faz query extra)

@@ -97,11 +97,11 @@ class RoleController extends AuthorizationController
 
     public static function getAllControllersRestricted(): array
     {
+        $all = self::getAllControllers();
 
         if (AuthorizationController::isMaster()) {
-            return ['*' => '*'];
+            return $all;
         }
-        $all = self::getAllControllers();
 
         $scope = GrantScopeService::currentUserGrantScope();
 
@@ -117,67 +117,68 @@ class RoleController extends AuthorizationController
         return array_intersect_key($all, $scopeMap);
     }
 
-    public static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
+    private static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
     {
-        $ids = [];
-        $orig = [];
+        $byMethod = [];
+        $origins  = [];
 
-        $ref = new \ReflectionClass($controllerClass);
-
-        // 1) Métodos action* (públicos)
-        foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m) {
-            $name = $m->getName();
-            if (strpos($name, 'action') === 0 && $name !== 'actions') {
-                $id = \yii\helpers\Inflector::camel2id(substr($name, 6));
-                $ids[$id] = true;
+        // 1) Métodos action* (públicos), incluindo herdados
+        $ref = new ReflectionClass($controllerClass);
+        foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            $name = $method->getName();
+            if (str_starts_with($name, 'action') && $name !== 'actions') {
+                // transforma actionXpto => xpto (camel2id)
+                $id = Inflector::camel2id(substr($name, 6));
+                $byMethod[$id] = true;
                 if ($withOrigins) {
-                    $orig[$id] = (new \ReflectionClass($m->getDeclaringClass()->getName()))->getShortName();
+                    $origins[$id] = $method->getDeclaringClass()->getName();
                 }
             }
         }
 
-        // 2) actions() mapeadas
+        // 2) External actions via actions() (se possível instanciar o controller)
+        $byMap = [];
         try {
+            // Deriva um ID simples a partir do nome da classe (EmailServiceController => email-service)
             $short = preg_replace('/Controller$/', '', $ref->getShortName());
-            $ctrlId = \yii\helpers\Inflector::camel2id($short);
+            $id    = Inflector::camel2id($short);
+
+            // Tenta instanciar: __construct($id, $module, $config = [])
             /** @var \yii\web\Controller $instance */
-            $instance = new $controllerClass($ctrlId, \Yii::$app);
+            $instance = new $controllerClass($id, \Yii::$app);
             $map = $instance->actions();
             if (is_array($map)) {
-                // quem declara o método actions()
-                try {
-                    $declShort = $ref->getMethod('actions')->getDeclaringClass()->getShortName();
-                } catch (\Throwable $e) {
-                    $declShort = $ref->getShortName();
-                }
-                foreach (array_keys($map) as $k) {
-                    $k = trim((string)$k);
-                    if ($k === '') continue;
-                    $ids[$k] = true;
-                    if ($withOrigins) {
-                        $orig[$k] = $orig[$k] ?? $declShort;
+                foreach (array_keys($map) as $key) {
+                    $key = trim((string)$key);
+                    if ($key !== '') {
+                        $byMap[$key] = true;
+                        if ($withOrigins && !isset($origins[$key])) {
+                            // marca origem como "actions()"
+                            $origins[$key] = $controllerClass . '::actions()';
+                        }
                     }
                 }
             }
         } catch (\Throwable $e) {
-            // silencioso
+            // silencioso: se não der p/ instanciar, apenas não coleta actions() mapeadas
         }
 
-        $list = array_keys($ids);
-        sort($list, SORT_NATURAL);
+        // 3) Merge final (set union)
+        $all = array_keys($byMethod + $byMap);
+        sort($all);
 
+        // Se quiser devolver as origens também:
         if ($withOrigins) {
-            // garante apenas chaves existentes em list
-            $o = [];
-            foreach ($list as $k) {
-                $o[$k] = $orig[$k] ?? $ref->getShortName();
+            // mantém apenas origens de keys existentes
+            $orig = [];
+            foreach ($all as $k) {
+                $orig[$k] = $origins[$k] ?? $controllerClass;
             }
-            return ['list' => $list, 'origins' => $o];
+            return ['list' => $all, 'origins' => $orig];
         }
 
-        return $list;
+        return $all;
     }
-
 
     /**
      * AJAX: Retorna actions de um controller FQCN (inclui herdadas e as de actions()).
@@ -192,11 +193,12 @@ class RoleController extends AuthorizationController
         }
 
         try {
-            $res = self::collectControllerActions($controllerClass, true);
+            // Se quiser ver de onde veio cada action, troque para true
+            $result = self::collectControllerActions($controllerClass, false);
+
             return [
                 'success' => true,
-                'actions' => array_values($res['list']), // ['index','create',...]
-                'origins' => $res['origins'],            // ['index'=>'AuthorizationController', ...]
+                'actions' => array_values($result),
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];

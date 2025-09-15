@@ -3,7 +3,7 @@
 /** @var croacworks\essentials\models\RoleTemplate $model */
 /** @var yii\widgets\ActiveForm $form */
 
-use croacworks\essentials\controllers\RoleController; // helper reutilizado
+use croacworks\essentials\controllers\RoleController; // pode reutilizar este helper
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -11,17 +11,16 @@ use croacworks\essentials\widgets\form\ActiveForm;
 
 PluginAsset::register($this)->add(['multiselect']);
 
-$controllers      = RoleController::getAllControllersRestricted();
-$actionUrl        = Url::to(['role/get-actions']);
+$controllers = RoleController::getAllControllersRestricted();
+$actionUrl      = Url::to(['role/get-actions']);
 
-$origins          = [];
-$savedActions     = [];
+$origins        = [];
+$savedActions   = [];
 $availableActions = [];
-$originMap        = []; // id cru => ControllerShortName
-$fromActions      = [];
-$toActions        = [];
+$fromActions    = [];
+$toActions      = [];
 
-/** Pré-carrega dados quando editando */
+// Pré-carrega dados quando editando
 if (!$model->isNewRecord) {
     // origins em array (campo é string com ';')
     if (!empty($model->origin)) {
@@ -31,27 +30,17 @@ if (!$model->isNewRecord) {
         }
     }
 
-    // actions salvas (podem estar qualificadas ou cruas)
+    // actions salvas
     $savedActions = $model->actions ? array_values(array_filter(array_map('trim', explode(';', $model->actions)))) : [];
 
-    // Descobre actions do controller atual (ids crus + mapa de origem)
+    // Descobre actions do controller atual
     $controllerFQCN = $model->controller;
     if ($controllerFQCN && class_exists($controllerFQCN)) {
-        $res = RoleController::collectControllerActions($controllerFQCN, true);
-        $availableActions = $res['list'];     // ['index','create',...]
-        $originMap        = $res['origins'];  // ['index'=>'AuthorizationController', ...]
-        sort($availableActions, SORT_NATURAL);
-    }
-
-    // Normaliza: se alguma action salva vier qualificada (Controller\id), mantém só a parte após "\"
-    if ($savedActions) {
-        $savedActions = array_map(static function ($a) {
-            $a = trim((string)$a);
-            if ($a === '') return '';
-            $pos = strrpos($a, '\\');
-            return $pos !== false ? substr($a, $pos + 1) : $a;
-        }, $savedActions);
-        $savedActions = array_values(array_filter($savedActions, static fn($v) => $v !== ''));
+        $methods = get_class_methods($controllerFQCN);
+        $availableActions = array_filter($methods, fn($m) => str_starts_with($m, 'action'));
+        // remove prefixo "action" e converte camelCase para id (ex.: actionGetItems -> get-items)
+        $availableActions = array_map(fn($a) => \yii\helpers\Inflector::camel2id(substr($a, 6)), $availableActions);
+        sort($availableActions);
     }
 
     // dual list
@@ -59,15 +48,10 @@ if (!$model->isNewRecord) {
     $toActions   = $savedActions;
 }
 
-/** Helper para rotular com "ControllerShortName\action" */
-$labelOf = function (string $id) use ($originMap): string {
-    $decl = $originMap[$id] ?? '';
-    return ($decl !== '' ? $decl . '\\' : '') . $id;
-};
-
 $js = <<<JS
 (function(){
     // inicializa multiselect das duas listas
+    // (o plugin usado pelo PluginAsset 'multiselect' espera estes IDs)
     $('#multiselect').multiselect();
     $('#multiselect_to').multiselect();
 
@@ -76,51 +60,35 @@ $js = <<<JS
     $('#roletemplate-origin').select2({width:'100%',allowClear:true,placeholder:'',multiple:true});
     $('#roletemplate-level').select2({width:'100%',allowClear:true,placeholder:'-- Level --'});
 
-    function buildOptions(actions, origins) {
-        var html = '';
-        (actions || []).forEach(function(id){
-            var decl  = (origins && origins[id]) ? origins[id] : '';
-            var label = (decl ? decl + '\\\\' : '') + id; // duplica a barra no JS string
-            html += '<option value="'+id+'" data-decl="'+decl+'" title="'+label+'">'+label+'</option>';
-        });
-        return html;
-    }
-
-    // Buscar actions do controller via AJAX (value cru; label qualificado)
+    // Buscar actions do controller via AJAX
     $('#roletemplate-controller').on('change', function () {
-        var controller = $(this).val();
+        let controller = $(this).val();
         $('#multiselect').empty();
         $('#multiselect_to').empty();
 
         if (!controller) return;
 
-        $.post('{$actionUrl}', { controller: controller }, function(res) {
+        $.post('{$actionUrl}', { controller }, function(res) {
             if (res && res.success) {
-                var options = buildOptions(res.actions, res.origins);
+                let options = '';
+                (res.actions || []).forEach(function(action) {
+                    options += `<option value="\${action}">\${action}</option>`;
+                });
                 $('#multiselect').html(options);
             } else {
-                if (window.Swal) {
-                    Swal.fire("Erro", (res && res.message) ? res.message : "Não foi possível carregar as actions", "error");
-                } else {
-                    alert((res && res.message) ? res.message : "Não foi possível carregar as actions");
-                }
+                Swal.fire("Erro", (res && res.message) ? res.message : "Não foi possível carregar as actions", "error");
             }
-        }, 'json').fail(function(xhr){
-            if (window.Swal) {
-                Swal.fire("Erro", xhr.responseText || "Falha na requisição", "error");
-            } else {
-                alert(xhr.responseText || "Falha na requisição");
-            }
-        });
+        }, 'json');
     });
 
     // Enter para adicionar origem no Select2
     $('#add_origin').on('keyup', function(event){
         if (event.keyCode === 13) {
-            var val = $('#add_origin').val().trim();
+            let val = $('#add_origin').val().trim();
             if (!val) return;
 
-            var option = new Option(val, val, true, true);
+            // cria opção dinâmica no select2 múltiplo
+            let option = new Option(val, val, true, true);
             $('#roletemplate-origin').append(option).trigger('change');
             $('#add_origin').val('');
         }
@@ -142,14 +110,15 @@ $js = <<<JS
 
     // Antes de enviar o form: empacota actions (lista "to") em string separada por ';'
     $('#roletemplate-form').on('submit', function(){
-        var selected = [];
+        let selected = [];
         $('#multiselect_to option').each(function(){
-            selected.push($(this).val()); // sempre o id cru
+            selected.push($(this).val());
         });
         $('#roletemplate-actions-hidden').val(selected.join(';'));
 
-        // Também empacota origins, se necessário
-        var origins = $('#roletemplate-origin').val() || [];
+        // Também empacota origins se necessário (caso backend espere string)
+        // Se o backend já aceita array e faz implode, pode remover este bloco.
+        let origins = $('#roletemplate-origin').val() || [];
         $('#roletemplate-origin-hidden').val(origins.join(';'));
     });
 })();
@@ -179,13 +148,14 @@ $this->registerJs($js);
     </div>
 
     <?php
-    // Campo principal de origins como múltiplo (Select2).
+    // Campo principal de origins como múltiplo (Select2). O atributo no model é string;
+    // se preferir armazenar array no POST e tratar no controller, deixe como está.
     echo $form->field($model, 'origin')->dropDownList(
         $origins,
         ['multiple' => true, 'id' => 'roletemplate-origin']
     )->label('Origins');
 
-    // Hidden opcional para enviar origins já “implodidos”.
+    // Hidden opcional para enviar origins já “implodidos” (se seu backend esperar string direta).
     echo Html::hiddenInput('RoleTemplate[originHidden]', '', ['id' => 'roletemplate-origin-hidden']);
     ?>
 
@@ -196,11 +166,7 @@ $this->registerJs($js);
                 <label for="multiselect"><?= Yii::t('app', 'Available actions') ?></label>
                 <select name="from[]" id="multiselect" class="form-control" size="10" multiple="multiple">
                     <?php foreach ($fromActions as $action): ?>
-                        <option value="<?= Html::encode($action) ?>"
-                                data-decl="<?= Html::encode($originMap[$action] ?? '') ?>"
-                                title="<?= Html::encode($labelOf($action)) ?>">
-                            <?= Html::encode($labelOf($action)) ?>
-                        </option>
+                        <option value="<?= Html::encode($action) ?>"><?= Html::encode($action) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -216,11 +182,7 @@ $this->registerJs($js);
                 <label for="multiselect_to"><?= Yii::t('app', 'Selected actions') ?></label>
                 <select name="to[]" id="multiselect_to" class="form-control" size="10" multiple="multiple">
                     <?php foreach ($toActions as $action): ?>
-                        <option value="<?= Html::encode($action) ?>"
-                                data-decl="<?= Html::encode($originMap[$action] ?? '') ?>"
-                                title="<?= Html::encode($labelOf($action)) ?>">
-                            <?= Html::encode($labelOf($action)) ?>
-                        </option>
+                        <option value="<?= Html::encode($action) ?>"><?= Html::encode($action) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -228,7 +190,7 @@ $this->registerJs($js);
     </div>
 
     <?php
-    // Hidden para salvar as actions selecionadas já concatenadas com ';' (ids crus)
+    // Hidden para salvar as actions selecionadas já concatenadas com ';'
     echo Html::activeHiddenInput($model, 'actions', ['id' => 'roletemplate-actions-hidden']);
     ?>
 
