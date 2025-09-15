@@ -228,6 +228,13 @@ class UserController extends AuthorizationController
 
                     $tx->commit();
                     Yii::$app->session->setFlash('success', Yii::t('app', 'User updated successfully.'));
+                    Yii::$app->notify->create(
+                        Yii::$app->user->id ?: 0,
+                        Yii::t('app', 'User'),
+                        Yii::t('app', 'User updated successfully.'),
+                        'system',
+                        "/user/{$profile->user_id}"
+                    );
                     return $this->redirect(['view', 'id' => $user->id]);
                 } catch (\Throwable $e) {
                     $tx->rollBack();
