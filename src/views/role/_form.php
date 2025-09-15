@@ -28,22 +28,29 @@ if (!$model->isNewRecord) {
   foreach (explode(';', $model->origin) as $origin) {
     $origins[$origin] = $origin;
   }
-  // Parse actions salvas
+
+  // ações já salvas no banco
   $savedActions = $model->actions ? explode(';', $model->actions) : [];
 
-  // Garante que o controller foi carregado e é válido
-  $controllerFQCN = $model->controller;; // crie esse método se necessário, baseado no `path:controller`
+  $controllerFQCN = $model->controller;
   $availableActions = [];
 
   if (class_exists($controllerFQCN)) {
-    $methods = get_class_methods($controllerFQCN);
-    $availableActions = array_filter($methods, fn($m) => str_starts_with($m, 'action'));
-    $availableActions = array_map(fn($a) => \yii\helpers\Inflector::camel2id(substr($a, 6)), $availableActions);
+    // pega QUALIFICADAS, ex.: AuthorizationController\order-model
+    $availableActions = \croacworks\essentials\controllers\RoleController::collectQualifiedActions($controllerFQCN);
   }
 
-  // Separar actions em usadas e não usadas
-  $fromActions = array_diff($availableActions, $savedActions);
-  $toActions = $savedActions;
+  // Compat: se vieram ações antigas sem "\" (não qualificadas), prefixa com o short do controller atual
+  if ($availableActions && $savedActions) {
+    $short = (new \ReflectionClass($controllerFQCN))->getShortName();
+    $savedActions = array_map(function ($a) use ($short) {
+      return (strpos($a, '\\') === false) ? ($short . '\\' . $a) : $a;
+    }, $savedActions);
+  }
+
+  // separa lado esquerdo/direito
+  $fromActions = array_values(array_diff($availableActions, $savedActions));
+  $toActions   = $savedActions;
 }
 
 $js = <<<JS
@@ -95,27 +102,19 @@ $(function () {
     $.post('{$actionUrl}', { controller: fqcn }, function(res) {
       if (res && res.success) {
         var html = '';
-        var uniqOrigins = {};
-        res.actions.forEach(function(a){
-          var origin = (res.origins && res.origins[a]) ? res.origins[a] : fqcn;
-          uniqOrigins[origin] = true;
-          html += '<option value="'+a+'" data-origin="'+origin+'" title="'+origin+'">'+a+'</option>';
+        res.actions.forEach(function(qa){ // qa = "AuthorizationController\order-model"
+          html += '<option value="'+qa+'">'+qa+'</option>';
         });
-        $('#multiselect').html(html);
+        document.getElementById('multiselect').innerHTML = html;
 
-        // Popular o select de origins com as origens únicas
-        var orig = $('#role-origin');
-        orig.empty();
-        Object.keys(uniqOrigins).sort().forEach(function(o){
-          var opt = new Option(o, o, true, true); // já selecionado
-          orig.append(opt);
-        });
-        orig.trigger('change');
-
-        if (window.Swal) Swal.close();
+        if (window.Swal) { Swal.close(); }
       } else {
-        if (window.Swal) { Swal.close(); Swal.fire({icon:'error', title:'Ops', text:(res&&res.message)||'Não foi possível carregar as actions'}); }
-        else { alert('Erro ao carregar actions'); }
+        if (window.Swal) {
+          Swal.close();
+          Swal.fire({icon:'error', title:'Ops', text: (res && res.message) || 'Não foi possível carregar as actions'});
+        } else {
+          alert('Erro ao carregar actions');
+        }
       }
     }, 'json').fail(function(xhr){
       if (window.Swal) {
@@ -125,6 +124,8 @@ $(function () {
         alert('Falha na requisição');
       }
     });
+
+    
   });
 
   // se já houver um valor selecionado (edição), dispara para popular as actions

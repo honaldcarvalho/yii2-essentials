@@ -122,28 +122,28 @@ class RoleController extends AuthorizationController
         $byMethod = [];
         $origins  = [];
 
-        // 1) Métodos action* (públicos), incluindo herdados
         $ref = new ReflectionClass($controllerClass);
+        $shortName = $ref->getShortName(); // Ex.: FileController, AuthorizationController
+
+        // 1) Métodos action* (públicos), incluindo herdados
         foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             $name = $method->getName();
             if (str_starts_with($name, 'action') && $name !== 'actions') {
-                // transforma actionXpto => xpto (camel2id)
                 $id = Inflector::camel2id(substr($name, 6));
-                $byMethod[$id] = true;
+                $decl = $method->getDeclaringClass()->getShortName();
+                $key = $decl . '\\' . $id; // <DeclaringController>\<action>
+                $byMethod[$key] = true;
                 if ($withOrigins) {
-                    $origins[$id] = $method->getDeclaringClass()->getName();
+                    $origins[$key] = $method->getDeclaringClass()->getName();
                 }
             }
         }
 
         // 2) External actions via actions() (se possível instanciar o controller)
-        $byMap = [];
         try {
-            // Deriva um ID simples a partir do nome da classe (EmailServiceController => email-service)
             $short = preg_replace('/Controller$/', '', $ref->getShortName());
             $id    = Inflector::camel2id($short);
 
-            // Tenta instanciar: __construct($id, $module, $config = [])
             /** @var \yii\web\Controller $instance */
             $instance = new $controllerClass($id, \Yii::$app);
             $map = $instance->actions();
@@ -151,25 +151,23 @@ class RoleController extends AuthorizationController
                 foreach (array_keys($map) as $key) {
                     $key = trim((string)$key);
                     if ($key !== '') {
-                        $byMap[$key] = true;
-                        if ($withOrigins && !isset($origins[$key])) {
-                            // marca origem como "actions()"
-                            $origins[$key] = $controllerClass . '::actions()';
+                        $decl = $ref->getMethod('actions')->getDeclaringClass()->getShortName();
+                        $full = $decl . '\\' . $key;
+                        $byMethod[$full] = true;
+                        if ($withOrigins && !isset($origins[$full])) {
+                            $origins[$full] = $controllerClass . '::actions()';
                         }
                     }
                 }
             }
         } catch (\Throwable $e) {
-            // silencioso: se não der p/ instanciar, apenas não coleta actions() mapeadas
+            // silencioso
         }
 
-        // 3) Merge final (set union)
-        $all = array_keys($byMethod + $byMap);
-        sort($all);
+        $all = array_keys($byMethod);
+        sort($all, SORT_NATURAL);
 
-        // Se quiser devolver as origens também:
         if ($withOrigins) {
-            // mantém apenas origens de keys existentes
             $orig = [];
             foreach ($all as $k) {
                 $orig[$k] = $origins[$k] ?? $controllerClass;
@@ -193,12 +191,12 @@ class RoleController extends AuthorizationController
         }
 
         try {
-            $result = self::collectControllerActions($controllerClass, true); // <-- TRUE
+            $result = self::collectControllerActions($controllerClass, true);
 
             return [
                 'success' => true,
-                'actions' => array_values($result['list']),
-                'origins' => $result['origins'], // actionId => FQCN (ou Controller::actions())
+                'actions' => array_values($result['list']),   // ["FileController\create", ...]
+                'origins' => $result['origins'],              // opcional: mapa action=>FQCN
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
