@@ -171,30 +171,36 @@ class AuthorizationController extends CommonController
      */
     public static function groupScopeIds(): array
     {
-        $gid = static::currentGroupId();
-        if (!$gid) return [];
+        // Pega todos os grupos do usuário (principal + adicionais)
+        $baseIds = self::getAllUserGroupIds();
+        if (empty($baseIds)) return [];
 
-        $gid = (int)$gid;
-        $cacheKey = 'group-descendants:' . $gid;
+        // Cache simples por conjunto de grupos do usuário
+        $keyParts  = array_map('intval', $baseIds);
+        sort($keyParts, SORT_NUMERIC);
+        $cacheKey = 'group-descendants:' . implode(',', $keyParts);
 
         $ids = Yii::$app->cache->get($cacheKey);
         if ($ids === false) {
-            try {
-                // ✅ Não suba para o root! O escopo é "eu + meus filhos".
-                // familyIdsByRoot($gid) deve retornar [$gid] + descendentes de $gid.
-                $ids = \croacworks\essentials\models\Group::familyIdsByRoot($gid);
-            } catch (\Throwable $e) {
-                // fail-safe: pelo menos o próprio grupo
-                $ids = [$gid];
+            $set = [];
+            foreach ($baseIds as $gid) {
+                try {
+                    // ❗ NÃO suba pro root. Escopo = [$gid] + descendentes de $gid
+                    $branch = \croacworks\essentials\models\Group::familyIdsByRoot((int)$gid);
+                } catch (\Throwable $e) {
+                    $branch = [(int)$gid];
+                }
+                foreach ((array)$branch as $id) {
+                    $set[(int)$id] = true;
+                }
             }
+            $ids = array_keys($set);
+            sort($ids, SORT_NUMERIC);
 
-            // normaliza
-            $ids = array_values(array_unique(array_map('intval', (array)$ids)));
             Yii::$app->cache->set($cacheKey, $ids, 60);
         }
 
-        // Segurança: nunca retornar vazio; garante ao menos o próprio gid.
-        return !empty($ids) ? $ids : [$gid];
+        return $ids;
     }
 
     public static function isMaster(): bool

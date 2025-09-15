@@ -86,7 +86,7 @@ class ModelCommon extends \yii\db\ActiveRecord
                 if (!\croacworks\essentials\controllers\AuthorizationController::isMaster()) {
 
                     // NOVO: usa a FAMÍLIA dos grupos do usuário (pai ⇄ filhos ⇄ irmãos)
-                    $groupIds = Group::familyIdsFromUser($user);
+                    $groupIds = AuthorizationController::groupScopeIds();
 
                     // Mantém acesso ao grupo 1 se for tua política (opcional)
                     $groupIds[] = 1;
