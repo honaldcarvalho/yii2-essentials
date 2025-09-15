@@ -163,7 +163,6 @@ class ConfigurationController extends AuthorizationController
         return $this->redirect(['index']);
     }
 
-
     /**
      * Clona uma Configuration com suas relações.
      * Retorna JSON quando a requisição é AJAX (fetch), com redirectUrl.

@@ -36,6 +36,7 @@ use yii\symfonymailer\Mailer;
 class Configuration extends ModelCommon
 {
     public $verGroup = true;
+    
     const SCENARIO_ADMIN = 'profile';
     
     public function scenarios()
