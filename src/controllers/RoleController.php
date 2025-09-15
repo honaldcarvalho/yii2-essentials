@@ -119,44 +119,43 @@ class RoleController extends AuthorizationController
 
     public static function collectControllerActions(string $controllerClass, bool $withOrigins = false): array
     {
-        $byMethod = [];
-        $origins  = [];
+        $ids = [];
+        $orig = [];
 
-        $ref = new ReflectionClass($controllerClass);
-        $shortName = $ref->getShortName(); // Ex.: FileController, AuthorizationController
+        $ref = new \ReflectionClass($controllerClass);
 
-        // 1) Métodos action* (públicos), incluindo herdados
-        foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $name = $method->getName();
-            if (str_starts_with($name, 'action') && $name !== 'actions') {
-                $id = Inflector::camel2id(substr($name, 6));
-                $decl = $method->getDeclaringClass()->getShortName();
-                $key = $decl . '\\' . $id; // <DeclaringController>\<action>
-                $byMethod[$key] = true;
+        // 1) Métodos action* (públicos)
+        foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $m) {
+            $name = $m->getName();
+            if (strpos($name, 'action') === 0 && $name !== 'actions') {
+                $id = \yii\helpers\Inflector::camel2id(substr($name, 6));
+                $ids[$id] = true;
                 if ($withOrigins) {
-                    $origins[$key] = $method->getDeclaringClass()->getName();
+                    $orig[$id] = (new \ReflectionClass($m->getDeclaringClass()->getName()))->getShortName();
                 }
             }
         }
 
-        // 2) External actions via actions() (se possível instanciar o controller)
+        // 2) actions() mapeadas
         try {
             $short = preg_replace('/Controller$/', '', $ref->getShortName());
-            $id    = Inflector::camel2id($short);
-
+            $ctrlId = \yii\helpers\Inflector::camel2id($short);
             /** @var \yii\web\Controller $instance */
-            $instance = new $controllerClass($id, \Yii::$app);
+            $instance = new $controllerClass($ctrlId, \Yii::$app);
             $map = $instance->actions();
             if (is_array($map)) {
-                foreach (array_keys($map) as $key) {
-                    $key = trim((string)$key);
-                    if ($key !== '') {
-                        $decl = $ref->getMethod('actions')->getDeclaringClass()->getShortName();
-                        $full = $decl . '\\' . $key;
-                        $byMethod[$full] = true;
-                        if ($withOrigins && !isset($origins[$full])) {
-                            $origins[$full] = $controllerClass . '::actions()';
-                        }
+                // quem declara o método actions()
+                try {
+                    $declShort = $ref->getMethod('actions')->getDeclaringClass()->getShortName();
+                } catch (\Throwable $e) {
+                    $declShort = $ref->getShortName();
+                }
+                foreach (array_keys($map) as $k) {
+                    $k = trim((string)$k);
+                    if ($k === '') continue;
+                    $ids[$k] = true;
+                    if ($withOrigins) {
+                        $orig[$k] = $orig[$k] ?? $declShort;
                     }
                 }
             }
@@ -164,19 +163,21 @@ class RoleController extends AuthorizationController
             // silencioso
         }
 
-        $all = array_keys($byMethod);
-        sort($all, SORT_NATURAL);
+        $list = array_keys($ids);
+        sort($list, SORT_NATURAL);
 
         if ($withOrigins) {
-            $orig = [];
-            foreach ($all as $k) {
-                $orig[$k] = $origins[$k] ?? $controllerClass;
+            // garante apenas chaves existentes em list
+            $o = [];
+            foreach ($list as $k) {
+                $o[$k] = $orig[$k] ?? $ref->getShortName();
             }
-            return ['list' => $all, 'origins' => $orig];
+            return ['list' => $list, 'origins' => $o];
         }
 
-        return $all;
+        return $list;
     }
+
 
     /**
      * AJAX: Retorna actions de um controller FQCN (inclui herdadas e as de actions()).
@@ -191,17 +192,17 @@ class RoleController extends AuthorizationController
         }
 
         try {
-            $result = self::collectControllerActions($controllerClass, true);
-
+            $res = self::collectControllerActions($controllerClass, true);
             return [
                 'success' => true,
-                'actions' => array_values($result['list']),   // ["FileController\create", ...]
-                'origins' => $result['origins'],              // opcional: mapa action=>FQCN
+                'actions' => array_values($res['list']), // ['index','create',...]
+                'origins' => $res['origins'],            // ['index'=>'AuthorizationController', ...]
             ];
         } catch (\Throwable $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
+
 
     /**
      * Aplica (ou reaplica) templates de roles conforme o nível do grupo.
