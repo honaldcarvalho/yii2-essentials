@@ -41,16 +41,17 @@ if (!$model->isNewRecord) {
   }
 
   // Compat: se vieram ações antigas sem "\" (não qualificadas), prefixa com o short do controller atual
-  if ($availableActions && $savedActions) {
+if ($availableActions && $savedActions) {
     $short = (new \ReflectionClass($controllerFQCN))->getShortName();
-    $savedActions = array_map(function ($a) use ($short) {
-      return (strpos($a, '\\') === false) ? ($short . '\\' . $a) : $a;
+    $savedActions = array_map(function($a) use ($short){
+        return (strpos($a, '\\') === false) ? ($short . '\\' . $a) : $a;
     }, $savedActions);
-  }
+}
+
 
   // separa lado esquerdo/direito
-  $fromActions = array_values(array_diff($availableActions, $savedActions));
-  $toActions   = $savedActions;
+$fromActions = array_values(array_diff($availableActions, $savedActions));
+$toActions   = $savedActions;
 }
 
 $js = <<<JS
