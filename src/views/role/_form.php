@@ -104,13 +104,13 @@ $(function () {
         $('#multiselect').html(html);
 
         // Popular o select de origins com as origens únicas
-        var $orig = $('#role-origin');
-        $orig.empty();
+        var orig = $('#role-origin');
+        orig.empty();
         Object.keys(uniqOrigins).sort().forEach(function(o){
           var opt = new Option(o, o, true, true); // já selecionado
-          $orig.append(opt);
+          orig.append(opt);
         });
-        $orig.trigger('change');
+        orig.trigger('change');
 
         if (window.Swal) Swal.close();
       } else {
