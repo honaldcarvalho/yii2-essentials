@@ -203,7 +203,6 @@ class RoleController extends AuthorizationController
         }
     }
 
-
     /**
      * Aplica (ou reaplica) templates de roles conforme o nível do grupo.
      * - Apaga somente roles originadas por template (origin='*') quando $reseed=true

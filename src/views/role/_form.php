@@ -146,9 +146,9 @@ $(function () {
   });
 
   // se já houver um valor selecionado (edição), dispara para popular as actions
-  if ($('#role-controller').val()) {
-    $('#role-controller').trigger('change');
-  }
+  // if ($('#role-controller').val()) {
+  //   $('#role-controller').trigger('change');
+  // }
 });
 JS;
 

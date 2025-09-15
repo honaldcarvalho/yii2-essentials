@@ -176,27 +176,19 @@ class AuthorizationController extends CommonController
         $gid = static::currentGroupId();
         if (!$gid) return [];
 
-        $gid = (int)$gid;
         $cacheKey = 'group-family:' . $gid;
-
         $ids = Yii::$app->cache->get($cacheKey);
         if ($ids === false) {
             try {
-                // root da árvore do grupo atual
-                $rootId = \croacworks\essentials\models\Group::getRootId($gid);
-                // todos os ids (root + descendentes). Já possui fallback sem CTE.
-                $ids = \croacworks\essentials\models\Group::familyIdsByRoot((int)$rootId);
+                $ids = Group::familyIds($gid);
             } catch (\Throwable $e) {
-                // fail-safe: pelo menos o próprio grupo
-                $ids = [$gid];
+                // Fallback se a instância não suporta CTE
+                $ids = Group::familyIdsNoCte($gid);
             }
-
-            // normaliza
-            $ids = array_values(array_unique(array_map('intval', (array)$ids)));
-            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s
+            Yii::$app->cache->set($cacheKey, $ids, 60); // 60s de cache (ajuste à vontade)
         }
 
-        return !empty($ids) ? $ids : [$gid];
+        return $ids ?: [$gid];
     }
 
     public static function isMaster(): bool
