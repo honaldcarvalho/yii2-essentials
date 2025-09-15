@@ -23,7 +23,6 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
                         echo $this->render('_form_admin', [
                             'model' => $model
                         ]);
-                        return;
                     } else {
                         echo $this->render('_form', [
                             'model' => $model

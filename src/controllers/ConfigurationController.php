@@ -127,7 +127,7 @@ class ConfigurationController extends AuthorizationController
 
         $model = $this->findModel($id);
 
-        if(AuthorizationController::isMaster()){
+        if(!AuthorizationController::isMaster()){
             $model->scenario = Configuration::SCENARIO_ADMIN;
         }   
 
