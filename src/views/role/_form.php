@@ -72,11 +72,10 @@ $(function () {
   });
 
   function resolveFQCN(selectEl){
-    var \$opt = $(selectEl).find('option:selected');
-    var v = \$opt.data('fqcn') || \$opt.val();
-    // se vier índice numérico ou 'index', usa o texto (label) do option
-    if (!v || v === 'index' || /^\\d+$/.test(v)) {
-      v = (\$opt.text() || '').trim();
+    var optEl = $(selectEl).find('option:selected');
+    var v = optEl.data('fqcn') || optEl.val();
+    if (!v || v === 'index' || /^\d+$/.test(v)) {
+      v = (optEl.text() || '').trim();
     }
     return v;
   }
@@ -125,7 +124,7 @@ $(function () {
       }
     });
 
-    
+
   });
 
   // se já houver um valor selecionado (edição), dispara para popular as actions
