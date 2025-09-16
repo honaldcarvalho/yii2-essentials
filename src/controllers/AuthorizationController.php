@@ -1015,7 +1015,7 @@ class AuthorizationController extends CommonController
         }
 
         // NÃO-MASTER: deixa o ModelCommon aplicar o escopo; não duplique filtros aqui
-        $query = $modelClass::find()->where(['id' => (int)$id])->limit(1);
+        $query = $modelClass::find()->andWhere(['id' => (int)$id])->limit(1);
 
         // Se você realmente quer liberar o grupo público (1) só no "view",
         // isso já é tratado no seu ModelCommon (você adiciona 1 ao array). 
