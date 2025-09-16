@@ -1,0 +1,591 @@
+category,message,translation_pt_BR
+app,Auth,Autenticação
+app,Description,Descrição
+app,Address,Endereço
+app,Bussines Name,Nome empresarial
+app,Configurations,Configurações
+app,Postal Code,CEP
+app,Enable LDAP Login,Habilitar login via LDAP
+app,Enable Recaptcha Login,Habilitar reCAPTCHA no login
+app,Recaptcha Secret Key,Chave secreta do reCAPTCHA
+app,Recaptcha Secret Site Key,Chave do site do reCAPTCHA
+app,This item is currently in use.,Este item está em uso no momento.
+app,Alert!,Alerta!
+app,User,Usuário
+app,Users,Usuários
+app,User Name,Nome de usuário
+app,Display Name,Nome de exibição
+app,Create User,Criar usuário
+app,View User: {name},Ver usuário: {name}
+app,Group,Grupo
+app,Groups,Grupos
+app,Create Group,Criar grupo
+app,View Group: {name},Ver grupo: {name}
+app,Rule,Regra
+app,Rules,Regras
+app,Page,Página
+app,Pages,Páginas
+app,View Page: {name},Ver página: {name}
+app,Create Page,Criar página
+app,Create Param,Criar parâmetro
+app,Create Ldap,Criar LDAP
+app,Params,Parâmetros
+app,Param,Parâmetro
+app,Update Param: {name},Atualizar parâmetro: {name}
+app,Section,Seção
+app,Sections,Seções
+app,Create Section,Criar seção
+app,Content,Conteúdo
+app,Created At,Criado em
+app,Updated At,Atualizado em
+app,Crop,Cortar
+app,Folder ID,ID da pasta
+app,Folder,Pasta
+app,Create Folder,Criar pasta
+app,Remove from folder,Remover da pasta
+app,Folders,Pastas
+app,View Folder: {name},Ver pasta: {name}
+app,External Access,Acesso externo
+app,File,Arquivo
+app,File ID,ID do arquivo
+app,Files,Arquivos
+app,File List,Lista de arquivos
+app,Select File,Selecionar arquivo
+app,Create File,Criar arquivo
+app,Load More,Carregar mais
+app,View File: {name},Ver arquivo: {name}
+app,Home,Início
+app,ID,ID
+app,Keywords (PT),Palavras‑chave (PT)
+app,Keywords (ENG),Palavras‑chave (EN)
+app,Multi,Múltiplo
+app,Name,Nome
+app,Number,Número
+app,Picture,Imagem
+app,Reset,Limpar
+app,Resume,Resumo
+app,Status,Status
+app,Save,Salvar
+app,Search,Pesquisar
+app,Send,Enviar
+app,The requested page does not exist.,A página solicitada não existe.
+app,Title,Título
+app,List,Lista
+app,Select authors,Selecionar autores
+app,Searching...,Pesquisando...
+app,No results found.,Nenhum resultado encontrado.
+app,Please enter 3 or more characters...,Digite 3 ou mais caracteres...
+app,Add File,Adicionar arquivo
+app,Are you sure you want to delete this item?,Tem certeza de que deseja excluir este item?
+app,"The above error occurred while the Web server was processing your request. Please contact us if you think this is a server error. Thank you. Meanwhile, you may","O erro acima ocorreu enquanto o servidor processava sua solicitação. Se você acredita que é um erro do servidor, entre em contato conosco. Enquanto isso, você pode"
+app,return to dashboard,voltar ao painel
+app,Create,Criar
+app,Update,Atualizar
+app,Delete,Excluir
+app,Year,Ano
+app,This site uses cookies to ensure you get the best experience on our site.,Este site utiliza cookies para garantir a melhor experiência.
+app,Signup,Cadastro
+app,Please fill out the following fields to signup:,Preencha os campos abaixo para se cadastrar:
+app,Password,Senha
+app,Password Confirm,Confirmar senha
+app,Language,Idioma
+app,Phone,Telefone
+app,Translations,Traduções
+app,Languages,Idiomas
+app,Source Message,Mensagem de origem
+app,Source Messages,Mensagens de origem
+app,Radcheck,Radcheck
+app,Radacct,Radacct
+app,Licenses,Licenças
+app,License Types,Tipos de licença
+app,Filter,Filtro
+app,Filters,Filtros
+app,Enabled,Habilitado
+app,Groupname,Nome do grupo
+app,Calledstationid,Calledstationid
+app,Nasipaddress,Nasipaddress
+app,Acctstarttime,Acctstarttime
+app,Acctstoptime,Acctstoptime
+app,Acctsessiontime,Acctsessiontime
+app,Acctinputoctets,Acctinputoctets
+app,Acctoutputoctets,Acctoutputoctets
+app,Authentication,Autenticação
+app,Source Message #{name},Mensagem de origem #{name}
+app,Translates,Traduções
+app,Disabled,Desabilitado
+app,-- All --,-- Todos --
+app,Print,Imprimir
+app,Registered Visitors,Visitantes registrados
+app,New Visitors,Novos visitantes
+app,Registered Month,Mês de registro
+app,Users Online,Usuários online
+app,Returning Users,Usuários recorrentes
+app,Active in Last 24h Users,Usuários ativos nas últimas 24h
+app,Registrations Per Day,Registros por dia
+app,Operational System (%),Sistema operacional (%)
+app,Device Type (%),Tipo de dispositivo (%)
+app,Patient,Paciente
+app,Patients,Pacientes
+app,Service Origins,Origens de serviço
+app,Service,Serviço
+app,New,Novo
+app,Page Header,Cabeçalho da página
+app,Dinamic Pages,Páginas dinâmicas
+app,System,Sistema
+app,Site Section,Seção do site
+app,Site Sections,Seções do site
+app,Storage,Armazenamento
+app,Notification,Notificação
+app,Notifications,Notificações
+app,Message,Mensagem
+app,Messages,Mensagens
+app,Date,Data
+app,Timetable,Agenda
+app,Active,Ativo
+app,Inactive,Inativo
+app,Services,Serviços
+app,Institution,Instituição
+app,Institutions,Instituições
+app,Institution List,Lista de instituições
+app,Institution Page,Página da instituição
+app,Service List,Lista de serviços
+app,Professionals,Profissionais
+app,Professional,Profissional
+app,Full Name,Nome completo
+app,Identity Number,Documento de identidade
+app,City,Cidade
+app,State,Estado
+app,Street,Rua
+app,Post,Post
+app,Posts,Posts
+app,Post List,Lista de posts
+app,Cover,Capa
+app,Icon,Ícone
+app,Medical Specialties,Especialidades médicas
+app,Medical Specialty,Especialidade médica
+app,Daily Agenda,Agenda diária
+app,Order,Ordem
+app,Question,Pergunta
+app,Answer,Resposta
+app,Valor,Valor
+app,Valor Promocional,Valor Promocional
+app,Promoção Ativa,Promoção Ativa
+app,Seção do Serviço,Seção do Serviço
+app,Service Origin,Origem do serviço
+app,Service Orders,Ordens de serviço
+app,Cpf Cnpj,CPF/CNPJ
+app,District,Bairro
+app,Create Patient,Criar paciente
+app,Register Patient,Cadastrar paciente
+app,Service Sections,Seções de serviço
+app,Service Section,Seção de serviço
+app,New Service Order,Nova ordem de serviço
+app,Amount,Quantidade
+app,Price,Preço
+app,Price Promo,Preço promocional
+app,Active Promo,Promoção ativa
+app,Loyalty Card Number,Número do cartão fidelidade
+app,Loyalty Card,Cartão fidelidade
+app,Create Service,Criar serviço
+app,Clients,Clientes
+app,Create Dbclient,Criar Dbclient
+app,Email Services,Serviços de e‑mail
+app,Create Email Service,Criar serviço de e‑mail
+app,Synchronize,Sincronizar
+app,Create Daily Agenda,Criar agenda diária
+app,Atualizar DailyAgenda: {name},Atualizar DailyAgenda: {name}
+app,Create Service Section,Criar seção de serviço
+app,Contact,Contato
+app,Contacts,Contatos
+app,Subject,Assunto
+app,Text,Texto
+app,Data Contact,Dados de contato
+app,Legend Cover,Legenda da capa
+app,Show Cover,Exibir capa
+app,Source,Fonte
+app,Post Section,Seção do post
+*,Auth,Autenticação
+*,Description,Descrição
+*,Address,Endereço
+*,Bussines Name,Nome empresarial
+*,Configurations,Configurações
+*,Postal Code,CEP
+*,Enable LDAP Login,Habilitar login via LDAP
+*,Enable Recaptcha Login,Habilitar reCAPTCHA no login
+*,Recaptcha Secret Key,Chave secreta do reCAPTCHA
+*,Recaptcha Secret Site Key,Chave do site do reCAPTCHA
+*,This item is currently in use.,Este item está em uso no momento.
+*,Alert!,Alerta!
+*,User,Usuário
+*,Users,Usuários
+*,User Name,Nome de usuário
+*,Display Name,Nome de exibição
+*,Create User,Criar usuário
+*,View User: {name},Ver usuário: {name}
+*,Group,Grupo
+*,Groups,Grupos
+*,Create Group,Criar grupo
+*,View Group: {name},Ver grupo: {name}
+*,Rule,Regra
+*,Rules,Regras
+*,Page,Página
+*,Pages,Páginas
+*,View Page: {name},Ver página: {name}
+*,Create Page,Criar página
+*,Create Param,Criar parâmetro
+*,Create Ldap,Criar LDAP
+*,Params,Parâmetros
+*,Param,Parâmetro
+*,Update Param: {name},Atualizar parâmetro: {name}
+*,Section,Seção
+*,Sections,Seções
+*,Create Section,Criar seção
+*,Content,Conteúdo
+*,Created at,Criado em
+*,Updated at,Atualizado em
+*,Crop,Cortar
+*,Folder ID,ID da pasta
+*,Folder,Pasta
+*,Create Folder,Criar pasta
+*,Remove from folder,Remover da pasta
+*,Folders,Pastas
+*,View Folder: {name},Ver pasta: {name}
+*,External Access,Acesso externo
+*,File,Arquivo
+*,File ID,ID do arquivo
+*,Files,Arquivos
+*,File List,Lista de arquivos
+*,Select File,Selecionar arquivo
+*,Create File,Criar arquivo
+*,Load More,Carregar mais
+*,View File: {name},Ver arquivo: {name}
+*,Home,Início
+*,ID,ID
+*,Keywords (PT),Palavras‑chave (PT)
+*,Keywords (ENG),Palavras‑chave (EN)
+*,Multi,Múltiplo
+*,Name,Nome
+*,Number,Número
+*,Picture,Imagem
+*,Reset,Limpar
+*,Resume,Resumo
+*,Status,Status
+*,Save,Salvar
+*,Search,Pesquisar
+*,Send,Enviar
+*,The requested page does not exist.,A página solicitada não existe.
+*,Title,Título
+*,List,Lista
+*,Select authors,Selecionar autores
+*,Searching...,Pesquisando...
+*,No results found.,Nenhum resultado encontrado.
+*,Please enter 3 or more characters...,Digite 3 ou mais caracteres...
+*,Add File,Adicionar arquivo
+*,Are you sure you want to delete this item?,Tem certeza de que deseja excluir este item?
+*,"The above error occurred while the Web server was processing your request. Please contact us if you think this is a server error. Thank you. Meanwhile, you may","O erro acima ocorreu enquanto o servidor processava sua solicitação. Se você acredita que é um erro do servidor, entre em contato conosco. Enquanto isso, você pode"
+*,return to dashboard,voltar ao painel
+*,Create,Criar
+*,Update,Atualizar
+*,Delete,Excluir
+*,Year,Ano
+*,This website uses cookies to ensure you get the best experience on our website.,Este site utiliza cookies para garantir a melhor experiência.
+site,Epigrafe,Epígrafe
+site,Issue ID,ID da edição
+site,Issues,Edições
+site,Issue,Edição
+site,Create Issue,Criar edição
+site,Published,Publicado
+site,Under Review,Em avaliação
+site,Rejected,Rejeitado
+site,Approved,Aprovado
+site,Reason,Motivo
+site,Reviewed by,Revisado por
+site,Abstract,Resumo
+site,Are you sure you want to delete this item?,Tem certeza de que deseja excluir este item?
+site,Article ID,ID do artigo
+site,Articles,Artigos
+site,Author,Autor
+site,Authors,Autores
+site,Bio,Bio
+site,Content,Conteúdo
+site,Create Article,Criar artigo
+site,Create Author,Criar autor
+site,Title,Título
+site,Resume,Resumo
+site,Update,Atualizar
+site,Update Article: {name},Atualizar artigo: {name}
+site,Update Author: {name},Atualizar autor: {name}
+site,Update Issue: {name},Atualizar edição: {name}
+site,Volume,Volume
+site,Year,Ano
+site,Apresentation,Apresentação
+site,Expedient,Expediente
+site,Template,Template
+site,Current Issue,Edição atual
+site,Previous Issue,Edição anterior
+site,Recent Issues,Edições recentes
+*,View,Visualizar
+site,More articles,Mais artigos
+site,By,Por
+*,Privacy,Privacidade
+*,Terms,Termos
+*,Contact,Contato
+*,Develeped by,Desenvolvido por
+site,Please enter 3 or more characters...,Digite 3 ou mais caracteres...
+*,Search Results,Resultados da pesquisa
+site,Issue Volume,Volume da edição
+site,Issue Number,Número da edição
+site,Issue Year,Ano da edição
+site,Keyword(s),Palavra(s)-chave
+site,Select authors,Selecionar autores
+site,Add Article,Adicionar artigo
+*,Learn more,Saiba mais
+*,I Got It,Entendi
+site,Article Section,Seção do artigo
+*,Translations,Traduções
+*,Languages,Idiomas
+*,Messages,Mensagens
+*,Source Messages,Mensagens de origem
+*,Manager Pages,Gerenciar páginas
+site,Manager Articles,Gerenciar artigos
+*,List Files,Listar arquivos
+*,Message,Mensagem
+*,Source Message,Mensagem de origem
+*,Category,Categoria
+*,Language,Idioma
+*,Article,Artigo
+*,Create Message,Criar mensagem
+*,Create Source Message,Criar mensagem de origem
+*,Create Language,Criar idioma
+site,SUGGESTIVE TEMPLATE FOR SCIENTIFIC ARTICLES,TEMPLATE SUGESTIVO PARA ARTIGOS CIENTÍFICOS
+*,No further information available,Nenhuma informação adicional disponível
+site,View Articles,View Articles
+app,Appointments,Atendimentos
+app,Appointment,Atendimento
+app,Payment Methods,Formas de pagamento
+app,Create Payment Method,Criar forma de pagamento
+app,Service Payment,Pagamento de serviço
+app,Service Payments,Pagamentos de serviço
+app,Payment Origin,Origem do pagamento
+app,Payment Origins,Origens de pagamento
+app,Schedule,Agendar
+app,Schedules,Agendamentos
+app,Down Payment,Entrada
+app,Installment Frequency,Frequência de parcelas
+app,Installments,Parcelas
+app,Due Date,Vencimento
+app,Add Item,Adicionar item
+app,View Professional: {name},Ver profissional: {name}
+app,Invoices,Faturas
+app,Order Items,Itens da ordem
+app,Select one state,Selecione um estado
+app,Select one city,Selecione uma cidade
+app,Loyalty Cards,Cartões fidelidade
+app,List Offerers Services,Listar serviços ofertados
+app,Create Professional,Criar profissional
+app,Register Professional,Cadastrar profissional
+app,Used Qtd,Qtd usada
+app,Available Qtd,Qtd disponível
+app,Total Qtd,Qtd total
+app,Related Services,Serviços relacionados
+app,Pending,Pendente
+app,Cancelled,Cancelado
+app,Completed,Concluído
+app,Change Invoice Status,Alterar status da fatura
+app,Declined,Recusado
+app,Paid,Pago
+app,Refunded,Estornado
+app,Partial Refunded,Estorno parcial
+app,Open,Aberto
+app,Service Order,Ordem de serviço
+app,Confirmed,Confirmado
+app,Select a status,Selecione um status
+app,Son,Filho
+app,Daughter,Filha
+app,Spouse,Cônjuge
+app,Guardian,Responsável
+app,Guardianship,Responsabilidade
+app,Other,Outro
+app,Order Service #{number},Ordem de serviço #{number}
+app,View Contract,Ver contrato
+app,External ID,ID externo
+app,External Professional Term,Termo do profissional externo
+app,No expiration date,Sem data de expiração
+app,Pay in Cash,Pagar em dinheiro
+app,Daily,Diário
+app,Weekly,Semanal
+app,Montly,Mensal
+app,Yearly,Anual
+app,Invoice,Fatura
+app,Generate PDF,Gerar PDF
+app,Pay Day,Dia de pagamento
+app,Payment Method,Forma de pagamento
+app,Down Payment Method,Forma de pagamento da entrada
+app,Transfer,Transferência
+app,Barcode,Boleto/Código de barras
+app,Credit,Crédito
+app,Cancel Invoice,Cancelar fatura
+app,Do you really want to open this order? All invoices will be deleted!,Deseja realmente reabrir esta ordem? Todas as faturas serão excluídas!
+app,Package Selected,Pacote selecionado
+app,Select Package,Selecionar pacote
+app,External Professional,Profissional externo
+app,Select one Professional External,Selecione um profissional externo
+app,Select one Patient,Selecione um paciente
+app,Select one Service,Selecione um serviço
+app,Select one Payment Table,Selecione uma tabela de pagamento
+app,Loyalty Card Wizard,Assistente do cartão fidelidade
+app,Step,Etapa
+app,Wizard Step,Etapa do assistente
+app,Create Service Order,Criar ordem de serviço
+app,Are you sure you want to go back to the step? Everything created in it will be removed!,Tem certeza de que deseja voltar a esta etapa? Tudo criado nela será removido!
+app,Anamnesis,Anamnese
+app,Physical Assessment,Avaliação física
+app,Psychological Assessment,Avaliação psicológica
+app,Nutritional Report,Relatório nutricional
+app,Medical Report,Relatório médico
+app,Final Discharge Report,Relatório de alta final
+app,Physical Evaluation,Avaliação física
+app,Psychological Evaluation,Avaliação psicológica
+app,Select Report Type,Selecione o tipo de relatório
+app,Report Type,Tipo de relatório
+app,Select Professional,Selecionar profissional
+app,Select Appointment,Selecionar atendimento
+app,Date Report,Data do relatório
+app,New Professional Report,Novo relatório profissional
+app,Export All Data,Exportar todos os dados
+app,Professional Report,Relatório profissional
+app,Professional Reports,Relatórios profissionais
+app,Create Professional Report,Criar relatório profissional
+app,View Professional Reports,Ver relatórios profissionais
+app,Professional Reports for,Relatórios profissionais para
+app,Select file(s) to upload,Selecione arquivo(s) para enviar
+app,Remove Files,Remover arquivos
+app,Duration,Duração
+app,Size,Tamanho
+app,Type,Tipo
+app,Extension,Extensão
+app,Create Source Message,Criar mensagem de origem
+app,Selecte Package,Selecionar pacote
+app,Cash,Dinheiro
+app,Back Step,Voltar etapa
+app,Generate Invoice,Gerar fatura
+app,Change Status,Alterar status
+app,Analysis,Análise
+app,Origin,Origem
+app,Order Status,Status da OS
+app,Re-invoice Type,Tipo de refaturamento
+app,Re-invoice Pending Installments,Refaturar parcelas pendentes
+app,Re-invoice All Installments,Refaturar todas as parcelas
+app,Re-invoice,Refaturar
+app,Date of Birth,Data de nascimento
+app,Item Description,Descrição do item
+app,Payday,Dia do pagamento
+app,Created (From),Criado (De)
+app,Created (To),Criado (Até)
+app,Finalized,Finalizado
+app,Schedule Appointment,Agendar atendimento
+app,Register Appointment,Cadastrar atendimento
+app,Amount (Min),Valor (Mín.)
+app,Amount (Max),Valor (Máx.)
+app,Due Date (From),Vencimento (De)
+app,Due Date (To),Vencimento (Até)
+app,Payday (From),Pagamento (De)
+app,Payday (To),Pagamento (Até)
+app,Parcel,Parcela
+app,Subscribes Offered,Assinaturas ofertadas
+app,Subscribe,Assinar
+app,Available while active,Disponível enquanto ativo
+app,Promotion,Promoção
+app,Your Loyalty Cards,Seus cartões fidelidade
+app,Client has no cards,O cliente não possui cartões
+app,Edit,Editar
+app,Personal Details,Dados pessoais
+app,Personal Information,Informações pessoais
+app,Change Password,Alterar senha
+app,Manage notification preferences,Gerenciar preferências de notificação
+app,Account Actions,Ações da conta
+app,Sign Out,Sair
+app,Preferences,Preferências
+app,Edit Personal Information,Editar informações pessoais
+app,Choose Language,Escolher idioma
+app,Change,Alterar
+app,New Password,Nova senha
+app,Confirm Password,Confirmar senha
+app,Create a new password,Crie uma nova senha
+app,Repeat your password,Repita sua senha
+app,View,Visualizar
+app,Package,Pacote
+app,Request,Solicitação
+app,Under Analysis,Em análise
+app,Rejected,Rejeitado
+app,Profile,Perfil
+app,In Progress,Em andamento
+app,Partially Paid,Parcialmente pago
+app,Unpaid,Não pago
+app,Partially Refunded,Parcialmente estornado
+app,Pending Approval,Aguardando aprovação
+app,Payment Status,Status do pagamento
+app,Approval Status,Status de aprovação
+app,Service Progress Status,Status de progresso do serviço
+app,I agree to the,Eu concordo com os
+app,Request Subscription,Solicitar assinatura
+app,and,e
+app,Terms of Service,Termos de serviço
+app,Privacy Police,Política de privacidade
+app,Privacy Policy,Política de privacidade
+app,Not Started,Não iniciado
+app,Aproved,Aprovado
+app,Approved,Aprovado
+app,Sign in to your account,Faça login na sua conta
+app,Enter your CPF,Informe seu CPF
+app,Enter your password,Informe sua senha
+app,Sign In,Entrar
+app,Sign Up,Cadastrar
+app,Forgot Password?,Esqueceu a senha?
+app,Enter your full name,Informe seu nome completo
+app,Enter your email,Informe seu e-mail
+app,Enter your phone number,Informe seu telefone
+app,Create a password,Crie uma senha
+app,Already have an account?,Já possui uma conta?
+app,Create Account,Criar conta
+app,Sign up to get started,Cadastre-se para começar
+app,Change Language,Mudar idioma
+app,Chose Language,Escolher idioma
+app,Time,Horário
+app,Invoice number {number} for amount {amount} due {due_date} has been updated to {status},"A fatura número {number}, no valor de {amount}, com vencimento em {due_date}, foi atualizada para {status}"
+app,Invoice Update,Atualização de fatura
+app,Agenda Update,Atualização de agenda
+app,The appointment for {date} at {time} as a doctor {professional} has been updated to {status},O atendimento de {date} às {time} com o médico {professional} foi atualizado para {status}
+app,The {service} with the professional {professional} has been scheduled for {date} at {time},O serviço {service} com o profissional {professional} foi agendado para {date} às {time}
+app,The appointment for service {service} on {date} at {time} with professional {professional} has been updated to {status},O atendimento do serviço {service} em {date} às {time} com o profissional {professional} foi atualizado para {status}
+app,View Details,Ver detalhes
+app,Forgot Password,Esqueci a senha
+app,Enter your email to reset your password,Informe seu e-mail para redefinir a senha
+app,Remember your password,Lembrou sua senha
+app,Resend Email,Reenviar e-mail
+app,Check Your Email,Verifique seu e-mail
+app,Remember your password?,Lembrou sua senha?
+app,Send Request,Enviar solicitação
+app,Yes,Sim
+app,No,Não
+app,All,Todos
+app,Is Package,É pacote
+app,Remember me,Lembrar-me
+app,Client has no appointments,O cliente não possui atendimentos
+app,Calendar,Calendário
+app,Accept,Aceitar
+app,Services Offers,Serviços ofertados
+app,No patient found with this email,Nenhum paciente encontrado com este e-mail
+app,"Please, provide your email","Por favor, informe seu e-mail"
+app,Details,Detalhes
+app,Orders,Ordens
+app,Your Orders,Suas ordens
+app,Client has no orders,O cliente não possui ordens
+app,Order Number,Número da ordem
+app,Order Date,Data da ordem
+app,Clear all,Limpar tudo
+app,Close,Fechar
+app,No notifications found.,Nenhuma notificação encontrada.
+app,The service order of number #{service_id} has been updated to {status},A ordem de serviço número #{service_id} foi atualizada para {status}
+app,Service Order Update,Atualização de ordem de serviço
+app,If you forgot your password you can,"Se você esqueceu sua senha, você pode"
