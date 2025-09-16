@@ -322,7 +322,7 @@ class UserController extends AuthorizationController
                     );
 
 
-                    return $this->redirect(['profile', 'id' => Yii::$app->user->identity->id]);
+                    return $this->redirect(['/profile']);
 
                 } catch (\Throwable $e) {
                     $tx->rollBack();
