@@ -296,7 +296,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
                     <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app','Account'); ?></div>
-                    <a class="dropdown-item" href="/user/profile">
+                    <a class="dropdown-item" href="/profile">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                         </svg> 

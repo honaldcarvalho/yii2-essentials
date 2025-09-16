@@ -23,7 +23,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             [
                 'attribute'=>'file_id',
-                'header' => 'Preview',
                 'format' => 'raw',
                 'value' => function ($model) {
                     if ($model->profile->file) {
