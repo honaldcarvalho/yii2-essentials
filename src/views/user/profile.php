@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model]) ?>
+        <?= Html::a(Yii::t('app', 'Edit Profile'), ['edit'], ['class' => 'btn btn-primary']) ?>
     </p>
 
     <?= DetailView::widget([
