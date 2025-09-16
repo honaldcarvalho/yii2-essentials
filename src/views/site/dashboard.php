@@ -106,83 +106,133 @@ $this->title = 'Dashboard';
 </div>
 
 <?php
-// URL do endpoint — ajuste se seu controller/rota for diferente
 $healthUrl = \yii\helpers\Url::to(['/dashboard/health']);
+$this->registerJsVar('DASH', [
+    'url' => $healthUrl,
+    'intervalMs' => 30000,
+]);
+?>
+
+<?php
 $js = <<<JS
-(function(){
-  var healthUrl = '{$healthUrl}';
-  var intervalMs = 30000;
-
-  function setCardState(cardEl, percent){
-    var cls = 'bg-success';
-    if (percent > 70) cls = 'bg-danger';
-    else if (percent > 50) cls = 'bg-warning';
-
-    cardEl.classList.remove('bg-success','bg-warning','bg-danger');
-    cardEl.classList.add(cls);
+(function($){
+  // fallback pra yii.t se não estiver carregado
+  if (!window.yii) window.yii = {};
+  if (typeof yii.t !== 'function') {
+    yii.t = function(category, message){ return message; };
   }
 
-  function setProgress(el, percent){
-    var p = Math.max(0, Math.min(100, parseInt(percent || 0)));
-    el.style.width = p + '%';
-    el.setAttribute('aria-valuenow', String(p));
+  var healthUrl = (window.DASH && DASH.url) || '/dashboard/health';
+  var intervalMs = (window.DASH && DASH.intervalMs) || 30000;
+
+  // helpers
+  function setCardState(\$card, percent){
+    if (!\$card || !\$card.length) return;
+    var p = Number(percent||0), cls = 'bg-success';
+    if (p > 70) cls = 'bg-danger';
+    else if (p > 50) cls = 'bg-warning';
+    \$card.removeClass('bg-success bg-warning bg-danger').addClass(cls);
   }
 
-  function text(el, value){
-    if (el) el.textContent = value;
+  function animateBar(\$el, percent){
+    if (!\$el || !\$el.length) return;
+    var p = Math.max(0, Math.min(100, parseInt(percent||0)));
+    // anima a largura via jQuery
+    \$el.stop(true).animate({ width: p + '%' }, 500);
+    \$el.attr('aria-valuenow', String(p));
+  }
+
+  function animateNumber(\$el, value, suffix){
+    if (!\$el || !\$el.length) return;
+    var current = parseFloat(\$el.text().replace(',', '.')) || 0;
+    var target  = parseFloat(value) || 0;
+    var hasSuffix = typeof suffix === 'string' && suffix.length > 0;
+
+    \$({v: current}).stop(true).animate({v: target}, {
+      duration: 600,
+      step: function(now){
+        // se for inteiro, mostra inteiro; senão 1 casa
+        var isInt = Number.isInteger(target);
+        var txt = isInt ? Math.round(now) : (Math.round(now * 10)/10);
+        \$el.text(txt + (hasSuffix ? suffix : ''));
+      }
+    });
+  }
+
+  function setTextFade(\$el, newText){
+    if (!\$el || !\$el.length) return;
+    var txt = (newText == null ? '' : String(newText));
+    // fade suave na troca
+    \$el.stop(true, true).fadeOut(150, function(){
+      \$el.text(txt).fadeIn(150);
+    });
   }
 
   function updateUI(data){
     if (!data || !data.ok) return;
 
-    // OS (mantém barra decorativa em 0, só atualiza textos)
-    text(document.getElementById('os-pretty'), data.os.pretty_name || '');
-    text(document.getElementById('os-name'), data.os.name || '');
+    // OS
+    setTextFade($('#os-pretty'), data.os?.pretty_name || '');
+    setTextFade($('#os-name'),   data.os?.name || '');
 
     // DISK
     var disk = data.disk || {};
-    setCardState(document.getElementById('disk-card'), disk.percent_used || 0);
-    text(document.getElementById('disk-total'), disk.total_bytes_pretty || '');
-    text(document.getElementById('disk-used'), (disk.used_bytes_pretty ? ('{$this->renderDynamic("return Yii::t(\\'app\\', \\'Total Space Used:\\');")}'+disk.used_bytes_pretty) : ''));
-    setProgress(document.getElementById('disk-progress'), disk.percent_used || 0);
+    setCardState($('#disk-card'), disk.percent_used);
+    setTextFade($('#disk-total'), disk.total_bytes_pretty || '');
+    setTextFade(
+      $('#disk-used'),
+      (disk.used_bytes_pretty ? (yii.t('app','Total Space Used:') + disk.used_bytes_pretty) : '')
+    );
+    animateBar($('#disk-progress'), disk.percent_used);
 
     // MEMORY
     var mem = data.memory || {};
-    setCardState(document.getElementById('memory-card'), mem.percent_used || 0);
-    text(document.getElementById('memory-total'), mem.total_pretty || '');
-    text(document.getElementById('memory-used'), (mem.used_pretty ? ('{$this->renderDynamic("return Yii::t(\\'app\\', \\'Total Memory Used:\\');")}'+mem.used_pretty) : ''));
-    setProgress(document.getElementById('memory-progress'), mem.percent_used || 0);
+    setCardState($('#memory-card'), mem.percent_used);
+    setTextFade($('#memory-total'), mem.total_pretty || '');
+    setTextFade(
+      $('#memory-used'),
+      (mem.used_pretty ? (yii.t('app','Total Memory Used:') + mem.used_pretty) : '')
+    );
+    animateBar($('#memory-progress'), mem.percent_used);
 
     // CPU
     var cpu = data.cpu || {};
-    setCardState(document.getElementById('cpu-card'), cpu.used || 0);
-    text(document.getElementById('cpu-used'), parseInt(cpu.used || 0));
-    text(document.getElementById('cpu-free'), (cpu.free ? ('{$this->renderDynamic("return Yii::t(\\'app\\', \\'Total Cpu Free:\\');")}'+cpu.free) : ''));
-    setProgress(document.getElementById('cpu-progress'), cpu.used || 0);
+    setCardState($('#cpu-card'), cpu.used);
+    // anima o número de uso (em %). Exibe só o número; o % já está na barra.
+    animateNumber($('#cpu-used'), parseFloat(cpu.used||0));
+    setTextFade(
+      $('#cpu-free'),
+      (cpu.free ? (yii.t('app','Total Cpu Free:') + cpu.free) : '')
+    );
+    animateBar($('#cpu-progress'), cpu.used);
   }
 
   function onError(err){
-    // Se tiver Toastr, use; senão, console:
-    if (window.toastr && typeof window.toastr.error === 'function'){
-      window.toastr.error('Falha ao atualizar o Dashboard.');
+    if (window.toastr && typeof toastr.error === 'function'){
+      toastr.error(yii.t('app','Falha ao atualizar o Dashboard.'));
     } else {
       console.error('Falha ao atualizar o Dashboard', err);
     }
   }
 
   function fetchHealth(){
-    fetch(healthUrl, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(function(r){ return r.json(); })
-      .then(updateUI)
-      .catch(onError);
+    $.ajax({
+      url: healthUrl,
+      method: 'GET',
+      dataType: 'json',
+      cache: false
+    })
+    .done(updateUI)
+    .fail(onError);
   }
 
-  // primeira atualização imediata
-  fetchHealth();
+  // primeira carga + interval
+  $(function(){
+    fetchHealth();
+    setInterval(fetchHealth, intervalMs);
+  });
 
-  // atualiza a cada 30s
-  setInterval(fetchHealth, intervalMs);
-})();
+})(jQuery);
 JS;
 
 $this->registerJs($js);
