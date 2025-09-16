@@ -22,6 +22,7 @@ class AuthorizationController extends CommonController
     const ADMIN_GROUP_ID = 2;
 
     public $free = ['login', 'signup', 'error'];
+    public $guest = [];
 
     /* ===== Helpers de usuário/grupos (compatíveis com o que já existe) ===== */
 
@@ -548,6 +549,11 @@ class AuthorizationController extends CommonController
                     'allow' => true,
                     'actions' => $this->free,
                     'roles' => ['?', '@'],
+                ],
+                [
+                    'allow'   => true,
+                    'actions' => (array)$this->guest,
+                    'roles'   => ['@'],
                 ],
                 [
                     'allow' => true,

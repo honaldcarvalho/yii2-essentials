@@ -19,11 +19,7 @@ use yii\web\Response;
  */
 class UserController extends AuthorizationController
 {
-    public function __construct($id, $module, $config = array())
-    {
-        parent::__construct($id, $module, $config);
-        $this->free = ['change-theme'];
-    }
+    public $guest = ['change-lang', 'change-theme','update','view','profile','edit'];    
 
     /**
      * Lists all User models.
@@ -188,6 +184,7 @@ class UserController extends AuthorizationController
      */
     public function actionUpdate($id)
     {
+        /** @var \croacworks\essentials\models\User|null $user */
         $user = $this->findModel($id);
         $isAdmin = AuthorizationController::isMaster() || (AuthorizationController::isAdmin());
         $user->scenario = 'update';
@@ -250,23 +247,6 @@ class UserController extends AuthorizationController
         ]);
     }
 
-    public function actionEdit()
-    {
-        $model = $this->findModel(Yii::$app->user->id);
-        $model->username_old = $model->username;
-        $model->email_old = $model->email;
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            $post = Yii::$app->request->post();
-            $model->resetPassword();
-            return $this->redirect(['profile', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
-    }
-
     public function actionAddGroup()
     {
 
@@ -301,6 +281,7 @@ class UserController extends AuthorizationController
     public function actionDelete($id)
     {
         if ($id != 1) {
+            /** @var \croacworks\essentials\models\User|null $user */
             $user = $this->findModel($id);
             if ($user->file_id !== null) {
                 $picture = File::findOne($user->file_id);
