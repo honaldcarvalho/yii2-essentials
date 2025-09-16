@@ -58,7 +58,7 @@ class UserController extends AuthorizationController
         $lang = Yii::$app->request->post('lang');
         $model =  self::User();
         if ($model !== null && $lang !== null && !empty($lang)) {
-            $model->language_id = Language::findOne(['code' => $lang])->id;
+            $model->profile->language_id = Language::findOne(['code' => $lang])->id;
         }
         return $model->save();
     }
