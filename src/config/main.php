@@ -141,42 +141,45 @@ $config = [
             'showScriptName' => false,
             'enableStrictParsing' => false,
             'rules' => array_merge(
-                customControllersUrl([
-                    'dashboard',
-                    'role',
-                    'util',
-                    'site',
-                    'group',
-                    'user',
-                    'role',
-                    'role-template',
-                    'language',
-                    'source-message',
-                    'message',
-                    'menu',
-                    'params',
-                    'configuration',
-                    'meta-tag',
-                    'email-service',
-                    'license-type',
-                    'license',
-                    'log',
-                    'folder',
-                    'file',
-                    'page-section',
-                    'page',
-                    'notification',
-                    'notification-message',
-                    'rest/mail',
-                    'rest/storage',
-                    'rest/auth',
-                    'rest/address',
-                    'rest/instagram',
-                    'rest/youtube',
-                    'rest/cron'
-                ], 'common'),
+                customControllersUrl(
+                    [
+                        'dashboard',
+                        'role',
+                        'util',
+                        'site',
+                        'group',
+                        'user',
+                        'role',
+                        'role-template',
+                        'language',
+                        'source-message',
+                        'message',
+                        'menu',
+                        'params',
+                        'configuration',
+                        'meta-tag',
+                        'email-service',
+                        'license-type',
+                        'license',
+                        'log',
+                        'folder',
+                        'file',
+                        'page-section',
+                        'page',
+                        'notification',
+                        'notification-message',
+                        'rest/mail',
+                        'rest/storage',
+                        'rest/auth',
+                        'rest/address',
+                        'rest/instagram',
+                        'rest/youtube',
+                        'rest/cron'
+                    ],
+                    'common'
+                ),
                 [
-                    'GET profile' => 'user/profile',
+                    'profile' => 'common/user/profile',
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',
                     "site/clear-cache/<key:\w+>" => "site/clear-cache",
@@ -204,7 +207,7 @@ $config = [
                         'defaults' => ['group' => 1],
                     ],
                     //--- REGRAS PAGE END ---//
-                    
+
                     '<controller:\w+>/<id:\d+>' => '<controller>/view',
                     '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                     '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
@@ -261,7 +264,7 @@ if (YII_ENV_DEV) {
     $config['modules']['debug'] = [
         'class' => yii\debug\Module::class,
         // uncomment the following to add your IP if you are not connecting from localhost.
-        'allowedIPs' => ['127.0.0.1', '::1','*'],
+        'allowedIPs' => ['127.0.0.1', '::1', '*'],
     ];
 
     $config['bootstrap'][] = 'gii';
