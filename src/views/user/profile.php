@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a(Yii::t('app', 'Edit Profile'), ['edit'], ['class' => 'btn btn-primary']) ?>
+        <?= Html::a('<i class="fas fa-edit"></i> '. Yii::t('app', 'Edit Profile'), ['edit'], ['class' => 'btn btn-warning']) ?>
     </p>
 
     <?= DetailView::widget([
