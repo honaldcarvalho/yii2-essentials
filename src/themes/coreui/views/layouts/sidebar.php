@@ -70,7 +70,8 @@ function getNodes($parentId = null): array
             $isVisible = false;
             foreach ($children as $c) {
                 if (!array_key_exists('visible', $c) || !empty($c['visible'])) {
-                    $isVisible = true; break;
+                    $isVisible = true;
+                    break;
                 }
             }
         } else {
@@ -121,11 +122,11 @@ $nodes[] = ['divider' => true];
             <?php
             if (!empty($config->file_id) && $config->file !== null) {
                 $url = Yii::getAlias('@web') . $config->file->urlThumb;
-                echo '<img class="sidebar-brand-full" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
-                echo '<img class="sidebar-brand-narrow" src="'.htmlspecialchars($url).'" alt="'.htmlspecialchars($config->title).'" height="32">';
+                echo '<img class="sidebar-brand-full" src="' . htmlspecialchars($url) . '" alt="' . htmlspecialchars($config->title) . '" height="32">';
+                echo '<img class="sidebar-brand-narrow" src="' . htmlspecialchars($url) . '" alt="' . htmlspecialchars($config->title) . '" height="32">';
             } else {
-                echo '<img class="sidebar-brand-full" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($config->title).'" height="32">';
-                echo '<img class="sidebar-brand-narrow" src="'.$assetDir.'/images/croacworks-logo-hq.png" alt="'.htmlspecialchars($config->title).'" height="32">';
+                echo '<img class="sidebar-brand-full" src="' . $assetDir . '/images/croacworks-logo-hq.png" alt="' . htmlspecialchars($config->title) . '" height="32">';
+                echo '<img class="sidebar-brand-narrow" src="' . $assetDir . '/images/croacworks-logo-hq.png" alt="' . htmlspecialchars($config->title) . '" height="32">';
             }
             ?>
             <?= $config->title ?>
@@ -136,17 +137,12 @@ $nodes[] = ['divider' => true];
 
     <!-- Bloco de usuário (opcional) -->
     <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
-        <a href="/user/<?= $user->id; ?>" class="flex-shrink-0">
-            <?php if ($user->profile && $user->profile->file): ?>
-                <img src="<?= $user->profile->file->url; ?>" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
-            <?php else: ?>
-                <svg width="32" height="32">
-                    <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                </svg>
-            <?php endif; ?>
+        <a class="nav-link" href="index.html">
+            <svg class="nav-icon">
+                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
+            </svg> Dashboard
         </a>
         <div class="flex-grow-1">
-            <a href="/user/<?= $user->id; ?>" class="fw-semibold text-white-50"><?= htmlspecialchars($name_user) ?></a>
             <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
         </div>
     </div>
