@@ -29,7 +29,7 @@ class UserController extends AuthorizationController
     public function actionIndex()
     {
         if(!AuthorizationController::isMaster() || !AuthorizationController::isAdmin()){
-            return $this->redirect(['profile', 'id' => Yii::$app->user->identity->id]);
+            return $this->redirect(['profile']);
         }
         $searchModel = new User();
         $options = [
