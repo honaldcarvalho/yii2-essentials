@@ -142,6 +142,7 @@ $config = [
             'enableStrictParsing' => false,
             'rules' => array_merge(
                 customControllersUrl([
+                    'dashboard',
                     'role',
                     'util',
                     'site',
