@@ -45,7 +45,7 @@ class Language extends ModelCommon
             'id' => Yii::t('app', 'ID'),
             'code' => Yii::t('app', 'Code'),
             'name' => Yii::t('app', 'Name'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'All'),
         ];
     }
 }
