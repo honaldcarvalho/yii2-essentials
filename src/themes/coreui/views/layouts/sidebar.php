@@ -106,12 +106,12 @@ function getNodes($parentId = null): array
 $nodes = getNodes(null);
 
 // Logout opcional
-$nodes[] = [
-    'label' => Yii::t('app', 'Logout'),
-    'icon'  => 'cil-account-logout',
-    'active' => 'logout',
-    'url'   => ['/site/logout'],
-];
+// $nodes[] = [
+//     'label' => Yii::t('app', 'Logout'),
+//     'icon'  => 'cil-account-logout',
+//     'active' => 'logout',
+//     'url'   => ['/site/logout'],
+// ];
 
 $nodes[] = ['divider' => true];
 
