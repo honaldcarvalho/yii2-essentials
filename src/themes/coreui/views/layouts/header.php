@@ -105,13 +105,13 @@ onPjaxReady((root) => {
         target.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
         }
         fetch('/user/change-lang', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        credentials: 'same-origin',
-        body: 'lang=' + encodeURIComponent(lang)
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            credentials: 'same-origin',
+            body: 'lang=' + encodeURIComponent(lang)
         })
-        .then(function(){ location.reload(); })
-        .catch(function(){ location.reload(); });
+        .then(function(){ //location.reload(); })
+        .catch(function(){ //location.reload(); });
     });
     });
 
