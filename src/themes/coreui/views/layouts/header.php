@@ -228,6 +228,9 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     </li>
                 </ul>
             </li>
+            <li class="nav-item py-1">
+                <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+            </li>
             <li class="nav-item dropdown lang-menu">
                 <button class="btn btn-link nav-link py-2 px-2 d-flex align-items-center" type="button"
                     data-coreui-toggle="dropdown" aria-expanded="false" aria-label="Selecionar idioma">
