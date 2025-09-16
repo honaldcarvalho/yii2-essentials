@@ -68,48 +68,42 @@ $this->title = '';
                     </div>
                     <!-- /.col-->
 
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white <?= $memoryInfo['percent_used'] > 50 ? ($memoryInfo['percent_used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold"><?= Yii::t('app', 'Memory') ?></div>
+                                <div><?= $memoryInfo['total_pretty'] ?></div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="<?= $memoryInfo['percent_used'] ?>%" aria-valuenow="<?= $memoryInfo['percent_used'] ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="text-white text-opacity-75">
+                                    <?= Yii::t('app','Total Memory Used:').$memoryInfo['used_bytes_pretty'] ?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white <?= $cpuInfo['used'] > 50 ? ($cpuInfo['used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold"><?= Yii::t('app', 'CPU Usage') ?></div>
+                                <div><?= $cpuInfo['used'] ?></div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="<?= $cpuInfo['used'] ?>%" aria-valuenow="<?= $cpuInfo['used'] ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="text-white text-opacity-75">
+                                    <?= Yii::t('app','Total Cpu Free:').$cpuInfo['free'] ?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+
                 </div>
                 <!-- /.row.g-4-->
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-3 col-sm-6 col-12">
-
-        <div class="info-box <?= $memoryInfo['percent_used'] > 50 ? ($memoryInfo['percent_used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
-            <span class="info-box-icon"><i class="fas fa-memory"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text"><?= Yii::t('app', 'Memory') ?></span>
-                <span class="info-box-number"><?= $memoryInfo['total_pretty'] ?></span>
-                <div class="progress">
-                    <div class="progress-bar" style="width: <?= $memoryInfo['percent_used'] ?>%"></div>
-                </div>
-                <span class="progress-description">
-                    Total Memory Used: <?= $memoryInfo['used_pretty'] ?>
-                </span>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3 col-sm-6 col-12">
-
-        <div class="info-box <?= $cpuInfo['used'] > 50 ? ($cpuInfo['used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
-            <span class="info-box-icon"><i class="fa-solid fa-microchip"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text"><?= Yii::t('app', 'CPU Usage') ?></span>
-                <span class="info-box-number"><?= $cpuInfo['used'] ?>% </span>
-                <div class="progress">
-                    <div class="progress-bar" style="width: <?= $cpuInfo['used'] ?>%"></div>
-                </div>
-                <span class="progress-description">
-                    Total Cpu Free: <?= $cpuInfo['free'] ?>%
-                </span>
-            </div>
-
-        </div>
-
     </div>
 
 </div>
