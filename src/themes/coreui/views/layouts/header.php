@@ -312,10 +312,12 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                         </svg> <?= Yii::t('app','Configurations'); ?> 
                     </a>
                     <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="/site/logout">
+                    <a class="dropdown-item" href="#">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
-                        </svg> Lock Account</a><a class="dropdown-item" href="#">
+                        </svg> Lock Account
+                    </a>
+                    <a class="dropdown-item" href="/site/logout" data-method="post">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
                         </svg> Logout
