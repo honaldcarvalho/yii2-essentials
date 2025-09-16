@@ -19,7 +19,7 @@ use yii\web\Response;
  */
 class UserController extends AuthorizationController
 {
-    public $guest = ['change-lang', 'change-theme','update','view','profile','edit'];    
+    public $guest = ['change-lang', 'change-theme', 'update', 'view', 'profile', 'edit'];
 
     /**
      * Lists all User models.
@@ -55,12 +55,32 @@ class UserController extends AuthorizationController
 
     public function actionChangeLang()
     {
-        $lang = Yii::$app->request->post('lang');
-        $model =  self::User();
-        if ($model !== null && $lang !== null && !empty($lang)) {
-            $model->profile->language_id = Language::findOne(['code' => $lang])->id;
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $code = (string)Yii::$app->request->post('lang', '');
+        if ($code === '') {
+            return ['ok' => false, 'error' => 'Language code is required'];
         }
-        return $model->save();
+
+        $user = self::User();
+        if (!$user || !$user->profile) {
+            return ['ok' => false, 'error' => 'User/profile not found'];
+        }
+
+        $lang = Language::findOne(['code' => $code, 'status' => true]);
+        if (!$lang) {
+            return ['ok' => false, 'error' => 'Invalid language'];
+        }
+
+        // grava direto no profile, sem validação e sem firula
+        $saved = $user->profile->updateAttributes(['language_id' => (int)$lang->id]);
+
+        // aplica no request atual só para consistência (sem persistir em lugar nenhum)
+        if ($saved) {
+            Yii::$app->language = $lang->code;
+        }
+
+        return ['ok' => (bool)$saved];
     }
 
     /**
