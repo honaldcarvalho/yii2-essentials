@@ -2,11 +2,11 @@
 namespace croacworks\essentials\controllers;
 
 use Yii;
-use yii\web\Controller;
+
 use yii\web\Response;
 use croacworks\essentials\models\SystemInfo;
 
-class DashboardController extends Controller
+class DashboardController extends AuthorizationController
 {
     public function actionHealth()
     {
