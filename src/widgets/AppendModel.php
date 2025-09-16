@@ -186,7 +186,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                     $this->action_columns,
                     [
                         'status' => function ($url, $model, $key) {
-                            return Html::a(
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'status-model',$model) ?  Html::a(
                                 '<i class="fas fa-toggle-' . (!$model->status ? 'off' : 'on') . '"></i>',
                                 'javascript:;',
                                 [
@@ -197,10 +197,10 @@ class AppendModel extends \yii\bootstrap5\Widget
                                     "data-placement" => "top",
                                     "title" => \Yii::t('*', "Change Status {$this->attactModel}")
                                 ]
-                            );
+                            ) : '';
                         },
                         'remove' => function ($url, $model, $key) {
-                            return Html::a(
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'remove-model',$model) ? Html::a(
                                 '<i class="fas fa-trash"></i>',
                                 'javascript:;',
                                 [
@@ -211,10 +211,11 @@ class AppendModel extends \yii\bootstrap5\Widget
                                     "data-placement" => "top",
                                     "title" => \Yii::t('*', "Remove {$this->attactModel}")
                                 ]
-                            );
+                            ) : '';
                         },
                         'edit' => function ($url, $model, $key) {
-                            return Html::a(
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'get-model',$model) && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model',$model)
+                            ? Html::a(
                                 '<i class="fas fa-pen"></i>',
                                 'javascript:;',
                                 [
@@ -225,7 +226,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                                     "data-placement" => "top",
                                     "title" => \Yii::t('*', "Edit {$this->attactModel}")
                                 ]
-                            );
+                            ) : '';
                         },
                     ]
                 )
