@@ -174,9 +174,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
             </svg>
         </button>
         <ul class="header-nav d-none d-lg-flex">
-            <li class="nav-item"><a class="nav-link" href="/site/dashboard">Dashboard</a></li>
-            <li class="nav-item"><a class="nav-link" href="/users"><?= Yii::t('app', 'Users') ?></a></li>
-            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>"><?= Yii::t('app', 'Configurations') ?></a></li>
+
         </ul>
 
         <!-- NOTIFICATION -->
