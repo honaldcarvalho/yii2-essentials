@@ -21,12 +21,6 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'group.name:text:'.Yii::t('app', 'Group'),
-            'profile.fullname:text:'.Yii::t('app', 'Full Name'),
-            'username',
-            'email:email',
-            'profile.language.name:text:'.Yii::t('app', 'Language'),
-            #'theme',
             [
                 'attribute'=>'file_id',
                 'header' => 'Preview',
@@ -39,6 +33,12 @@ $this->params['breadcrumbs'][] = $this->title;
                     }
                 }
             ],
+            'group.name:text:'.Yii::t('app', 'Group'),
+            'profile.fullname:text:'.Yii::t('app', 'Full Name'),
+            'username',
+            'email:email',
+            'profile.language.name:text:'.Yii::t('app', 'Language'),
+            #'theme',
             'created_at:datetime',
             'updated_at:datetime',
             [

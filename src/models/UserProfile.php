@@ -71,8 +71,8 @@ class UserProfile extends ModelCommon
     {
         return [
             'id' => Yii::t('app', 'ID'),
+            'file_id' => Yii::t('app', 'Profile Image'),
             'user_id' => Yii::t('app', 'User ID'),
-            'file_id' => Yii::t('app', 'File ID'),
             'fullname' => Yii::t('app', 'Fullname'),
             'cpf_cnpj' => Yii::t('app', 'Cpf Cnpj'),
             'phone' => Yii::t('app', 'Phone'),
