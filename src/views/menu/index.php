@@ -35,7 +35,7 @@ $script = <<< JS
             }).done(function() {
                 toastr.success("Ordem atualizada");
             }).fail(function() {
-                toastr.error("Erro ao atualizar a ordem. Recarregue a página");
+                toastr.error(yii.t('app','Failed to update order. Reload the page'));
             }).always(function(){
                 $('#overlay').hide();
             });

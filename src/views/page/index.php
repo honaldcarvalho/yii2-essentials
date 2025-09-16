@@ -23,7 +23,7 @@ $js = <<< JS
         navigator.clipboard.writeText(url).then(() => {
             toastr.success('URL copiada!', '', {timeOut: 2000});
         }).catch(err => {
-            toastr.error('Erro ao copiar URL', '', {timeOut: 3000});
+            toastr.error(yii.t('app','Error copying URL'), '', {timeOut: 3000});
             console.error(err);
         });
 

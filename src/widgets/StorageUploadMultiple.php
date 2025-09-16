@@ -278,7 +278,7 @@ class StorageUploadMultiple extends Widget
                 btn.prop("disabled", false); removeBtn.disabled = false;
             }
         }).catch((err)=>{
-            toastr.error("Erro na página: " + err);
+            toastr.error(yii.t('app','Page error:') + err);
             bar.style.width = '0%'; bar.textContent = '';
         }).finally(()=>{
             if (uploading>0) uploading--;
@@ -363,7 +363,7 @@ class StorageUploadMultiple extends Widget
                     filesArray.set(index, dt.files[0]);
                 }catch(e){
                     filesArray.set(index, null); removeFile(index);
-                    toastr.error("Imagem inválida: " + originalFile.name);
+                    toastr.error(yii.t('app','Invalid image:') + originalFile.name);
                 }
             } else {
                 filesArray.set(index, originalFile);

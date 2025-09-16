@@ -112,7 +112,7 @@ onPjaxReady((root) => {
             location.reload();
             } else {
             if (label) label.textContent = original || (lang ? String(lang).toUpperCase() : '');
-            if (window.toastr) toastr.error((resp && resp.error) || 'Falha ao trocar idioma.');
+            if (window.toastr) toastr.error((resp && resp.error) || yii.t('app','Failed to change language.'));
             }
         })
         .fail(function(xhr){
