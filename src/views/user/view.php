@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\controllers\AuthorizationController;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
@@ -7,8 +8,10 @@ use yii\widgets\DetailView;
 /** @var croacworks\essentials\models\User $model */
 
 $this->title = Yii::t('app', 'User: #{id} - {name}', ['id' => $model->id,'name' => $model->username]);
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
+if((AuthorizationController::isMaster()||AuthorizationController::isAdmin()))
+    $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
+
 \yii\web\YiiAsset::register($this);
 ?>
 <div class="user-view">

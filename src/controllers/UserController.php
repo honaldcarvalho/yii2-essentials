@@ -28,9 +28,7 @@ class UserController extends AuthorizationController
      */
     public function actionIndex()
     {
-        if(!AuthorizationController::isMaster() || !AuthorizationController::isAdmin()){
-            return $this->redirect(['profile']);
-        }
+
         $searchModel = new User();
         $options = [
             'orderBy' => ['id' => SORT_DESC],
