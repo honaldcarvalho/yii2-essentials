@@ -3,11 +3,12 @@
 use croacworks\essentials\models\Language;
 use yii\bootstrap5\Breadcrumbs;
 
-$name_split = explode(' ', Yii::$app->user->identity->username);
+$user = Yii::$app->user->identity;
+$name_split = explode(' ', $user->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
+
 $action = Yii::$app->controller->action->id;
 $languages = Language::find()->where(['status' => true])->all();
-$user = Yii::$app->user->identity;
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
@@ -282,29 +283,28 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                 <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
 
-            <li class="nav-item dropdown"><a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                    <div class="avatar avatar-md"><img class="avatar-img" src="<?= $avatar; ?>" alt="<?= $name_user; ?>"></div>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end pt-0">
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div>
-
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold my-2">
-                        <div class="fw-semibold">Settings</div>
-                    </div>
-
-                    <a class="dropdown-item" href="/user/profile">
+            <li class="nav-item dropdown">
+                <a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    <div class="avatar avatar-md">
                         <?php if ($user->profile && $user->profile->file): ?>
-                            <img src="<?= $user->profile->file->url; ?>" class="rounded-circle icon me-2" style="width:32px;height:32px;object-fit:cover;">
+                            <img src="<?= $user->profile->file->url; ?>" class="rounded-circle avatar-img" style="width:32px;height:32px;object-fit:cover;" alt="<?= $name_user; ?>">
                         <?php else: ?>
-                            <svg class="rounded-circle icon me-2" width="32" height="32">
+                            <svg class="rounded-circle avatar-img" width="32" height="32">
                                 <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
                             </svg>
                         <?php endif; ?>
+                    </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end pt-0">
+                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div>
+                    <a class="dropdown-item" href="/user/view/<?= Yii::$app->user->identity->id; ?>">
+                        <svg class="icon me-2">
+                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                        </svg> 
                         
                         <?= Yii::t('app','Profile'); ?> 
                     </a>
-
-                    <a class="dropdown-item" href="/configuration">
+                    <a class="dropdown-item" href="/configuration/<?= $configuration->id; ?>">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
                         </svg> <?= Yii::t('app','Configurations'); ?> 
