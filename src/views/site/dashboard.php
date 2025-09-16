@@ -24,7 +24,7 @@ $this->title = '';
 ?>
 
 <div class="row">
-    <div class="example">
+
         <ul class="nav nav-underline-border" role="tablist">
             <li class="nav-item"><a class="nav-link active" data-coreui-toggle="tab" href="#preview-1002" role="tab">
                     <i class="icon me-2" fa-brands fa-<?= $osInfo['type'] ?>"></i>
@@ -77,7 +77,7 @@ $this->title = '';
                                     <div class="progress-bar" role="progressbar" style="<?= $memoryInfo['percent_used'] ?>%" aria-valuenow="<?= $memoryInfo['percent_used'] ?>" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                                 <small class="text-white text-opacity-75">
-                                    <?= Yii::t('app','Total Memory Used:').$memoryInfo['used_bytes_pretty'] ?>
+                                    <?= Yii::t('app','Total Memory Used:').$memoryInfo['used_pretty'] ?>
                                 </small>
                             </div>
                         </div>
