@@ -56,7 +56,7 @@ class LicenseType extends ModelCommon
             'value' => Yii::t('app', 'Value'),
             'contract' => Yii::t('app', 'Contract'),
             'max_devices' => Yii::t('app', 'Max Devices'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 

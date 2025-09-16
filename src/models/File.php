@@ -103,6 +103,7 @@ class File extends ModelCommon
             'type' => Yii::t('app', 'Type'),
             'size' => Yii::t('app', 'Size'),
             'duration' => Yii::t('app', 'Duration'),
+            'status' => Yii::t('app', 'Active'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
         ];

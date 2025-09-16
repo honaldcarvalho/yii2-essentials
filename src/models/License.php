@@ -57,7 +57,7 @@ class License extends ModelCommon
             'validate' => Yii::t('app', 'Validate'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 

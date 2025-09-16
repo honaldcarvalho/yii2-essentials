@@ -63,7 +63,7 @@ class RoleTemplate extends ModelCommon
             'controller' => Yii::t('app', 'Controller'),
             'actions' => Yii::t('app', 'Actions'),
             'origin' => Yii::t('app', 'Origin'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 

@@ -55,7 +55,7 @@ class State extends ModelCommon
             'uf' => Yii::t('app', 'Uf'),
             'ibge' => Yii::t('app', 'Ibge'),
             'ddd' => Yii::t('app', 'Ddd'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 

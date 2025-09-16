@@ -107,7 +107,7 @@ class Configuration extends ModelCommon
             'email' => Yii::t('app', 'Email'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
             'email_template' => Yii::t('app', 'Email Template'),
             'logging' => Yii::t('app', 'Logging'),
         ];

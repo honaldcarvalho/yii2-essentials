@@ -94,7 +94,7 @@ class Role extends ModelCommon
             'name' => Yii::t('app', 'Name'),
             'controller' => Yii::t('app', 'Controller'),
             'actions' => Yii::t('app', 'Actions'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
         ];

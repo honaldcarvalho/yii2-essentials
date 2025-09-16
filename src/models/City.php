@@ -48,7 +48,7 @@ class City extends ModelCommon
             'state_id' => Yii::t('app', 'State ID'),
             'name' => Yii::t('app', 'Name'),
             'ibge' => Yii::t('app', 'Ibge'),
-            'status' => Yii::t('app', 'Status'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 

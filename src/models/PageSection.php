@@ -55,8 +55,8 @@ class PageSection extends ModelCommon
     {
         return [
             'id' => 'ID',
-            'name' => 'Nome',
-            'status' => 'Ativo',
+            'name' => Yii::t('app', 'Name'),
+            'status' => Yii::t('app', 'Active'),
         ];
     }
 
