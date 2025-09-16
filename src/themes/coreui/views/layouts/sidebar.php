@@ -129,7 +129,7 @@ $nodes[] = ['divider' => true];
                 echo '<img class="sidebar-brand-narrow" src="' . $assetDir . '/images/croacworks-logo-hq.png" alt="' . htmlspecialchars($config->title) . '" height="32">';
             }
             ?>
-            <?= $config->title ?>
+            <span class="system-title"><?= $config->title ?></span>
         </div>
         <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close"
             onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>

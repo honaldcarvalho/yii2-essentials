@@ -13945,3 +13945,8 @@ a.sidebar-header
 {
   text-decoration: none;
 }
+
+.sidebar-narrow-unfoldable .sidebar .sidebar-header .system-title
+{
+  display: none;
+}
