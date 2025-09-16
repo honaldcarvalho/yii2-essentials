@@ -7,7 +7,6 @@ use yii\widgets\DetailView;
 /** @var croacworks\essentials\models\User $model */
 
 $this->title = Yii::t('app', 'Profile').': '.$model->profile->fullname;
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>

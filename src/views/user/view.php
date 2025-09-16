@@ -8,8 +8,7 @@ use yii\widgets\DetailView;
 /** @var croacworks\essentials\models\User $model */
 
 $this->title = Yii::t('app', 'User: #{id} - {name}', ['id' => $model->id,'name' => $model->username]);
-if((AuthorizationController::isMaster()||AuthorizationController::isAdmin()))
-    $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
 \yii\web\YiiAsset::register($this);
