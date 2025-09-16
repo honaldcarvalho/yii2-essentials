@@ -589,3 +589,4 @@ app,No notifications found.,Nenhuma notificação encontrada.
 app,The service order of number #{service_id} has been updated to {status},A ordem de serviço número #{service_id} foi atualizada para {status}
 app,Service Order Update,Atualização de ordem de serviço
 app,If you forgot your password you can,"Se você esqueceu sua senha, você pode"
+app,Network error when switching language,"Erro de rede ao trocar idioma"

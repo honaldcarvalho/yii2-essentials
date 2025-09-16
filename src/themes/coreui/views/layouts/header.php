@@ -117,7 +117,7 @@ onPjaxReady((root) => {
         })
         .fail(function(xhr){
             if (label) label.textContent = original || (lang ? String(lang).toUpperCase() : '');
-            if (window.toastr) toastr.error('Erro de rede ao trocar idioma' + (xhr && xhr.status ? ' (HTTP ' + xhr.status + ')' : '') + '.');
+            if (window.toastr) toastr.error(yii.t('app','Network error when switching language') + (xhr && xhr.status ? ' (HTTP ' + xhr.status + ')' : '') + '.');
         });
     });
 
@@ -173,7 +173,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
         <ul class="header-nav d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/site/dashboard">Dashboard</a></li>
             <li class="nav-item"><a class="nav-link" href="/users"><?= Yii::t('app', 'Users') ?></a></li>
-            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>"><?= Yii::t('app', 'Settings') ?></a></li>
+            <li class="nav-item"><a class="nav-link" href="/configuration/<?= $configuration->id; ?>"><?= Yii::t('app', 'Configurations') ?></a></li>
         </ul>
 
         <!-- NOTIFICATION -->

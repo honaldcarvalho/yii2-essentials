@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?= DefaultButtons::widget(
                             [
                                 'controller' => Yii::$app->controller->id,
-                                'show'=>['create'],'buttons_name'=>['create'=>Yii::t("backend","Create Language")],
+                                'show'=>['create'],'buttons_name'=>['create'=>Yii::t('app',"Create Language")],
                                 'verGroup'=>false
                             ]) ?>
                         </div>

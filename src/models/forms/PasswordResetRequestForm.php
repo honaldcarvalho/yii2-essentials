@@ -74,7 +74,7 @@ class PasswordResetRequestForm extends Model
                     <a href='{$resetLink}' target='_blank' rel='noopener'>" . Yii::t('app', 'Reset Password') . "</a>
                 </td></tr>
             </table>
-            <p><small>" . Yii::t("backend", "This message was sent automatically by the {title}, do not respond.", ['title' => $cfg->title]) . "</small></p>
+            <p><small>" . Yii::t('app', "This message was sent automatically by the {title}, do not respond.", ['title' => $cfg->title]) . "</small></p>
         ";
 
         // Usa o método novo (template do banco)

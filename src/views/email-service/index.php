@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
                      <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget(
                             [
-                                'show'=>['create'],'buttons_name'=>['create'=>Yii::t("backend","Create Email Sevice")]
+                                'show'=>['create'],'buttons_name'=>['create'=>Yii::t('app',"Create Email Sevice")]
                             ]) ?>
                         </div>
                     </div>
