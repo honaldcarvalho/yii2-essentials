@@ -8272,6 +8272,7 @@ textarea.form-control-lg {
   padding: var(--cui-sidebar-nav-group-items-padding-y) var(--cui-sidebar-nav-group-items-padding-x);
   overflow: hidden;
   transition: height 0.15s ease;
+  padding-left: 1rem;
 }
 @media (prefers-reduced-motion: reduce) {
   .sidebar-nav .nav-group .nav-group-items {
