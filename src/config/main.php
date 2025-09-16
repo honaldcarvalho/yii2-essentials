@@ -179,6 +179,7 @@ $config = [
                     'common'
                 ),
                 [
+                    'profile/edit' => 'common/user/edit',
                     'profile' => 'common/user/profile',
                     'f/<slug:[A-Za-z0-9]{8,64}>' => 'file/open',
                     'POST storage/upload' => 'storage/upload',

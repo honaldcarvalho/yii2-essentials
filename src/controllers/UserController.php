@@ -274,6 +274,70 @@ class UserController extends AuthorizationController
         ]);
     }
 
+    public function actionEdit()
+    {
+        /** @var \croacworks\essentials\models\User|null $user */
+        $user = Yii::$app->user->identity;
+        $user->scenario = 'profile';
+
+        $profile = $user->profile ?: new UserProfile(['user_id' => $user->id]);
+
+        if (
+            Yii::$app->request->isAjax
+            && $user->load(Yii::$app->request->post())
+            && $profile->load(Yii::$app->request->post())
+        ) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            return array_merge(
+                \yii\widgets\ActiveForm::validate($user),
+                \yii\widgets\ActiveForm::validate($profile)
+            );
+        }
+
+        if ($user->load(Yii::$app->request->post()) && $profile->load(Yii::$app->request->post())) {
+
+            $isValid = $user->validate();
+            $isValid = $profile->validate() && $isValid;
+
+            if ($isValid) {
+                $tx = Yii::$app->db->beginTransaction(\yii\db\Transaction::SERIALIZABLE);
+                try {
+                    if (!$user->save(false)) {
+                        throw new \RuntimeException('Unable to save User.');
+                    }
+
+                    $profile->user_id = $user->id;
+                    if (!$profile->save(false)) {
+                        throw new \RuntimeException('Unable to save UserProfile.');
+                    }
+
+                    $tx->commit();
+                    Yii::$app->session->setFlash('success', Yii::t('app', 'User updated successfully.'));
+                    Yii::$app->notify->create(
+                        Yii::$app->user->id ?: 0,
+                        Yii::t('app', 'User'),
+                        Yii::t('app', 'User updated successfully.'),
+                        'system',
+                        "/user/{$profile->user_id}"
+                    );
+
+
+                    return $this->redirect(['profile', 'id' => Yii::$app->user->identity->id]);
+
+                } catch (\Throwable $e) {
+                    $tx->rollBack();
+                    Yii::error($e->getMessage(), __METHOD__);
+                    Yii::$app->session->setFlash('error', Yii::t('app', 'Error while saving. Please try again.'));
+                }
+            }
+        }
+
+        return $this->render('edit', [
+            'model' => $user,
+            'profile' => $profile,
+        ]);
+    }
+
     public function actionAddGroup()
     {
 
