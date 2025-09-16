@@ -99,6 +99,7 @@ class User extends Account
     {
         return [
             'id' => Yii::t('app', 'ID'),
+            'file_id' => Yii::t('app', 'Profile Image'),
             'group_id' => Yii::t('app', 'Group'),
             'username' => Yii::t('app', 'Username'),
             'email' => Yii::t('app', 'Email'),
