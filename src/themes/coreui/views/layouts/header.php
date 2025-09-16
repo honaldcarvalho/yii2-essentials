@@ -127,7 +127,7 @@ if (!empty($configuration->file_id) && $configuration->file !== null) {
 }
 
 // Helpers rápidos para flag (emoji) e rótulo amigável
-$activeLang = Yii::$app->user->identity->language; // ex.: 'pt-BR' ou 'en-US'
+$activeLang = Yii::$app->user->identity->profile->language; // ex.: 'pt-BR' ou 'en-US'
 
 /** Converte 'pt-BR' -> 🇧🇷 (emoji flag) */
 $codeToFlag = static function (string $code): string {
