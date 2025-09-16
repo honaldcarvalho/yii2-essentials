@@ -24,19 +24,136 @@ $this->title = '';
 ?>
 
 <div class="row">
-    <div class="col-md-3 col-sm-6 col-12">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-body-secondary text-end">
-                    <i class="icon icon-xxl fab fa-<?= $osInfo['type'] ?>">
-                </div>
-                <div class="fs-4 fw-semibold"><?= $osInfo['pretty_name'] ?></div>
-                <div class="small text-body-secondary text-uppercase fw-semibold text-truncate"><?= Yii::t('app', 'Operation System') ?></div>
-                <div class="progress progress-thin mt-3 mb-0">
-                    <div class="progress-bar bg-info" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="example">
+        <ul class="nav nav-underline-border" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-coreui-toggle="tab" href="#preview-1000" role="tab">
+                    <svg class="icon me-2">
+                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
+                    </svg>Preview</a></li>
+        </ul>
+        <div class="tab-content rounded-bottom">
+            <div class="tab-pane p-3 active preview" role="tabpanel" id="preview-1000">
+                <div class="row g-4">
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-4 fw-semibold">26K <span class="fs-6 fw-normal">(-12.4%
+                                            <svg class="icon">
+                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-bottom"></use>
+                                            </svg>)</span></div>
+                                    <div>Users</div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <svg class="icon">
+                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
+                                </div>
+                            </div>
+                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
+                                <canvas class="chart" id="card-chart1" height="70"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-4 fw-semibold">$6.200 <span class="fs-6 fw-normal">(40.9%
+                                            <svg class="icon">
+                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-top"></use>
+                                            </svg>)</span></div>
+                                    <div>Income</div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <svg class="icon">
+                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
+                                </div>
+                            </div>
+                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
+                                <canvas class="chart" id="card-chart2" height="70"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-4 fw-semibold">2.49% <span class="fs-6 fw-normal">(84.7%
+                                            <svg class="icon">
+                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-top"></use>
+                                            </svg>)</span></div>
+                                    <div>Conversion Rate</div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <svg class="icon">
+                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
+                                </div>
+                            </div>
+                            <div class="c-chart-wrapper mt-3" style="height:70px;">
+                                <canvas class="chart" id="card-chart3" height="70"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white bg-danger">
+                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fs-4 fw-semibold">44K <span class="fs-6 fw-normal">(-23.6%
+                                            <svg class="icon">
+                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-bottom"></use>
+                                            </svg>)</span></div>
+                                    <div>Sessions</div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <svg class="icon">
+                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
+                                        </svg>
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
+                                </div>
+                            </div>
+                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
+                                <canvas class="chart" id="card-chart4" height="70"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 col-12">
+
+        <div class="info-box bg-gray-dark">
+            <span class="info-box-icon"><i class="fa-brands fa-<?= $osInfo['type'] ?>"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text"><?= Yii::t('app', 'Operation System') ?></span>
+                <span class="info-box-number"><?= $osInfo['pretty_name'] ?></span>
+                <div class="progress">
+
+                </div>
+                <span class="progress-description">
+                    <?= $osInfo['name'] ?>
+                </span>
+            </div>
+        </div>
+
     </div>
 
     <div class="col-md-3 col-sm-6 col-12">
