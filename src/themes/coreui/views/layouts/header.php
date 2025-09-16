@@ -6,7 +6,7 @@ use yii\bootstrap5\Breadcrumbs;
 $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 $action = Yii::$app->controller->action->id;
-$languages = Language::find()->where(['status'=>true])->all();
+$languages = Language::find()->where(['status' => true])->all();
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
@@ -97,19 +97,27 @@ onPjaxReady((root) => {
     setInterval(fetchList, 30000);
 
     // troca de idioma (dropdown CoreUI)
-    jQuery(document).on('click', '.lang-menu [data-lang]', function(){
+    jQuery(document).on('click', '.lang-menu .dropdown-item[data-lang]', function(){
         var lang = jQuery(this).data('lang');
+        var label = document.getElementById('lang-selected');
+        var original = label ? label.textContent : '';
+
+        if (label) {
+        label.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
+        }
 
         jQuery.post('/user/change-lang', { lang: lang })
         .done(function(resp){
             if (resp && resp.ok) {
             location.reload();
             } else {
+            if (label) label.textContent = original || (lang ? String(lang).toUpperCase() : '');
             if (window.toastr) toastr.error((resp && resp.error) || 'Falha ao trocar idioma.');
             }
         })
-        .fail(function(){
-            if (window.toastr) toastr.error('Erro de rede ao trocar idioma.');
+        .fail(function(xhr){
+            if (label) label.textContent = original || (lang ? String(lang).toUpperCase() : '');
+            if (window.toastr) toastr.error('Erro de rede ao trocar idioma' + (xhr && xhr.status ? ' (HTTP ' + xhr.status + ')' : '') + '.');
         });
     });
 
