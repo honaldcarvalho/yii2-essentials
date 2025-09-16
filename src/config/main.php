@@ -97,7 +97,6 @@ $config = [
         ],
 
         'formatter' => [
-            'locale' => 'pt_BR',
             'defaultTimeZone'    => 'America/Fortaleza',
             'dateFormat' => 'dd/MM/yyyy',
             'datetimeFormat' => 'php:d/m/y H:i',
