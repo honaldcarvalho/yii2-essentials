@@ -117,8 +117,8 @@ $nodes[] = ['divider' => true];
 
 ?>
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
-    <div href="/" class="sidebar-header border-bottom">
-        <a class="sidebar-brand">
+    <a href="/" class="sidebar-header border-bottom">
+        <div class="sidebar-brand">
             <?php
             if (!empty($config->file_id) && $config->file !== null) {
                 $url = Yii::getAlias('@web') . $config->file->urlThumb;
@@ -130,10 +130,10 @@ $nodes[] = ['divider' => true];
             }
             ?>
             <?= $config->title ?>
-        </a>
+        </div>
         <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close"
             onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
-    </div>
+        </a>
 
     <!-- Navegação -->
     <?= CoreuiMenu::widget([
