@@ -8380,13 +8380,19 @@ textarea.form-control-lg {
     transform: rotate(0deg);
   }
 }
-
+.sidebar-narrow-unfoldable .system-title
+{
+  display: none;
+}
 .sidebar-narrow-unfoldable {
   --cui-sidebar-narrow-unfoldable-box-shadow: var(--cui-box-shadow);
 }
 .sidebar-narrow-unfoldable:hover {
   box-shadow: var(--cui-sidebar-narrow-unfoldable-box-shadow);
   box-shadow: 0 0.5rem 1rem rgba(8, 10, 12, 0.15);
+}
+.sidebar-narrow-unfoldable:hover .system-title{
+    display: block;
 }
 .sidebar-narrow-unfoldable:hover .sidebar-toggler::before {
   transform: rotate(-180deg);
@@ -13946,7 +13952,3 @@ a.sidebar-header
   text-decoration: none;
 }
 
-.sidebar-narrow-unfoldable .system-title
-{
-  display: none;
-}
