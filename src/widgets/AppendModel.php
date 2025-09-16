@@ -4,6 +4,7 @@ namespace croacworks\essentials\widgets;
 
 use croacworks\essentials\components\gridview\ActionColumnCustom;
 use croacworks\essentials\components\gridview\ResponsiveGridView;
+use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
@@ -416,7 +417,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         JS,Yii::$app->view::POS_END);
         $field_str = '';
 
-        $button = $this->new_button ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
+        $button = $this->new_button && AuthorizationController::verAuthorization(Yii::$app->controller->id, 'model-get') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
         $button_save = Yii::t('app', "Save");
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
