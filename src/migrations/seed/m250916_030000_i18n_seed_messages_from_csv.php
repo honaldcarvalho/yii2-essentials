@@ -8,7 +8,7 @@ use yii\db\Migration;
  * - Upserts into source_message and message (language 'pt-BR').
  * - Detects either default Yii i18n tables or 'dbtranslate' schema.
  */
-class m20250916_030000_i18n_seed_messages_from_csv extends Migration
+class m250916_030000_i18n_seed_messages_from_csv extends Migration
 {
     private string $tblSource;
     private string $tblMessage;
