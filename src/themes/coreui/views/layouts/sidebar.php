@@ -135,18 +135,6 @@ $nodes[] = ['divider' => true];
             onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()"></button>
     </div>
 
-    <!-- Bloco de usuário (opcional) -->
-    <div class="px-3 py-3 border-bottom d-flex align-items-center gap-2">
-        <a class="nav-link" href="index.html">
-            <svg class="nav-icon">
-                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-speedometer"></use>
-            </svg> Dashboard
-        </a>
-        <div class="flex-grow-1">
-            <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
-        </div>
-    </div>
-
     <!-- Navegação -->
     <?= CoreuiMenu::widget([
         'items'              => $nodes,

@@ -304,6 +304,9 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                         </svg> 
                         
                         <?= $name_user ?> 
+                        <div class="flex-grow-1">
+                            <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
+                        </div>
                     </a>
                     <a class="dropdown-item" href="/configuration<?= AuthorizationController::isMaster() ? "/{$configuration->id}" : ''; ?>">
                         <svg class="icon me-2">
