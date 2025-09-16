@@ -148,8 +148,8 @@ class User extends Account
     public static function isMasterByUserId(int $userId, ?int $baseGroupId, \yii\db\Connection $db): bool
     {
         $groupsTable = \croacworks\essentials\models\Group::tableName();
-        $ugTable = class_exists(\croacworks\essentials\models\UsersGroup::class)
-            ? \croacworks\essentials\models\UsersGroup::tableName()
+        $ugTable = class_exists(\croacworks\essentials\models\UserGroup::class)
+            ? \croacworks\essentials\models\UserGroup::tableName()
             : '{{%user_groups}}';
 
         // 1) base group_id é master?
