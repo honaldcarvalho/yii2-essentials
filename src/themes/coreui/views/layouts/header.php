@@ -5,7 +5,7 @@ use croacworks\essentials\models\Language;
 use yii\bootstrap5\Breadcrumbs;
 
 $user = Yii::$app->user->identity;
-$name_split = explode(' ', $user->username);
+$name_split = explode(' ', $user->profile->fullname ?? $user->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 
 $action = Yii::$app->controller->action->id;
