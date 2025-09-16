@@ -5,6 +5,8 @@ use yii\bootstrap5\Breadcrumbs;
 
 $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
+$action = Yii::$app->controller->action->id;
+$languages = Language::find()->where(['status'=>true])->all();
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
