@@ -26,114 +26,64 @@ $this->title = '';
 <div class="row">
     <div class="example">
         <ul class="nav nav-underline-border" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-coreui-toggle="tab" href="#preview-1000" role="tab">
+            <li class="nav-item"><a class="nav-link active" data-coreui-toggle="tab" href="#preview-1002" role="tab">
                     <svg class="icon me-2">
                         <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
                     </svg>Preview</a></li>
         </ul>
         <div class="tab-content rounded-bottom">
-            <div class="tab-pane p-3 active preview" role="tabpanel" id="preview-1000">
+            <div class="tab-pane p-3 active preview" role="tabpanel" id="preview-1002">
                 <div class="row g-4">
                     <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
                         <div class="card text-white bg-primary">
-                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="fs-4 fw-semibold">26K <span class="fs-6 fw-normal">(-12.4%
-                                            <svg class="icon">
-                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-bottom"></use>
-                                            </svg>)</span></div>
-                                    <div>Users</div>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <svg class="icon">
-                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
-                                        </svg>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
-                                </div>
-                            </div>
-                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
-                                <canvas class="chart" id="card-chart1" height="70"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- /.col-->
-                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
-                        <div class="card text-white bg-info">
-                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="fs-4 fw-semibold">$6.200 <span class="fs-6 fw-normal">(40.9%
-                                            <svg class="icon">
-                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-top"></use>
-                                            </svg>)</span></div>
-                                    <div>Income</div>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <svg class="icon">
-                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
-                                        </svg>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
-                                </div>
-                            </div>
-                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
-                                <canvas class="chart" id="card-chart2" height="70"></canvas>
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold">89.9%</div>
+                                <div>Widget title</div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div><small class="text-white text-opacity-75">Widget helper text</small>
                             </div>
                         </div>
                     </div>
                     <!-- /.col-->
                     <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
                         <div class="card text-white bg-warning">
-                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="fs-4 fw-semibold">2.49% <span class="fs-6 fw-normal">(84.7%
-                                            <svg class="icon">
-                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-top"></use>
-                                            </svg>)</span></div>
-                                    <div>Conversion Rate</div>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <svg class="icon">
-                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
-                                        </svg>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
-                                </div>
-                            </div>
-                            <div class="c-chart-wrapper mt-3" style="height:70px;">
-                                <canvas class="chart" id="card-chart3" height="70"></canvas>
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold">12.124</div>
+                                <div>Widget title</div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div><small class="text-white text-opacity-75">Widget helper text</small>
                             </div>
                         </div>
                     </div>
                     <!-- /.col-->
                     <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
                         <div class="card text-white bg-danger">
-                            <div class="card-body pb-0 d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="fs-4 fw-semibold">44K <span class="fs-6 fw-normal">(-23.6%
-                                            <svg class="icon">
-                                                <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-arrow-bottom"></use>
-                                            </svg>)</span></div>
-                                    <div>Sessions</div>
-                                </div>
-                                <div class="dropdown">
-                                    <button class="btn btn-transparent text-white p-0" type="button" data-coreui-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        <svg class="icon">
-                                            <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-options"></use>
-                                        </svg>
-                                    </button>
-                                    <div class="dropdown-menu dropdown-menu-end"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><a class="dropdown-item" href="#">Something else here</a></div>
-                                </div>
-                            </div>
-                            <div class="c-chart-wrapper mt-3 mx-3" style="height:70px;">
-                                <canvas class="chart" id="card-chart4" height="70"></canvas>
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold">$98.111,00</div>
+                                <div>Widget title</div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div><small class="text-white text-opacity-75">Widget helper text</small>
                             </div>
                         </div>
                     </div>
+                    <!-- /.col-->
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold">2 TB</div>
+                                <div>Widget title</div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div><small class="text-white text-opacity-75">Widget helper text</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
                 </div>
+                <!-- /.row.g-4-->
             </div>
         </div>
     </div>
