@@ -7,6 +7,7 @@ $name_split = explode(' ', Yii::$app->user->identity->username);
 $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) : '');
 $action = Yii::$app->controller->action->id;
 $languages = Language::find()->where(['status' => true])->all();
+$user = Yii::$app->user->identity;
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
@@ -280,46 +281,43 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
             <li class="nav-item py-1">
                 <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
-            
+
             <li class="nav-item dropdown"><a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     <div class="avatar avatar-md"><img class="avatar-img" src="<?= $avatar; ?>" alt="<?= $name_user; ?>"></div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
-                        </svg> Updates<span class="badge badge-sm bg-info ms-2">42</span></a><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-envelope-open"></use>
-                        </svg> Messages<span class="badge badge-sm bg-success ms-2">42</span></a><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-task"></use>
-                        </svg> Tasks<span class="badge badge-sm bg-danger ms-2">42</span></a><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-comment-square"></use>
-                        </svg> Comments<span class="badge badge-sm bg-warning ms-2">42</span></a>
+                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div>
+
                     <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold my-2">
                         <div class="fw-semibold">Settings</div>
-                    </div><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                        </svg> Profile</a><a class="dropdown-item" href="#">
+                    </div>
+
+                    <a class="dropdown-item" href="/user/profile">
+                        <?php if ($user->profile && $user->profile->file): ?>
+                            <img src="<?= $user->profile->file->url; ?>" class="rounded-circle icon me-2" style="width:32px;height:32px;object-fit:cover;">
+                        <?php else: ?>
+                            <svg class="rounded-circle icon me-2" width="32" height="32">
+                                <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                            </svg>
+                        <?php endif; ?>
+                        
+                        <?= Yii::t('app','Profile'); ?> 
+                    </a>
+
+                    <a class="dropdown-item" href="/configuration">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
-                        </svg> Settings</a><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-credit-card"></use>
-                        </svg> Payments<span class="badge badge-sm bg-secondary ms-2">42</span></a><a class="dropdown-item" href="#">
-                        <svg class="icon me-2">
-                            <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-file"></use>
-                        </svg> Projects<span class="badge badge-sm bg-primary ms-2">42</span></a>
-                    <div class="dropdown-divider"></div><a class="dropdown-item" href="#">
+                        </svg> <?= Yii::t('app','Configurations'); ?> 
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/site/logout">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
                         </svg> Lock Account</a><a class="dropdown-item" href="#">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-account-logout"></use>
-                        </svg> Logout</a>
+                        </svg> Logout
+                    </a>
                 </div>
             </li>
         </ul>

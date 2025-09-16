@@ -29,6 +29,10 @@ class ConfigurationController extends AuthorizationController
      */
     public function actionIndex()
     {
+        if(!AuthorizationController::isMaster()){
+            return $this->redirect(['configuration', 'id' => Configuration::get()->id]);
+        }
+
         $searchModel = new Configuration();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         

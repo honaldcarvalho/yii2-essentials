@@ -28,6 +28,9 @@ class UserController extends AuthorizationController
      */
     public function actionIndex()
     {
+        if(!AuthorizationController::isMaster() || !AuthorizationController::isAdmin()){
+            return $this->redirect(['profile', 'id' => Yii::$app->user->identity->id]);
+        }
         $searchModel = new User();
         $options = [
             'orderBy' => ['id' => SORT_DESC],
@@ -125,9 +128,9 @@ class UserController extends AuthorizationController
         ]);
     }
 
-    public function actionProfile($id)
+    public function actionProfile()
     {
-        $model = $this->findModel($id);
+        $model = $this->findModel(Yii::$app->user->identity->id);
 
         return $this->render(
             'profile',
@@ -252,7 +255,13 @@ class UserController extends AuthorizationController
                         'system',
                         "/user/{$profile->user_id}"
                     );
-                    return $this->redirect(['view', 'id' => $user->id]);
+
+                    if($user->scenario == 'profile'){
+                        return $this->redirect(['profile', 'id' => Yii::$app->user->identity->id]);
+                    } else {
+                        return $this->redirect(['view', 'id' => $user->id]);
+                    }
+
                 } catch (\Throwable $e) {
                     $tx->rollBack();
                     Yii::error($e->getMessage(), __METHOD__);
