@@ -42,10 +42,26 @@ $this->title = '';
                                 <div class="fs-4 fw-semibold"><?= Yii::t('app', 'Operation System') ?></div>
                                 <div><?= $osInfo['pretty_name'] ?></div>
                                 <div class="progress progress-white progress-thin my-2">
-                                    <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar" role="progressbar" style="width:0%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
                                 <small class="text-white text-opacity-75">
                                     <?= $osInfo['name'] ?>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.col-->
+
+                    <div class="col-12 col-sm-6 col-xl-4 col-xxl-3">
+                        <div class="card text-white <?= $diskInfo['percent_used'] > 50 ? ($diskInfo['percent_used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
+                            <div class="card-body">
+                                <div class="fs-4 fw-semibold"><?= Yii::t('app', 'Disk Space') ?></div>
+                                <div><?= $diskInfo['total_bytes_pretty'] ?></div>
+                                <div class="progress progress-white progress-thin my-2">
+                                    <div class="progress-bar" role="progressbar" style="<?= $diskInfo['percent_used'] ?>%" aria-valuenow="<?= $diskInfo['percent_used'] ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small class="text-white text-opacity-75">
+                                    <?= Yii::t('app','Total Space Used:').$diskInfo['used_bytes_pretty'] ?>
                                 </small>
                             </div>
                         </div>
@@ -58,24 +74,6 @@ $this->title = '';
         </div>
     </div>
     
-    <div class="col-md-3 col-sm-6 col-12">
-
-        <div class="info-box <?= $diskInfo['percent_used'] > 50 ? ($diskInfo['percent_used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
-            <span class="info-box-icon"><i class="fas fa-hdd"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text"><?= Yii::t('app', 'Disk Space') ?></span>
-                <span class="info-box-number"><?= $diskInfo['total_bytes_pretty'] ?></span>
-                <div class="progress">
-                    <div class="progress-bar" style="width: <?= $diskInfo['percent_used'] ?>%"></div>
-                </div>
-                <span class="progress-description">
-                    Total Space Used: <?= $diskInfo['used_bytes_pretty'] ?>
-                </span>
-            </div>
-        </div>
-
-    </div>
-
     <div class="col-md-3 col-sm-6 col-12">
 
         <div class="info-box <?= $memoryInfo['percent_used'] > 50 ? ($memoryInfo['percent_used'] > 70 ? 'bg-danger' : 'bg-warning') : 'bg-success' ?>">
