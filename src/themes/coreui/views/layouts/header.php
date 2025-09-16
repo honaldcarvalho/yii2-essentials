@@ -280,10 +280,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
             <li class="nav-item py-1">
                 <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
             </li>
-
-            <li class="nav-item py-1">
-                <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
-            </li>
+            
             <li class="nav-item dropdown"><a class="nav-link py-0 pe-0" data-coreui-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                     <div class="avatar avatar-md"><img class="avatar-img" src="<?= $avatar; ?>" alt="<?= $name_user; ?>"></div>
                 </a>
