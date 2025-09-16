@@ -119,6 +119,7 @@ $nodes[] = ['divider' => true];
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
     <a href="/" class="sidebar-header border-bottom">
         <div class="sidebar-brand">
+            <span class="system-logo">
             <?php
             if (!empty($config->file_id) && $config->file !== null) {
                 $url = Yii::getAlias('@web') . $config->file->urlThumb;
@@ -129,6 +130,7 @@ $nodes[] = ['divider' => true];
                 echo '<img class="sidebar-brand-narrow" src="' . $assetDir . '/images/croacworks-logo-hq.png" alt="' . htmlspecialchars($config->title) . '" height="32">';
             }
             ?>
+            </span>
             <span class="system-title"><?= $config->title ?></span>
         </div>
         <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close"

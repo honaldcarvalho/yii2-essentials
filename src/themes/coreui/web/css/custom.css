@@ -8380,10 +8380,29 @@ textarea.form-control-lg {
     transform: rotate(0deg);
   }
 }
+
+.sidebar-brand {
+  display: flex;            /* ativa flexbox */
+  align-items: center;      /* centraliza logo e título na vertical */
+  gap: 8px;                 /* espaço entre logo e título */
+}
+
+.system-logo img {
+  display: block;
+  height: 32px;             /* garante tamanho uniforme */
+}
+
+.system-title {
+  font-size: 1.2rem;        /* ajusta tamanho do título */
+  font-weight: bold;
+  white-space: nowrap;      /* evita quebra de linha no título */
+}
+
 .sidebar-narrow-unfoldable .system-title
 {
   display: none;
 }
+
 .sidebar-narrow-unfoldable {
   --cui-sidebar-narrow-unfoldable-box-shadow: var(--cui-box-shadow);
 }
