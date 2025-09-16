@@ -251,7 +251,7 @@ class UserController extends AuthorizationController
                         Yii::t('app', 'User'),
                         Yii::t('app', 'User updated successfully.'),
                         'system',
-                        "/user/{$profile->user_id}"
+                        "/profile"
                     );
 
                     if($user->scenario == 'profile'){
@@ -318,7 +318,7 @@ class UserController extends AuthorizationController
                         Yii::t('app', 'User'),
                         Yii::t('app', 'User updated successfully.'),
                         'system',
-                        "/user/{$profile->user_id}"
+                        "/profile"
                     );
 
 
