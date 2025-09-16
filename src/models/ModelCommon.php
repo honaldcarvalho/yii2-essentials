@@ -127,6 +127,34 @@ class ModelCommon extends \yii\db\ActiveRecord
 
         return $query;
     }
+    
+    public static function findOne($condition)
+    {
+        // Usa o find() do ModelCommon, que já aplica (ou não) o escopo de grupo.
+        $query = static::find(); // master não é restringido; não-master recebe os filtros
+
+        // Normaliza a condição como o Yii faz:
+        // - Escalar => mapeia para a(s) PK(s)
+        // - Array numérico com N valores => combina com PK composta
+        if (!is_array($condition)) {
+            $pks = static::primaryKey();
+            if (count($pks) === 1) {
+                $condition = [$pks[0] => $condition];
+            } else {
+                // scalar para PK composta não é bem definido → falha segura
+                return null;
+            }
+        } else {
+            // Se vier array puramente numérico e a tabela tiver PK composta, combine
+            $isNumericKeys = array_keys($condition) === range(0, count($condition) - 1);
+            $pks = static::primaryKey();
+            if ($isNumericKeys && count($pks) === count($condition)) {
+                $condition = array_combine($pks, $condition);
+            }
+        }
+
+        return $query->andWhere($condition)->one();
+    }
 
     public function rules()
     {
