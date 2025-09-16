@@ -110,9 +110,9 @@ onPjaxReady((root) => {
             credentials: 'same-origin',
             body: 'lang=' + encodeURIComponent(lang)
         })
-        .then(function(){ //location.reload(); 
+        .then(function(){ location.reload(); 
             })
-        .catch(function(){ //location.reload();
+        .catch(function(){ location.reload();
         });
     });
     });
