@@ -29,13 +29,15 @@ class ConfigurationController extends AuthorizationController
      */
     public function actionIndex()
     {
-        if(!AuthorizationController::isMaster()){
-            return $this->redirect(['configuration', 'id' => Configuration::get()->id]);
+        if (!AuthorizationController::isMaster()) {
+            return $this->render('view', [
+                'model' =>Configuration::get(),
+            ]);
         }
 
         $searchModel = new Configuration();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-        
+
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
@@ -132,16 +134,16 @@ class ConfigurationController extends AuthorizationController
 
         $model = $this->findModel($id);
 
-        if(!AuthorizationController::isMaster()){
+        if (!AuthorizationController::isMaster()) {
             $model->scenario = Configuration::SCENARIO_ADMIN;
-        }   
+        }
 
         $post = Yii::$app->request->post();
 
         if ($model->validate() && $model->load($post)) {
 
             if ($model->save()) {
-                Yii::$app->notify->createForGroup($model->group_id, Yii::t('app','Configurations'), Yii::t('app','Configurations Updated'), 'system', "/configuration/{$model->id}", true, null);
+                Yii::$app->notify->createForGroup($model->group_id, Yii::t('app', 'Configurations'), Yii::t('app', 'Configurations Updated'), 'system', "/configuration/{$model->id}", true, null);
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
@@ -187,7 +189,7 @@ class ConfigurationController extends AuthorizationController
         try {
             // Copia atributos (exceto PK e datas)
             $clone = new Configuration();
-            $attrs = $original->getAttributes(null, ['id','created_at','updated_at']);
+            $attrs = $original->getAttributes(null, ['id', 'created_at', 'updated_at']);
             $clone->setAttributes($attrs, false);
 
             // Ajustes de campos potencialmente únicos (se existirem no schema)
@@ -218,7 +220,7 @@ class ConfigurationController extends AuthorizationController
             if (property_exists($original, 'metaTags') || method_exists($original, 'getMetaTags')) {
                 foreach ($original->metaTags as $meta) {
                     $newMeta = new MetaTag();
-                    $newMeta->setAttributes($meta->getAttributes(null, ['id','created_at','updated_at']), false);
+                    $newMeta->setAttributes($meta->getAttributes(null, ['id', 'created_at', 'updated_at']), false);
                     $newMeta->configuration_id = $clone->id;
                     if (!$newMeta->save(false)) {
                         throw new \Exception('Erro ao clonar meta tag.');
@@ -230,7 +232,7 @@ class ConfigurationController extends AuthorizationController
             if (property_exists($original, 'parameters') || method_exists($original, 'getParameters')) {
                 foreach ($original->parameters as $param) {
                     $newParam = new Parameter();
-                    $newParam->setAttributes($param->getAttributes(null, ['id','created_at','updated_at']), false);
+                    $newParam->setAttributes($param->getAttributes(null, ['id', 'created_at', 'updated_at']), false);
                     $newParam->configuration_id = $clone->id;
                     if (!$newParam->save(false)) {
                         throw new \Exception('Erro ao clonar parâmetro.');
@@ -243,8 +245,8 @@ class ConfigurationController extends AuthorizationController
             // Notificação
             Yii::$app->notify->createForGroup(
                 $clone->group_id,
-                Yii::t('app','Configurations'),
-                Yii::t('app','Configuration cloned'),
+                Yii::t('app', 'Configurations'),
+                Yii::t('app', 'Configuration cloned'),
                 'system',
                 "/configuration/{$clone->id}",
                 true,
@@ -262,7 +264,6 @@ class ConfigurationController extends AuthorizationController
 
             Yii::$app->session->setFlash('success', 'Configuração clonada com sucesso.');
             return $this->redirect(['view', 'id' => $clone->id]);
-
         } catch (\Throwable $e) {
             $tx->rollBack();
             Yii::error("Erro ao clonar configuração: {$e->getMessage()}", __METHOD__);
