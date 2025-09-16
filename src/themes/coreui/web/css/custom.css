@@ -13940,3 +13940,8 @@ textarea.form-control-lg {
     display: table;
     width: 100%;
 }
+
+.sidebar-header a
+{
+  text-decoration: none;
+}
