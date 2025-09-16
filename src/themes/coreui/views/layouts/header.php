@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\Language;
 use yii\bootstrap5\Breadcrumbs;
 
@@ -304,7 +305,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                         
                         <?= Yii::t('app','Profile'); ?> 
                     </a>
-                    <a class="dropdown-item" href="/configuration/<?= $configuration->id; ?>">
+                    <a class="dropdown-item" href="/configuration<?= AuthorizationController::isMaster() ? "/{$configuration->id}" : ''; ?>">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
                         </svg> <?= Yii::t('app','Configurations'); ?> 
