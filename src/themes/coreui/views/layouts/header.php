@@ -97,25 +97,19 @@ onPjaxReady((root) => {
     setInterval(fetchList, 30000);
 
     // troca de idioma (dropdown CoreUI)
-  jQuery('.lang-menu [data-lang]').on('click', function(){
+    jQuery(document).on('click', '.lang-menu [data-lang]', function(){
         var lang = jQuery(this).data('lang');
-        var label = document.getElementById('lang-selected');
-        if (label) {
-        label.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div>';
-        }
 
         jQuery.post('/user/change-lang', { lang: lang })
         .done(function(resp){
             if (resp && resp.ok) {
             location.reload();
             } else {
-            if (label) label.textContent = lang;
             if (window.toastr) toastr.error((resp && resp.error) || 'Falha ao trocar idioma.');
             }
         })
         .fail(function(){
-            if (label) label.textContent = lang;
-            if (window.toastr) toastr.error('Erro ao trocar idioma.');
+            if (window.toastr) toastr.error('Erro de rede ao trocar idioma.');
         });
     });
 
