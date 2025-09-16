@@ -1,5 +1,5 @@
 <?php
-namespace app\controllers;
+namespace croacworks\essentials\controllers;
 
 use Yii;
 use yii\web\Controller;
