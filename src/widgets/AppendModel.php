@@ -417,7 +417,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         JS,Yii::$app->view::POS_END);
         $field_str = '';
 
-        $button = $this->new_button && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'model-save') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
+        $button = $this->new_button && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
         $button_save = Yii::t('app', "Save");
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
