@@ -17,7 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= Html::a(Yii::t('app', 'Create Section'), ['create'], ['class' => 'btn btn-success']) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['create'], 'buttons_name' => ['create' => Yii::t('app', 'Create Section')],]) ?>
                         </div>
                     </div>
 
