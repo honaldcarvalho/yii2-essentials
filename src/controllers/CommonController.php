@@ -18,7 +18,7 @@ use croacworks\essentials\helpers\ModelHelper;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\ModelCommon;
-use yii\helpers\FileHelper;
+
 use yii\helpers\Url;
 
 /**
@@ -904,8 +904,6 @@ class CommonController extends \yii\web\Controller
         // Trim and return.
         return trim($string);
     }
-
-    use yii\helpers\FileHelper;
 
     /**
      * Converte uma imagem (arquivo local ou URL) em data URI base64.
