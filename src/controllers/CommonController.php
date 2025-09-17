@@ -1010,8 +1010,9 @@ class CommonController extends \yii\web\Controller
         // 2) Tenta URL padrão da CroacWorks
         $fallbackUrl = 'https://croacworks.com.br/images/croacworks-logo-hq.png';
         $data = static::imageToDataUri($fallbackUrl);
-        if ($data) return $data;
-
+        if ($data) {
+            return $data;
+        }
         // 3) PNG transparente 1x1 (fallback mínimo)
         return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
     }
