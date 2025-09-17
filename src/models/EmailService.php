@@ -245,6 +245,8 @@ class EmailService extends ModelCommon
         // 3) troca o placeholder
         if ($attached) {
             $html = str_replace('{{logo_url}}', 'cid:' . $cid, $html);
+        } else{
+            $html = str_replace('{{logo_url}}', 'https://croacworks.com.br/images/croacworks-logo-hq.png', $html);
         }
 
         $result = $compose->send();

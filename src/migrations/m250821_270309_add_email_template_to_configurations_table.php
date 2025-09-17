@@ -43,7 +43,7 @@ class m250821_270309_add_email_template_to_configurations_table extends Migratio
                     <table role="presentation" class="main">
                     <tr>
                         <td style="padding:20px 20px 0;text-align:center">
-                        <a href="https://{{company_host}}" target="_blank" rel="noopener" style="display:inline-block">
+                        <a href="{{company_host}}" target="_blank" rel="noopener" style="display:inline-block">
                             <img src="{{logo_url}}" alt="{{company_title}} logo" style="border:none;width:150px;max-width:150px">
                         </a>
                         </td>
