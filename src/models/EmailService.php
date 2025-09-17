@@ -191,23 +191,12 @@ class EmailService extends ModelCommon
         $cfg = Configuration::get();
         $fromEmail = $options['from'] ?? $this->username;
         $fromName  = $options['fromName'] ?? ($cfg->title . ' robot');
-
+        $compose = $mailer->compose();
+        
         $html = $this->renderTemplate([
             'subject' => $subject,
             'content' => $content,
         ]);
-
-        $compose = $mailer->compose()
-            ->setHtmlBody($html)
-            ->setTo($to)
-            ->setSubject($subject);
-
-        if (!empty($fromEmail)) {
-            $compose->setFrom([$fromEmail => $fromName]);
-        }
-        if (!empty($options['cc'])) {
-            $compose->setCc($options['cc']);
-        }
         
         // === Anexar logo inline (CID) de forma simples ===
         $cid = 'logo_' . uniqid() . '@cid';
@@ -247,6 +236,19 @@ class EmailService extends ModelCommon
             $html = str_replace('{{logo_url}}', 'cid:' . $cid, $html);
         } else{
             $html = str_replace('{{logo_url}}', 'https://croacworks.com.br/images/croacworks-logo-hq.png', $html);
+        }
+
+        $compose
+            ->setHtmlBody($html)
+            ->setTo($to)
+            ->setSubject($subject);
+
+        if (!empty($fromEmail)) {
+            $compose->setFrom([$fromEmail => $fromName]);
+        }
+
+        if (!empty($options['cc'])) {
+            $compose->setCc($options['cc']);
         }
 
         $result = $compose->send();
