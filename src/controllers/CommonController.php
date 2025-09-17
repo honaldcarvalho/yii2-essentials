@@ -16,7 +16,9 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\helpers\ModelHelper;
 use croacworks\essentials\models\Configuration;
+use croacworks\essentials\models\File;
 use croacworks\essentials\models\ModelCommon;
+use yii\helpers\FileHelper;
 use yii\helpers\Url;
 
 /**
@@ -901,5 +903,118 @@ class CommonController extends \yii\web\Controller
         $string = str_replace("{%}", "?", $string);
         // Trim and return.
         return trim($string);
+    }
+
+    use yii\helpers\FileHelper;
+
+    /**
+     * Converte uma imagem (arquivo local ou URL) em data URI base64.
+     * Limite de 2MB para evitar e-mails gigantes.
+     */
+    protected static function imageToDataUri(string $pathOrUrl, int $maxBytes = 2_000_000): ?string
+    {
+        try {
+            $bytes = null;
+            $mime  = null;
+
+            // Tenta tratar como caminho local primeiro
+            $localPath = static::toLocalPathIfPossible($pathOrUrl);
+            if ($localPath && is_file($localPath)) {
+                if (filesize($localPath) > $maxBytes) return null;
+                $bytes = @file_get_contents($localPath);
+                if ($bytes === false) return null;
+
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime  = $finfo ? finfo_file($finfo, $localPath) : null;
+                if ($finfo) finfo_close($finfo);
+            } else {
+                // Trata como URL (se allow_url_fopen estiver habilitado)
+                if (!preg_match('~^https?://~i', $pathOrUrl)) return null;
+                $bytes = @file_get_contents($pathOrUrl);
+                if ($bytes === false) return null;
+                if (strlen($bytes) > $maxBytes) return null;
+
+                // Descobre MIME a partir do conteúdo
+                if (function_exists('getimagesizefromstring')) {
+                    $info = @getimagesizefromstring($bytes);
+                    $mime = $info['mime'] ?? null;
+                }
+                if (!$mime) {
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mime  = $finfo ? finfo_buffer($finfo, $bytes) : null;
+                    if ($finfo) finfo_close($finfo);
+                }
+            }
+
+            if (!$mime) $mime = 'image/png'; // fallback
+            $b64 = base64_encode($bytes);
+            return 'data:' . $mime . ';base64,' . $b64;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Se o caminho for tipo "/uploads/logo.png" tenta resolvê-lo para o filesystem local.
+     * Retorna null se parecer uma URL absoluta ou não for resolvível.
+     */
+    protected static function toLocalPathIfPossible(string $path): ?string
+    {
+        // Já é URL http(s)
+        if (preg_match('~^https?://~i', $path)) {
+            return null;
+        }
+
+        // Caminho absoluto no FS
+        if (is_file($path)) {
+            return $path;
+        }
+
+        // Tenta @webroot (ex.: /var/www/app/web)
+        $webroot = Yii::getAlias('@webroot', false);
+        if ($webroot) {
+            // se começar com "/", trata como absoluto relativo ao webroot
+            if (substr($path, 0, 1) === '/') {
+                $fs = rtrim($webroot, DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $path);
+                if (is_file($fs)) return $fs;
+            }
+            // ou relativo simples
+            $fs = rtrim($webroot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+            if (is_file($fs)) return $fs;
+        }
+
+        // Tenta @app/web (alguns projetos não têm @webroot definido em console)
+        $appWeb = Yii::getAlias('@app/web', false);
+        if ($appWeb) {
+            if (substr($path, 0, 1) === '/') {
+                $fs = rtrim($appWeb, DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $path);
+                if (is_file($fs)) return $fs;
+            }
+            $fs = rtrim($appWeb, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+            if (is_file($fs)) return $fs;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve a logo configurada e retorna SEMPRE um data URI (base64).
+     * Se falhar, usa logo padrão remota (convertida para base64) ou um PNG 1x1.
+     */
+    public static function resolveLogoDataUri(?File $file): string
+    {
+        // 1) Tenta arquivo configurado
+        if ($file && $file->path) {
+            $data = static::imageToDataUri((string)$file->path);
+            if ($data) return $data;
+        }
+
+        // 2) Tenta URL padrão da CroacWorks
+        $fallbackUrl = 'https://croacworks.com.br/images/croacworks-logo-hq.png';
+        $data = static::imageToDataUri($fallbackUrl);
+        if ($data) return $data;
+
+        // 3) PNG transparente 1x1 (fallback mínimo)
+        return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
     }
 }

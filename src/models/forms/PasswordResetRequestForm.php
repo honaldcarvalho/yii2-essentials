@@ -80,7 +80,7 @@ class PasswordResetRequestForm extends Model
         // Usa o método novo (template do banco)
         return $service->sendUsingTemplate(
             $this->email,
-            'Reset Password - ' . $cfg->title,
+            Yii::t('app', 'Reset Password') . ' - ' . $cfg->title,
             $content,
             ['fromName' => $cfg->title . ' robot']
         );

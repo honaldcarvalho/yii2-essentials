@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\controllers\CommonController;
 use Yii;
 use yii\helpers\Url;
 use yii\symfonymailer\Mailer;
@@ -133,7 +134,7 @@ class EmailService extends ModelCommon
 
         // 2) Mapa de placeholders fixos (company + logo)
         $builtins = [
-            '{{logo_url}}'       => self::resolveLogoUrl($cfg),
+            '{{logo_url}}'       => CommonController::resolveLogoDataUri($cfg->file ?? Yii::getAlias('@webroot', false) . '/images/croacworks-logo-hq.png'),
             '{{company_title}}'  => (string)($cfg->title ?? ''),
             '{{company_slogan}}' => (string)($cfg->slogan ?? ''),
             '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''), // seu campo tem 2 "s" mesmo
