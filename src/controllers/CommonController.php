@@ -73,26 +73,23 @@ class CommonController extends \yii\web\Controller
             Yii::setAlias("@{$param->name}", "{$param->value}");
             Yii::setAlias("@{$param->name}_description", "{$param->description}");
         }
-        $cookies = Yii::$app->request->cookies;
-        $post = Yii::$app->request->post();
 
         if (!\Yii::$app->user->isGuest) {
             $language = \Yii::$app->user->identity->profile->language->code;
-        } else if (($cookie = $cookies->get('lang')) !== null && !isset($post['lang'])) {
-            $language = $cookie->value;
-        } else if (isset($post['lang'])) {
-
-            Yii::$app->response->cookies->add(new \yii\web\Cookie([
-                'name' => 'lang',
-                'value' => $post['lang'],
-            ]));
-        } else {
-            Yii::$app->response->cookies->add(new \yii\web\Cookie([
-                'name' => 'lang',
-                'value' => 'pt-BR',
-            ]));
         }
-        \Yii::$app->language = $language ?? $this->config->language->code;
+
+        $hostName = Yii::$app->request->hostInfo;
+        if (empty($hostName)) {
+            $hostName = Yii::$app->request->hostName;
+        }
+
+        $byHost = Configuration::find()->where(['host' => $hostName])->one();
+
+        if ($byHost) {
+            $this->config = $byHost;
+        }
+
+        \Yii::$app->language = $language ?? $this->config->language->code ?? 'en-US';
 
         return $behaviors;
     }
@@ -200,7 +197,7 @@ class CommonController extends \yii\web\Controller
         $this->goBack();
     }
 
-    public function updateUpload($model,$post)
+    public function updateUpload($model, $post)
     {
 
         $old = $model->file_id;

@@ -8,7 +8,6 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
-use croacworks\essentials\widgets\Alert;
 use yii\helpers\Html;
 use yii\web\View;
 
@@ -16,12 +15,7 @@ CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
 PluginAsset::register($this)->add(['fontawesome','fancybox','sweetalert2']);
 $configuration = Configuration::get();
-Yii::$app->language = $configuration->language->code;
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
-// if(Yii::$app->user->identity === null){
-//     return (new CommonController(0,0))->redirect(['site/login']); 
-// }
-$theme = 'dark';//Yii::$app->user->identity->theme;
 $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_END);
 ?>
 <?php $this->beginPage() ?>
@@ -39,7 +33,7 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
   </head>
   <body>
     <?php $this->beginBody() ?>
-    <?= Alert::widget(); ?>
+
     <?= $content; ?>
 
     <?php $this->endBody() ?>

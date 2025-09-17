@@ -7,7 +7,7 @@
 use yii\bootstrap5\Html;
 use yii\bootstrap5\ActiveForm;
 
-$this->title = 'Resend verification email';
+$this->title = Yii::t('app','Resend verification email');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
 
                                 <div class="form-group mb-3 mt-3">
-                                    <?= Html::submitButton('Send', ['class' => 'btn btn-primary']) ?>
+                                    <?= Html::submitButton(Yii::t('app','Send'), ['class' => 'btn btn-primary']) ?>
                                 </div>
 
                                 <?php ActiveForm::end(); ?>
