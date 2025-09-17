@@ -134,7 +134,7 @@ class EmailService extends ModelCommon
 
         // 2) Mapa de placeholders fixos (company + logo)
         $builtins = [
-            '{{logo_url}}'       => CommonController::resolveLogoDataUri($cfg->file ?? Yii::getAlias('@webroot', false) . '/images/croacworks-logo-hq.png'),
+            '{{logo_url}}'       => Yii::getAlias('@webroot', false) . '/images/croacworks-logo-hq.png',
             '{{company_title}}'  => (string)($cfg->title ?? ''),
             '{{company_slogan}}' => (string)($cfg->slogan ?? ''),
             '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''), // seu campo tem 2 "s" mesmo
