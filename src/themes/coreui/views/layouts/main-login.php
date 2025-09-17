@@ -16,7 +16,7 @@ CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
 PluginAsset::register($this)->add(['fontawesome','fancybox','sweetalert2']);
 $configuration = Configuration::get();
-Yii::$app->language = $this->configuration->language->code;
+Yii::$app->language = $configuration->language->code;
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
 // if(Yii::$app->user->identity === null){
 //     return (new CommonController(0,0))->redirect(['site/login']); 
