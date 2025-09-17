@@ -909,7 +909,7 @@ class CommonController extends \yii\web\Controller
      * Converte uma imagem (arquivo local ou URL) em data URI base64.
      * Limite de 2MB para evitar e-mails gigantes.
      */
-    protected static function imageToDataUri(string $pathOrUrl, int $maxBytes = 2_000_000): ?string
+    public static function imageToDataUri(string $pathOrUrl, int $maxBytes = 2_000_000): ?string
     {
         try {
             $bytes = null;
@@ -956,7 +956,7 @@ class CommonController extends \yii\web\Controller
      * Se o caminho for tipo "/uploads/logo.png" tenta resolvê-lo para o filesystem local.
      * Retorna null se parecer uma URL absoluta ou não for resolvível.
      */
-    protected static function toLocalPathIfPossible(string $path): ?string
+    public static function toLocalPathIfPossible(string $path): ?string
     {
         // Já é URL http(s)
         if (preg_match('~^https?://~i', $path)) {

@@ -134,8 +134,7 @@ class EmailService extends ModelCommon
 
         // 2) Mapa de placeholders fixos (company + logo)
         $builtins = [
-            //'{{logo_url}}'       => 'https://croacworks.com.br/images/croacworks-logo-hq.png',
-            '{{logo_url}}'       => CommonController::resolveLogoDataUri($cfg->file ?? Yii::getAlias('@webroot', false) . '/images/croacworks-logo-hq.png'),
+            //'{{logo_url}}'       => CommonController::resolveLogoDataUri($cfg->file ?? Yii::getAlias('@webroot', false) . '/images/croacworks-logo-hq.png'),
             '{{company_title}}'  => (string)($cfg->title ?? ''),
             '{{company_slogan}}' => (string)($cfg->slogan ?? ''),
             '{{company_name}}'   => (string)($cfg->bussiness_name ?? ''), // seu campo tem 2 "s" mesmo
@@ -208,6 +207,44 @@ class EmailService extends ModelCommon
         }
         if (!empty($options['cc'])) {
             $compose->setCc($options['cc']);
+        }
+        
+        // === Anexar logo inline (CID) de forma simples ===
+        $cid = 'logo_' . uniqid() . '@cid';
+        $attached = false;
+
+        // 1) tenta pegar do filesystem local (ex.: /files/images/...)
+        if (!empty($cfg->file) && !empty($cfg->file->path)) {
+            $webroot = Yii::getAlias('@webroot');
+            $fs = rtrim($webroot, DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $cfg->file->path);
+            if (is_file($fs)) {
+                $compose->attach($fs, [
+                    'fileName'    => 'logo.png',
+                    'contentType' => 'image/png',
+                    'inline'      => true,
+                    'contentId'   => $cid,
+                ]);
+                $attached = true;
+            }
+        }
+
+        // 2) fallback: baixa a logo padrão e embute como conteúdo
+        if (!$attached) {
+            $bytes = @file_get_contents('https://croacworks.com.br/images/croacworks-logo-hq.png');
+            if ($bytes !== false) {
+                $compose->attachContent($bytes, [
+                    'fileName'    => 'logo.png',
+                    'contentType' => 'image/png',
+                    'inline'      => true,
+                    'contentId'   => $cid,
+                ]);
+                $attached = true;
+            }
+        }
+
+        // 3) troca o placeholder
+        if ($attached) {
+            $html = str_replace('{{logo_url}}', 'cid:' . $cid, $html);
         }
 
         $result = $compose->send();
