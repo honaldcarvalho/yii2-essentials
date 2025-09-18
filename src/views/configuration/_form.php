@@ -4,6 +4,7 @@ use croacworks\essentials\models\EmailService;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\Group;;
 use croacworks\essentials\models\Language;
+use croacworks\essentials\widgets\AceEditor;
 use croacworks\essentials\widgets\UploadImageInstant;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
@@ -55,6 +56,11 @@ if(!empty($model->file_id && $model->file != null)){
         <?= $form->field($model, 'logging')->checkbox() ?>
         <?= $form->field($model, 'status')->checkbox() ?>
     </div>
+
+    <div class="col-md-12">
+        <?= AceEditor::widget([ 'model' => $model, 'attribute' => 'template', 'mode' => 'html', 'theme' => 'twilight', 'height' => '500px', ]); ?>
+    </div>
+
 
     <div class="form-group mb-3 mt-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
