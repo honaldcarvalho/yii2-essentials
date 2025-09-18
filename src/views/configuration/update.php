@@ -19,17 +19,28 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
     <p>
         <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['list']]) ?>
     </p>
-    <div class="col-md-12">
-        <?php
-        if ($model->scenario == Configuration::SCENARIO_ADMIN) {
-            echo $this->render('_form_admin', [
-                'model' => $model
-            ]);
-        } else {
-            echo $this->render('_form', [
-                'model' => $model
-            ]);
-        }
-        ?>
+
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <?php
+                        if ($model->scenario == Configuration::SCENARIO_ADMIN) {
+                            echo $this->render('_form_admin', [
+                                'model' => $model
+                            ]);
+                        } else {
+                            echo $this->render('_form', [
+                                'model' => $model
+                            ]);
+                        }
+                        ?>
+                    </div>
+                </div>
+            </div>
+            <!--.card-body-->
+        </div>
+        <!--.card-->
     </div>
 </div>
