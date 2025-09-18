@@ -25,8 +25,8 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
                     <div class="row mb-2">
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                'show' => ['list'],
-                                'buttons_name' => ['list' => Yii::t('app', 'List Pages')]
+                                'show' => ['index'],
+                                'buttons_name' => ['index' => Yii::t('app', 'List Pages')]
                             ]) ?>
                         </div>
                     </div>

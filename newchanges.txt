@@ -61,9 +61,9 @@ Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por f
                     <div class="row mb-2">
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                'show' => ['list'],
+                                'show' => ['index'],
                                 'model' => $model,
-                                'buttons_name' => ['list' => Yii::t('app', 'List ')],
+                                'buttons_name' => ['index' => Yii::t('app', 'List ')],
                                 ])?>
                         </div>
                     </div>
