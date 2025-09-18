@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\services;
 
 use Yii;
@@ -65,11 +66,11 @@ class Notify extends Component
         ]);
 
         if (!$n->validate()) {
-            Yii::error(['notify.validate'=>false, 'errors'=>$n->errors, 'attrs'=>$n->attributes], 'notify');
+            Yii::error(['notify.validate' => false, 'errors' => $n->errors, 'attrs' => $n->attributes], 'notify');
             return null;
         }
         if (!$n->save(false)) {
-            Yii::error(['notify.save'=>false, 'attrs'=>$n->attributes], 'notify');
+            Yii::error(['notify.save' => false, 'attrs' => $n->attributes], 'notify');
             return null;
         }
         return $n;
@@ -132,6 +133,71 @@ class Notify extends Component
     }
 
     /**
+     * Create notifications for ALL users in the system (optionally send Expo push).
+     *
+     * @return int Number of notifications created.
+     */
+    public function createForAllUsers(
+        string $title,
+        ?string $content = null,
+        string $type = 'system',
+        ?string $url = null,
+        ?int $persistGroupId = null,
+        bool $pushExpo = false,
+        array $expoData = []
+    ): int {
+        $userIds = $this->resolveAllActiveUserIds();
+        if (!$userIds) return 0;
+
+        $created = $this->createForUsers($userIds, $title, $content, $type, $url, $persistGroupId);
+
+        if ($pushExpo && $created > 0) {
+            // Aggregate all tokens (deduplicated), then batch-send via Expo.
+            $tokens = [];
+            foreach ($userIds as $uid) {
+                foreach ($this->getExpoTokensForUser((int)$uid) as $t) {
+                    $tokens[$t] = true;
+                }
+            }
+            $tokens = array_keys($tokens);
+
+            if ($tokens) {
+                $data = array_merge([
+                    'title'   => (string)$title,
+                    'content' => (string)($content ?? ''),
+                    'url'     => (string)($url ?? ''),
+                    'type'    => (string)$type,
+                    'scope'   => 'global',
+                ], $expoData);
+
+                $this->sendExpoPush($tokens, $title, $content ?? '', $data);
+            }
+        }
+
+        return $created;
+    }
+
+    /**
+     * Resolve all active user IDs (system-wide).
+     * Falls back to all users if status constants are not present.
+     *
+     * @return int[]
+     */
+    protected function resolveAllActiveUserIds(): array
+    {
+        $userTable = \croacworks\essentials\models\User::tableName();
+        $q = (new \yii\db\Query())->select('id')->from($userTable);
+
+        // Filter active if available (User::STATUS_ACTIVE)
+        $userClass = \croacworks\essentials\models\User::class;
+        if (property_exists($userClass, 'status') && defined($userClass . '::STATUS_ACTIVE')) {
+            $q->where(['status' => constant($userClass . '::STATUS_ACTIVE')]);
+        }
+
+        return $q->column();
+    }
+    
+    /**
      * Por grupo (fan-out): cria 1 por usuário; opcionalmente dispara push para todos.
      * $pushExpo=true → envia push para todos do grupo (e filhos se $includeChildren=true).
      * $expoData é anexado ao payload do push (ex.: ['foo'=>'bar']).
@@ -174,7 +240,7 @@ class Notify extends Component
                 'content' => (string)($content ?? ''),
                 'url'     => (string)($url ?? ''),
                 'type'    => (string)$type,
-                'group_id'=> (int)$groupId,
+                'group_id' => (int)$groupId,
             ], $expoData);
 
             if ($tokens) {
@@ -202,14 +268,15 @@ class Notify extends Component
             ->select('u.id')
             ->from("$userTable u")
             ->leftJoin("$ugTable ug", 'ug.user_id = u.id')
-            ->where(['or',
+            ->where([
+                'or',
                 ['u.group_id' => $groupIds],
                 ['ug.group_id' => $groupIds],
             ])
             ->groupBy('u.id');
 
-        if (property_exists(User::class, 'status') && defined(User::class.'::STATUS_ACTIVE')) {
-            $q->andWhere(['u.status' => constant(User::class.'::STATUS_ACTIVE')]);
+        if (property_exists(User::class, 'status') && defined(User::class . '::STATUS_ACTIVE')) {
+            $q->andWhere(['u.status' => constant(User::class . '::STATUS_ACTIVE')]);
         }
 
         return $q->column();
@@ -313,20 +380,22 @@ class Notify extends Component
 
         // 2) Campo direto no User (expo_token)
         try {
-            $u = User::find()->select(['id','expo_token'])->where(['id'=>$userId])->one();
+            $u = User::find()->select(['id', 'expo_token'])->where(['id' => $userId])->one();
             if ($u && property_exists($u, 'expo_token') && !empty($u->expo_token)) {
                 $tokens[] = (string)$u->expo_token;
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         // 3) Campo/prop expoTokens (array ou JSON)
         try {
-            $u = $u ?? User::find()->select(['id'])->where(['id'=>$userId])->one();
+            $u = $u ?? User::find()->select(['id'])->where(['id' => $userId])->one();
             if ($u && property_exists($u, 'expoTokens') && !empty($u->expoTokens)) {
                 $vals = is_string($u->expoTokens) ? json_decode($u->expoTokens, true) : $u->expoTokens;
                 foreach ((array)$vals as $tk) $tokens[] = (string)$tk;
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         // normaliza/valida
         $tokens = array_values(array_unique(array_filter(array_map('trim', $tokens))));

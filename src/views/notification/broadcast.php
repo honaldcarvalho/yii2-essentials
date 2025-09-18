@@ -48,9 +48,10 @@ $this->registerJs($js);
     <div class="row">
       <div class="col-md-4">
         <?= $form->field($model, 'recipient_mode')->radioList([
-            'user'  => Yii::t('app','User'),
-            'group' => Yii::t('app','Group'),
-            'all'   => Yii::t('app','All (current scope)'),
+            'user'       => Yii::t('app','User'),
+            'group'      => Yii::t('app','Group'),
+            'all'        => Yii::t('app','All (current scope)'),
+            'all_global' => Yii::t('app','All users (global)'),
         ], ['itemOptions' => ['class'=>'form-check-inline']]) ?>
       </div>
 

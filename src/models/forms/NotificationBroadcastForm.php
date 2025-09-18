@@ -6,13 +6,10 @@ use yii\base\Model;
 
 class NotificationBroadcastForm extends Model
 {
-    /** @var string 'user'|'group'|'all' */
+    /** @var string 'user'|'group'|'all'|'all_global' */
     public $recipient_mode = 'user';
-    /** @var int|null */
     public $user_id;
-    /** @var int|null */
     public $group_id;
-    /** @var bool */
     public $include_children = true;
 
     public $title;
@@ -20,17 +17,14 @@ class NotificationBroadcastForm extends Model
     public $type = 'system';
     public $url;
 
-    /** Send Expo push notification */
     public $push_expo = false;
-
-    /** Optional JSON payload to attach to push ("data") */
     public $expo_data_json;
 
     public function rules(): array
     {
         return [
             [['recipient_mode', 'title'], 'required'],
-            ['recipient_mode', 'in', 'range' => ['user','group','all']],
+            ['recipient_mode', 'in', 'range' => ['user','group','all','all_global']],
             [['user_id','group_id'], 'integer'],
             ['include_children', 'boolean'],
             ['title', 'string', 'max' => 255],
@@ -38,13 +32,13 @@ class NotificationBroadcastForm extends Model
             ['type', 'default', 'value' => 'system'],
             ['push_expo', 'boolean'],
 
-            // Conditional requirements
+            // conditional
             ['user_id', 'required', 'when' => fn($m)=>$m->recipient_mode==='user',
                 'whenClient'=>"function(){return document.querySelector('[name=\"NotificationBroadcastForm[recipient_mode]\"]:checked').value==='user'}"],
             ['group_id', 'required', 'when' => fn($m)=>$m->recipient_mode==='group',
                 'whenClient'=>"function(){return document.querySelector('[name=\"NotificationBroadcastForm[recipient_mode]\"]:checked').value==='group'}"],
 
-            // Validate JSON (if provided)
+            // optional JSON validation
             ['expo_data_json', function($attr){
                 if ($this->$attr === null || trim($this->$attr) === '') return;
                 json_decode($this->$attr, true);
@@ -71,7 +65,6 @@ class NotificationBroadcastForm extends Model
         ];
     }
 
-    /** Returns associative array to be attached as Expo push "data". */
     public function expoData(): array
     {
         if (!$this->expo_data_json || trim($this->expo_data_json) === '') return [];

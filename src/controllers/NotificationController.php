@@ -124,6 +124,36 @@ class NotificationController extends AuthorizationController
                 return $this->refresh();
             }
 
+            if ($model->recipient_mode === 'all_global') {
+                // optional guard: only master can blast the entire system
+                if (!static::isMaster()) {
+                    Yii::$app->session->setFlash('danger', Yii::t('app', 'You are not allowed to send to all users (global).'));
+                    return $this->refresh();
+                }
+
+                /** @var \croacworks\essentials\services\Notify $notify */
+                $notify = Yii::$app->notify;
+
+                $persistGroupId = (int)(static::currentGroupId() ?? 0) ?: null; // origin marker (optional)
+                $created = $notify->createForAllUsers(
+                    (string)$model->title,
+                    $model->content !== '' ? (string)$model->content : null,
+                    (string)$model->type,
+                    $model->url !== '' ? (string)$model->url : null,
+                    $persistGroupId,
+                    (bool)$model->push_expo,
+                    (array)$model->expoData()
+                );
+
+                Yii::$app->session->setFlash(
+                    $created ? 'success' : 'warning',
+                    $created
+                        ? Yii::t('app', 'Notification sent to {n} user(s) globally.', ['n' => $created])
+                        : Yii::t('app', 'No recipients found.')
+                );
+                return $this->refresh();
+            }
+
             // 'all' → send to the current scope (root + all descendants)
             $current = static::currentGroupId();
             if (!$current) {
