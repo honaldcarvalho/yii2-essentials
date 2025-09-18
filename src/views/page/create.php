@@ -13,7 +13,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
-            
+
             <h1><?= Html::encode($this->title) ?></h1>
 
             <div class="card">
@@ -23,12 +23,12 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['index'],
-                                'buttons_name' => ['index' => Yii::t('app', 'List Pages')]
-                                ])?>
+                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Pages')]
+                            ]) ?>
                         </div>
                     </div>
 
-                    <?=$this->render('_form', [
+                    <?= $this->render('_form', [
                         'model' => $model
                     ]) ?>
 
