@@ -46,7 +46,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['create'],
-                                'buttons_name' => ['create' => Yii::t('app', 'New') . ' ' . Yii::t('app', 'Page')]
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')]
                             ]) ?>
                         </div>
                     </div>
