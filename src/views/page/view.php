@@ -28,6 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
                         </div>
                     </div>
+
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
