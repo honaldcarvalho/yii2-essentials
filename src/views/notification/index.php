@@ -36,13 +36,19 @@ $js = <<<JS
   var deleteUrl     = cfg.deleteUrl;
   var deleteAllUrl  = cfg.deleteAllUrl;
   var pjaxContainer = cfg.pjaxContainer || '#pjax-notifications';
-  var inFlight      = false; // evita duplo reload
+  var inFlight      = false; // avoid double reload
 
   function confirmSwal(msg) {
     if (typeof Swal === 'undefined') {
       return Promise.resolve( confirm(msg) ? { isConfirmed: true } : { isConfirmed: false } );
     }
-    return Swal.fire({title: msg, icon:'warning', showCancelButton:true, confirmButtonText:'Sim', cancelButtonText:'Cancelar'});
+    return Swal.fire({
+      title: msg,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: yii.t('app','Yes'),
+      cancelButtonText: yii.t('app','Cancel')
+    });
   }
 
   function postJson(url, payload) {
@@ -69,94 +75,94 @@ $js = <<<JS
     badge.style.display = n > 0 ? 'inline-block' : 'none';
   }
 
-  // Delegação de eventos (funciona após PJAX)
+  // Event delegation (works after PJAX)
   document.addEventListener('click', function(ev){
     var t = ev.target;
 
-    // 3.1) Marcar todas como lidas
+    // 3.1) Mark all as read
     if (t.id === 'btn-mark-all-read') {
       ev.preventDefault();
-      confirmSwal('Marcar TODAS as notificações como lidas?').then(function(res){
+      confirmSwal(yii.t('app','Mark ALL notifications as read?')).then(function(res){
         if (!res.isConfirmed) return;
         postJson(readUrl, {all: 1})
           .then(function(resp){
             if (resp && (resp.ok === true || typeof resp.count !== 'undefined')) {
-              if (typeof Swal !== 'undefined') Swal.fire('Pronto!','Todas marcadas como lidas.','success');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Done!'), yii.t('app','All marked as read.'), 'success');
               updateHeaderBadge(resp.count);
               safeReload();
             } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível marcar como lidas.','error');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Could not mark as read.'), 'error');
             }
           })
           .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+            if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Network error.'), 'error');
           });
       });
       return;
     }
 
-    // 3.2) Apagar lidas
+    // 3.2) Delete read
     if (t.id === 'btn-delete-read') {
       ev.preventDefault();
-      confirmSwal('Apagar TODAS as notificações lidas?').then(function(res){
+      confirmSwal(yii.t('app','Delete ALL read notifications?')).then(function(res){
         if (!res.isConfirmed) return;
         postJson(deleteAllUrl, {onlyRead: 1})
           .then(function(resp){
             if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Lidas apagadas.','success');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Done!'), yii.t('app','Read notifications deleted.'), 'success');
               safeReload();
             } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Could not delete.'), 'error');
             }
           })
           .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+            if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Network error.'), 'error');
           });
       });
       return;
     }
 
-    // 3.3) Apagar todas
+    // 3.3) Delete all
     if (t.id === 'btn-delete-all') {
       ev.preventDefault();
-      confirmSwal('Apagar TODAS as notificações (lidas e não lidas)?').then(function(res){
+      confirmSwal(yii.t('app','Delete ALL notifications (read and unread)?')).then(function(res){
         if (!res.isConfirmed) return;
         postJson(deleteAllUrl, {})
           .then(function(resp){
             if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Todas apagadas.','success');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Done!'), yii.t('app','All notifications deleted.'), 'success');
               updateHeaderBadge(0);
               safeReload();
             } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Could not delete.'), 'error');
             }
           })
           .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+            if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Network error.'), 'error');
           });
       });
       return;
     }
 
-    // 3.4) Apagar 1 (se você já trocou o ActionColumn para botão .js-notif-delete)
+    // 3.4) Delete one
     if (t.closest && t.closest('.js-notif-delete')) {
       ev.preventDefault();
       var btn = t.closest('.js-notif-delete');
       var id = btn.getAttribute('data-id');
       if (!id) return;
-      confirmSwal('Apagar esta notificação?').then(function(res){
+      confirmSwal(yii.t('app','Delete this notification?')).then(function(res){
         if (!res.isConfirmed) return;
         postJson(deleteUrl + '?id=' + encodeURIComponent(id), {})
           .then(function(resp){
             if (resp && resp.ok) {
-              if (typeof Swal !== 'undefined') Swal.fire('Feito!','Notificação apagada.','success');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Done!'), yii.t('app','Notification deleted.'), 'success');
               safeReload();
             } else {
-              if (typeof Swal !== 'undefined') Swal.fire('Ops','Não foi possível apagar.','error');
+              if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Could not delete.'), 'error');
             }
           })
           .catch(function(){
-            if (typeof Swal !== 'undefined') Swal.fire('Ops','Erro de rede.','error');
+            if (typeof Swal !== 'undefined') Swal.fire(yii.t('app','Oops'), yii.t('app','Network error.'), 'error');
           });
       });
       return;
@@ -170,30 +176,16 @@ $this->registerJs($js, View::POS_END);
 
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <div>
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div>
             <h5 class="mb-0"><?= Html::encode($this->title) ?></h5>
-            <div class="small text-muted"><?= Yii::t('app', 'Gerencie suas notificações') ?></div>
-        </div>
-        <div class="d-flex gap-2">
-            <div class="d-flex gap-2">
-            <?= Html::button(Yii::t('app','Marcar todas como lidas'), [
-                'class' => 'btn btn-outline-primary',
-                'id'    => 'btn-mark-all-read',
-                'type'  => 'button',
-            ]) ?>
-
-            <?= Html::button(Yii::t('app','Apagar lidas'), [
-                'class' => 'btn btn-outline-secondary',
-                'id'    => 'btn-delete-read',
-                'type'  => 'button',
-            ]) ?>
-
-            <?= Html::button(Yii::t('app','Apagar todas'), [
-                'class' => 'btn btn-outline-danger',
-                'id'    => 'btn-delete-all',
-                'type'  => 'button',
-            ]) ?>
-            </div>
+            <div class="small text-muted"><?= Yii::t('app', 'Manage your notifications') ?></div>
+          </div>
+          <div class="d-flex gap-2">
+            <?= Html::button(Yii::t('app','Mark all as read'), ['class'=>'btn btn-outline-primary','id'=>'btn-mark-all-read','type'=>'button']) ?>
+            <?= Html::button(Yii::t('app','Delete read'),       ['class'=>'btn btn-outline-secondary','id'=>'btn-delete-read','type'=>'button']) ?>
+            <?= Html::button(Yii::t('app','Delete all'),        ['class'=>'btn btn-outline-danger','id'=>'btn-delete-all','type'=>'button']) ?>
+          </div>
         </div>
     </div>
 
@@ -248,7 +240,7 @@ $this->registerJs($js, View::POS_END);
                 ],
                 [
                     'attribute' => 'description',
-                    'label' => Yii::t('app', 'Título'),
+                    'label' => Yii::t('app', 'Title'),
                     'format' => 'raw',
                     'value' => function (Notification $m) {
                         $title = Html::encode($m->description);
@@ -258,7 +250,7 @@ $this->registerJs($js, View::POS_END);
                 ],
                 [
                     'attribute' => 'type',
-                    'label' => Yii::t('app', 'Tipo'),
+                    'label' => Yii::t('app', 'Type'),
                     'contentOptions' => ['style' => 'width:140px'],
                 ],
                 [
@@ -276,7 +268,7 @@ $this->registerJs($js, View::POS_END);
                     'value' => function (Notification $m) {
                         if (!$m->url) return '<span class="text-muted">—</span>';
                         $u = Html::encode($m->url);
-                        return Html::a(Yii::t('app', 'Abrir'), $u, ['class' => 'btn btn-sm btn-outline-primary', 'target' => '_self']);
+                        return Html::a(Yii::t('app', 'Open'), $u, ['class' => 'btn btn-sm btn-outline-primary', 'target' => '_self']);
                     }
                 ],
                 // ActionColumn
