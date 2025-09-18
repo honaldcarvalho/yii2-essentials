@@ -58,9 +58,8 @@ if(!empty($model->file_id && $model->file != null)){
     </div>
 
     <div class="col-md-12">
-        <?= AceEditor::widget([ 'model' => $model, 'attribute' => 'template', 'mode' => 'html', 'theme' => 'twilight', 'height' => '500px', ]); ?>
+        <?= AceEditor::widget([ 'model' => $model, 'attribute' => 'email_template', 'mode' => 'html', 'theme' => 'twilight', 'height' => '500px', ]); ?>
     </div>
-
 
     <div class="form-group mb-3 mt-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>'.Yii::t('app','Save'), ['class' => 'btn btn-success']) ?>
