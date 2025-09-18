@@ -11,7 +11,6 @@ use yii\grid\GridView;
 $this->title = Yii::t('app', 'Email Services');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -25,7 +24,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['create'],
-                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')]
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Email Service'),'verGroup' => false]
                              ])?>
                         </div>
                     </div>
@@ -51,6 +50,37 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'yii\bootstrap5\LinkPager',
                         ]
                     ]); ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
+</div>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['create'],
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')]
+                             ])?>
+                        </div>
+                    </div>
+
+
 
                 </div>
                 <!--.card-body-->

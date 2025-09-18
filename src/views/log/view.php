@@ -42,34 +42,46 @@ if ($model->data) {
 }
 ?>
 
-<div class="row">
-    <div class="col-md-12">
-        <p>
-            <?= Html::a(Yii::t('app', 'Delete'), ['delete', 'id' => $model->id], [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => Yii::t('app', 'Are you sure you want to delete this item?'),
-                    'method' => 'post',
-                ],
-            ]) ?>
-        </p>
-        <?= DetailView::widget([
-            'model' => $model,
-            'attributes' => [
-                'id',
-                [
-                    'attribute' => 'user.username', // corrigido usernamer → username
-                    'label' => Yii::t('app', 'User'),
-                ],
-                'controller',
-                'action',
-                [
-                    'attribute' => 'data',
-                    'format'    => 'raw',
-                    'value'     => $diffHtml,
-                ],
-                'created_at:datetime',
-            ],
-        ]) ?>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model])?>
+                        </div>
+                    </div>
+
+                    <?= DetailView::widget([
+                        'model' => $model,
+                        'attributes' => [
+                            'id',
+                            [
+                                'attribute' => 'user.username', // corrigido usernamer → username
+                                'label' => Yii::t('app', 'User'),
+                            ],
+                            'controller',
+                            'action',
+                            [
+                                'attribute' => 'data',
+                                'format'    => 'raw',
+                                'value'     => $diffHtml,
+                            ],
+                            'created_at:datetime',
+                        ],
+                    ]) ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
     </div>
+    <!--.row-->
 </div>

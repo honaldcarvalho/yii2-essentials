@@ -17,7 +17,7 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
     <div class="row">
         <div class="col-md-12">
             
-            <h1><?= Html::encode($this->title) ?></h1>
+            <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
 
             <div class="card">
                 <div class="card-body">
@@ -26,7 +26,7 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['index'],
-                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Pages')]
+                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Email Services'),'verGroup' => false]
                             ]) ?>
                         </div>
                     </div>

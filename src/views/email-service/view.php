@@ -14,18 +14,19 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                            'controller' => Yii::$app->controller->id,
-                            'model' => $model,
-                            'verGroup' => false
-                        ]) ?>
-                        <?= Html::a(Yii::t('app', 'Test'), ['test', 'id' => $model->id], ['class' => 'btn btn-default']) ?>
-                    </p>
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'verGroup' => false])?>
+                        </div>
+                    </div>
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
@@ -40,12 +41,13 @@ $this->params['breadcrumbs'][] = $this->title;
                             'port',
                         ],
                     ]) ?>
+
                 </div>
-                <!--.col-md-12-->
+                <!--.card-body-->
             </div>
-            <!--.row-->
+            <!--.card-->
         </div>
-        <!--.card-body-->
+        <!--.col-md-12-->
     </div>
-    <!--.card-->
+    <!--.row-->
 </div>

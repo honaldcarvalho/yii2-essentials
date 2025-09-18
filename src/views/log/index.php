@@ -12,9 +12,13 @@ use yii\grid\GridView;
 $this->title = Yii::t('app', 'Logs');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
             <div class="card">
                 <div class="card-body">
 
@@ -50,7 +54,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'yii\bootstrap5\LinkPager',
                         ]
                     ]); ?>
-
 
                 </div>
                 <!--.card-body-->
