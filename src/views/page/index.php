@@ -40,7 +40,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['create'], 'buttons_name' => ['create' => Yii::t('app', 'New User')],]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['create']]) ?>
                         </div>
                     </div>
 
