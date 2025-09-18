@@ -164,29 +164,33 @@ $delete_files_button[] =
         <div class="card-body">
 
           <div class="row mb-2">
-            <div class="col-md-12">
+
+            <div class="input-group col">
+
               <?= croacworks\essentials\widgets\DefaultButtons::widget([
                 'controller' => 'File',
                 'show' => [],
                 'extras' => $delete_files_button
               ]) ?>
-            </div>
-            <div class="input-group col">
+
               <?= Html::button(
                 '<i class="fas fa-exchange-alt mr-2"></i>' . Yii::t('app', 'Move to:'),
                 ['class' => 'btn input-group-text btn-success', 'id' => 'move-folder']
               ) ?>
+
               <?= Html::dropDownList(
                 'folder_id',
                 null,
                 yii\helpers\ArrayHelper::map(Folder::find()->asArray()->all(), 'id', 'name'),
                 ['id' => 'folder_id', 'class' => 'form-control']
               ) ?>
+
             </div>
+
           </div>
 
           <?php echo $this->render('/_parts/filter', ['view' => '/file', 'searchModel' => $searchModel]); ?>
-          
+
           <?php Pjax::begin([
             'id' => 'grid-pjax',
             'timeout' => 8000,
