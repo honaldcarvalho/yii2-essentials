@@ -7,7 +7,10 @@ use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\widgets\InputWidget;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
-
+/**
+ * USAGE:
+ * AceEditor::widget([ 'model' => $model, 'attribute' => 'content', 'mode' => 'html', 'theme' => 'twilight', 'height' => '500px', ]);
+ */
 class AceEditor extends InputWidget
 {
     public $theme = 'monokai';
