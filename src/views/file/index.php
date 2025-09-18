@@ -14,7 +14,7 @@ $deleteUrl = Url::to(['/file/delete-files']);
 $moveUrl   = Url::to(['/file/move']); // sua action de mover
 $csrfParam = Yii::$app->request->csrfParam;
 $csrfToken = Yii::$app->request->csrfToken;
-  
+
 $this->registerJs(<<<JS
 (function bootFilesGrid(){
   // reexecuta após pjax
@@ -140,155 +140,162 @@ JS, View::POS_END);
 
 // Botão extra (apenas render, ação é AJAX acima)
 $delete_files_button[] =
-[
-    'controller'=>'file',
-    'action'=>'delete-files',
-    'icon'=>'<i class="fas fa-trash"></i>',
-    'text'=>'Delete File(s)',
-    'link'=>'javascript:;',
-    'options'=>[
-        'id' => 'delete-files',
-        'class' => 'btn btn-danger btn-block-m',
+  [
+    'controller' => 'file',
+    'action' => 'delete-files',
+    'icon' => '<i class="fas fa-trash"></i>',
+    'text' => 'Delete File(s)',
+    'link' => 'javascript:;',
+    'options' => [
+      'id' => 'delete-files',
+      'class' => 'btn btn-danger btn-block-m',
     ],
-];
+  ];
 
 ?>
-<div class="container-fluid">
 
-  
+<div class="container-fluid">
   <div class="row">
     <div class="col-md-12">
+
       <h1><?= Html::encode($this->title) ?></h1>
+
       <div class="card">
         <div class="card-body">
 
           <div class="row mb-2">
-            <div class="col">
+            <div class="col-md-12">
               <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                  'controller' => 'File',
-                  'show' => [],
-                  'extras'=> $delete_files_button
+                'controller' => 'File',
+                'show' => [],
+                'extras' => $delete_files_button
               ]) ?>
             </div>
-
             <div class="input-group col">
               <?= Html::button(
-                  '<i class="fas fa-exchange-alt mr-2"></i>' . Yii::t('app', 'Move to:'),
-                  ['class'=>'btn input-group-text btn-success', 'id'=>'move-folder']
+                '<i class="fas fa-exchange-alt mr-2"></i>' . Yii::t('app', 'Move to:'),
+                ['class' => 'btn input-group-text btn-success', 'id' => 'move-folder']
               ) ?>
               <?= Html::dropDownList(
-                  'folder_id',
-                  null,
-                  yii\helpers\ArrayHelper::map(Folder::find()->asArray()->all(), 'id', 'name'),
-                  ['id'=>'folder_id','class'=>'form-control']
+                'folder_id',
+                null,
+                yii\helpers\ArrayHelper::map(Folder::find()->asArray()->all(), 'id', 'name'),
+                ['id' => 'folder_id', 'class' => 'form-control']
               ) ?>
             </div>
           </div>
-          <?php echo $this->render('/_parts/filter', ['view' =>'/file','searchModel' => $searchModel]); ?>
+
+          <?php echo $this->render('/_parts/filter', ['view' => '/file', 'searchModel' => $searchModel]); ?>
+          
           <?php Pjax::begin([
-              'id'=>'grid-pjax',
-              'timeout'=>8000,
-              'enablePushState'=>false,
-              'enableReplaceState'=>false,
+            'id' => 'grid-pjax',
+            'timeout' => 8000,
+            'enablePushState' => false,
+            'enableReplaceState' => false,
           ]); ?>
 
           <?= GridView::widget([
-              'dataProvider' => $dataProvider,
-              'tableOptions' => ['class'=>'table table-striped table-bordered'],
-              'columns' => [
-                  ['class' => 'yii\grid\CheckboxColumn', // <-- resolve seleção múltipla
-                   'checkboxOptions' => function($model){
-                       return ['value'=>$model->id, 'class'=>'file-item'];
-                   },
-                   'name' => 'file_selected[]', // nome certo para coletar via jQuery
-                  ],
-                  'id',
-                  'name',
-                  'group.name:text:'.Yii::t('app', 'Group'),
-                  'folder.name:text:'.Yii::t('app', 'Folder'),
-                  [
-                      'attribute'=>'folder_id',
-                      'format'=>'raw',
-                      'value'=> function($data){
-                          if ($data->folder_id != null) {
-                              return Html::a(
-                                  $data->folder->name,
-                                  Url::to(['/folder/view', 'id' => $data->folder_id]),
-                                  ['data-pjax'=>0] // abre fora do pjax
-                              );
-                          }
-                          return null;
-                      }
-                  ],
-                  'description',
-                  'type',
-                  [
-                      'headerOptions' => ['style' => 'width:10%'],
-                      'header' => 'Preview',
-                      'format' => 'raw',
-                      'value' => function ($data) {
-                          $url = $data->url;
-                          $type = '';
-                          if ($data->type == 'doc') {
-                              if ($data->extension != 'pdf') {
-                                  $url = 'https://docs.google.com/viewer?url=' . Yii::getAlias('@host') . $data->url;
-                              }
-                              $type = 'iframe';
-                          }
-                          return Html::a(
-                              "<img class='brand-image img-circle elevation-3' width='50' src='{$data->urlThumb}' />",
-                              $url,
-                              [
-                                  'class' => 'btn btn-outline-secondary',
-                                  'data-fancybox' => '',
-                                  'data-type' => $type,
-                                  'title' => Yii::t('app', 'View'),
-                                  'data-pjax'=>0, // evita interceptação do PJAX
-                              ]
-                          );
-                      }
-                  ],
-                  'extension',
-                  'size:bytes',
-                  'duration:time',
-                  [
-                      'attribute' => 'created_at',
-                      'format' => ['date', 'php:Y-m-d'],
-                      'label' => Yii::t('app', 'Created At'),
-                      'filter' => Html::input('date', ucfirst(Yii::$app->controller->id).'Search[created_at]', $searchModel->created_at, ['class'=>'form-control'])
-                  ],
-                  [
-                      'attribute' => 'updated_at',
-                      'format' => ['date', 'php:Y-m-d'],
-                      'label' => Yii::t('app', 'Updated At'),
-                      'filter' => Html::input('date', ucfirst(Yii::$app->controller->id).'Search[updated_at]', $searchModel->updated_at, ['class'=>'form-control'])
-                  ],
-                  [
-                      'class' => \croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                      'contentOptions' => ['style'=>'white-space:nowrap;'],
-                      'template' => '{view} {update} {ajax-delete}',
-
-                      'buttons' => [
-                          'ajax-delete' => function ($url, $model) {
-                              $url = \yii\helpers\Url::to(['/file/delete', 'id' => $model->id]);
-                              return \yii\helpers\Html::a('<i class="fas fa-trash"></i>', $url, [
-                                  'title'        => Yii::t('app', 'Delete'),
-                                  'class'        => 'btn btn-outline-danger',
-                                  'data-action'  => 'file-delete',
-                                  'data-pjax'    => 0,            
-                                  'data-method'  => false,        
-                                  'data-confirm' => false,
-                              ]);
-                          },
-                      ],
-                  ],
+            'dataProvider' => $dataProvider,
+            'tableOptions' => ['class' => 'table table-striped table-bordered'],
+            'columns' => [
+              [
+                'class' => 'yii\grid\CheckboxColumn', // <-- resolve seleção múltipla
+                'checkboxOptions' => function ($model) {
+                  return ['value' => $model->id, 'class' => 'file-item'];
+                },
+                'name' => 'file_selected[]', // nome certo para coletar via jQuery
               ],
+              'id',
+              'name',
+              'group.name:text:' . Yii::t('app', 'Group'),
+              'folder.name:text:' . Yii::t('app', 'Folder'),
+              [
+                'attribute' => 'folder_id',
+                'format' => 'raw',
+                'value' => function ($data) {
+                  if ($data->folder_id != null) {
+                    return Html::a(
+                      $data->folder->name,
+                      Url::to(['/folder/view', 'id' => $data->folder_id]),
+                      ['data-pjax' => 0] // abre fora do pjax
+                    );
+                  }
+                  return null;
+                }
+              ],
+              'description',
+              'type',
+              [
+                'headerOptions' => ['style' => 'width:10%'],
+                'header' => 'Preview',
+                'format' => 'raw',
+                'value' => function ($data) {
+                  $url = $data->url;
+                  $type = '';
+                  if ($data->type == 'doc') {
+                    if ($data->extension != 'pdf') {
+                      $url = 'https://docs.google.com/viewer?url=' . Yii::getAlias('@host') . $data->url;
+                    }
+                    $type = 'iframe';
+                  }
+                  return Html::a(
+                    "<img class='brand-image img-circle elevation-3' width='50' src='{$data->urlThumb}' />",
+                    $url,
+                    [
+                      'class' => 'btn btn-outline-secondary',
+                      'data-fancybox' => '',
+                      'data-type' => $type,
+                      'title' => Yii::t('app', 'View'),
+                      'data-pjax' => 0, // evita interceptação do PJAX
+                    ]
+                  );
+                }
+              ],
+              'extension',
+              'size:bytes',
+              'duration:time',
+              [
+                'attribute' => 'created_at',
+                'format' => ['date', 'php:Y-m-d'],
+                'label' => Yii::t('app', 'Created At'),
+                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[created_at]', $searchModel->created_at, ['class' => 'form-control'])
+              ],
+              [
+                'attribute' => 'updated_at',
+                'format' => ['date', 'php:Y-m-d'],
+                'label' => Yii::t('app', 'Updated At'),
+                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[updated_at]', $searchModel->updated_at, ['class' => 'form-control'])
+              ],
+              [
+                'class' => \croacworks\essentials\components\gridview\ActionColumnCustom::class,
+                'contentOptions' => ['style' => 'white-space:nowrap;'],
+                'template' => '{view} {update} {ajax-delete}',
+
+                'buttons' => [
+                  'ajax-delete' => function ($url, $model) {
+                    $url = \yii\helpers\Url::to(['/file/delete', 'id' => $model->id]);
+                    return \yii\helpers\Html::a('<i class="fas fa-trash"></i>', $url, [
+                      'title'        => Yii::t('app', 'Delete'),
+                      'class'        => 'btn btn-outline-danger',
+                      'data-action'  => 'file-delete',
+                      'data-pjax'    => 0,
+                      'data-method'  => false,
+                      'data-confirm' => false,
+                    ]);
+                  },
+                ],
+              ],
+            ],
           ]); ?>
 
           <?php Pjax::end(); ?>
 
         </div>
+        <!--.card-body-->
       </div>
+      <!--.card-->
     </div>
+    <!--.col-md-12-->
   </div>
+  <!--.row-->
 </div>

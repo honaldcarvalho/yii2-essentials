@@ -23,6 +23,7 @@ Campo active do item define a regra de action:
 
 Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por filho) + abertura correta dos grupos.
 
+//index
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -52,17 +53,17 @@ Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por f
     <!--.row-->
 </div>
 
+//create - update
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
             
-            <h1><?= Html::encode($this->title) ?></h1>
+            <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
 
             <div class="card">
                 <div class="card-body">
 
                     <div class="row mb-2">
-                        <div class="col-md-12">
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['index'],
@@ -70,7 +71,10 @@ Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por f
                             ]) ?>
                         </div>
                     </div>
-                    //content
+
+                    <?=$this->render('_form', [
+                        'model' => $model
+                    ]) ?>
 
                 </div>
                 <!--.card-body-->
@@ -82,6 +86,7 @@ Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por f
     <!--.row-->
 </div>
 
+//view
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">

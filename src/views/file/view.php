@@ -20,13 +20,19 @@ $this::registerJs($script,$this::POS_END);
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model]) ?>
-                    </p>
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model])?>
+                        </div>
+                    </div>
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
@@ -66,12 +72,13 @@ $this::registerJs($script,$this::POS_END);
                             'updated_at:datetime',
                         ],
                     ]) ?>
+
                 </div>
-                <!--.col-md-12-->
+                <!--.card-body-->
             </div>
-            <!--.row-->
+            <!--.card-->
         </div>
-        <!--.card-body-->
+        <!--.col-md-12-->
     </div>
-    <!--.card-->
+    <!--.row-->
 </div>

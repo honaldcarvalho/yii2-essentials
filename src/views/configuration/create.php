@@ -21,7 +21,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                        <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['index'],
                                 'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Pages')]
