@@ -13,6 +13,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="container-fluid">
     <div class="row">
+        <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
