@@ -20,17 +20,17 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row">
         <div class="col-md-12">
             
-            <h1><?= Html::encode($this->title) ?></h1>
+            <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
 
             <div class="card">
                 <div class="card-body">
+
                     <div class="row mb-2">
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                'show' => ['create'],
-                                'buttons_name' => ['create' => Yii::t('app', 'Create Role')],
-                                'verGroup'=>false
-                                ])?>
+                                'show' => ['index'],
+                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Roles'),'verGroup'=>false]
+                            ]) ?>
                         </div>
                     </div>
 

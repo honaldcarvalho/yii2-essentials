@@ -14,39 +14,58 @@ use yii\widgets\Pjax;
 $this->title = Yii::t('app', 'Roles Templates');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="roles-template-index">
 
-    <h1><?= Html::encode($this->title) ?></h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a(Yii::t('app', 'Create Roles Template'), ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
+            <div class="card">
+                <div class="card-body">
 
-    <?php Pjax::begin(); ?>
-    <?php echo $this->render('/_parts/filter', ['view' =>'/role-template','searchModel' => $searchModel]); ?>
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['create'],
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Role Template')]
+                             ])?>
+                        </div>
+                    </div>
 
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+                    <?php Pjax::begin(); ?>
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/role-template','searchModel' => $searchModel]); ?>
 
-            'id',
-            'level',
-            'controller',
-            [
-                'attribute'=>'actions',
-                'value'=> function($data){
-                    return str_replace(';', ' | ', $data->actions);
-                }
-            ],
-            'origin',
-            'status:boolean',
-            [
-                'class' => ActionColumnCustom::class
-            ],
-        ],
-    ]); ?>
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'columns' => [
+                            ['class' => 'yii\grid\SerialColumn'],
 
-    <?php Pjax::end(); ?>
+                            'id',
+                            'level',
+                            'controller',
+                            [
+                                'attribute'=>'actions',
+                                'value'=> function($data){
+                                    return str_replace(';', ' | ', $data->actions);
+                                }
+                            ],
+                            'origin',
+                            'status:boolean',
+                            [
+                                'class' => ActionColumnCustom::class
+                            ],
+                        ],
+                    ]); ?>
 
+                    <?php Pjax::end(); ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>

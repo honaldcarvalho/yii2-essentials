@@ -15,6 +15,9 @@ $model->origin = str_replace(';', ' | ', $model->origin);
 ?>
 
 <div class="container-fluid">
+    
+    <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
+
     <div class="card">
         <div class="card-body">
             <div class="row">

@@ -9,12 +9,35 @@ $this->title = Yii::t('app', 'Create Roles Template');
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Roles Templates'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="roles-template-create">
 
-    <h1><?= Html::encode($this->title) ?></h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
 
-    <?= $this->render('_form', [
-        'model' => $model,
-    ]) ?>
+            <div class="card">
+                <div class="card-body">
 
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['index'],
+                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Role Templates')]
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <?=$this->render('_form', [
+                        'model' => $model
+                    ]) ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>
