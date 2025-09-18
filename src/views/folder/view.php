@@ -20,17 +20,20 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title"><?= Yii::t('app', 'Folder') .": " . $model->name; ?></h3>
-        </div>
+    <div class="row">
+        <div class="col-md-12">
 
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model]) ?>
-                    </p>
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
+                        </div>
+                    </div>
+
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
@@ -43,69 +46,55 @@ $this->params['breadcrumbs'][] = $this->title;
                             'status:boolean',
                         ],
                     ]) ?>
-                </div>
-                <!--.col-md-12-->
-            </div>
-            <!--.row-->
-        </div>
-    </div>
-    <!--.card-->
 
-    <?= AppendModel::widget([
-        'title'=> Yii::t('app','Folders'),
-        'attactModel'=>'Folder',
-        'controller'=>'folder',
-        'attactClass'=>'croacworks\\essentials\\models\\Folder',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getFolders(),
-        ]),
-        'showFields'=>['folder.name','folder.description','folder.status:boolean'],
-        'fields'=>
-        [
-            [   
-                'name'=>'folder_id',
-                'type'=>'hidden',
-                'value'=>$model->id
-            ],
-            [
-                'name'=>'name',
-                'type'=>'text',
-            ],
-            [
-                'name'=>'description',
-                'type'=>'text',
-            ],
-            [
-                'name'=>'status',
-                'type'=>'checkbox'
-            ],
-        ]
-    ]); ?>
-    <!--.row-->
-
-    <div class="card mt-3">
-        <div class="card-header">
-            <h3 class="card-title"><?= Yii::t('app', 'Add File'); ?></h3>
-        </div>
-
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
+                    <?= AppendModel::widget([
+                        'title' => Yii::t('app', 'Folders'),
+                        'attactModel' => 'Folder',
+                        'controller' => 'folder',
+                        'attactClass' => 'croacworks\\essentials\\models\\Folder',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getFolders(),
+                        ]),
+                        'showFields' => ['folder.name', 'folder.description', 'folder.status:boolean'],
+                        'fields' =>
+                        [
+                            [
+                                'name' => 'folder_id',
+                                'type' => 'hidden',
+                                'value' => $model->id
+                            ],
+                            [
+                                'name' => 'name',
+                                'type' => 'text',
+                            ],
+                            [
+                                'name' => 'description',
+                                'type' => 'text',
+                            ],
+                            [
+                                'name' => 'status',
+                                'type' => 'checkbox'
+                            ],
+                        ]
+                    ]); ?>
+                    
                     <?= StorageUploadMultiple::widget([
                         'folder_id' => $model->id,
                         'group_id' => 1,
-                        'grid_reload'=>1,
-                        'grid_reload_id'=>'#list-files-grid'
+                        'grid_reload' => 1,
+                        'grid_reload_id' => '#list-files-grid'
                     ]); ?>
+
+                    <?= ListFiles::widget([
+                        'dataProvider' => $dataProvider,
+                    ]); ?>
+
                 </div>
+                <!--.card-body-->
             </div>
-            <!--.row-->
+            <!--.card-->
         </div>
-        <!--.card-->
+        <!--.col-md-12-->
     </div>
-    <!--.card-->
-    
-    <?= ListFiles::widget([
-        'dataProvider' => $dataProvider,
-    ]); ?>
+    <!--.row-->
 </div>
