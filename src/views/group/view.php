@@ -131,107 +131,120 @@ JS;
 $this->registerJs($js,$this::POS_END);
 ?>
 
-<div class="user-update">
-    <h1><?= Html::encode($this->title) ?></h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget([
-            'controller' => 'Group',
-            'model'      => $model,
-            'extras'     => $buttons
-        ]) ?>
-    </p>
+            <div class="card">
+                <div class="card-body">
 
-    <?= DetailView::widget([
-        'model' => $model,
-        'attributes' => [
-            'id',
-            'parente.name:text:' . Yii::t('app', 'Parent'),
-            'level',
-            'name',
-            'status:boolean',
-        ],
-    ]) ?>
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'extras'     => $buttons])?>
+                        </div>
+                    </div>
 
-    <?= AppendModel::widget([
-        'title' => Yii::t('app', 'Users'),
-        'attactModel' => 'User',
-        'uniqueId' => 'UserAppend',
-        'controller' => 'configuration',
-        'template' => '{edit}{remove}',
-        'attactClass' => 'croacworks\\essentials\\models\\User',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getUsers()
+                    <?= DetailView::widget([
+                        'model' => $model,
+                        'attributes' => [
+                            'id',
+                            'parente.name:text:' . Yii::t('app', 'Parent'),
+                            'level',
+                            'name',
+                            'status:boolean',
+                        ],
+                    ]) ?>
 
-        ]),
-        'showFields' => [
-            [
-                'attribute' => 'via',
-                'label' => 'Via',
-                'value' => function ($model) {
-                    $via = $model->getAttribute('via'); // lê a coluna extra do SELECT
-                    return $via;
-                },
-                'contentOptions' => ['style' => 'white-space:nowrap'],
-            ],
-            'profile.fullname',
-            'email',
-            [
-                'attribute' => 'created_at',
-                'format' => 'date',
-                'label' => Yii::t('app', 'Created At'),
-            ],
-            [
-                'attribute' => 'updated_at',
-                'format' => 'date',
-                'label' => Yii::t('app', 'Updated At'),
-            ],
-            'status:boolean',
-        ],
-        'fields' => [
-            [
-                'name' => 'group_id',
-                'type' => 'hidden',
-                'value' => $model->id
-            ],
-            [
-                'name' => 'id',
-                'value' => yii\helpers\ArrayHelper::map(
-                    User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
-                    'id', 'name'
-                ),
-                'type' => 'select2'
-            ],
-        ]
-    ]); ?>
+                    <?= AppendModel::widget([
+                        'title' => Yii::t('app', 'Users'),
+                        'attactModel' => 'User',
+                        'uniqueId' => 'UserAppend',
+                        'controller' => 'configuration',
+                        'template' => '{edit}{remove}',
+                        'attactClass' => 'croacworks\\essentials\\models\\User',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getUsers()
 
-    <?php
-    // NÃO envolver em PJAX extra — o AppendModel já cria um PJAX interno com id #list-rolesAppend-grid
-    echo AppendModel::widget([
-        'new_button'=> false,
-        'title' => Yii::t('app', 'Roles'),
-        'attactModel' => 'Role',
-        'uniqueId' => 'rolesAppend',   // <- usado no container interno: #list-rolesAppend-grid
-        'controller' => 'roles',
-        'template' => '',
-        'attactClass' => 'croacworks\\essentials\\models\\Role',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getRoles(),
-        ]),
-        'showFields' => [
-            'id',
-            'user.fullname:text:' . Yii::t('app', 'User'),
-            'group.name:text:' . Yii::t('app', 'Role'),
-            'controller',
-            [
-                'attribute'=>'actions',
-                'value'=> function($data){
-                    return str_replace(';', ' | ', $data->actions);
-                }
-            ],
-            'origin',
-            'status:boolean'
-        ]
-    ]);
-    ?>
+                        ]),
+                        'showFields' => [
+                            [
+                                'attribute' => 'via',
+                                'label' => 'Via',
+                                'value' => function ($model) {
+                                    $via = $model->getAttribute('via'); // lê a coluna extra do SELECT
+                                    return $via;
+                                },
+                                'contentOptions' => ['style' => 'white-space:nowrap'],
+                            ],
+                            'profile.fullname',
+                            'email',
+                            [
+                                'attribute' => 'created_at',
+                                'format' => 'date',
+                                'label' => Yii::t('app', 'Created At'),
+                            ],
+                            [
+                                'attribute' => 'updated_at',
+                                'format' => 'date',
+                                'label' => Yii::t('app', 'Updated At'),
+                            ],
+                            'status:boolean',
+                        ],
+                        'fields' => [
+                            [
+                                'name' => 'group_id',
+                                'type' => 'hidden',
+                                'value' => $model->id
+                            ],
+                            [
+                                'name' => 'id',
+                                'value' => yii\helpers\ArrayHelper::map(
+                                    User::find()->select(['id', "concat(username,' - ',email) as name"])->asArray()->all(),
+                                    'id', 'name'
+                                ),
+                                'type' => 'select2'
+                            ],
+                        ]
+                    ]); ?>
+
+                    <?php
+                    // NÃO envolver em PJAX extra — o AppendModel já cria um PJAX interno com id #list-rolesAppend-grid
+                    echo AppendModel::widget([
+                        'new_button'=> false,
+                        'title' => Yii::t('app', 'Roles'),
+                        'attactModel' => 'Role',
+                        'uniqueId' => 'rolesAppend',   // <- usado no container interno: #list-rolesAppend-grid
+                        'controller' => 'roles',
+                        'template' => '',
+                        'attactClass' => 'croacworks\\essentials\\models\\Role',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getRoles(),
+                        ]),
+                        'showFields' => [
+                            'id',
+                            'user.fullname:text:' . Yii::t('app', 'User'),
+                            'group.name:text:' . Yii::t('app', 'Role'),
+                            'controller',
+                            [
+                                'attribute'=>'actions',
+                                'value'=> function($data){
+                                    return str_replace(';', ' | ', $data->actions);
+                                }
+                            ],
+                            'origin',
+                            'status:boolean'
+                        ]
+                    ]);
+                    ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>

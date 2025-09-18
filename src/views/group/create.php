@@ -9,10 +9,34 @@ $this->title = Yii::t('app', 'Create Group');
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Groups'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= yii\bootstrap5\Html::encode($this->title) ?></h1>
 
+            <div class="card">
+                <div class="card-body">
 
-<div class="user-create">
-    <?= $this->render('_form', [
-        'model' => $model
-    ]) ?>
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['index'],
+                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Groups')]
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <?=$this->render('_form', [
+                        'model' => $model
+                    ]) ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>

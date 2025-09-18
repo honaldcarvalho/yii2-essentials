@@ -93,7 +93,7 @@ $this::registerJs($script, $this::POS_END);
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['create'],
-                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')],
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Menu')],
                                 'verGroup' => false
                              ])?>
                             <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-auto-add">
@@ -101,7 +101,7 @@ $this::registerJs($script, $this::POS_END);
                             </button>
                         </div>
                     </div>
-                    
+
                     <?php Pjax::begin(['id' => 'grid-menu']); ?>
                         <?= GridView::widget([
                             'dataProvider' => $dataProvider,

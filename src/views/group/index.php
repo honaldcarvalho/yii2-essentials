@@ -12,28 +12,50 @@ use yii\widgets\Pjax;
 $this->title = Yii::t('app', 'Groups');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="group-index">
 
-    <h1><?= Html::encode($this->title) ?></h1>
-    <p>
-        <?= Html::a(Yii::t('app', 'Create Group'), ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
-    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); ?>
-    <?php Pjax::begin(); ?>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['create'],
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Group')]
+                             ])?>
+                        </div>
+                    </div>
+
+                    <?php echo $this->render('/_parts/filter', ['view' =>'/group','searchModel' => $searchModel]); ?>
+                    <?php Pjax::begin(); ?>
 
 
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'columns' => [
-            'id',
-            'parent.name:text:'.Yii::t('app', 'Parent'),
-            'level',
-            'name',
-            'status:boolean',
-            ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom'],
-        ],
-    ]); ?>
+                    <?= GridView::widget([
+                        'dataProvider' => $dataProvider,
+                        'columns' => [
+                            'id',
+                            'parent.name:text:'.Yii::t('app', 'Parent'),
+                            'level',
+                            'name',
+                            'status:boolean',
+                            ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom'],
+                        ],
+                    ]); ?>
 
-    <?php Pjax::end(); ?>
+                    <?php Pjax::end(); ?>
 
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>
