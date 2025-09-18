@@ -71,7 +71,13 @@ $this->registerJs($js);
         <?= $form->field($model, 'title')->textInput(['maxlength'=>255]) ?>
       </div>
       <div class="col-md-3">
-        <?= $form->field($model, 'type')->textInput(['placeholder'=>'system']) ?>
+        <?= $form->field($model, 'type')->dropDownList([
+            'system',
+            'information',
+            'billing',
+            'appointment',
+            'promotion'
+        ]) ?>
       </div>
       <div class="col-md-3">
         <?= $form->field($model, 'url')->textInput(['placeholder'=>'/optional/path']) ?>
