@@ -22,3 +22,88 @@ Campo active do item define a regra de action:
 "a;b;c" ⇒ ativo só se a action atual ∈ {a,b,c}.
 
 Abaixo vai o CoreuiMenu.php com essa lógica implementada (pais só ativam por filho) + abertura correta dos grupos.
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model])?>
+                        </div>
+                    </div>
+                    //content
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['list'],
+                                'model' => $model,
+                                'buttons_name' => ['list' => Yii::t('app', 'List ')],
+                                ])?>
+                        </div>
+                    </div>
+                    //content
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['create'],
+                                'buttons_name' => ['create' => Yii::t('app', 'Create ')],
+                                ])?>
+                        </div>
+                    </div>
+                    //content
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
+</div>

@@ -13,14 +13,34 @@ $this->params['breadcrumbs'][] = ['label' => $model->title, 'url' => ['view', 'i
 $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 ?>
 
-<div class="page-index">
-    <h1><?= Html::encode($this->title) ?></h1>
-    <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['list']]) ?>
-    </p>
-    <div class="col-md-12">
-        <?= $this->render('_form', [
-            'model' => $model
-        ]) ?>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                                'show' => ['list'],
+                                'buttons_name' => ['list' => Yii::t('app', 'List Pages')]
+                            ]) ?>
+                        </div>
+                    </div>
+
+                    <?= $this->render('_form', [
+                        'model' => $model
+                    ]) ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
     </div>
+    <!--.row-->
 </div>

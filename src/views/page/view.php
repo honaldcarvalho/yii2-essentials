@@ -14,44 +14,58 @@ $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
 
-<div class="page-view">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
 
-    <h1><?= Html::encode($this->title) ?></h1>
+            <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
-    </p>
+            <div class="card">
+                <div class="card-body">
 
-    <?= DetailView::widget([
-        'model' => $model,
-        'attributes' => [
-            'id',
-            'group.name:text:' . Yii::t('app', 'Group'),
-            'section.name:text:' . Yii::t('app', 'Page Section'),
-            'slug',
-            'title',
-            'description',
-            'content:raw',
-            'keywords:ntext',
-            'created_at:datetime',
-            'status:boolean',
-        ],
-    ]) ?>
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
+                        </div>
+                    </div>
+                    <?= DetailView::widget([
+                        'model' => $model,
+                        'attributes' => [
+                            'id',
+                            'group.name:text:' . Yii::t('app', 'Group'),
+                            'section.name:text:' . Yii::t('app', 'Page Section'),
+                            'slug',
+                            'title',
+                            'description',
+                            'content:raw',
+                            'keywords:ntext',
+                            'created_at:datetime',
+                            'status:boolean',
+                        ],
+                    ]) ?>
 
-    <?= StorageUploadMultiple::widget([
-        'attach_model' => [
-            'class_name' => \croacworks\essentials\models\PageFile::class,
-            'id' => $model->id,
-            'fields' => ['page_id', 'file_id']
-        ],
-        'grid_reload' => 1,
-        'grid_reload_id' => '#list-files-grid'
-    ]); ?>
+                    <?= StorageUploadMultiple::widget([
+                        'attach_model' => [
+                            'class_name' => \croacworks\essentials\models\PageFile::class,
+                            'id' => $model->id,
+                            'fields' => ['page_id', 'file_id']
+                        ],
+                        'grid_reload' => 1,
+                        'grid_reload_id' => '#list-files-grid'
+                    ]); ?>
 
-    <?= ListFiles::widget([
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getFiles(),
-        ]),
-    ]); ?>
-    
+                    <?= ListFiles::widget([
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getFiles(),
+                        ]),
+                    ]); ?>
+
+                </div>
+                <!--.card-body-->
+            </div>
+            <!--.card-->
+        </div>
+        <!--.col-md-12-->
+    </div>
+    <!--.row-->
 </div>

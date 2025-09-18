@@ -10,14 +10,18 @@ $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Configuration'), 'ur
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<div class="configuration-index">
-    <h1><?= Html::encode($this->title) ?></h1>
-    <p>
-        <?= croacworks\essentials\widgets\DefaultButtons::widget(['show' => ['list']]) ?>
-    </p>
-    <div class="col-md-12">
-        <?= $this->render('_form', [
-            'model' => $model
-        ]) ?>
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <?=$this->render('_form', [
+                        'model' => $model
+                    ]) ?>
+                </div>
+            </div>
+        </div>
+        <!--.card-body-->
     </div>
+    <!--.card-->
 </div>
