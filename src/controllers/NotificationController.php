@@ -153,7 +153,7 @@ class NotificationController extends AuthorizationController
         }
 
         // Simple lists (for demo). For large datasets use Select2 with AJAX.
-        $users  = \croacworks\essentials\models\User::find()->select(['id', 'username', 'name', 'email'])->orderBy(['id' => SORT_ASC])->limit(500)->asArray()->all();
+        $users  = \croacworks\essentials\models\User::find()->select(['id', 'username', 'email'])->orderBy(['id' => SORT_ASC])->limit(500)->asArray()->all();
         $groups = \croacworks\essentials\models\Group::find()->select(['id', 'name'])->orderBy(['name' => SORT_ASC])->asArray()->all();
 
         $userItems = [];
