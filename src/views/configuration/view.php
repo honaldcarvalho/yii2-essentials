@@ -15,43 +15,49 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget(['model'=>$model,'verGroup'=>false]) ?>
-                        <?= Html::a(
-                            Yii::t('app', 'Preview Email Template'),
-                            [
-                                'preview',
-                                'id' => $model->id,
-                                'subject' => 'Reset Password — ' . Yii::$app->name,
-                                'content' => '<p>Olá, Usuário</p><p>Siga o link abaixo para redefinir sua senha.</p>',
-                            ],
-                            [
-                                'class' => 'btn btn-secondary',
-                                'data-fancybox' => 'preview-template',
-                                'data-type' => 'iframe',
-                                'data-options' => json_encode([
-                                    'iframe' => ['css' => ['width' => '100%', 'height' => '100%']],
-                                    'toolbar' => true,
-                                    'smallBtn' => true,
-                                ]),
-                            ]
-                        ) ?>
-                    </p>
+    <div class="row">
+        <div class="col-md-12">
+
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
+                            <?= Html::a(
+                                Yii::t('app', 'Preview Email Template'),
+                                [
+                                    'preview',
+                                    'id' => $model->id,
+                                    'subject' => 'Reset Password — ' . Yii::$app->name,
+                                    'content' => '<p>Olá, Usuário</p><p>Siga o link abaixo para redefinir sua senha.</p>',
+                                ],
+                                [
+                                    'class' => 'btn btn-secondary',
+                                    'data-fancybox' => 'preview-template',
+                                    'data-type' => 'iframe',
+                                    'data-options' => json_encode([
+                                        'iframe' => ['css' => ['width' => '100%', 'height' => '100%']],
+                                        'toolbar' => true,
+                                        'smallBtn' => true,
+                                    ]),
+                                ]
+                            ) ?>
+                        </div>
+                    </div>
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
                             'id',
                             'description',
                             [
-                                'attribute'=>'file_id',
-                                'format'=>'raw',
-                                'value'=> function($data){
-                                    if(!empty($data->file_id) && $data->file !== null){
-                                        $url = Yii::getAlias('@web').$data->file->urlThumb;
+                                'attribute' => 'file_id',
+                                'format' => 'raw',
+                                'value' => function ($data) {
+                                    if (!empty($data->file_id) && $data->file !== null) {
+                                        $url = Yii::getAlias('@web') . $data->file->urlThumb;
                                         return "<img class='brand-image img-circle elevation-3' width='50' src='{$url}' />";
                                     }
                                 }
@@ -65,87 +71,89 @@ $this->params['breadcrumbs'][] = $this->title;
                             'status:boolean',
                         ],
                     ]) ?>
+                    <?= AppendModel::widget([
+                        'title' => Yii::t('app', 'Parameters'),
+                        'attactModel' => 'Parameter',
+                        'uniqueId' => 'ParameterAppend',
+                        'controller' => 'configuration',
+                        'template' => '{edit}{remove}',
+                        'attactClass' => 'croacworks\\essentials\\models\\Parameter',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getParameters(),
+                        ]),
+                        'showFields' => [
+                            'description',
+                            'name',
+                            [
+                                'attribute' => 'value',
+                                'contentOptions' => ['class' => 'text-trucate'],
+                            ],
+                            'status:boolean'
+                        ],
+                        'fields' =>
+                        [
+                            [
+                                'name' => 'configuration_id',
+                                'type' => 'hidden',
+                                'value' => $model->id
+                            ],
+                            [
+                                'name' => 'description',
+                                'type' => 'text'
+                            ],
+                            [
+                                'name' => 'name',
+                                'type' => 'text'
+                            ],
+                            [
+                                'name' => 'value',
+                                'type' => 'text'
+                            ],
+                            [
+                                'name' => 'status',
+                                'type' => 'checkbox'
+                            ],
+                        ]
+                    ]); ?>
+
+                    <?= AppendModel::widget([
+                        'title' => Yii::t('app', 'Meta Tags'),
+                        'attactModel' => 'MetaTag',
+                        'uniqueId' => 'MetaTagAppend',
+                        'controller' => 'configuration',
+                        'template' => '{edit}{remove}',
+                        'attactClass' => 'croacworks\\essentials\\models\\MetaTag',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getMetaTags(),
+                        ]),
+                        'showFields' => ['description', 'name', 'content'],
+                        'fields' =>
+                        [
+                            [
+                                'name' => 'configuration_id',
+                                'type' => 'hidden',
+                                'value' => $model->id
+                            ],
+                            [
+                                'name' => 'description',
+                                'type' => 'text'
+                            ],
+                            [
+                                'name' => 'name',
+                                'type' => 'text'
+                            ],
+                            [
+                                'name' => 'content',
+                                'type' => 'text'
+                            ],
+                        ]
+                    ]); ?>
                 </div>
-                <!--.col-md-12-->
+                <!--.card-body-->
             </div>
-            <!--.row-->
+            <!--.card-->
         </div>
-        <!--.card-body-->
+        <!--.col-md-12-->
     </div>
-    <!--.card-->
-
-    <?= AppendModel::widget([
-        'title'=> Yii::t('app', 'Parameters'),
-        'attactModel'=>'Parameter',
-        'uniqueId'=>'ParameterAppend',
-        'controller'=>'configuration',
-        'template' => '{edit}{remove}',
-        'attactClass'=>'croacworks\\essentials\\models\\Parameter',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getParameters(),
-        ]),
-        'showFields'=>['description','name',
-        [
-            'attribute' => 'value',
-            'contentOptions' => ['class' => 'text-trucate'], 
-        ],
-        'status:boolean'],
-        'fields'=>
-        [
-            [
-                'name'=>'configuration_id',
-                'type'=>'hidden',
-                'value'=>$model->id
-            ],
-            [
-                'name'=>'description',
-                'type'=>'text'
-            ],
-            [
-                'name'=>'name',
-                'type'=>'text'
-            ],
-            [
-                'name'=>'value',
-                'type'=>'text'
-            ],
-            [
-                'name'=>'status',
-                'type'=>'checkbox'
-            ],
-        ]
-    ]); ?>
-
-    <?= AppendModel::widget([
-        'title'=> Yii::t('app', 'Meta Tags'),
-        'attactModel'=>'MetaTag',
-        'uniqueId'=>'MetaTagAppend',
-        'controller'=>'configuration',
-        'template' => '{edit}{remove}',
-        'attactClass'=>'croacworks\\essentials\\models\\MetaTag',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getMetaTags(),
-        ]),
-        'showFields'=>['description','name','content'],
-        'fields'=>
-        [
-            [
-                'name'=>'configuration_id',
-                'type'=>'hidden',
-                'value'=>$model->id
-            ],
-            [
-                'name'=>'description',
-                'type'=>'text'
-            ],
-            [
-                'name'=>'name',
-                'type'=>'text'
-            ],
-            [
-                'name'=>'content',
-                'type'=>'text'
-            ],
-        ]
-    ]); ?>
+    <!--.row-->
 </div>

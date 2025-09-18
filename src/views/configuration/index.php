@@ -94,69 +94,74 @@ JS;
 
 $this->registerJs($js, View::POS_END);
 ?>
+
 <div class="container-fluid">
-  
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-md-12">
-                            <?= Html::a(Yii::t('app', 'New Configuration'), ['create'], ['class' => 'btn btn-success']) ?>
-                        </div>
-                    </div>
+  <div class="row">
+    <div class="col-md-12">
 
+      <h1><?= Html::encode($this->title) ?></h1>
 
-                    <?php echo $this->render('/_parts/filter', ['view' =>'/configuration','searchModel' => $searchModel]); ?>
+      <div class="card">
+        <div class="card-body">
 
-                    <?= GridView::widget([
-                        'dataProvider' => $dataProvider,
-                        'columns' => [
-                            'id',
-                            'description',
-                            //'file_id',
-                            //'meta_viewport',
-                            //'meta_author',
-                            //'meta_robots',
-                            //'meta_googlebot',
-                            //'meta_keywords',
-                            //'meta_description',
-                            //'canonical',
-                            'host',
-                            'title',
-                            //'bussiness_name',
-                            'email:email',
-                            [
-                                'attribute'=>'created_at',
-                                'format' => 'date',
-                                'label' => Yii::t('app', 'Created At'),
-                                'filter' =>Html::input('date', ucfirst(Yii::$app->controller->id).'Search[created_at]',$searchModel->created_at,['class'=>'form-control dateandtime'])
-                            ],
-                            [
-                                'attribute'=>'updated_at',
-                                'format' => 'date',
-                                'label' => Yii::t('app', 'Updated At'),
-                                'filter' =>Html::input('date',ucfirst(Yii::$app->controller->id).'Search[updated_at]',$searchModel->updated_at,['class'=>'form-control dateandtime'])
-                            ],
-                            'status:boolean',
-                            [
-                                'class' => 'croacworks\essentials\components\gridview\ActionColumnCustom',
-                                'template' => '{clone} {view} {update} {delete}',
-                            ]
-                        ],
-                        'summaryOptions' => ['class' => 'summary mb-2'],
-                        'pager' => [
-                            'class' => 'yii\bootstrap5\LinkPager',
-                        ]
-                    ]); ?>
-
-
-                </div>
-                <!--.card-body-->
+          <div class="row mb-2">
+            <div class="col-md-12">
+              <?= croacworks\essentials\widgets\DefaultButtons::widget([
+                'show' => ['create'],
+                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')]
+              ]) ?>
             </div>
-            <!--.card-->
+          </div>
+
+          <?php echo $this->render('/_parts/filter', ['view' => '/configuration', 'searchModel' => $searchModel]); ?>
+
+          <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            'columns' => [
+              'id',
+              'description',
+              //'file_id',
+              //'meta_viewport',
+              //'meta_author',
+              //'meta_robots',
+              //'meta_googlebot',
+              //'meta_keywords',
+              //'meta_description',
+              //'canonical',
+              'host',
+              'title',
+              //'bussiness_name',
+              'email:email',
+              [
+                'attribute' => 'created_at',
+                'format' => 'date',
+                'label' => Yii::t('app', 'Created At'),
+                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[created_at]', $searchModel->created_at, ['class' => 'form-control dateandtime'])
+              ],
+              [
+                'attribute' => 'updated_at',
+                'format' => 'date',
+                'label' => Yii::t('app', 'Updated At'),
+                'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[updated_at]', $searchModel->updated_at, ['class' => 'form-control dateandtime'])
+              ],
+              'status:boolean',
+              [
+                'class' => 'croacworks\essentials\components\gridview\ActionColumnCustom',
+                'template' => '{clone} {view} {update} {delete}',
+              ]
+            ],
+            'summaryOptions' => ['class' => 'summary mb-2'],
+            'pager' => [
+              'class' => 'yii\bootstrap5\LinkPager',
+            ]
+          ]); ?>
+
         </div>
-        <!--.col-md-12-->
+        <!--.card-body-->
+      </div>
+      <!--.card-->
     </div>
-    <!--.row-->
+    <!--.col-md-12-->
+  </div>
+  <!--.row-->
 </div>
