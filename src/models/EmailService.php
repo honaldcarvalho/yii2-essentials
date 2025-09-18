@@ -190,71 +190,65 @@ class EmailService extends ModelCommon
 
         $cfg = Configuration::get();
         $fromEmail = $options['from'] ?? $this->username;
-        $fromName  = $options['fromName'] ?? ($cfg->title . ' robot');
+        $fromName  = $options['fromName'] ?? (($cfg->title ?? 'System') . ' robot');
+
         $compose = $mailer->compose();
-        
+
+        // HTML com placeholders (NÃO substitua {{logo_url}} no renderTemplate)
         $html = $this->renderTemplate([
             'subject' => $subject,
             'content' => $content,
         ]);
-        
-        // === Anexar logo inline (CID) de forma simples ===
-        $cid = 'logo_' . uniqid() . '@cid';
-        $attached = false;
 
-        // 1) tenta pegar do filesystem local (ex.: /files/images/...)
+        // --- Embute a logo como inline (gera multipart/related) ---
+        $cid = null;
+
+        // Tenta arquivo local configurado (ex.: /files/images/...)
         if (!empty($cfg->file) && !empty($cfg->file->path)) {
             $webroot = Yii::getAlias('@webroot');
             $fs = rtrim($webroot, DIRECTORY_SEPARATOR) . str_replace('/', DIRECTORY_SEPARATOR, $cfg->file->path);
             if (is_file($fs)) {
-                $compose->attach($fs, [
+                // yii2-symfonymailer: 2º argumento é array de opções
+                $cid = $compose->embed($fs, [
                     'fileName'    => 'logo.png',
                     'contentType' => 'image/png',
-                    'inline'      => true,
-                    'contentId'   => $cid,
                 ]);
-                $attached = true;
             }
         }
 
-        // 2) fallback: baixa a logo padrão e embute como conteúdo
-        if (!$attached) {
+        // Fallback: baixa logo padrão e embute conteúdo
+        if ($cid === null) {
             $bytes = @file_get_contents('https://croacworks.com.br/images/croacworks-logo-hq.png');
             if ($bytes !== false) {
-                $compose->attachContent($bytes, [
+                $cid = $compose->embedContent($bytes, [
                     'fileName'    => 'logo.png',
                     'contentType' => 'image/png',
-                    'inline'      => true,
-                    'contentId'   => $cid,
                 ]);
-                $attached = true;
             }
         }
 
-        // 3) troca o placeholder
-        if ($attached) {
-            $html = str_replace('{{logo_url}}', 'cid:' . $cid, $html);
-        } else{
-            $html = str_replace('{{logo_url}}', 'https://croacworks.com.br/images/croacworks-logo-hq.png', $html);
+        // Substitui placeholder por CID (suporta {{logo_url}} e `logo_url`)
+        if ($cid) {
+            $html = str_replace(['{{logo_url}}', '`logo_url`'], $cid, $html); // $cid já vem como "cid:xxxxx"
         }
 
-        $compose
-            ->setHtmlBody($html)
+        // Monta e envia
+        $compose->setHtmlBody($html)
             ->setTo($to)
             ->setSubject($subject);
 
         if (!empty($fromEmail)) {
             $compose->setFrom([$fromEmail => $fromName]);
         }
-
         if (!empty($options['cc'])) {
             $compose->setCc($options['cc']);
         }
 
         $result = $compose->send();
 
+        // Log/flash de erro, mantendo seu padrão
         foreach (Yii::getLogger()->messages as $msg) {
-            if (isset($msg[2]) && $msg[2] === 'yii\symfonymailer\Mailer::sendMessage') {
+            if (($msg[2] ?? '') === 'yii\symfonymailer\Mailer::sendMessage') {
                 $message_str .= $msg[2] . '|' . (is_string($msg[0]) ? $msg[0] : json_encode($msg[0])) . '/';
                 Yii::$app->session->setFlash('error', 'Occoured some error: ' . (is_string($msg[0]) ? $msg[0] : json_encode($msg[0])));
             }
@@ -262,6 +256,18 @@ class EmailService extends ModelCommon
 
         return ['result' => $result, 'message' => $message_str];
     }
+    /**
+     * Envia e-mail usando o template salvo no banco (ou o default da coluna).
+     * Wrapper estático para casos simples.
+     *
+     * @param string|array $to email ou [email => nome]
+     * @param string $subject
+     * @param string $content HTML a injetar em {{content}}
+     * @param string $from email do remetente (opcional, padrão é o username do serviço)
+     * @param string $from_name nome do remetente (opcional, padrão é "System robot")
+     * @param string|array $cc email(s) em cópia (opcional)
+     * @return array ['result'=>bool, 'message'=>string]
+     */
 
     public static function sendEmail(
         $subject,

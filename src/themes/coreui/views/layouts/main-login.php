@@ -8,6 +8,7 @@ use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
+use croacworks\essentials\widgets\Alert;
 use yii\helpers\Html;
 use yii\web\View;
 
@@ -33,7 +34,7 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
   </head>
   <body>
     <?php $this->beginBody() ?>
-
+    <?= Alert::widget(); ?>
     <?= $content; ?>
 
     <?php $this->endBody() ?>
