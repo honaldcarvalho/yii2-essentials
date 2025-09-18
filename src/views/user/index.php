@@ -26,11 +26,11 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="col-md-12">
                             <?= croacworks\essentials\widgets\DefaultButtons::widget([
                                 'show' => ['create'],
-                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'Page')]
+                                'buttons_name' => ['create' => Yii::t('app', 'Create') . ' ' . Yii::t('app', 'User')]
                              ])?>
                         </div>
                     </div>
-                    
+
                     <?php Pjax::begin(); ?>
                     <?php echo $this->render('/_parts/filter', ['view' =>'/user','searchModel' => $searchModel]); ?>
 
