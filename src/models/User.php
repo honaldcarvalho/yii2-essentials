@@ -102,6 +102,7 @@ class User extends Account
             'file_id' => Yii::t('app', 'Profile Image'),
             'group_id' => Yii::t('app', 'Group'),
             'username' => Yii::t('app', 'Username'),
+            'fullname' => Yii::t('app', 'Full Name'),
             'email' => Yii::t('app', 'Email'),
             'password' => Yii::t('app', 'Password'),
             'password_confirm' => Yii::t('app', 'Confirm Password'),
