@@ -199,17 +199,20 @@ $this::registerJs($script, $this::POS_END);
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <p>
-                        <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                            'controller' => Yii::$app->controller->id,
-                            'model' => $model,
-                            'verGroup' => false
-                        ]) ?>
-                    </p>
+    <div class="row">
+        <div class="col-md-12">
+            
+            <h1><?= Html::encode($this->title) ?></h1>
+
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'verGroup' => false])?>
+                        </div>
+                    </div>
+                    
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
@@ -243,97 +246,98 @@ $this::registerJs($script, $this::POS_END);
                             'status:boolean',
                         ],
                     ]) ?>
+    
+                    <?= AppendModel::widget([
+                        'title' => Yii::t('app', 'Menus'),
+                        'attactModel' => 'SysMenu',
+                        'controller' => 'menu',
+                        'uniqueId' => 'menu',
+                        'attactClass' => 'croacworks\\essentials\\models\\SysMenu',
+                        'dataProvider' => new \yii\data\ActiveDataProvider([
+                            'query' => $model->getChildren(),
+                        ]),
+                        'showFields' => [
+                            [
+                                'attribute' => 'label',
+                                'label' => 'Menu',
+                                'format' => 'raw',
+                                'value' => function ($model) {
+                                    /** @var \croacworks\essentials\models\SysMenu $model */
+                                    $count = $model->getChildren()->count();
+                                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
+                                    return \yii\helpers\Html::a(
+                                        \yii\helpers\Html::encode($model->label) . $badge,
+                                        ['view', 'id' => $model->id]
+                                    );
+                                }
+                            ],
+                            'icon',
+                            'order',
+                            'url:url',
+                            'status:boolean',
+                        ],
+                        'fields' => [
+                            // Sempre vincula ao pai atual
+                            ['name' => 'parent_id',   'type' => 'hidden', 'value' => $model->id],
+
+                            ['name' => 'label',       'type' => 'text'],
+
+                            // Controller (FQCN) - Select2 com a lista vinda do PHP
+                            [
+                                'name'  => 'controller',
+                                'type'  => 'select2',
+                                'value' => $controllers, // array(FQCN => FQCN)
+                            ],
+
+                            // Action - Select2 (opções serão carregadas via AJAX quando o controller mudar)
+                            [
+                                'name'  => 'action',
+                                'type'  => 'select2',
+                                'value' => [],
+                            ],
+
+                            // Ícone FontAwesome - Select2 (carregado via JS do list.json)
+                            [
+                                'name'  => 'icon',
+                                'type'  => 'select2',
+                                'value' => [],
+                            ],
+
+                            // Demais campos iguais ao seu form
+                            [
+                                'name'  => 'icon_style',
+                                'type'  => 'text',
+                                'value' => 'fas',
+                            ],
+                            ['name' => 'visible', 'type' => 'text'],
+                            [
+                                'name'  => 'url',
+                                'type'  => 'text',
+                                'value' => '#'
+                            ],
+                            [
+                                'name'  => 'path',
+                                'type'  => 'text',
+                                'value' => 'app'
+                            ],
+                            ['name' => 'active', 'type' => 'text'],
+                            ['name' => 'order',  'type' => 'number'],
+                            ['name' => 'status', 'type' => 'checkbox'],
+                        ],
+
+                        // Hooks para inicialização/edição
+                        'newCallBack'     => "appendMenuNewDefaults();",
+                        'editCallBack'    => "appendMenuEditHydrate();",
+                        'editCallBefore'  => "", // se quiser limpar algo antes de preencher, use aqui
+                        'callBack'        => "", // após salvar
+                    ]); ?>
+
                 </div>
-                <!--.col-md-12-->
+                <!--.card-body-->
             </div>
-            <!--.row-->
+            <!--.card-->
         </div>
-        <!--.card-body-->
+        <!--.col-md-12-->
     </div>
-    <!--.card-->
-
-    <?= AppendModel::widget([
-        'title' => Yii::t('app', 'Menus'),
-        'attactModel' => 'SysMenu',
-        'controller' => 'menu',
-        'uniqueId' => 'menu',
-        'attactClass' => 'croacworks\\essentials\\models\\SysMenu',
-        'dataProvider' => new \yii\data\ActiveDataProvider([
-            'query' => $model->getChildren(),
-        ]),
-        'showFields' => [
-            [
-                'attribute' => 'label',
-                'label' => 'Menu',
-                'format' => 'raw',
-                'value' => function ($model) {
-                    /** @var \croacworks\essentials\models\SysMenu $model */
-                    $count = $model->getChildren()->count();
-                    $badge = $count ? " <span class='badge bg-secondary'>{$count}</span>" : '';
-                    return \yii\helpers\Html::a(
-                        \yii\helpers\Html::encode($model->label) . $badge,
-                        ['view', 'id' => $model->id]
-                    );
-                }
-            ],
-            'icon',
-            'order',
-            'url:url',
-            'status:boolean',
-        ],
-        'fields' => [
-            // Sempre vincula ao pai atual
-            ['name' => 'parent_id',   'type' => 'hidden', 'value' => $model->id],
-
-            ['name' => 'label',       'type' => 'text'],
-
-            // Controller (FQCN) - Select2 com a lista vinda do PHP
-            [
-                'name'  => 'controller',
-                'type'  => 'select2',
-                'value' => $controllers, // array(FQCN => FQCN)
-            ],
-
-            // Action - Select2 (opções serão carregadas via AJAX quando o controller mudar)
-            [
-                'name'  => 'action',
-                'type'  => 'select2',
-                'value' => [],
-            ],
-
-            // Ícone FontAwesome - Select2 (carregado via JS do list.json)
-            [
-                'name'  => 'icon',
-                'type'  => 'select2',
-                'value' => [],
-            ],
-
-            // Demais campos iguais ao seu form
-            [
-                'name'  => 'icon_style',
-                'type'  => 'text',
-                'value' => 'fas',
-            ],
-            ['name' => 'visible', 'type' => 'text'],
-            [
-                'name'  => 'url',
-                'type'  => 'text',
-                'value' => '#'
-            ],
-            [
-                'name'  => 'path',
-                'type'  => 'text',
-                'value' => 'app'
-            ],
-            ['name' => 'active', 'type' => 'text'],
-            ['name' => 'order',  'type' => 'number'],
-            ['name' => 'status', 'type' => 'checkbox'],
-        ],
-
-        // Hooks para inicialização/edição
-        'newCallBack'     => "appendMenuNewDefaults();",
-        'editCallBack'    => "appendMenuEditHydrate();",
-        'editCallBefore'  => "", // se quiser limpar algo antes de preencher, use aqui
-        'callBack'        => "", // após salvar
-    ]); ?>
+    <!--.row-->
 </div>
