@@ -36,36 +36,28 @@ onPjaxReady((root) => {
     }
 
     function render(data){
-        const count = data.count || 0;
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    const count = data.count || 0;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
 
-        const items = data.items || [];
+    const items = data.items || [];
         list.innerHTML = items.map(item => `
-        <a href="\${item.url || '#'}" class="dropdown-item d-flex align-items-start notif-item" data-id="\${item.id}">
+            <a href="#"
+            class="dropdown-item d-flex align-items-start notif-item js-notif-open \${item . status === 0 ? 'is-unread' : ''}"
+            data-id="\${item . id}">
             <div class="me-2">
-            <span class="avatar bg-secondary text-white">
+                <span class="avatar bg-secondary text-white">
                 <i class="cil-bell"></i>
-            </span>
+                </span>
             </div>
             <div class="flex-grow-1">
-            <div class="small text-muted">\${new Date(item.created_at.replace(' ','T')).toLocaleString()}</div>
-            <div class="fw-semibold \${item.status === 0 ? '' : 'text-muted'}">\${escapeHtml(item.title)}</div>
-            \${item.content ? `<div class="small text-muted">\${escapeHtml(item.content)}</div>` : ''}
+                <div class="small text-muted">\${new Date((item . created_at || '') . replace(' ', 'T')) . toLocaleString()}</div>
+                <div class="fw-semibold \${item . status === 0 ? '' : 'text-muted'}">\${escapeHtml(item . title || '')}</div>
+                \${item . description ? `<div class="small text-muted">\${escapeHtml(item . description)}</div>` : ''}
             </div>
-            \${item.status === 0 ? '<span class="ms-2 badge bg-primary">novo</span>' : ''}
-        </a>
-        `).join('') || '<div class="dropdown-item text-muted">Sem notificações</div>';
-
-        // click marca como lida (e segue o link, se houver)
-        const anchors = list.querySelectorAll('.notif-item');
-        anchors.forEach(a => {
-        a.addEventListener('click', async (ev) => {
-            const id = Number(a.getAttribute('data-id'));
-            try { await markRead([id]); } catch(e) {}
-            // deixa navegar normalmente se tiver URL
-        });
-        });
+            \${item . status === 0 ? `<span class="ms-2 badge bg-primary">\${yii . t('app', 'New')}</span>` : ''}
+            </a>
+        `).join('') || `<div class="dropdown-item text-muted">\${yii . t('app', 'No notifications')}</div>`;
     }
 
     async function markRead(ids, all=false){
@@ -184,12 +176,6 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     <svg class="icon icon-lg">
                         <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
                     </svg>
-                    <button id="notif-bell" class="btn btn-ghost-secondary" aria-label="Notifications">
-                    <i class="cil-bell"></i>
-                    <span id="notif-badge"
-                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                            style="display:none">0</span>
-                    </button>
                     <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
@@ -301,13 +287,13 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app','Account'); ?></div>
+                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app', 'Account'); ?></div>
                     <a class="dropdown-item" href="/profile">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                        </svg> 
-                        
-                        <?= $name_user ?> 
+                        </svg>
+
+                        <?= $name_user ?>
                         <div class="flex-grow-1">
                             <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
                         </div>
@@ -315,7 +301,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     <a class="dropdown-item" href="/configuration<?= AuthorizationController::isMaster() ? "/{$configuration->id}" : ''; ?>">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
-                        </svg> <?= Yii::t('app','Configurations'); ?> 
+                        </svg> <?= Yii::t('app', 'Configurations'); ?>
                     </a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="#">

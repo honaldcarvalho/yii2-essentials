@@ -72,14 +72,16 @@ $theme = Yii::$app->user->identity->profile->theme;
   JS, View::POS_END);
 
     $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_END);
-    $this->registerJs('window.notifConfig = ' . json_encode([
-        'csrfToken'     => Yii::$app->request->getCsrfToken(),
-        'listUrl'       => \yii\helpers\Url::to(['/notification/list']),
-        'readUrl'       => \yii\helpers\Url::to(['/notification/read']),
-        'deleteUrl'     => \yii\helpers\Url::to(['/notification/delete']),
-        'deleteAllUrl'  => \yii\helpers\Url::to(['/notification/clear']),
-        'pjaxContainer' => '#pjax-notifications', // se você usa PJAX na index
-    ], JSON_UNESCAPED_SLASHES) . ';', \yii\web\View::POS_HEAD);
+    $this->registerJs('window.notifConfig = '.json_encode([
+    'csrfToken'     => Yii::$app->request->getCsrfToken(),
+    'listUrl'       => \yii\helpers\Url::to(['/notification/list']),   // lista resumida (título+descrição)
+    'viewUrl'       => \yii\helpers\Url::to(['/notification/view']),   // detalhe completo (id)
+    'readUrl'       => \yii\helpers\Url::to(['/notification/read']),
+    'deleteUrl'     => \yii\helpers\Url::to(['/notification/delete']),
+    'deleteAllUrl'  => \yii\helpers\Url::to(['/notification/clear']),
+    'pjaxContainer' => '#pjax-notifications',
+    'markOnOpen'    => true, // marque como lida ao abrir o modal
+    ], JSON_UNESCAPED_SLASHES).';', \yii\web\View::POS_HEAD);
     ?>
 </head>
 

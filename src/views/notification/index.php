@@ -238,6 +238,17 @@ $this->registerJs($js, View::POS_END);
         ],
         [
           'attribute' => 'description',
+          'format' => 'raw',
+          'value' => function ($model) {
+            return Html::a(
+              Html::encode($model->title) . '<br><small class="text-body-secondary">' . Html::encode($model->description) . '</small>',
+              '#',
+              ['class' => 'js-notif-open', 'data-id' => $model->id]
+            );
+          }
+        ],
+        [
+          'attribute' => 'description',
           'label' => Yii::t('app', 'Title'),
           'format' => 'raw',
           'value' => function (Notification $m) {
