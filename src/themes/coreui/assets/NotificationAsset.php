@@ -6,7 +6,7 @@ use yii\web\AssetBundle;
 class NotificationAsset extends AssetBundle
 {
     // aponto para a pasta onde realmente estão os arquivos
-    public $sourcePath = '@croacworks/essentials/web/notifications';
+    public $sourcePath = '@vendor/croacworks/yii2-essentials/src/themes/coreui/web/notifications';
 
     public $js = [
         'notifications-actions.js',
