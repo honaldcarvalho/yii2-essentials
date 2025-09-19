@@ -43,21 +43,21 @@ onPjaxReady((root) => {
     const items = data.items || [];
         list.innerHTML = items.map(item => `
             <a href="#"
-            class="dropdown-item d-flex align-items-start notif-item js-notif-open \${item . status === 0 ? 'is-unread' : ''}"
-            data-id="\${item . id}">
+            class="dropdown-item d-flex align-items-start notif-item js-notif-open \${item.status === 0 ? 'is-unread' : ''}"
+            data-id="\${item.id}">
             <div class="me-2">
                 <span class="avatar bg-secondary text-white">
                 <i class="cil-bell"></i>
                 </span>
             </div>
             <div class="flex-grow-1">
-                <div class="small text-muted">\${new Date((item . created_at || '') . replace(' ', 'T')) . toLocaleString()}</div>
-                <div class="fw-semibold \${item . status === 0 ? '' : 'text-muted'}">\${escapeHtml(item . title || '')}</div>
-                \${item . description ? `<div class="small text-muted">\${escapeHtml(item . description)}</div>` : ''}
+                <div class="small text-muted">\${new Date((item.created_at||'').replace(' ','T')).toLocaleString()}</div>
+                <div class="fw-semibold \${item.status === 0 ? '' : 'text-muted'}">\${escapeHtml(item.type || '')}</div>
+                \${item.description ? `<div class="small text-muted">\${escapeHtml(item.description)}` : ''}
             </div>
-            \${item . status === 0 ? `<span class="ms-2 badge bg-primary">\${yii . t('app', 'New')}</span>` : ''}
+            \${item.status === 0 ? `<span class="ms-2 badge bg-primary">\${yii.t('app','New')}</span>` : ''}
             </a>
-        `).join('') || `<div class="dropdown-item text-muted">\${yii . t('app', 'No notifications')}</div>`;
+        `).join('') || `<div class="dropdown-item text-muted">\${yii.t('app','No notifications')}</div>`;
     }
 
     async function markRead(ids, all=false){

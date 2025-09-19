@@ -237,24 +237,18 @@ $this->registerJs($js, View::POS_END);
           }
         ],
         [
-          'attribute' => 'description',
+          'label' => Yii::t('app','Notification'),
           'format' => 'raw',
-          'value' => function ($model) {
-            return Html::a(
-              Html::encode($model->title) . '<br><small class="text-body-secondary">' . Html::encode($model->description) . '</small>',
-              '#',
-              ['class' => 'js-notif-open', 'data-id' => $model->id]
-            );
-          }
-        ],
-        [
-          'attribute' => 'description',
-          'label' => Yii::t('app', 'Title'),
-          'format' => 'raw',
-          'value' => function (Notification $m) {
-            $title = Html::encode($m->description);
-            $content = $m->content ? '<div class="small text-muted">' . Html::encode($m->content) . '</div>' : '';
-            return "<div class='fw-semibold'>{$title}</div>{$content}";
+          'value' => static function($m){
+              $type = $m->notificationMessage ? $m->notificationMessage->type : '';
+              $desc = $m->description ?: '';
+              $unreadClass = ((int)$m->status === \croacworks\essentials\models\Notification::STATUS_UNREAD) ? ' is-unread' : '';
+              return \yii\helpers\Html::a(
+                  \yii\helpers\Html::encode($type) .
+                  ($desc ? '<br><small class="text-body-secondary">'.\yii\helpers\Html::encode($desc).'</small>' : ''),
+                  '#',
+                  ['class' => 'js-notif-open'.$unreadClass, 'data-id' => $m->id]
+              );
           }
         ],
         [

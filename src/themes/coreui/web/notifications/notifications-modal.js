@@ -1,11 +1,9 @@
 (function(){
   var cfg          = window.notifConfig || {};
   var csrfToken    = cfg.csrfToken;
-  var listUrl      = cfg.listUrl;
-  var viewUrl      = cfg.viewUrl;        // <--- NOVO
+  var viewUrl      = cfg.viewUrl;        // detail endpoint (id)
   var readUrl      = cfg.readUrl;
   var deleteUrl    = cfg.deleteUrl;
-  var deleteAllUrl = cfg.deleteAllUrl;
   var markOnOpen   = (cfg.markOnOpen !== false); // default true
 
   function t(msg){ return yii && yii.t ? yii.t('app', msg) : msg; }
@@ -35,7 +33,16 @@
     badge.style.display = n > 0 ? 'inline-block' : 'none';
   }
 
-  // =============== DETALHE ===============
+  function markRowAsRead(id){
+    var row = document.querySelector('.notif-row[data-id="'+id+'"], .notif-item[data-id="'+id+'"], tr[data-key="'+id+'"]');
+    if (row) row.classList.remove('is-unread');
+  }
+  function removeRow(id){
+    var row = document.querySelector('.notif-row[data-id="'+id+'"], .notif-item[data-id="'+id+'"], tr[data-key="'+id+'"]');
+    if (row) row.remove();
+  }
+
+  // ======== OPEN DETAIL (uses TYPE as title) ========
   function openNotificationDetail(id) {
     if (!id || !viewUrl) return;
 
@@ -46,22 +53,21 @@
           return;
         }
 
-        var it   = data.item; // {id,title,description,content_html,url,icon,read,created_at,from,tags,attachments:[{name,url}]}
+        var it = data.item; // {id,type,description,content_html,url,read,created_at,from,tags,attachments}
         var html = buildDetailHtml(it);
 
-        // marca como lida automaticamente ao abrir (opcional)
         var markPromise = Promise.resolve();
         if (markOnOpen && !it.read && readUrl) {
           markPromise = postJson(readUrl, {id: it.id}).then(function(resp){
             if (resp && typeof resp.count !== 'undefined') updateHeaderBadge(resp.count);
             it.read = true;
             markRowAsRead(it.id);
-          }).catch(function(){ /* ignore */ });
+          }).catch(function(){});
         }
 
         markPromise.finally(function(){
           Swal.fire({
-            title: (it.title || t('Notification')),
+            title: (it.type || t('Notification')),
             html: html,
             width: 800,
             showCancelButton: false,
@@ -83,13 +89,11 @@
   }
 
   function buildDetailHtml(it){
-    // Segurança: assuma que content_html já vem sanitizado do servidor.
-    // Se não vier, você pode cair para texto puro.
     var content = (it.content_html && typeof it.content_html === 'string')
       ? it.content_html
       : '<pre style="white-space:pre-wrap">' + (it.content || '') + '</pre>';
 
-    var desc = (it.description ? '<div class="notif-desc">'+ it.description +'</div>' : '');
+    var desc = it.description ? '<div class="notif-desc">'+ it.description +'</div>' : '';
     var meta = [
       it.created_at ? '<div><strong>'+t('Created at')+':</strong> '+ it.created_at +'</div>' : '',
       it.from       ? '<div><strong>'+t('From')+':</strong> '+ it.from +'</div>' : '',
@@ -141,7 +145,7 @@
         postJson(readUrl, {id: it.id}).then(function(resp){
           if (resp && typeof resp.count !== 'undefined') updateHeaderBadge(resp.count);
           markRowAsRead(it.id);
-          btn.remove(); // remove o botão, já que ficou lida
+          btn.remove();
           Swal.fire(t('Done!'), t('Marked as read.'), 'success');
         }).catch(function(){ Swal.fire(t('Oops'), t('Network error.'), 'error'); });
         return;
@@ -165,7 +169,7 @@
           postJson(deleteUrl + '?id=' + encodeURIComponent(it.id), {}).then(function(resp){
             if (resp && resp.ok) {
               removeRow(it.id);
-              Swal.close(); // fecha o modal
+              Swal.close();
               Swal.fire(t('Done!'), t('Notification deleted.'), 'success');
             } else {
               Swal.fire(t('Oops'), t('Could not delete.'), 'error');
@@ -177,25 +181,7 @@
     });
   }
 
-  // Helpers: atualiza a linha na lista/header se existir
-  function markRowAsRead(id){
-    // header dropdown
-    var row = document.querySelector('.notif-row[data-id="'+id+'"]');
-    if (row) row.classList.remove('is-unread');
-
-    // grid/list index
-    var tr = document.querySelector('tr[data-key="'+id+'"]');
-    if (tr) tr.classList.remove('is-unread');
-  }
-  function removeRow(id){
-    var row = document.querySelector('.notif-row[data-id="'+id+'"]');
-    if (row) row.remove();
-    var tr = document.querySelector('tr[data-key="'+id+'"]');
-    if (tr) tr.remove();
-  }
-
-  // =============== ABRIR POR CLIQUE ===============
-  // Use .js-notif-open data-id="<ID>" tanto no header quanto na listagem.
+  // Open detail when clicking on header/list items
   document.addEventListener('click', function(ev){
     var el = ev.target.closest('.js-notif-open');
     if (!el) return;
@@ -203,13 +189,5 @@
     if (!id) return;
     ev.preventDefault();
     openNotificationDetail(id);
-  });
-
-  // (opcional) ainda pode manter o “abre tudo” se você usa o botão do sino
-  document.addEventListener('click', function(ev){
-    var btn = ev.target.closest('#notif-bell-full'); // se tiver um botão alternativo
-    if (!btn) return;
-    ev.preventDefault();
-    // aqui você poderia chamar um modal com TODAS, mas seu fluxo agora é por item.
   });
 })();
