@@ -184,6 +184,12 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     <svg class="icon icon-lg">
                         <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
                     </svg>
+                    <button id="notif-bell" class="btn btn-ghost-secondary" aria-label="Notifications">
+                    <i class="cil-bell"></i>
+                    <span id="notif-badge"
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            style="display:none">0</span>
+                    </button>
                     <span id="notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg pt-0" id="notif-menu" aria-labelledby="notif-toggle" style="min-width: 360px">
