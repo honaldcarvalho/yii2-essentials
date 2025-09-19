@@ -3,12 +3,13 @@
 /** @var yii\web\View $this */
 /** @var string $content */
 
-use croacworks\essentials\assets\NotificationAsset;
+
 use croacworks\essentials\assets\PjaxHelperAsset;
 use croacworks\essentials\controllers\CommonController;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\themes\coreui\assets\CoreuiAsset;
 use croacworks\essentials\themes\coreui\assets\FontAwesomeAsset;
+use croacworks\essentials\themes\coreui\assets\NotificationAsset;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\web\View;
