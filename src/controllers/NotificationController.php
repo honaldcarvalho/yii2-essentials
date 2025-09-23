@@ -213,7 +213,7 @@ class NotificationController extends AuthorizationController
 
         $patientId = $this->patient->id;
         $n = Notification::find()
-            ->where(['id' => (int)$id, 'recipient_type' => 'patient', 'recipient_id' => $patientId])->one();
+            ->where(['id' => (int)$id])->one();
 
         if (!$n) return ['success' => false, 'message' => Yii::t('app', 'Notification not found.')];
 
