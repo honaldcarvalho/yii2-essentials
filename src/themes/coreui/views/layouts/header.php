@@ -134,8 +134,8 @@ onPjaxReady((root) => {
 
         if (bsModal) bsModal.show();
         } catch(err) {
-        console.error(err);
-        alert('Não foi possível carregar a notificação.');
+            console.error(err);
+            toastr.error(yii.t('app','Failed to load notification.'));
         }
     });
     // troca de idioma (dropdown CoreUI)
