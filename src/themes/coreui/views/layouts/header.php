@@ -3,6 +3,8 @@
 use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\Language;
 use yii\bootstrap5\Breadcrumbs;
+use yii\bootstrap5\Html;
+use yii\helpers\Url;
 
 $user = Yii::$app->user->identity;
 $name_split = explode(' ', $user->profile->fullname ?? $user->username);
@@ -36,28 +38,36 @@ onPjaxReady((root) => {
     }
 
     function render(data){
-    const count = data.count || 0;
-    badge.textContent = count;
-    badge.style.display = count > 0 ? 'inline-block' : 'none';
+        const count = data.count || 0;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
 
-    const items = data.items || [];
+        const items = data.items || [];
         list.innerHTML = items.map(item => `
-            <a href="#"
-            class="dropdown-item d-flex align-items-start notif-item js-notif-open \${item.status === 0 ? 'is-unread' : ''}"
-            data-id="\${item.id}">
+        <a href="\${item.url || '#'}" class="dropdown-item d-flex align-items-start notif-item" data-id="\${item.id}">
             <div class="me-2">
-                <span class="avatar bg-secondary text-white">
+            <span class="avatar bg-secondary text-white">
                 <i class="cil-bell"></i>
-                </span>
+            </span>
             </div>
             <div class="flex-grow-1">
-                <div class="small text-muted">\${new Date((item.created_at||'').replace(' ','T')).toLocaleString()}</div>
-                <div class="fw-semibold \${item.status === 0 ? '' : 'text-muted'}">\${escapeHtml(item.type || '')}</div>
-                \${item.description ? `<div class="small text-muted">\${escapeHtml(item.description)}` : ''}
+            <div class="small text-muted">\${new Date(item.created_at.replace(' ','T')).toLocaleString()}</div>
+            <div class="fw-semibold \${item.status === 0 ? '' : 'text-muted'}">\${escapeHtml(item.title)}</div>
+            \${item.content ? `<div class="small text-muted">\${escapeHtml(item.content)}</div>` : ''}
             </div>
-            \${item.status === 0 ? `<span class="ms-2 badge bg-primary">\${yii.t('app','New')}</span>` : ''}
-            </a>
-        `).join('') || `<div class="dropdown-item text-muted">\${yii.t('app','No notifications')}</div>`;
+            \${item.status === 0 ? '<span class="ms-2 badge bg-primary">novo</span>' : ''}
+        </a>
+        `).join('') || '<div class="dropdown-item text-muted">Sem notificações</div>';
+
+        // click marca como lida (e segue o link, se houver)
+        const anchors = list.querySelectorAll('.notif-item');
+        anchors.forEach(a => {
+        a.addEventListener('click', async (ev) => {
+            const id = Number(a.getAttribute('data-id'));
+            try { await markRead([id]); } catch(e) {}
+            // deixa navegar normalmente se tiver URL
+        });
+        });
     }
 
     async function markRead(ids, all=false){
@@ -91,6 +101,42 @@ onPjaxReady((root) => {
     fetchList();
     setInterval(fetchList, 30000);
 
+    list.addEventListener('click', async (e) => {
+        const item = e.target.closest('.notif-item');
+        if (!item) return;
+
+        const id = item.dataset.id;
+        if (!id) return;
+
+        try {
+        const u = new URL('{$viewUrl}', window.location.origin);
+        u.searchParams.set('id', id);
+
+        const res  = await fetch(u.toString(), {
+            headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+        const data = await safeJson(res);
+        if (!data.success) return;
+
+        const n = data.notification;
+        if (titleEl) titleEl.textContent = n.title || 'Notificação';
+        if (dtEl)    dtEl.textContent    = n.created_at || '';
+        if (msgEl)   msgEl.textContent   = n.message || '';
+        if (idEl)    idEl.value          = n.id;
+
+        // Visualmente marca como lida
+        item.classList.remove('unread');
+
+        if (bsModal) bsModal.show();
+        } catch(err) {
+        console.error(err);
+        alert('Não foi possível carregar a notificação.');
+        }
+    });
     // troca de idioma (dropdown CoreUI)
     jQuery(document).on('click', '.lang-menu .dropdown-item[data-lang]', function(){
         var lang = jQuery(this).data('lang');
@@ -287,13 +333,13 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app', 'Account'); ?></div>
+                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app','Account'); ?></div>
                     <a class="dropdown-item" href="/profile">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                        </svg>
-
-                        <?= $name_user ?>
+                        </svg> 
+                        
+                        <?= $name_user ?> 
                         <div class="flex-grow-1">
                             <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
                         </div>
@@ -301,7 +347,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     <a class="dropdown-item" href="/configuration<?= AuthorizationController::isMaster() ? "/{$configuration->id}" : ''; ?>">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
-                        </svg> <?= Yii::t('app', 'Configurations'); ?>
+                        </svg> <?= Yii::t('app','Configurations'); ?> 
                     </a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="#">
@@ -327,4 +373,31 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
             ]
         ]); ?>
     </div>
+
+    <!-- Modal Detalhe da Notificação -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm"> <!-- use modal-lg se preferir -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="nm-title"><?= Yii::t('app', 'Notification') ?></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Yii::t('app', 'Close') ?>"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-1" id="nm-datetime"></p>
+                    <div id="nm-message" class="mt-2"></div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <form id="nm-delete-form" method="post" action="<?= Url::to(['app/notification-delete']) ?>">
+                        <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->getCsrfToken()) ?>
+                        <input type="hidden" name="id" id="nm-id">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash3"></i> <?= Yii::t('app', 'Delete') ?>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </header>
+
