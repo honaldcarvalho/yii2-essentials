@@ -5,6 +5,7 @@ namespace croacworks\essentials\controllers;
 use Yii;
 use croacworks\essentials\models\Notification;
 use yii\data\ActiveDataProvider;
+use yii\helpers\HtmlPurifier;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -55,6 +56,7 @@ class NotificationController extends AuthorizationController
             'dataProvider' => $dataProvider,
         ]);
     }
+
 
     public function actionBroadcast()
     {
@@ -205,17 +207,31 @@ class NotificationController extends AuthorizationController
         ]);
     }
 
-    /**
-     * Displays a single Notification model.
-     * @param int $id ID
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
     public function actionView($id)
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $patientId = $this->patient->id;
+        $n = Notification::find()
+            ->where(['id' => (int)$id, 'recipient_type' => 'patient', 'recipient_id' => $patientId])->one();
+
+        if (!$n) return ['success' => false, 'message' => Yii::t('app', 'Notification not found.')];
+
+        if ((int)$n->status === 1) {
+            $n->status = 0;
+            $n->save(false);
+        }
+
+        return [
+            'success' => true,
+            'notification' => [
+                'id' => $n->id,
+                'title' => Yii::t('app', $n->description ?: 'Notification'),
+                'message' => Yii::t('app', $n->content ?: $n->description),
+                'type' => $n->type,
+                'created_at' => Yii::$app->formatter->asDatetime($n->created_at),
+            ]
+        ];
     }
 
     public function actionDelete($id = null)

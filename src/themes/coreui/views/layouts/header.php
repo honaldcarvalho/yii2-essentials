@@ -12,6 +12,7 @@ $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) :
 
 $action = Yii::$app->controller->action->id;
 $languages = Language::find()->where(['status' => true])->all();
+$viewUrl   = Url::to(['notification/view']);
 
 $this->registerJs(<<<JS
 onPjaxReady((root) => {
