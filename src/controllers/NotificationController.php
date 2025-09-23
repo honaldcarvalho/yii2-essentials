@@ -211,7 +211,6 @@ class NotificationController extends AuthorizationController
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $patientId = $this->patient->id;
         $n = Notification::find()
             ->where(['id' => (int)$id])->one();
 
