@@ -37,7 +37,7 @@ onPjaxReady((root) => {
     const dtEl    = document.getElementById('nm-datetime');
     const idEl    = document.getElementById('nm-id');
     const delForm = document.getElementById('nm-delete-form');
-    
+
     async function fetchList() {
         try {
         const res = await fetch('/notification/list?limit=10', {credentials:'same-origin'});
@@ -180,7 +180,6 @@ onPjaxReady((root) => {
     });
 
 })();
-
 
 JS);
 
@@ -391,29 +390,29 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
         ]); ?>
     </div>
 
-    <!-- Modal Detalhe da Notificação -->
-    <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm"> <!-- use modal-lg se preferir -->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title" id="nm-title"><?= Yii::t('app', 'Notification') ?></h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Yii::t('app', 'Close') ?>"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted mb-1" id="nm-datetime"></p>
-                    <div id="nm-message" class="mt-2"></div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <form id="nm-delete-form" method="post" action="<?= Url::to(['app/notification-delete']) ?>">
-                        <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->getCsrfToken()) ?>
-                        <input type="hidden" name="id" id="nm-id">
-                        <button type="submit" class="btn btn-danger">
-                            <i class="bi bi-trash3"></i> <?= Yii::t('app', 'Delete') ?>
-                        </button>
-                    </form>
-                </div>
+</header>
+
+<!-- Modal Detalhe da Notificação -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm"> <!-- use modal-lg se preferir -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="nm-title"><?= Yii::t('app', 'Notification') ?></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Yii::t('app', 'Close') ?>"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-1" id="nm-datetime"></p>
+                <div id="nm-message" class="mt-2"></div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <form id="nm-delete-form" method="post" action="<?= Url::to(['app/notification-delete']) ?>">
+                    <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->getCsrfToken()) ?>
+                    <input type="hidden" name="id" id="nm-id">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash3"></i> <?= Yii::t('app', 'Delete') ?>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-
-</header>
+</div>
