@@ -171,7 +171,7 @@ onPjaxReady((root) => {
             const json = res.ok ? await res.json() : { ok: false };
             if (json.ok) {
             bsModal?.hide();
-            list.querySelector(`.notif-item[data-id="${id}"]`)?.remove();
+            list.querySelector(`.notif-item[data-id="\${id}"]`)?.remove();
             fetchList();
             }
         } finally {
