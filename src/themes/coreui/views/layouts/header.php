@@ -28,7 +28,16 @@ onPjaxReady((root) => {
     const badge = document.getElementById('notif-badge');
     const list  = document.getElementById('notif-list');
     const markAll = document.getElementById('notif-mark-all');
+    
+    const modalEl = document.getElementById('notificationModal');
+    const bsModal = modalEl ? new bootstrap.Modal(modalEl) : null;
 
+    const titleEl = document.getElementById('nm-title');
+    const msgEl   = document.getElementById('nm-message');
+    const dtEl    = document.getElementById('nm-datetime');
+    const idEl    = document.getElementById('nm-id');
+    const delForm = document.getElementById('nm-delete-form');
+    
     async function fetchList() {
         try {
         const res = await fetch('/notification/list?limit=10', {credentials:'same-origin'});
