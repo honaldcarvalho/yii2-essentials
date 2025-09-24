@@ -101,7 +101,14 @@ onPjaxReady((root) => {
     // polling
     fetchList();
     setInterval(fetchList, 30000);
-
+    async function safeJson(res){
+        const ct = res.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) {
+                const txt = await res.text();
+                throw new Error('Resposta não-JSON ('+res.status+'): ' + txt.slice(0,200));
+            }
+        return res.json();
+    }
     list.addEventListener('click', async (e) => {
         const item = e.target.closest('.notif-item');
         if (!item) return;
@@ -334,13 +341,13 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     </div>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pt-0">
-                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app','Account'); ?></div>
+                    <div class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2"><?= Yii::t('app', 'Account'); ?></div>
                     <a class="dropdown-item" href="/profile">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-                        </svg> 
-                        
-                        <?= $name_user ?> 
+                        </svg>
+
+                        <?= $name_user ?>
                         <div class="flex-grow-1">
                             <div class="small text-white-50"><?= htmlspecialchars($user->group->name) ?></div>
                         </div>
@@ -348,7 +355,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                     <a class="dropdown-item" href="/configuration<?= AuthorizationController::isMaster() ? "/{$configuration->id}" : ''; ?>">
                         <svg class="icon me-2">
                             <use xlink:href="<?= $assetDir; ?>/vendors/@coreui/icons/svg/free.svg#cil-settings"></use>
-                        </svg> <?= Yii::t('app','Configurations'); ?> 
+                        </svg> <?= Yii::t('app', 'Configurations'); ?>
                     </a>
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="#">
@@ -401,4 +408,3 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
     </div>
 
 </header>
-
