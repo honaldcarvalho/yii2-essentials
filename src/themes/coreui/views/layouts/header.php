@@ -110,6 +110,7 @@ onPjaxReady((root) => {
     // polling
     fetchList();
     setInterval(fetchList, 30000);
+
     async function safeJson(res){
         const ct = res.headers.get('content-type') || '';
             if (!ct.includes('application/json')) {
@@ -118,6 +119,7 @@ onPjaxReady((root) => {
             }
         return res.json();
     }
+
     list.addEventListener('click', async (e) => {
         const item = e.target.closest('.notif-item');
         if (!item) return;
@@ -154,6 +156,29 @@ onPjaxReady((root) => {
             toastr.error(yii.t('app','Failed to load notification.'));
         }
     });
+
+    // Delete simples via AJAX (usa #nm-id, delForm, list, fetchList, bsModal já existentes)
+    if (delForm) delForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('nm-id')?.value;
+        if (!id) return;
+        const btn = delForm.querySelector('.btn-delete');
+        btn.disabled = true;
+        try {
+            const res = await fetch('/notification/delete?id=' + encodeURIComponent(id), {
+            method: 'POST', credentials: 'same-origin'
+            });
+            const json = res.ok ? await res.json() : { ok: false };
+            if (json.ok) {
+            bsModal?.hide();
+            list.querySelector(`.notif-item[data-id="${id}"]`)?.remove();
+            fetchList();
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    };
+
     // troca de idioma (dropdown CoreUI)
     jQuery(document).on('click', '.lang-menu .dropdown-item[data-lang]', function(){
         var lang = jQuery(this).data('lang');
@@ -408,7 +433,7 @@ $labelFrom = static function (\croacworks\essentials\models\Language $lang): str
                 <form id="nm-delete-form" method="post" action="<?= Url::to(['app/notification-delete']) ?>">
                     <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->getCsrfToken()) ?>
                     <input type="hidden" name="id" id="nm-id">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger btn-delete">
                         <i class="bi bi-trash3"></i> <?= Yii::t('app', 'Delete') ?>
                     </button>
                 </form>
