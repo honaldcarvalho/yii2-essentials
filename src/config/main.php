@@ -143,40 +143,22 @@ $config = [
             'rules' => array_merge(
                 customControllersUrl(
                     [
-                        'dashboard',
-                        'role',
-                        'util',
-                        'site',
-                        'group',
-                        'user',
-                        'role',
-                        'role-template',
-                        'language',
-                        'source-message',
-                        'message',
-                        'menu',
-                        'params',
-                        'configuration',
-                        'meta-tag',
-                        'email-service',
-                        'license-type',
-                        'license',
-                        'log',
-                        'folder',
-                        'file',
-                        'page-section',
-                        'page',
-                        'notification',
-                        'notification-message',
-                        'rest/mail',
-                        'rest/storage',
-                        'rest/auth',
-                        'rest/address',
-                        'rest/instagram',
-                        'rest/youtube',
-                        'rest/cron'
+                        'dashboard','role','util','site',
+                        'group','user','role','role-template','language',
+                        'source-message','message','menu','params','configuration','meta-tag',
+                        'email-service','license-type','license','log','folder','file',
+                        'page-section','page','notification','notification-message',
+                        'rest/mail','rest/storage','rest/auth','rest/address',
+                        'rest/instagram','rest/youtube','rest/cron'
                     ],
                     'common'
+                ),
+                customControllersUrl(
+                    [
+                        'post-section','post','faq-section','faq',
+                        'banner','page-header','contact'
+                    ],
+                    'blog'
                 ),
                 [
                     'profile/edit' => 'common/user/edit',
