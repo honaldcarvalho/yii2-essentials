@@ -13972,3 +13972,13 @@ a.sidebar-header
   text-decoration: none;
 }
 
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    color: inherit;              /* usa a cor de texto do tema */
+    background-color: inherit;   /* herda o fundo do dropdown */
+    border: 1px solid #444;      /* borda discreta para separar */
+}
+
+/* Opcional: ajustar placeholder também */
+.select2-container--default .select2-search--dropdown .select2-search__field::placeholder {
+    color: #aaa; /* tom neutro */
+}
