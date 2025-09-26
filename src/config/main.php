@@ -153,13 +153,6 @@ $config = [
                     ],
                     'common'
                 ),
-                customControllersUrl(
-                    [
-                        'post-section','post','faq-section','faq',
-                        'banner','page-header','contact'
-                    ],
-                    'blog'
-                ),
                 [
                     'profile/edit' => 'common/user/edit',
                     'profile' => 'common/user/profile',
