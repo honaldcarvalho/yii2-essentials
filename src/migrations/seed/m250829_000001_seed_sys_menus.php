@@ -2,79 +2,150 @@
 
 use yii\db\Migration;
 
-class m250829_000001_seed_sys_menus extends Migration
+/**
+ * Inserts sys_menus rows resolving parent_id by parent's label (no fixed IDs).
+ * Idempotent: re-runs won't duplicate existing labels.
+ */
+class m250926_181500_seed_sys_menus extends Migration
 {
+    private string $table = '{{%sys_menus}}';
+
+    /** Labels we insert (for safeDown), ordered parent-first; children later */
+    private array $items = [
+        // Top level parents
+        ['label' => 'System',       'parent' => null, 'icon' => 'fas fa-cogs',        'icon_style' => 'fas', 'url' => '#',                 'order' => 9,    'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null, 'action' => null,   'active' => null,   'visible' => null],
+        ['label' => 'Development',  'parent' => null, 'icon' => 'fas fa-file-code',   'icon_style' => 'fas', 'url' => '#',                 'order' => 10,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => null, 'action' => null,   'active' => null,   'visible' => null],
+        ['label' => 'Dashboard',    'parent' => null, 'icon' => 'fas fa-tachometer-alt','icon_style'=>'fas', 'url' => '/site/dashboard',    'order' => 1,    'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\SiteController', 'action' => 'dashboard', 'active' => 'dashboard', 'visible' => 'croacworks\\essentials\\controllers\\SiteController;dashboard'],
+
+        // Children of System
+        ['label' => 'Menus',           'parent' => 'System', 'icon' => 'fas fa-bars',            'icon_style' => 'fas', 'url' => '/menu/index',             'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\MenuController',           'action' => 'index', 'active' => 'menu',          'visible' => 'index'],
+        ['label' => 'Configurations',  'parent' => 'System', 'icon' => 'fas fa-clipboard-check', 'icon_style' => 'fas', 'url' => '/configuration/index',     'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\ConfigurationController','action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Authentication',  'parent' => 'System', 'icon' => 'fas fa-key',             'icon_style' => 'fas', 'url' => '#',                        'order' => 3,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
+        ['label' => 'Dinamic Pages',   'parent' => 'System', 'icon' => 'fas fa-copy',            'icon_style' => 'fas', 'url' => '#',                        'order' => 3,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
+        ['label' => 'Storage',         'parent' => 'System', 'icon' => 'fas fa-hdd',             'icon_style' => 'fas', 'url' => '#',                        'order' => 4,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
+        ['label' => 'Notifications',   'parent' => 'System', 'icon' => 'fas fa-comment-alt',     'icon_style' => 'fas', 'url' => '#',                        'order' => 5,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
+        ['label' => 'Translations',    'parent' => 'System', 'icon' => 'fas fa-globe',           'icon_style' => 'fas', 'url' => '#',                        'order' => 6,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
+        ['label' => 'Logs',            'parent' => 'System', 'icon' => 'fas fa-keyboard',        'icon_style' => 'fas', 'url' => '#',                        'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => '',                                              'action' => '',      'active' => null,          'visible' => 'index'],
+
+        // Children of Development
+        ['label' => 'Debug',           'parent' => 'Development', 'icon' => 'fas fa-file-code',  'icon_style' => 'fas', 'url' => 'debug/default/view',       'order' => 0,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'app\\controllers\\DebugController',          'action' => 'default', 'active' => null,        'visible' => null],
+        ['label' => 'Gii',             'parent' => 'Development', 'icon' => 'fas fa-file-code',  'icon_style' => 'fas', 'url' => '/gii',                     'order' => 1,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'app\\controllers\\GiiController',            'action' => '*',       'active' => null,        'visible' => null],
+
+        // Children of Authentication
+        ['label' => 'Groups',          'parent' => 'Authentication', 'icon' => 'fas fa-users',  'icon_style' => 'fas', 'url' => '/group/index',             'order' => 0,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\GroupController',       'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Users',           'parent' => 'Authentication', 'icon' => 'fas fa-user',   'icon_style' => 'fas', 'url' => '/user/index',              'order' => 1,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\UserController',        'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Roles',           'parent' => 'Authentication', 'icon' => 'fas fa-person-booth','icon_style'=>'fas','url' => '/role/index',          'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\RoleController',        'action' => '',      'active' => 'role',       'visible' => 'croacworks\\essentials\\controllers\\RoleController;index'],
+        ['label' => 'License Types',   'parent' => 'Authentication', 'icon' => 'fas fa-certificate','icon_style'=>'fas','url' => '/license-type/index',  'order' => 5,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LicenseTypeController',  'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Licenses',        'parent' => 'Authentication', 'icon' => 'fas fa-certificate','icon_style'=>'fas','url' => '/license/index',       'order' => 6,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LicenseController',     'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Role Templates',  'parent' => 'Authentication', 'icon' => 'fas fa-puzzle-piece','icon_style'=>'fas','url' => '/role-template/index','order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\RoleTemplateController', 'action' => '', 'active' => 'role-template','visible' => 'croacworks\\essentials\\controllers\\RoleTemplateController;index'],
+
+        // Children of Dinamic Pages
+        ['label' => 'Sections',        'parent' => 'Dinamic Pages', 'icon' => '',                'icon_style' => 'fas', 'url' => '/page-section/index',     'order' => 3,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\PageSectionController', 'action' => 'index', 'active' => 'page-section', 'visible' => 'croacworks\\essentials\\controllers\\PageSectionController;index'],
+        ['label' => 'Pages',           'parent' => 'Dinamic Pages', 'icon' => 'fas fa-file',     'icon_style' => 'fas', 'url' => '/page/index',              'order' => 5,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\PageController',        'action' => 'index', 'active' => null,          'visible' => 'index'],
+
+        // Children of Storage
+        ['label' => 'Folders',         'parent' => 'Storage', 'icon' => 'fas fa-folder',         'icon_style' => 'fas', 'url' => '/folder/index',           'order' => 0,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\FolderController',     'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Files',           'parent' => 'Storage', 'icon' => 'fas fa-file',           'icon_style' => 'fas', 'url' => '/file/index',             'order' => 0,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\FileController',       'action' => 'index', 'active' => null,          'visible' => 'index'],
+
+        // Children of Notifications
+        ['label' => 'Messages',        'parent' => 'Notifications', 'icon' => 'fas fa-comment-dots','icon_style'=>'fas','url' => '/notification/index',  'order' => 0,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\NotificationController', 'action' => '', 'active' => 'index', 'visible' => 'croacworks\\essentials\\controllers\\NotificationController;index'],
+        ['label' => 'Broadcast',       'parent' => 'Notifications', 'icon' => 'fas fa-broadcast-tower','icon_style'=>'fas','url' => '/notification/broadcast','order'=> 7,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\NotificationController', 'action' => '', 'active' => 'croacworks\\essentials\\controllers\\NotificationController;broadcast', 'visible' => 'croacworks\\essentials\\controllers\\NotificationController;broadcast'],
+
+        // Children of Translations
+        ['label' => 'Languages',       'parent' => 'Translations', 'icon' => 'fas fa-language',  'icon_style' => 'fas', 'url' => '/language/index',        'order' => 0,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LanguageController',   'action' => 'index', 'active' => null,          'visible' => 'index'],
+        ['label' => 'Source Messages', 'parent' => 'Translations', 'icon' => 'fas fa-comment',   'icon_style' => 'fas', 'url' => '/source-message/index',   'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\SourceMessageController','action' => 'index', 'active' => null,          'visible' => 'index'],
+
+        // Children of Logs
+        ['label' => 'Geral',           'parent' => 'Logs', 'icon' => '',                         'icon_style' => 'fas', 'url' => '/log/index',              'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LogController',        'action' => 'index', 'active' => 'index',       'visible' => 'index'],
+        ['label' => 'Autentication',   'parent' => 'Logs', 'icon' => 'fas fa-sign-in-alt',       'icon_style' => 'fas', 'url' => '/log/auth',               'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LogController',        'action' => 'auth',  'active' => 'auth',        'visible' => 'auth'],
+
+        // Blog admin (top-level)
+        ['label' => 'Post Section',    'parent' => null, 'icon' => 'fas fa-circle',              'icon_style' => 'fas', 'url' => '/post-section/index',     'order' => 2,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\PostSectionController', 'action' => 'index', 'active' => 'post-section', 'visible' => 'blog\\admin\\controllers\\PostSectionController;index'],
+        ['label' => 'Post',            'parent' => null, 'icon' => 'fas fa-newspaper',           'icon_style' => 'fas', 'url' => '/post/index',             'order' => 3,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\PostController',        'action' => '',      'active' => 'post',        'visible' => 'blog\\admin\\controllers\\PostController;index'],
+        ['label' => 'Faq Section',     'parent' => null, 'icon' => 'fas fa-circle',              'icon_style' => 'fas', 'url' => '/faq-section/index',      'order' => 4,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\FaqSectionController', 'action' => 'index', 'active' => 'faq-section', 'visible' => 'blog\\admin\\controllers\\FaqSectionController;index'],
+        ['label' => 'Faq',             'parent' => null, 'icon' => 'far fa-question-circle',     'icon_style' => 'fas', 'url' => '/faq/index',              'order' => 5,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\FaqController',        'action' => '',      'active' => 'faq',         'visible' => 'blog\\admin\\controllers\\FaqController;index'],
+        ['label' => 'Banner',          'parent' => null, 'icon' => 'far fa-image',               'icon_style' => 'fas', 'url' => '/banner/index',           'order' => 6,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\BannerController',     'action' => '',      'active' => 'banner',      'visible' => 'blog\\admin\\controllers\\BannerController;index'],
+        ['label' => 'Page Header',     'parent' => null, 'icon' => 'fas fa-circle',              'icon_style' => 'fas', 'url' => '/page-header/index',      'order' => 7,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\PageHeaderController', 'action' => 'index', 'active' => 'page-header', 'visible' => 'blog\\admin\\controllers\\PageHeaderController;index'],
+        ['label' => 'Contact',         'parent' => null, 'icon' => 'fas fa-envelope',            'icon_style' => 'fas', 'url' => '/contact/index',          'order' => 8,   'only_admin' => 1, 'status' => 1, 'show' => 1, 'controller' => 'blog\\admin\\controllers\\ContactController',   'action' => '',      'active' => 'contact',     'visible' => 'blog\\admin\\controllers\\ContactController;index'],
+    ];
+
     public function safeUp()
     {
-        $table = '{{%sys_menus}}';
+        // resolve & insert in waves while parents exist
+        $pending = $this->items;
+        $resolved = [];
 
-        // ATENÇÃO: se já existir conteúdo nessa tabela, verifique conflitos de PK (id)
-        $this->execute('SET FOREIGN_KEY_CHECKS=0');
+        while (!empty($pending)) {
+            $progress = false;
 
-        // Insere PAI com ids fixos (batem com os parent_id usados abaixo)
-        $this->batchInsert($table,
-            ['id','parent_id','label','icon','icon_style','url','order','only_admin','status','show','controller','action','active','visible'],
-            [
-                // Top-level
-                [13,null,'System','fas fa-cogs','fas','#',13,0,1,1,null,null,null,null],
-                [14,null,'Development','fas fa-file-code','fas','#',14,1,1,1,null,null,null,null],
+            foreach ($pending as $k => $row) {
+                $parentId = null;
+                if (!empty($row['parent'])) {
+                    $parentId = $this->findIdByLabel($row['parent']);
+                    if ($parentId === null) {
+                        // parent not created yet; skip for next wave
+                        continue;
+                    }
+                }
 
-                // System children (alguns são pais de outros)
-                [16,13,'Menus','fas fa-bars','fas','/menu/index',2,0,1,1,'croacworks\\essentials\\controllers\\MenuController','index','menu','index'],
-                [17,13,'Configurations','fas fa-clipboard-check','fas','/configuration/index',2,0,1,1,'croacworks\\essentials\\controllers\\ConfigurationController','index',null,'index'],
+                $id = $this->findIdByLabel($row['label']);
+                if ($id === null) {
+                    $this->insert($this->table, [
+                        'parent_id'   => $parentId,
+                        'label'       => $row['label'],
+                        'icon'        => $row['icon'],
+                        'icon_style'  => $row['icon_style'],
+                        'url'         => $row['url'],
+                        'order'       => $row['order'],
+                        'only_admin'  => $row['only_admin'],
+                        'status'      => $row['status'],
+                        'show'        => $row['show'],
+                        'controller'  => $row['controller'],
+                        'action'      => $row['action'],
+                        'active'      => $row['active'],
+                        'visible'     => $row['visible'],
+                    ]);
+                } else {
+                    // ensure correct parent if needed (optional small sync)
+                    if ($parentId !== null) {
+                        $this->update($this->table, ['parent_id' => $parentId], ['id' => $id]);
+                    }
+                }
 
-                // Pais intermediários sob System (ids FIXOS referenciados depois)
-                [25,13,'Authentication','fas fa-key','fas','#',3,0,1,1,null,null,null,null],
-                [26,13,'Dinamic Pages','fas fa-copy','fas','#',3,0,1,1,null,null,null,null],
-                [27,13,'Storage','fas fa-hdd','fas','#',4,0,1,1,null,null,null,null],
-                [28,13,'Notifications','fas fa-comment-alt','fas','#',5,0,1,1,null,null,null,null],
-                [29,13,'Translations','fas fa-globe','fas','#',6,0,1,1,null,null,null,null],
+                $resolved[] = $row['label'];
+                unset($pending[$k]);
+                $progress = true;
+            }
 
-                // Demais filhos de System
-                [32,13,'Email Services','fas fa-envelope','fas','/email-service/index',8,0,1,1,'croacworks\\essentials\\controllers\\EmailServiceController','index',null,'index'],
-                [33,13,'Logs','fas fa-keyboard','fas','/log/index',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','index',null,'index'],
-                [49,33,'Geral','','fas','/log/index',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','index',null,'index'],
-                [50,33,'Autentication','fas fa-sign-in-alt','fas','/log/auth',1000,0,1,1,'croacworks\\essentials\\controllers\\LogController','auth',null,'auth'],
-
-                // Development children
-                [34,14,'Debug','fas fa-file-code','fas','debug/default/view',0,1,1,1,'app\\controllers\\DebugController','default',null,null],
-                [35,14,'Gii','fas fa-file-code','fas','/gii',1,1,1,1,'app\\controllers\\GiiController','*',null,null],
-
-                // Authentication children (parent_id = 25)
-                [36,25,'Groups','fas fa-users','fas','/group/index',0,0,1,1,'croacworks\\essentials\\controllers\\GroupController','index',null,'index'],
-                [37,25,'Users','fas fa-user','fas','/user/index',1,0,1,1,'croacworks\\essentials\\controllers\\UserController','index',null,'index'],
-                [38,25,'Roles','fas fa-person-booth','fas','/role/index',2,0,1,1,'croacworks\\essentials\\controllers\\RoleController','', 'role','croacworks\\essentials\\controllers\\RoleController;index'],
-                [50,25,'Role Templates','fas fa-puzzle-piece','fas','/role-template/index',2,0,1,1,'croacworks\\essentials\\controllers\\RoleTemplateController','', 'role','croacworks\\essentials\\controllers\\RoleTemplateController;index'],
-                [39,25,'License Types','fas fa-certificate','fas','/license-type/index',5,0,1,1,'croacworks\\essentials\\controllers\\LicenseTypeController','index',null,'index'],
-                [40,25,'Licenses','fas fa-certificate','fas','/license/index',6,0,1,1,'croacworks\\essentials\\controllers\\LicenseController','index',null,'index'],
-
-                // Dinamic Pages children (parent_id = 26)
-                [41,26,'Sections','fas fa-ellipsis-v','fas','/section/index',3,0,1,1,'croacworks\\essentials\\controllers\\PageSectionController','index',null,'index'],
-                [42,26,'Pages','fas fa-file','fas','/page/index',5,0,1,1,'croacworks\\essentials\\controllers\\PageController','index',null,'index'],
-
-                // Storage children (parent_id = 27)
-                [43,27,'Folders','fas fa-folder','fas','/folder/index',0,0,1,1,'croacworks\\essentials\\controllers\\FolderController','index',null,'index'],
-                [44,27,'Files','fas fa-file','fas','/file/index',0,0,1,1,'croacworks\\essentials\\controllers\\FileController','index',null,'index'],
-
-                // Notifications children (parent_id = 28)
-                [45,28,'Messages','fas fa-comment-dots','fas','/notification-message/index',0,0,1,1,'croacworks\\essentials\\controllers\\NotificationMessageController','index',null,'index'],
-                [46,28,'Notifications','fas fa-paper-plane','fas','/notification/index',7,0,1,1,'croacworks\\essentials\\controllers\\NotificationController','index',null,'index'],
-
-                // Translations children (parent_id = 29)
-                [47,29,'Languages','fas fa-language','fas','/language/index',0,0,1,1,'croacworks\\essentials\\controllers\\LanguageController','index',null,'index'],
-                [48,29,'Source Messages','fas fa-comment','fas','/source-message/index',2,0,1,1,'croacworks\\essentials\\controllers\\SourceMessageController','index',null,'index'],
-            ]
-        );
-
-        $this->execute('SET FOREIGN_KEY_CHECKS=1');
+            if (!$progress) {
+                // Cyclic or missing parent names
+                throw new \RuntimeException('Could not resolve some menu parents. Check parent labels and order.');
+            }
+        }
     }
 
     public function safeDown()
     {
-        // Remove pelos ids inseridos acima
-        $this->delete('{{%sys_menus}}', ['id' => [
-            13,14,15,16,17,25,26,27,28,29,32,33,34,35,36,37,38,39,40,
-            41,42,43,44,45,46,47,48,49
-        ]]);
+        // delete in reverse dependency order (children before parents)
+        $labels = array_column($this->items, 'label');
+        $labels = array_reverse($labels);
+
+        foreach ($labels as $label) {
+            $id = $this->findIdByLabel($label);
+            if ($id !== null) {
+                $this->delete($this->table, ['id' => $id]);
+            }
+        }
+    }
+
+    private function findIdByLabel(string $label): ?int
+    {
+        $row = (new \yii\db\Query())
+            ->select(['id'])
+            ->from($this->table)
+            ->where(['label' => $label])
+            ->one($this->db);
+
+        return $row ? (int)$row['id'] : null;
     }
 }

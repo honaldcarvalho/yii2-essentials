@@ -19,7 +19,7 @@ class MenuController extends AuthorizationController
     public function actionIndex()
     {
         $searchModel  = new SysMenu();
-        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams);
+        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams,['pageSize' => 1000]);
 
         // Se não filtraram por parent_id, mostra apenas RAÍZES (parent_id IS NULL)
         if (!isset(\Yii::$app->request->queryParams['Menu']['parent_id'])) {

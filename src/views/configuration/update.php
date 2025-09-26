@@ -6,7 +6,7 @@
 use croacworks\essentials\models\Configuration;
 use yii\bootstrap5\Html;
 
-$this->title = Yii::t('app', 'Update Param: {name}', [
+$this->title = Yii::t('app', 'Update Configuration: {name}', [
     'name' => $model->title,
 ]);
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Configuration'), 'url' => ['index']];
