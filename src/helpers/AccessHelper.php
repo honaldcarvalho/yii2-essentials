@@ -1,5 +1,5 @@
 <?php
-namespace common\helpers;
+namespace croacworks\essentials\helpers;
 
 use croacworks\essentials\models\AccessLog;
 use Yii;
