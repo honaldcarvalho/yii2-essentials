@@ -17,7 +17,7 @@ class m230911_192840_create_configurations_table extends Migration
             'description' => $this->string()->notNull(),
             'language_id' => $this->integer()->notNull()->defaultValue(1),//'en-US'
             'group_id' => $this->integer()->notNull()->defaultValue(3),//clients
-            'file_id' => $this->integer(),
+            'file_id' => $this->bigInteger(),
             'email_service_id' => $this->integer(),
             'email' => $this->string()->notNull(),
             'host' => $this->string()->notNull(),

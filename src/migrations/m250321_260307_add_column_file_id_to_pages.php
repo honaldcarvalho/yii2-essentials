@@ -9,7 +9,7 @@ class m250321_260307_add_column_file_id_to_pages extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn('{{%pages}}', 'file_id', $this->integer());
+        $this->addColumn('{{%pages}}', 'file_id', $this->bigInteger());
     }
 
     /**

@@ -14,7 +14,7 @@ class m250821_002031_create_user_profiles_table extends Migration
 
         $this->createTable('{{%user_profiles}}', [
             'id' => $this->primaryKey(),
-            'file_id' => $this->integer(),
+            'file_id' => $this->bigInteger(),
             'user_id' => $this->integer()->notNull(),
             'language_id' => $this->integer()->defaultValue(1),//en-US
             'theme' => $this->string(10)->defaultValue('light'),

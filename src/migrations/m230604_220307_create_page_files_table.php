@@ -15,7 +15,7 @@ class m230604_220307_create_page_files_table extends Migration
         $this->createTable('{{%page_files}}', [
             'id' => $this->primaryKey(),
             'page_id' => $this->integer()->notNull(),
-            'file_id' => $this->integer()->notNull()
+            'file_id' => $this->bigInteger()->notNull()
         ]);
 
         $this->addForeignKey(

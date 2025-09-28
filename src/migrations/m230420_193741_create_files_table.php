@@ -13,7 +13,7 @@ class m230420_193741_create_files_table extends Migration
     public function safeUp()
     {
         $this->createTable('{{%files}}', [
-            'id' => $this->primaryKey(),
+            'id' => $this->bigPrimaryKey(),
             'folder_id' => $this->integer(),
             'caption' => $this->integer()->defaultValue(0),
             'name' => $this->string(300)->notNull(),
