@@ -333,7 +333,7 @@ class StorageController extends ControllerRest
             $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
             $save          = $options['save']            ?? 0;
             $convert_video = $options['convert_video']   ?? true;
-            $thumb_aspect  = $options['thumb_aspect']    ?? 1;
+            $thumb_aspect  = $options['thumb_aspect']    ?? 0;
             $quality       = $options['quality']         ?? 80;
             $group_id      = (int)($options['group_id'] ?? 1);
 
