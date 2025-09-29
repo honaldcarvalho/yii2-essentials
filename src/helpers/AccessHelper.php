@@ -1,18 +1,16 @@
 <?php
 namespace croacworks\essentials\helpers;
 
-use croacworks\essentials\models\AccessLog;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\web\Controller;
+use croacworks\essentials\models\AccessLog;
 
 class AccessHelper
 {
     /**
-     * Registra o acesso (com filtros) e, se houver um modelo sendo visualizado
-     * e ele possuir o atributo `access`, incrementa +1.
-     *
-     * Use no beforeAction: AccessHelper::registerAccess($this, $actionId);
+     * Use no beforeAction:
+     *   \common\helpers\AccessHelper::registerAccess($this, $action->id);
      */
     public static function registerAccess(Controller $controller, ?string $actionId = null): void
     {
@@ -20,36 +18,30 @@ class AccessHelper
         $ip  = $request->userIP;
         $url = $request->absoluteUrl;
 
-        // --- Filtros de host/arquivo/urls indesejadas ------------------------
+        // --- Filtros ---------------------------------------------------------
         $host    = parse_url($url, PHP_URL_HOST);
         $appHost = parse_url($request->hostInfo, PHP_URL_HOST);
-        if ($host !== $appHost) {
-            return;
-        }
+        if ($host !== $appHost) return;
 
-        $extsIgnore = [
+        $ignoredExt = [
             'jpg','jpeg','png','gif','svg',
             'pdf','doc','docx','xls','xlsx','ppt','pptx',
             'zip','rar','mp4','mp3','avi','mov',
             'css','js','json','xml','txt'
         ];
-        $path     = parse_url($url, PHP_URL_PATH);
-        $ext      = strtolower((string)pathinfo($path, PATHINFO_EXTENSION));
-        if ($ext && in_array($ext, $extsIgnore, true)) {
-            return;
-        }
+        $path = parse_url($url, PHP_URL_PATH);
+        $ext  = strtolower((string)pathinfo($path, PATHINFO_EXTENSION));
+        if ($ext && in_array($ext, $ignoredExt, true)) return;
 
-        if (stripos($url, 'vercaptcha') !== false || stripos($url, 'recaptcha') !== false) {
-            return;
-        }
+        if (stripos($url, 'vercaptcha') !== false || stripos($url, 'recaptcha') !== false) return;
 
-        // --- Cache anti-duplicação por 5 min (ip + url) ----------------------
+        // --- Deduplicação por 5 minutos (IP + URL) --------------------------
         $cacheKey = "access_log_{$ip}_" . md5($url);
         if (Yii::$app->cache->exists($cacheKey)) {
-            return;
+            return; // mantém a semântica: só incrementa junto com o log
         }
 
-        // --- Grava o AccessLog ----------------------------------------------
+        // --- Persistir AccessLog --------------------------------------------
         $log = new AccessLog();
         $log->ip_address = $ip;
         $log->url = $url;
@@ -57,69 +49,114 @@ class AccessHelper
 
         Yii::$app->cache->set($cacheKey, true, 300);
 
-        // --- Incrementa `access` no modelo atual (se existir) ----------------
+        // --- Incrementar `access` no modelo exibido (se houver) -------------
         self::incrementModelAccessIfPossible($controller, $actionId);
     }
 
     /**
-     * Tenta identificar o modelo da página.
-     * Estratégias:
-     *  1) Controller::findModel($id|$slug) se existir.
-     *  2) Controller::$modelClass (padrão REST) com id/slug.
-     * Se o modelo tiver atributo `access`, faz updateAllCounters(+1).
+     * Tenta descobrir o modelo exibido e, se tiver atributo `access`, incrementa +1.
+     * Estratégias: findModel() e/ou modelClass (PK/slug/coluna compatível).
      */
     protected static function incrementModelAccessIfPossible(Controller $controller, ?string $actionId = null): void
     {
-        $request = Yii::$app->request;
-        $id      = $request->get('id');
-        $slug    = $request->get('slug');
+        $request  = Yii::$app->request;
+        $actionId = $actionId ?? ($controller->action->id ?? null);
 
-        // só tenta em actions que geralmente exibem 1 registro
-        $actionId = $actionId ?? ($controller->action ? $controller->action->id : null);
+        // Em geral só faz sentido em páginas "de detalhe"
         $likelyViewActions = ['view','public','detail','show'];
-        if ($actionId && !in_array($actionId, $likelyViewActions, true) && $id === null && $slug === null) {
+        $isLikelyView = $actionId ? in_array($actionId, $likelyViewActions, true) : false;
+
+        // Parâmetros disponíveis (GET + params resolvidos pela URL rule)
+        $params = array_merge(
+            (array)$request->get(),
+            (array)(Yii::$app->requestedParams ?? [])
+        );
+
+        // Se não é uma action de detalhe e não há nenhum param, não insista
+        if (!$isLikelyView && empty($params)) {
             return;
+        }
+
+        // Prioridade de chaves "clássicas"
+        $preferredKeys = ['id','slug','uuid','code','key'];
+        $candidatePairs = [];
+
+        // 1) Adiciona pares preferidos se existirem e forem escalares
+        foreach ($preferredKeys as $k) {
+            if (array_key_exists($k, $params) && (is_scalar($params[$k]) || (is_object($params[$k]) && method_exists($params[$k],'__toString')))) {
+                $candidatePairs[] = [$k, (string)$params[$k]];
+            }
+        }
+        // 2) Adiciona demais pares escalares
+        foreach ($params as $k => $v) {
+            if (in_array($k, $preferredKeys, true)) continue;
+            if (is_scalar($v) || (is_object($v) && method_exists($v,'__toString'))) {
+                $candidatePairs[] = [$k, (string)$v];
+            }
         }
 
         $model = null;
 
-        // 1) findModel() do controller, se existir
+        // --- (A) Tentar via findModel($value) -------------------------------
         if (method_exists($controller, 'findModel')) {
-            try {
-                if ($id !== null) {
-                    $model = $controller->findModel($id);
-                } elseif ($slug !== null) {
-                    $model = $controller->findModel($slug);
+            foreach ($candidatePairs as [$k, $v]) {
+                try {
+                    $maybe = $controller->findModel($v);
+                    if ($maybe instanceof ActiveRecord) {
+                        $model = $maybe;
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    // tenta o próximo
                 }
-            } catch (\Throwable $e) {
-                $model = null; // ignora se não achou
             }
         }
 
-        // 2) Propriedade $modelClass (REST) ou controllers que definem isso
+        // --- (B) Tentar via modelClass --------------------------------------
         if ($model === null && property_exists($controller, 'modelClass')) {
             $cls = $controller->modelClass;
             if (is_string($cls) && class_exists($cls) && is_subclass_of($cls, ActiveRecord::class)) {
                 try {
-                    if ($id !== null) {
-                        $model = $cls::findOne($id);
-                    } elseif ($slug !== null && $cls::getTableSchema()->getColumn('slug')) {
-                        $model = $cls::find()->where(['slug' => $slug])->limit(1)->one();
+                    $schema = $cls::getTableSchema();
+
+                    // (B1) PK composta ou simples com params completos
+                    $pk = $schema->primaryKey;
+                    $pkCond = [];
+                    $hasAllPk = true;
+                    foreach ($pk as $pkCol) {
+                        if (!array_key_exists($pkCol, $params)) { $hasAllPk = false; break; }
+                        $pkCond[$pkCol] = $params[$pkCol];
+                    }
+                    if ($hasAllPk && !empty($pkCond)) {
+                        $model = $cls::findOne($pkCond);
+                    }
+
+                    // (B2) slug, se existir coluna e param
+                    if ($model === null && $schema->getColumn('slug') && isset($params['slug'])) {
+                        $model = $cls::find()->where(['slug' => $params['slug']])->limit(1)->one();
+                    }
+
+                    // (B3) primeira coluna compatível com um param scalar
+                    if ($model === null) {
+                        foreach ($candidatePairs as [$k, $v]) {
+                            if ($schema->getColumn($k)) {
+                                $model = $cls::find()->where([$k => $v])->limit(1)->one();
+                                if ($model) break;
+                            }
+                        }
                     }
                 } catch (\Throwable $e) {
-                    $model = null;
+                    // silencioso
                 }
             }
         }
 
-        // Se encontrou e tem atributo `access`, incrementa
+        // --- Incrementar se tiver atributo `access` --------------------------
         if ($model instanceof ActiveRecord && $model->hasAttribute('access')) {
             try {
-                // updateAllCounters usa a PK (funciona com PK composta também)
-                $pkCondition = $model->getPrimaryKey(true);
-                $model::updateAllCounters(['access' => 1], $pkCondition);
+                $model::updateAllCounters(['access' => 1], $model->getPrimaryKey(true));
             } catch (\Throwable $e) {
-                // silencioso; não deve quebrar a página por causa do contador
+                // não quebra a página por causa do contador
             }
         }
     }
