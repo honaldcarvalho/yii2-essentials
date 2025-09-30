@@ -9,179 +9,208 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 /**
- * UploadImageInstant — Widget de upload com preview, CropperJS e compressão client-side.
+ * UploadImageInstant — Upload widget with preview, CropperJS, and client-side compression.
  *
- * FUNCIONAMENTO
- * ─────────────
- * • mode = 'defer'  (padrão)
- *   - Não envia nada imediatamente.
- *   - Após cortar, o arquivo é INJETADO no <input type="file" name="Model[file_id]"> do formulário.
- *   - Ao salvar o form, sua lógica/Behavior faz o upload no backend, grava o file_id e remove o antigo.
+ * HOW IT WORKS
+ * ─────────────────
+ * • mode = 'defer'  (default)
+ *   - Does not upload immediately.
+ *   - After cropping, the file is INJECTED into the form's <input type="file" name="Model[file_id]">.
+ *   - When the form is submitted, your Behavior/logic on the server uploads it, stores file_id, and removes the old one.
  *
  * • mode = 'instant'
- *   - Envia de imediato para /rest/storage/send (StorageController::actionSend).
- *   - Com o StorageController alterado, é possível JÁ VINCULAR ao modelo enviando:
- *       model_class, model_id, model_field e (opcional) delete_old=1
- *   - O widget também preenche um <input type="hidden" name="Model[file_id]"> com o id retornado (fallback).
+ *   - Uploads immediately to /rest/storage/send (StorageController::actionSend).
+ *   - With the updated StorageController it can LINK the file to your model by sending:
+ *       model_class, model_id, model_field and (optional) delete_old=1
+ *   - The widget also fills a <input type="hidden" name="Model[file_id]"> with the returned id as a fallback.
  *
- * AUTENTICAÇÃO (modo instant)
- * ───────────────────────────
- * O widget envia Authorization: Bearer {token} buscando, nesta ordem:
+ * AUTHENTICATION (instant mode)
+ * ─────────────────────────────
+ * The widget sends Authorization: Bearer {token}, trying in this order:
  *   1) <meta name="api-token" content="...">
- *   2) Propriedade PHP $authToken
+ *   2) PHP property $authToken
  *   3) localStorage['token']
  *   4) window.AUTH_TOKEN
  *   5) cookie "token"
- * Se nada encontrado e authQueryFallback=true, acrescenta ?access-token= na URL.
+ * If none is found and authQueryFallback=true, it appends ?access-token= to the URL.
  *
- * PARÂMETROS PRINCIPAIS
- * ──────────────────────
- * • mode: 'defer' | 'instant'              (padrão: 'defer')
- * • model: ActiveRecord (opcional, recomendado)
- * • attribute: string                      (ex.: 'file_id')
- * • imageUrl: string                       (URL do preview inicial)
- * • aspectRatio: '1' | '16/9' | 'NaN'      (NaN = livre)
- * • maxWidth (px), maxSizeMB (MB)          (compressão client-side)
- * • sendUrl                                (modo instant; padrão: /rest/storage/send)
- * • linkModelOnSend: bool                  (instant → envia model_* p/ vincular no StorageController)
- * • deleteOldOnReplace: bool               (instant → remove file antigo ao trocar no server)
- * • attactModelClass, attactModelFields    (opcional; cria pivot via attach_model junto do upload)
- * • removeFlagParam, removeFlagScoped      (integração com AttachFileBehavior p/ remoção no submit)
+ * MAIN PARAMETERS
+ * ───────────────
+ * • mode: 'defer' | 'instant'              (default: 'defer')
+ * • model: ActiveRecord (optional, recommended)
+ * • attribute: string                      (e.g., 'file_id')
+ * • imageUrl: string                       (initial preview URL)
+ * • aspectRatio: '1' | '16/9' | 'NaN'      (NaN = free)
+ * • maxWidth (px), maxSizeMB (MB)          (client-side compression)
+ * • sendUrl                                (instant mode; default: /rest/storage/send)
+ * • linkModelOnSend: bool                  (instant → send model_* to link on the server)
+ * • deleteOldOnReplace: bool               (instant → delete old file on server when replacing)
+ * • attactModelClass, attactModelFields    (optional; creates pivot via attach_model along with the upload)
+ * • removeFlagParam, removeFlagScoped      (AttachFileBehavior integration for removal on submit)
  * • authToken / meta api-token / storage 'token' / cookie 'token'
  *
- * COMO USAR
- * ─────────
- * A) CREATE/UPDATE simples (recomendado): mode='defer'
- *    - O arquivo é injetado no <input type="file"> e só segue ao salvar o form.
+ * NEW (Front-end i18n + JS callback)
+ * ──────────────────────────────────
+ * • Front-end translations via `yii.t('app', '...')` in JavaScript (no Yii::t in PHP).
+ *   If `yii.t` is not available, English text is used as a fallback.
  *
- *    // No form:
+ * • callBackOnSelect: string|null
+ *   Set the name of a global JS function to receive a payload when the user:
+ *     - selects a file (phase: "selected")
+ *     - crops a file (phase: "cropped")
+ *     - successfully saves (instant mode) (phase: "saved")
+ *
+ *   Signature:
+ *     function yourFn({ phase, widgetId, file, fileId, url }) { ... }
+ *
+ *   Phases and payload:
+ *     - "selected": { phase, widgetId, file }
+ *     - "cropped" : { phase, widgetId, file }
+ *     - "saved"   : { phase, widgetId, file, fileId, url }   // only on instant mode
+ *
+ * USAGE
+ * ─────
+ * A) Typical CREATE/UPDATE (recommended): mode='defer'
+ *    - File is injected into <input type="file"> and only goes on form submit.
+ *
+ *    // In your form:
  *    <?= $form->field($model, 'file_id')->fileInput([
  *         'id' => Html::getInputId($model, 'file_id'),
  *         'accept' => 'image/*', 'style' => 'display:none'
  *       ])->label(false); ?>
  *
  *    <?= \croacworks\essentials\widgets\UploadImageInstant::widget([
- *         'mode'        => 'defer',
- *         'hideSaveButton' => true,             // só “Cortar” e fechar
- *         'model'       => $model,
- *         'attribute'   => 'file_id',
- *         'fileInputId' => Html::getInputId($model, 'file_id'),
- *         'imageUrl'    => $model->file->url ?? '',
- *         'aspectRatio' => '16/9',
+ *         'mode'           => 'defer',
+ *         'hideSaveButton' => true,             // "Crop" injects and closes
+ *         'model'          => $model,
+ *         'attribute'      => 'file_id',
+ *         'fileInputId'    => Html::getInputId($model, 'file_id'),
+ *         'imageUrl'       => $model->file->url ?? '',
+ *         'aspectRatio'    => '16/9',
+ *         'callBackOnSelect' => 'onImageFlow',  // optional global JS callback
  *    ]) ?>
  *
- * B) UPDATE sem submit do form: mode='instant' (vincula já no upload)
+ * B) UPDATE without form submit: mode='instant' (links on upload)
  *
  *    <?= \croacworks\essentials\widgets\UploadImageInstant::widget([
- *         'mode'                => 'instant',
- *         'model'               => $model,           // precisa ter PK
- *         'attribute'           => 'file_id',
- *         'imageUrl'            => $model->file->url ?? '',
- *         'aspectRatio'         => '16/9',
- *         'linkModelOnSend'     => true,            // envia model_class/id/field
- *         'deleteOldOnReplace'  => true,            // apaga antigo ao trocar (no server)
- *         'authToken'           => Yii::$app->user->identity->access_token ?? null,
+ *         'mode'               => 'instant',
+ *         'model'              => $model,           // must have PK
+ *         'attribute'          => 'file_id',
+ *         'imageUrl'           => $model->file->url ?? '',
+ *         'aspectRatio'        => '16/9',
+ *         'linkModelOnSend'    => true,            // send model_class/id/field
+ *         'deleteOldOnReplace' => true,            // delete old file on server
+ *         'authToken'          => Yii::$app->user->identity->access_token ?? null,
+ *         'callBackOnSelect'   => 'onImageFlow',   // optional global JS callback
  *    ]) ?>
  *
- * C) Upload avulso (sem modelo) no instant
+ * C) Standalone upload (no model) in instant mode
  *
  *    <?= \croacworks\essentials\widgets\UploadImageInstant::widget([
  *         'mode'        => 'instant',
  *         'imageUrl'    => '',
  *         'aspectRatio' => '1',
+ *         'callBackOnSelect' => 'onImageFlow', // optional
  *    ]) ?>
  *
  *    <script>
- *      document.addEventListener('uploadImage:saved', (e) => {
- *        console.log('Arquivo salvo:', e.detail.file); // {id, url, ...}
- *      });
+ *      function onImageFlow(payload) {
+ *        // payload.phase: "selected" | "cropped" | "saved"
+ *        // payload.file: File in all phases; fileId & url only in "saved"
+ *        console.log('Image flow:', payload);
+ *      }
  *    </script>
  *
- * REMOÇÃO (agora 100% via Behavior no submit)
- * ───────────────────────────────────────────
- * • O botão “Remover” (nos dois modos) apenas:
- *     - limpa o preview e os inputs locais;
- *     - seta um hidden remove=1 (nome controlado por removeFlagParam/Scoped).
- * • A remoção REAL (desvincular e apagar o File antigo) acontece no submit,
- *   dentro do AttachFileBehavior (deleteOldOnReplace / flag de remoção).
+ * REMOVAL (handled 100% by Behavior on submit)
+ * ────────────────────────────────────────────
+ * • The "Remove" button (in both modes) only:
+ *     - clears preview and local inputs;
+ *     - sets a hidden remove=1 (name controlled by removeFlagParam/Scoped).
+ * • The REAL removal (unlink and delete old File) happens on submit,
+ *   inside your AttachFileBehavior (deleteOldOnReplace / removal flag).
  *
- * EVENTOS JS
- * ──────────
- * • uploadImage:pending — emitido no defer após cortar (arquivo já no input file do form).
- * • uploadImage:saved   — emitido no instant após upload ok:
+ * JS EVENTS
+ * ─────────
+ * • uploadImage:pending — emitted in 'defer' after crop (file is already in the form file input).
+ * • uploadImage:saved   — emitted in 'instant' after successful upload:
  *      document.addEventListener('uploadImage:saved', (e) => {
  *        const file = e.detail.file; // { id, url, ... }
  *      });
  *
- * STORAGECONTROLLER — contrato esperado (/rest/storage/send)
- * ─────────────────────────────────────────────────────────
- * • Obrigatório: file (multipart). Use save=1 para retornar o ID do File.
- * • Úteis: folder_id, group_id, thumb_aspect, quality.
- * • Vínculo direto ao modelo:
+ * STORAGECONTROLLER — expected contract (/rest/storage/send)
+ * ──────────────────────────────────────────────────────────
+ * • Required: file (multipart). Use save=1 to receive the File id.
+ * • Useful: folder_id, group_id, thumb_aspect, quality.
+ * • Direct link to a model:
  *     model_class, model_id, model_field, delete_old(0/1)
- * • Pivot opcional:
- *     attach_model (JSON: {class_name, fields:['model_id','file_id'], id:<PK do seu modelo>})
+ * • Optional pivot:
+ *     attach_model (JSON: {class_name, fields:['model_id','file_id'], id:<your model PK>})
  *
- * DICAS / TROUBLESHOOTING
- * ───────────────────────
- * • “Não vinculou no instant”: verifique se o registro já tem PK e se linkModelOnSend=true.
- *   Cheque no DevTools se model_class/model_id/model_field estão no FormData do POST.
- * • “401/403”: confira o token (meta, prop PHP, localStorage, cookie). O widget também pode usar ?access-token=.
- * • “Corte fora do centro/tela”: o modal é limitado a ~92vh; o widget centraliza a crop box automaticamente.
+ * TIPS / TROUBLESHOOTING
+ * ──────────────────────
+ * • "Not linked in instant": ensure the record has a PK and linkModelOnSend=true.
+ *   Check DevTools to confirm model_class/model_id/model_field are present in POST FormData.
+ * • "401/403": check the token (meta, PHP prop, localStorage, cookie). The widget can also use ?access-token=.
+ * • "Crop outside viewport": modal is limited to ~92vh; the widget auto-centers the crop box.
  */
+
 class UploadImageInstant extends \yii\bootstrap5\Widget
 {
-  /** Preview inicial */
+  /** Initial preview URL */
   public string $imageUrl = '';
   public string $accept = 'image/*';
 
-  /** '1', '16/9' ou 'NaN' (livre) */
+  /** '1', '16/9' or 'NaN' (free) */
   public string $aspectRatio = '1';
 
-  /** Compressão client-side */
+  /** Client-side compression */
   public int $maxWidth = 1200;
   public float $maxSizeMB = 3.0;
 
-  /** Modo de envio: 'defer' (padrão) ou 'instant' */
+  /** Send mode: 'defer' (default) or 'instant' */
   public string $mode = 'defer';
 
-  /** Esconder o botão "Salvar" do modal? (no 'defer' o "Cortar" já injeta e fecha) */
+  /** Hide "Save" in modal? (in 'defer' the "Crop" already injects and closes) */
   public bool $hideSaveButton = true;
 
-  /** Endpoints (usado no modo 'instant') */
+  /** Endpoint (used in 'instant' mode) */
   public $sendUrl = ['/rest/storage/send'];
 
-  /** Associação com o modelo/atributo (para descobrir name/id corretos) */
-  public $model = null;               // \yii\db\ActiveRecord|null
+  /** Model/attribute association */
+  public $model = null; // \yii\db\ActiveRecord|null
   public string $attribute = 'file_id';
 
-  /** (Opcional) se quiser forçar o id do input file do modelo (ex.: 'captive-file_id') */
+  /** Optional: force the file input id of the model */
   public ?string $fileInputId = null;
 
-  /** (Opcional) pivot via attach_model (usado no 'instant') */
+  /** Optional pivot via attach_model (instant mode) */
   public ?string $attactModelClass = null;
   public array $attactModelFields = [];
 
-  /** No upload instant, enviar também model_* para o StorageController linkar no servidor */
+  /** Instant upload → include model_* for server-side linking */
   public bool $linkModelOnSend = true;
   public bool $deleteOldOnReplace = true;
 
-  /** Parâmetros de envio */
+  /** Upload params */
   public int $folderId = 2;
   public int $groupId  = 1;
-  public $thumbAspect = 1;  // 1 ou "L/H" (ex.: "160/99")
+  /** 1 or "W/H" (e.g. "160/99") */
+  public $thumbAspect = 1;
   public int $quality  = 85;
 
-  /** Labels */
-  public string $labelSelect = 'Selecione a imagem';
-  public string $labelCrop   = 'Cortar';
-  public string $labelSave   = 'Salvar';
-  public string $labelCancel = 'Cancelar';
-  public string $labelRemove = 'Remover';
+  /** Button labels (plain English; JS may translate via yii.t at runtime) */
+  public string $labelSelect = 'Select image';
+  public string $labelCrop   = 'Crop';
+  public string $labelSave   = 'Save';
+  public string $labelCancel = 'Cancel';
+  public string $labelRemove = 'Remove';
+  public string $labelProcessing = 'Processing...';
+  public string $labelCropImage  = 'Crop image';
 
+  /** Placeholder image */
   public string $placeholder = '/dummy/code.php?x=250x250/fff/000.jpg&text=NO IMAGE';
 
-  /** Auth (modo 'instant') */
+  /** Auth (instant mode) */
   public ?string $authToken = null;
   public string $authMetaName = 'api-token';
   public string $authStorageKey = 'token';
@@ -189,9 +218,18 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
   public bool $withCredentials = true;
   public bool $authQueryFallback = true;
 
-  /** Integração com o AttachFileBehavior (remoção no submit) */
+  /** Integration with AttachFileBehavior (remove on submit) */
   public string $removeFlagParam  = 'remove';
-  public bool   $removeFlagScoped = false; // true => envia como Model[remove]
+  public bool   $removeFlagScoped = false; // true => Model[remove]
+
+  /**
+   * Global JS function name to call on select/crop/save.
+   * Signature: function yourFn({ phase, widgetId, file, fileId, url }) {}
+   * - selected: {phase:"selected", file}
+   * - cropped : {phase:"cropped", file}
+   * - saved   : {phase:"saved", fileId, url, file}
+   */
+  public ?string $callBackOnSelect = null;
 
   public function init(): void
   {
@@ -199,10 +237,10 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
     PluginAsset::register(Yii::$app->view)->add(['cropper']);
 
     if ($this->model !== null && !method_exists($this->model, 'hasAttribute')) {
-      throw new InvalidConfigException('Parâmetro $model deve ser um ActiveRecord ou null.');
+      throw new InvalidConfigException('Parameter $model must be an ActiveRecord or null.');
     }
     if (!in_array($this->mode, ['defer', 'instant'], true)) {
-      throw new InvalidConfigException('Parâmetro $mode deve ser "defer" ou "instant".');
+      throw new InvalidConfigException('Parameter $mode must be "defer" or "instant".');
     }
   }
 
@@ -221,6 +259,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
     $cancelId  = "uii_cancel_{$id}";
     $removeBtn = "uii_removebtn_{$id}";
     $overlayId = "uii_overlay_{$id}";
+    $removeHiddenId = "uii_remove_{$id}";
 
     $initialUrl = $this->imageUrl ?: $this->placeholder;
 
@@ -228,29 +267,28 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
     $csrfParam = Yii::$app->request->csrfParam;
     $csrfToken = Yii::$app->request->getCsrfToken();
 
-    //MODEL FILE
+    // MODEL
     $haveModel  = $this->model !== null && $this->model->hasAttribute($this->attribute);
     $modelClass = $haveModel ? addslashes(get_class($this->model)) : '';
     $modelId    = $haveModel ? (string)$this->model->getPrimaryKey() : '';
 
-    // URLs
+    // URL
     $sendUrl = Url::to($this->sendUrl);
 
-    // Nome/ID do input file do modelo
+    // Model input name/id
     $inputName   = $haveModel ? Html::getInputName($this->model, $this->attribute) : 'file_id';
     $inputIdPhp  = $this->fileInputId ?: ($haveModel ? Html::getInputId($this->model, $this->attribute) : 'uii_file_' . $id);
 
-    // Hidden de remoção (Behavior)
-    $removeHiddenId = "uii_remove_{$id}";
+    // Remove flag name
     $removeHiddenName = $this->removeFlagScoped && $haveModel
       ? Html::getInputName($this->model, $this->removeFlagParam)
       : $this->removeFlagParam;
 
-    // attach_model opcional
+    // attach_model
     $attactClass  = $this->attactModelClass ? addslashes($this->attactModelClass) : '';
     $attactFields = $this->attactModelFields;
 
-    // Opções JS
+    // Options
     $aspect  = $this->aspectRatio;
     $maxW    = (int)$this->maxWidth;
     $maxMB   = (float)$this->maxSizeMB;
@@ -273,6 +311,9 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
     $linkOnSend        = $this->linkModelOnSend ? 'true' : 'false';
     $deleteOld         = $this->deleteOldOnReplace ? '1' : '0';
 
+    // Callback name (function in window)
+    $cbName = $this->callBackOnSelect ? addslashes($this->callBackOnSelect) : '';
+
     // ===== CSS =====
     $css = <<<CSS
 .uploader-card .overlay{
@@ -281,16 +322,16 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
 }
 .uploader-card .preview{ max-width:600px; }
 
-/* Modal ocupa viewport sem estourar */
+/* Modal viewport sized */
 .uploader-modal .modal-dialog{ max-width:min(95vw, 1200px); margin:1rem auto; }
 .uploader-modal .modal-content{ max-height:92vh; }
 .uploader-modal .modal-body{ padding:0; overflow:hidden; }
 
-/* Área do crop com altura explícita baseada no viewport */
+/* Crop area */
 .uploader-modal .img-container{
   position:relative;
   width:100%;
-  height:calc(92vh - 140px); /* ~ header+footer */
+  height:calc(92vh - 140px);
   background: conic-gradient(#eee 0 25%, #ddd 0 50%) 0 / 20px 20px;
 }
 .uploader-modal .img-container img{
@@ -303,17 +344,24 @@ CSS;
     // ===== JS =====
     $script = <<<JS
 (function(){
-  // ---- AUTH HELPERS (modo 'instant') ----
+  // ---------- i18n helpers (front) ----------
+  function tCat(cat, key, fallback){
+    try {
+      if (window.yii && typeof window.yii.t === 'function') {
+        return window.yii.t(cat, key);
+      }
+    } catch(e){}
+    return fallback || key;
+  }
+  function t(key, fallback){ return tCat('app', key, fallback); }
+
+  // ---------- AUTH ----------
   const AUTH_TOKEN_FROM_PHP = '{$authToken}';
   const AUTH_META_NAME      = '{$authMetaName}';
   const AUTH_STORAGE_KEY    = '{$authStorageKey}';
   const AUTH_COOKIE_NAME    = '{$authCookieName}';
   const WITH_CREDS          = '{$withCreds}';
   const AUTH_QUERY_FALLBACK = {$authQueryFallback};
-  const MODEL_CLASS = '{$modelClass}';
-  const MODEL_ID    = '{$modelId}';
-  const LINK_ON_SEND= {$linkOnSend};
-  const DELETE_OLD  = {$deleteOld};
 
   function getCookie(name){
     return document.cookie
@@ -331,41 +379,46 @@ CSS;
   }
   function commonHeaders() {
     const h = { 'Accept': 'application/json' };
-    const t = getAuthToken();
-    if (t) h['Authorization'] = 'Bearer ' + t;
+    const tkn = getAuthToken();
+    if (tkn) h['Authorization'] = 'Bearer ' + tkn;
     return h;
   }
   function withAccessToken(url){
     if (!AUTH_QUERY_FALLBACK) return url;
-    const t = getAuthToken();
-    if (!t) return url;
+    const tkn = getAuthToken();
+    if (!tkn) return url;
     const sep = url.includes('?') ? '&' : '?';
-    return url + sep + 'access-token=' + encodeURIComponent(t);
+    return url + sep + 'access-token=' + encodeURIComponent(tkn);
   }
 
-  // ---- DOM ----
-  const wrap    = document.getElementById('$wrapId');
-  const photo   = document.getElementById('$photoId');
-  const imageEl = document.getElementById('$imgId');
-  const input   = document.getElementById('$inputId');
-  const overlay = document.getElementById('$overlayId');
+  // ---------- DOM ----------
+  const wrap    = document.getElementById('{$wrapId}');
+  const photo   = document.getElementById('{$photoId}');
+  const imageEl = document.getElementById('{$imgId}');
+  const input   = document.getElementById('{$inputId}');
+  const overlay = document.getElementById('{$overlayId}');
 
-  const btnCrop   = document.getElementById('$cropId');
-  const btnSave   = document.getElementById('$saveId');
+  const btnCrop   = document.getElementById('{$cropId}');
+  const btnSave   = document.getElementById('{$saveId}');
   btnSave.style.display = 'none';
-  const btnCancel = document.getElementById('$cancelId');
-  const btnRemove = document.getElementById('$removeBtn');
+  const btnCancel = document.getElementById('{$cancelId}');
+  const btnRemove = document.getElementById('{$removeBtn}');
 
-  const removeHidden = document.getElementById('$removeHiddenId');
+  const removeHidden = document.getElementById('{$removeHiddenId}');
   function setRemoveFlag(v){ if (removeHidden) removeHidden.value = String(v); }
 
-  const modalEl = document.getElementById('$modalId');
+  const modalEl = document.getElementById('{$modalId}');
   const modal = new bootstrap.Modal(modalEl, {backdrop:'static', keyboard:false});
 
   const MODE = '{$mode}';
   const HIDE_SAVE_BTN = {$hideSaveButton};
 
-  // Input file REAL do modelo
+  const MODEL_CLASS = '{$modelClass}';
+  const MODEL_ID    = '{$modelId}';
+  const LINK_ON_SEND= {$linkOnSend};
+  const DELETE_OLD  = {$deleteOld};
+
+  // Real model file input
   const MODEL_INPUT_ID = '{$inputIdPhp}';
   const MODEL_INPUT_NAME = '{$inputName}';
 
@@ -388,29 +441,26 @@ CSS;
   }
   const modelFileInput = (MODE === 'defer') ? ensureModelFileInput() : null;
 
-  // No modo 'instant', sincronizamos um hidden [Model][file_id] (para o submit futuro)
+  // In 'instant' sync a hidden [Model][file_id]
   let hidden = null;
   if (MODE === 'instant') {
-    // 1) achar/criar um HIDDEN com o mesmo name do atributo do modelo
     hidden = document.querySelector(`input[type="hidden"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
     if (!hidden) {
       const form = wrap.closest('form');
       if (form) {
         hidden = document.createElement('input');
         hidden.type  = 'hidden';
-        hidden.name  = MODEL_INPUT_NAME;  // ex.: Captive[file_id]
+        hidden.name  = MODEL_INPUT_NAME;
         hidden.value = '';
         form.appendChild(hidden);
       }
     }
-    // 2) se houver <input type="file" name="Model[file_id]">, RENOMEIE para não conflitar
+    // avoid collision with a file input of the same name
     const fileSameName = document.querySelector(`input[type="file"][name="\${CSS.escape(MODEL_INPUT_NAME)}"]`);
-    if (fileSameName) {
-      fileSameName.name = MODEL_INPUT_NAME + '__ignore'; // evita colisão no submit
-    }
+    if (fileSameName) fileSameName.name = MODEL_INPUT_NAME + '__ignore';
   }
-  
-  // ---- CONFIG ----
+
+  // ---------- CONFIG ----------
   const CSRF_PARAM = '{$csrfParam}';
   const CSRF_TOKEN = '{$csrfToken}';
 
@@ -433,11 +483,24 @@ CSS;
   let cropper = null;
   let lastSavedFileId = hidden?.value || null;
 
+  const CB_NAME = '{$cbName}';
+  function invokeCallback(payload){
+    if (!CB_NAME) return;
+    const fn = window[CB_NAME];
+    if (typeof fn === 'function') {
+      try { fn(payload); } catch(err){ console.error(err); }
+    }
+  }
+
   function showOverlay(){ overlay.style.display='flex'; }
   function hideOverlay(){ overlay.style.display='none'; }
 
   function isImage(file){
     return ["image/jpeg","image/png","image/gif","image/bmp","image/webp"].includes(file.type);
+  }
+
+  function errorAlert(msg){
+    alert(t(msg, msg));
   }
 
   function compressImage(file){
@@ -456,15 +519,15 @@ CSS;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img,0,0,w,h);
           canvas.toBlob((blob) => {
-            if (!blob) return reject('Falha ao comprimir.');
-            if (blob.size > MAX_BYTES) return reject('Imagem excede ' + MAX_MB + 'MB mesmo após compressão.');
+            if (!blob) return reject(t('Failed to compress image.', 'Failed to compress image.'));
+            if (blob.size > MAX_BYTES) return reject(t('Image exceeds the size limit even after compression.', 'Image exceeds the size limit even after compression.'));
             resolve(new File([blob], file.name, {type: file.type, lastModified: Date.now()}));
           }, file.type, 0.85);
         };
-        img.onerror = () => reject('Erro ao carregar a imagem.');
+        img.onerror = () => reject(t('Failed to load image.', 'Failed to load image.'));
         img.src = e.target.result;
       };
-      reader.onerror = () => reject('Erro ao ler o arquivo.');
+      reader.onerror = () => reject(t('Failed to read the file.', 'Failed to read the file.'));
       reader.readAsDataURL(file);
     });
   }
@@ -511,7 +574,7 @@ CSS;
     if (LINK_ON_SEND && MODEL_CLASS && MODEL_ID) {
       fd.append('model_class', MODEL_CLASS);
       fd.append('model_id', String(MODEL_ID));
-      fd.append('model_field', MODEL_INPUT_NAME.split(']').slice(-2, -1)[0] || 'file_id'); // tenta extrair o nome do atributo
+      fd.append('model_field', MODEL_INPUT_NAME.split(']').slice(-2, -1)[0] || 'file_id');
       fd.append('delete_old', String(DELETE_OLD));
     }
 
@@ -520,29 +583,38 @@ CSS;
       fd.append('attach_model', JSON.stringify(payload));
     }
 
-    let urlSend = withAccessToken(SEND_URL);
-
+    const urlSend = withAccessToken('{$sendUrl}');
     const res = await fetch(urlSend, {
       method: 'POST',
       body: fd,
       headers: commonHeaders(),
       credentials: WITH_CREDS,
     });
-    if(!res.ok) throw new Error('Falha no upload ('+res.status+').');
+    if(!res.ok) throw new Error(t('Upload failed ({0}).', 'Upload failed ({0}).').replace('{0}', String(res.status)));
     const json = await res.json();
     if (!json || json.success !== true) {
-      const msg = (json && json.data) ? JSON.stringify(json.data) : 'Resposta inválida.';
-      throw new Error('Upload não aceito: ' + msg);
+      const msg = (json && json.data) ? JSON.stringify(json.data) : t('Invalid server response.', 'Invalid server response.');
+      throw new Error(t('Upload not accepted: {0}', 'Upload not accepted: {0}').replace('{0}', msg));
     }
-    return json.data; // modelo File
+    return json.data; // File model
   }
 
-  // ---- Eventos ----
+  // -------- i18n: ensure modal texts translated when shown --------
+  modalEl.addEventListener('show.bs.modal', () => {
+    const titleEl = modalEl.querySelector('.modal-title');
+    if (titleEl) titleEl.textContent = t('Crop image', 'Crop image');
+    const btnCrop = modalEl.querySelector('#{$cropId}');
+    if (btnCrop) btnCrop.lastChild.nodeValue = ' ' + t('Crop', 'Crop');
+    const btnCancel = modalEl.querySelector('#{$cancelId}');
+    if (btnCancel) btnCancel.textContent = t('Cancel', 'Cancel');
+  });
+
+  // -------- Events --------
   input.addEventListener('change', async (e) => {
     const files = e.target.files;
     if(!files || !files.length) return;
     tmpFile = files[0];
-    if (!isImage(tmpFile)) { alert('Arquivo inválido.'); return; }
+    if (!isImage(tmpFile)) { errorAlert('Invalid file.'); return; }
 
     try{
       showOverlay();
@@ -556,10 +628,12 @@ CSS;
       }
       imageEl.src = toPreview;
       btnSave.style.display = 'block';
-      setRemoveFlag(0); // escolheu arquivo → não remover
+      setRemoveFlag(0);
+      // callback: selected
+      invokeCallback({ phase: 'selected', widgetId: '{$id}', file: tmpFile });
       modal.show();
     } catch(err){
-      alert(err);
+      errorAlert(err.message || String(err));
     } finally {
       hideOverlay();
     }
@@ -587,14 +661,14 @@ CSS;
 
   btnCancel.addEventListener('click', () => modal.hide());
 
-  // CORTAR: no 'defer' injeta arquivo e fecha; no 'instant' só atualiza preview
+  // CROP: in 'defer' injects file and closes; in 'instant' only updates preview
   btnCrop.addEventListener('click', async () => {
     if (!cropper) return;
     try{
       showOverlay();
       const canvas = cropper.getCroppedCanvas();
       const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-      if (!blob) throw new Error('Falha ao gerar recorte.');
+      if (!blob) throw new Error(t('Failed to generate crop.', 'Failed to generate crop.'));
 
       let finalFile = (tmpFile?.type === 'image/png')
         ? new File([blob], tmpFile.name, {type: blob.type})
@@ -603,31 +677,33 @@ CSS;
             return await compressImage(f);
           })();
 
-      // preview sempre
+      // preview always
       photo.src = URL.createObjectURL(finalFile);
 
       if (MODE === 'defer') {
-        assignFileToModelInput(finalFile); // entrega pro form
-        setRemoveFlag(0); // vai salvar com imagem → não remover
-        document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '$id' }}));
+        assignFileToModelInput(finalFile);
+        setRemoveFlag(0);
+        // callback: cropped (defer)
+        invokeCallback({ phase: 'cropped', widgetId: '{$id}', file: finalFile });
+        document.dispatchEvent(new CustomEvent('uploadImage:pending', { detail: { widgetId: '{$id}' }}));
       }
       btnSave.style.display = 'block';
       modal.hide();
     } catch (err){
-      alert(err.message || err);
+      errorAlert(err.message || String(err));
     } finally {
       hideOverlay();
     }
   });
 
-  // SALVAR: no 'defer' faz o mesmo que CORTAR; no 'instant' envia pro servidor
+  // SAVE: in 'defer' same as CROP; in 'instant' uploads to server
   btnSave.addEventListener('click', async () => {
     if (!cropper) return;
     try{
       showOverlay();
       const canvas = cropper.getCroppedCanvas();
       const blob = await new Promise(res => canvas.toBlob(res, tmpFile?.type || 'image/jpeg', 0.9));
-      if(!blob) throw new Error('Falha ao gerar recorte.');
+      if(!blob) throw new Error(t('Failed to generate crop.', 'Failed to generate crop.'));
 
       let finalFile = (tmpFile?.type === 'image/png')
         ? new File([blob], tmpFile.name, {type: blob.type})
@@ -640,6 +716,8 @@ CSS;
         photo.src = URL.createObjectURL(finalFile);
         assignFileToModelInput(finalFile);
         setRemoveFlag(0);
+        // callback: cropped (defer save path)
+        invokeCallback({ phase: 'cropped', widgetId: '{$id}', file: finalFile });
         modal.hide();
         return;
       }
@@ -649,40 +727,64 @@ CSS;
       lastSavedFileId = saved.id || null;
       if (saved.url) photo.src = saved.url + '?v=' + Date.now();
       if (hidden) hidden.value = String(lastSavedFileId ?? '');
-      setRemoveFlag(0); // temos imagem → não remover no submit
-      document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '$id' }}));
+      setRemoveFlag(0);
+      document.dispatchEvent(new CustomEvent('uploadImage:saved', { detail: { file: saved, widgetId: '{$id}' }}));
+      // callback: saved (instant)
+      invokeCallback({ phase: 'saved', widgetId: '{$id}', file: finalFile, fileId: saved.id || null, url: saved.url || '' });
       modal.hide();
     } catch(err){
       console.error(err);
-      alert(err.message || err);
+      errorAlert(err.message || String(err));
     } finally {
       hideOverlay();
     }
   });
 
-  // REMOVER — agora 100% via Behavior (somente marca a intenção e limpa UI)
+  // REMOVE — UI only; real removal handled by the Behavior on submit
   btnRemove.addEventListener('click', async () => {
     try{
       showOverlay();
-
-      // visual
-      photo.src = '<?= addslashes($this->placeholder) ?>';
+      photo.src = '{$this->escapeJs($this->placeholder)}';
       btnSave.style.display = 'none';
 
-      // limpa inputs locais
       if (modelFileInput) modelFileInput.value = '';
       if (hidden) hidden.value = '';
 
-      // marca para o Behavior remover no submit
       setRemoveFlag(1);
-
-      // não removemos no servidor aqui; o Behavior cuida no afterSave
     } catch(err){
       console.error(err);
     } finally {
       hideOverlay();
     }
   });
+
+  // Translate static pieces already visible on load (progress text, buttons)
+  (function translateStatic(){
+    const prog = document.querySelector('#{$overlayId} strong');
+    if (prog) prog.textContent = t('Processing...', 'Processing...');
+    const lblSelect = document.querySelector('label[for="{$inputId}"]');
+    if (lblSelect) {
+      // keep icon, translate text only (after the icon)
+      const icon = lblSelect.querySelector('i');
+      lblSelect.textContent = '';
+      if (icon) lblSelect.appendChild(icon);
+      lblSelect.appendChild(document.createTextNode(' ' + t('Select image', 'Select image')));
+    }
+    const bSave = document.getElementById('{$saveId}');
+    if (bSave) {
+      const icon = bSave.querySelector('i');
+      bSave.textContent = '';
+      if (icon) bSave.appendChild(icon);
+      bSave.appendChild(document.createTextNode(' ' + t('Save', 'Save')));
+    }
+    const bRemove = document.getElementById('{$removeBtn}');
+    if (bRemove) {
+      const icon = bRemove.querySelector('i');
+      bRemove.textContent = '';
+      if (icon) bRemove.appendChild(icon);
+      bRemove.appendChild(document.createTextNode(' ' + t('Remove', 'Remove')));
+    }
+  })();
 
 })();
 JS;
@@ -692,14 +794,15 @@ JS;
 
     $showRemove = ($this->imageUrl !== '') ? '' : 'd-none';
 
-    ob_start(); ?>
+    ob_start(); 
+  ?>
     <div id="<?= $wrapId ?>">
       <div class="card uploader-card">
         <div class="card-body position-relative">
 
           <div id="<?= $overlayId ?>" class="overlay">
             <div class="text-white d-flex align-items-center gap-2">
-              <strong><?= Yii::t('app', 'Processing...') ?></strong>
+              <strong><?= Html::encode($this->labelProcessing) ?></strong>
               <div class="spinner-border ms-2" role="status" aria-hidden="true"></div>
             </div>
           </div>
@@ -709,10 +812,10 @@ JS;
           </div>
 
           <div class="text-center pb-2">
-            <!-- input fora do label -->
+            <!-- hidden file chooser that opens via label -->
             <input id="<?= $inputId ?>" type="file" accept="<?= Html::encode($this->accept) ?>" class="d-none">
 
-            <!-- hidden de remoção para o Behavior -->
+            <!-- removal flag for Behavior -->
             <input type="hidden" id="<?= $removeHiddenId ?>" name="<?= Html::encode($removeHiddenName) ?>" value="0">
 
             <div class="btn-group" role="group" aria-label="upload actions">
@@ -737,7 +840,7 @@ JS;
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 id="<?= $modalId ?>_label" class="modal-title">Cortar imagem</h5>
+              <h5 id="<?= $modalId ?>_label" class="modal-title"><?= Html::encode($this->labelCropImage) ?></h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= Html::encode($this->labelCancel) ?>"></button>
             </div>
             <div class="modal-body">
@@ -765,5 +868,10 @@ JS;
   {
     $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     return addslashes($json ?? '[]');
+  }
+
+  private function escapeJs(string $s): string
+  {
+    return addslashes($s);
   }
 }
