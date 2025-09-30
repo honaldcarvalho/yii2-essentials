@@ -318,7 +318,7 @@ class StorageController extends ControllerRest
             $filePathThumb = '';
             $fileUrl       = '';
             $fileThumbUrl  = '';
-            $thumb_aspect  = 0;
+            $thumb_aspect  = null;
             $ext           = '';
             $type          = '';
 

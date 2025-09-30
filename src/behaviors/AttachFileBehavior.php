@@ -130,10 +130,11 @@ class AttachFileBehavior extends Behavior
             }
 
             try {
-                if($this->thumb_aspect)
+                if($this->thumb_aspect){
                     $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => $this->thumb_aspect]);
-                else
-                    $resp = StorageController::uploadFile($uploaded, ['save' => true]);
+                } else {
+                    $resp = StorageController::uploadFile($uploaded, ['save' => true]); 
+                }
 
                 if (!empty($resp['success'])) {
                     $this->alreadyUploaded = true;
