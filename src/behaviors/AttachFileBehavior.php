@@ -33,9 +33,7 @@ class AttachFileBehavior extends Behavior
     public function events(): array
     {
         return [
-            Model::EVENT_BEFORE_VALIDATE          => 'rememberOld',
-            BaseActiveRecord::EVENT_BEFORE_INSERT => 'handleUploadOrKeep',
-            BaseActiveRecord::EVENT_BEFORE_UPDATE => 'handleUploadOrKeep',
+            Model::EVENT_BEFORE_VALIDATE => 'handleUploadOrKeep',
             BaseActiveRecord::EVENT_AFTER_INSERT  => 'deleteOldIfNeeded',
             BaseActiveRecord::EVENT_AFTER_UPDATE  => 'deleteOldIfNeeded',
             BaseActiveRecord::EVENT_AFTER_DELETE  => 'deleteOnDelete',
