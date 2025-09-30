@@ -25,7 +25,7 @@ class AttachFileBehavior extends Behavior
     public bool $deleteOnOwnerDelete = false;
     public bool $debug = false;
     public bool $emptyMeansRemove = false;
-
+    public bool $thumb_aspect = false;
     private bool $alreadyUploaded = false;
     private $oldId;
     private $toDeleteId = null;
@@ -130,7 +130,10 @@ class AttachFileBehavior extends Behavior
             }
 
             try {
-                $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => 1]);
+                if($this->thumb_aspect)
+                    $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => $this->thumb_aspect]);
+                else
+                    $resp = StorageController::uploadFile($uploaded, ['save' => true]);
 
                 if (!empty($resp['success'])) {
                     $this->alreadyUploaded = true;
