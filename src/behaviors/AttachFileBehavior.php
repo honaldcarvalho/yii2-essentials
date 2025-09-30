@@ -33,7 +33,9 @@ class AttachFileBehavior extends Behavior
     public function events(): array
     {
         return [
-            Model::EVENT_BEFORE_VALIDATE => 'handleUploadOrKeep',
+            Model::EVENT_BEFORE_VALIDATE          => 'rememberOld',
+            BaseActiveRecord::EVENT_BEFORE_INSERT => 'handleUploadOrKeep',
+            BaseActiveRecord::EVENT_BEFORE_UPDATE => 'handleUploadOrKeep',
             BaseActiveRecord::EVENT_AFTER_INSERT  => 'deleteOldIfNeeded',
             BaseActiveRecord::EVENT_AFTER_UPDATE  => 'deleteOldIfNeeded',
             BaseActiveRecord::EVENT_AFTER_DELETE  => 'deleteOnDelete',
@@ -104,11 +106,16 @@ class AttachFileBehavior extends Behavior
 
     public function handleUploadOrKeep(ModelEvent $event): void
     {
+$this->log('handleUploadOrKeep CALLED', [
+    'ownerClass' => get_class($this->owner),
+    'isNew' => $this->owner->isNewRecord,
+    'alreadyUploaded' => $this->alreadyUploaded,
+    'attrValue' => $this->owner->{$this->attribute},
+]);
         if ($this->alreadyUploaded) {
             return;
         }
-        $this->alreadyUploaded = true;
-        
+
         $owner = $this->owner;
         $attr  = $this->attribute;
         $req   = Yii::$app->request;
