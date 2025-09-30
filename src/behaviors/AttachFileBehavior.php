@@ -106,12 +106,6 @@ class AttachFileBehavior extends Behavior
 
     public function handleUploadOrKeep(ModelEvent $event): void
     {
-$this->log('handleUploadOrKeep CALLED', [
-    'ownerClass' => get_class($this->owner),
-    'isNew' => $this->owner->isNewRecord,
-    'alreadyUploaded' => $this->alreadyUploaded,
-    'attrValue' => $this->owner->{$this->attribute},
-]);
         if ($this->alreadyUploaded) {
             return;
         }
@@ -170,32 +164,40 @@ $this->log('handleUploadOrKeep CALLED', [
             }
         }
 
-if ($removeFlag === 1) {
-    if ($this->oldId) {
-        $this->toDeleteId = $this->oldId;
-    }
-    $owner->{$attr} = null;
-    return;
-}
-
-if ($hasPostedKey) {
-    $raw = trim((string)$postedId);
-    if ($raw === '' || $raw === '0' || strtolower($raw) === 'null') {
-        if ($this->emptyMeansRemove) {
-            if ($this->oldId) $this->toDeleteId = $this->oldId;
+        if ($removeFlag === 1) {
+            if ($this->oldId) {
+                $this->toDeleteId = $this->oldId;
+            }
             $owner->{$attr} = null;
+            return;
         }
-        return;
-    }
-    $newId = (int)$raw;
-    if ($newId !== (int)$this->oldId) {
-        if ($this->deleteOldOnReplace && $this->oldId) {
-            $this->toDeleteId = $this->oldId;
+
+        if ($hasPostedKey) {
+            $raw = trim((string)$postedId);
+            if ($raw === '') {
+                $owner->{$attr} = $this->oldId;
+                return;
+            }
+            if ($raw === '0' || strtolower($raw) === 'null') {
+                if ($this->emptyMeansRemove) {
+                    if ($this->oldId) $this->toDeleteId = $this->oldId;
+                    $owner->{$attr} = null;
+                } else {
+                    $owner->{$attr} = $this->oldId;
+                }
+                return;
+            }
+            $newId = (int)$raw;
+            if ($newId !== (int)$this->oldId) {
+                if ($this->deleteOldOnReplace && $this->oldId) {
+                    $this->toDeleteId = $this->oldId;
+                }
+                $owner->{$attr} = $newId;
+            } else {
+                $owner->{$attr} = $this->oldId;
+            }
+            return;
         }
-        $owner->{$attr} = $newId;
-    }
-    return;
-}
 
         $owner->{$attr} = $this->oldId;
     }
