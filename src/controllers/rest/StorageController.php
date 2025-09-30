@@ -392,7 +392,9 @@ class StorageController extends ControllerRest
                 $createdPaths['file'] = $filePathRoot;
 
                 try {
-                    if ($thumb_aspect == 1) {
+                    $thumb_aspect = $options['thumb_aspect'] ?? null;
+
+                    if (!$thumb_aspect || $thumb_aspect === '1') {
                         $image_size = getimagesize($filePathRoot);
                         if (!$image_size) {
                             return self::errorResponse(

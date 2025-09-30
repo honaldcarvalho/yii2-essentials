@@ -25,7 +25,7 @@ class AttachFileBehavior extends Behavior
     public bool $deleteOnOwnerDelete = false;
     public bool $debug = false;
     public bool $emptyMeansRemove = false;
-    public bool $thumb_aspect = false;
+    public string|false $thumb_aspect = false;
     private bool $alreadyUploaded = false;
     private $oldId;
     private $toDeleteId = null;
