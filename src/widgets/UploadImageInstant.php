@@ -679,7 +679,8 @@ CSS;
 
       // preview always
       photo.src = URL.createObjectURL(finalFile);
-
+      {$this->callBackOnSelect}
+      
       if (MODE === 'defer') {
         assignFileToModelInput(finalFile);
         setRemoveFlag(0);
