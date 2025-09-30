@@ -392,32 +392,12 @@ class StorageController extends ControllerRest
 
                 try {
                     if ($thumb_aspect == 1) {
-                        $image_size = getimagesize($filePathRoot);
-                        if ($image_size) {
-                            $major = $image_size[0];
-                            $min   = $image_size[1];
-                            $mov   = ($major - $min) / 2;
-                            $point = [$mov, 0];
-
-                            if ($major < $min) {
-                                $major = $image_size[1];
-                                $min   = $image_size[0];
-                                $mov   = ($major - $min) / 2;
-                                $point = [0, $mov];
-                            }
-
-                            Image::crop($filePathRoot, $min, $min, $point)
-                                ->save($filePathThumbRoot, ['quality' => 100]);
-                            $createdPaths['thumb'] = $filePathThumbRoot;
-
-                            if ($min > 300) {
-                                Image::thumbnail($filePathThumbRoot, 300, 300)
-                                    ->save($filePathThumbRoot, ['quality' => 100]);
-                            }
-                        }
+                        // usa padrão 160x99 mantendo aspecto widescreen
+                        self::createThumbnail($filePathRoot, $filePathThumbRoot);
+                        $createdPaths['thumb'] = $filePathThumbRoot;
                     } else {
-                        [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
-                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
+                        [$thumbWidth, $thumbHeight] = explode('/', $options['thumb_aspect']);
+                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeight);
                         $createdPaths['thumb'] = $filePathThumbRoot;
                     }
                 } catch (\Throwable $e) {
