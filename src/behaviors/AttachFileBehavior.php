@@ -107,7 +107,8 @@ class AttachFileBehavior extends Behavior
         if ($this->alreadyUploaded) {
             return;
         }
-
+        $this->alreadyUploaded = true;
+        
         $owner = $this->owner;
         $attr  = $this->attribute;
         $req   = Yii::$app->request;
