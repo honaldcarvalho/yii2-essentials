@@ -153,7 +153,6 @@ use yii\helpers\Url;
  * • "401/403": check the token (meta, PHP prop, localStorage, cookie). The widget can also use ?access-token=.
  * • "Crop outside viewport": modal is limited to ~92vh; the widget auto-centers the crop box.
  */
-
 class UploadImageInstant extends \yii\bootstrap5\Widget
 {
   /** Initial preview URL */
@@ -679,8 +678,7 @@ CSS;
 
       // preview always
       photo.src = URL.createObjectURL(finalFile);
-      {$this->callBackOnSelect}
-      
+
       if (MODE === 'defer') {
         assignFileToModelInput(finalFile);
         setRemoveFlag(0);
