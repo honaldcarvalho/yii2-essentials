@@ -90,6 +90,36 @@ class PageSection extends ModelCommon
         return $this->hasOne(PageSection::class, ['id' => 'parent_id']);
     }
 
+    public function getParent()
+    {
+        return $this->hasOne(PageSection::class, ['id' => 'parent_id']);
+    }
+
+    public function getChildren()
+    {
+        return $this->hasMany(PageSection::class, ['parent_id' => 'id']);
+    }
+
+    public static function getAllDescendantIds($groupIds)
+    {
+        $all = [];
+        $queue = (array) $groupIds;
+
+        while (!empty($queue)) {
+            $current = array_shift($queue);
+            if (!in_array($current, $all)) {
+                $all[] = $current;
+                $children = static::find()
+                    ->select('id')
+                    ->where(['parent_id' => $current])
+                    ->column();
+                $queue = array_merge($queue, $children);
+            }
+        }
+
+        return $all;
+    }
+
     /**
      * Gets query for [[PageSection]].
      *
