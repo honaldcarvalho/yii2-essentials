@@ -15,16 +15,16 @@ class m230520_202200_create_page_sections_table extends Migration
         $this->createTable('{{%page_sections}}', [
             'id' => $this->primaryKey(),
             'group_id' => $this->integer(),
-            'page_section_id' => $this->integer()->defaultValue(null),
+            'parent_id' => $this->integer()->defaultValue(null),
             'name' => $this->string()->notNull(),
             'uri' => $this->string()->defaultValue('#')->notNull(),
             'status' => $this->integer()->defaultValue(1)
         ]);
 
         $this->addForeignKey(
-            'fk-page_sections-page_section_id',
+            'fk-page_sections-parent_id',
             'page_sections',
-            'page_section_id',
+            'parent_id',
             'page_sections',
             'id',
             'RESTRICT'

@@ -8,7 +8,7 @@ use Yii;
  * This is the model class for table "page_sections".
  *
  * @property int $id
- * @property int|null $page_section_id
+ * @property int|null $parent_id
  * @property int|null $group_id
  * @property string|null $name
  * @property string $slug
@@ -44,7 +44,7 @@ class PageSection extends ModelCommon
                 'message' => Yii::t('app', 'Already exists a section with this Slug/Group/Language combination.')
             ],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
-            [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
+            [['parent_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['parent_id' => 'id']],
         ];
     }
 
@@ -77,7 +77,7 @@ class PageSection extends ModelCommon
      */
     public function getPages()
     {
-        return $this->hasMany(Page::class, ['page_section_id' => 'id']);
+        return $this->hasMany(Page::class, ['parent_id' => 'id']);
     }
 
     /**
@@ -87,7 +87,7 @@ class PageSection extends ModelCommon
      */
     public function getPageSection()
     {
-        return $this->hasOne(PageSection::class, ['id' => 'page_section_id']);
+        return $this->hasOne(PageSection::class, ['id' => 'parent_id']);
     }
 
     /**
@@ -97,6 +97,6 @@ class PageSection extends ModelCommon
      */
     public function getPageSections()
     {
-        return $this->hasMany(PageSection::class, ['id' => 'page_section_id']);
+        return $this->hasMany(PageSection::class, ['id' => 'parent_id']);
     }
 }
