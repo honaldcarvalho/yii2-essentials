@@ -5,6 +5,7 @@ use croacworks\essentials\models\PageSection;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
 use croacworks\essentials\widgets\form\TinyMCE;
+use croacworks\essentials\widgets\UploadImageInstant;
 
 /** @var yii\web\View $this */
 /** @var croacworks\essentials\models\Page $model */
@@ -17,6 +18,22 @@ use croacworks\essentials\widgets\form\TinyMCE;
     
     <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Group::find()
     ->asArray()->all(), 'id', 'name'), ['class'=>'form-control'])->label(Yii::t('app','Group')) ?>
+
+    <?= $form->field($model, 'file_id')
+        ->fileInput([
+            'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+            'accept' => 'image/*',
+            'style' => 'display:none'
+        ])->label(false) ?>
+
+    <?= UploadImageInstant::widget([
+        'mode'        => 'defer',
+        'model'       => $model,
+        'attribute'   => 'file_id',
+        'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+        'imageUrl'    => $model->file->url ?? '',
+        'aspectRatio' => '1',
+    ]) ?>
 
     <?= $form->field($model, 'page_section_id')->dropDownList(
         yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'), 

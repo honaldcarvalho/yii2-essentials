@@ -130,6 +130,16 @@ $this->registerJs($js, View::POS_END);
               //'canonical',
               'host',
               'title',
+              [
+                'attribute' => 'file_id',
+                'format' => 'raw',
+                'value' => function ($data) {
+                    if (!empty($data->file_id) && $data->file !== null) {
+                        $url = Yii::getAlias('@web') . $data->file->urlThumb;
+                        return "<img class='brand-image img-circle elevation-3' width='50' src='{$url}' />";
+                    }
+                }
+              ],
               //'bussiness_name',
               'email:email',
               [

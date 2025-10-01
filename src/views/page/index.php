@@ -60,6 +60,16 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             'id',
                             'group.name:text:' . Yii::t('app', 'Group'),
                             'pageSection.name:text:' . Yii::t('app', 'Page Section'),
+                            [
+                                'attribute' => 'file_id',
+                                'format' => 'raw',
+                                'value' => function ($data) {
+                                    if (!empty($data->file_id) && $data->file !== null) {
+                                        $url = Yii::getAlias('@web') . $data->file->urlThumb;
+                                        return "<img class='brand-image img-circle elevation-3' width='50' src='{$url}' />";
+                                    }
+                                }
+                            ],
                             'slug',
                             'title',
                             'language.code:text:' . Yii::t('app', 'Language'),

@@ -10,7 +10,7 @@ Ignora totalmente controller/active do próprio grupo.
 Só fica ativo se algum filho visível estiver ativo.
 
 Se nenhum filho ativo ⇒ grupo nunca ativo/aberto.
-
+    
 Item folha (sem filhos)
 
 Usa controller do item (FQCN ou derivado do url).

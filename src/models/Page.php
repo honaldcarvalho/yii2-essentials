@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\behaviors\AttachFileBehavior;
 use croacworks\essentials\models\Language;
 use Yii;
 
@@ -59,9 +60,24 @@ class Page extends ModelCommon
                 'targetAttribute' => ['slug', 'group_id', 'language_id', 'page_section_id'],
                 'message' => Yii::t('app', 'Already exists a page with this Slug/Group/Language/Section combination.')
             ],
+            [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
         ];
     }
 
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            [
+                'class' => AttachFileBehavior::class,
+                'attribute' => 'file_id',
+                'removeFlagParam' => 'remove',
+                'deleteOldOnReplace' => true,
+                'deleteOnOwnerDelete' => false,
+                'debug' => true, // ligue por enquanto
+            ],
+        ]);
+    }
+    
     /**
      * Gets query for [[Group]].
      *
@@ -79,6 +95,7 @@ class Page extends ModelCommon
     {
         return [
             'id' => 'ID',
+            'file_id' => Yii::t('app', 'Cover'),
             'page_section_id' => Yii::t('app', 'Page Section'),
             'slug' => Yii::t('app', 'Slug'),
             'language' => Yii::t('app', 'Language'),

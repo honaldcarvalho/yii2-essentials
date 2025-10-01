@@ -35,6 +35,16 @@ $this->params['breadcrumbs'][] = $this->title;
                             'id',
                             'group.name:text:' . Yii::t('app', 'Group'),
                             'section.name:text:' . Yii::t('app', 'Page Section'),
+                            [
+                                'attribute' => 'file_id',
+                                'format' => 'raw',
+                                'value' => function ($data) {
+                                    if (!empty($data->file_id) && $data->file !== null) {
+                                        $url = Yii::getAlias('@web') . $data->file->urlThumb;
+                                        return "<img class='brand-image img-circle elevation-3' width='50' src='{$url}' />";
+                                    }
+                                }
+                            ],
                             'slug',
                             'title',
                             'description',
