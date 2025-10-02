@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'columns' => [
                             'id',
                             'pageSection.name:text:'.Yii::t('app', 'Page Section'),
-                            'slug',
+
                             'name',
                             'status:boolean',
                             ['class' => 'croacworks\essentials\components\gridview\ActionColumnCustom'],
