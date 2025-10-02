@@ -91,7 +91,7 @@ class Page extends ModelCommon
             $try = $base;
             $i = 2;
             while (self::find()
-                ->andWhere(['page_section_id' => $this->post_section_id, 'slug' => $try])
+                ->andWhere(['page_section_id' => $this->page_section_id, 'slug' => $try])
                 ->andFilterWhere(['<>', 'id', $this->id])
                 ->exists()
             ) {
