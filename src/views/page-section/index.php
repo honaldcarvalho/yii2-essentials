@@ -38,12 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'columns' => [
                             'id',
                             'pageSection.name:text:'.Yii::t('app', 'Page Section'),
-                            [
-                                'label' => Yii::t('app', 'Section Slug'),
-                                'value' => function ($model) {
-                                    return $model->parent_id ? ($model->pageSection->slug ?? null) : null;
-                                },
-                            ],
+                            'slug',
                             'name',
                             'status:boolean',
 
