@@ -3,6 +3,7 @@
 namespace croacworks\essentials\models;
 
 use Yii;
+use yii\helpers\Inflector;
 
 /**
  * This is the model class for table "page_sections".
@@ -48,6 +49,32 @@ class PageSection extends ModelCommon
         ];
     }
 
+    public function generateUniqueSlug(?string $baseName = null): string
+    {
+        $baseStr = trim((string)($baseName ?? $this->name ?? $this->id));
+        $seed    = Inflector::slug($baseStr) ?: (string)$this->id;
+
+        $try = $seed;
+        $i = 2;
+        while (static::find()
+            ->andWhere(['parent_id' => $this->parent_id, 'slug' => $try])
+            ->andFilterWhere(['<>', 'id', $this->id])
+            ->exists()
+        ) {
+            $try = $seed . '-' . $i++;
+        }
+        return $try;
+    }
+
+    public function beforeValidate()
+    {
+        if (!parent::beforeValidate()) return false;
+        if (empty($this->slug)) {
+            $this->slug = $this->generateUniqueSlug();
+        }
+        return true;
+    }
+    
     /**
      * {@inheritdoc}
      */
@@ -69,7 +96,7 @@ class PageSection extends ModelCommon
     {
         return $this->hasOne(Group::class, ['id' => 'group_id']);
     }
-    
+
     /**
      * Gets query for [[Pages]].
      *

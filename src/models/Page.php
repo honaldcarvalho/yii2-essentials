@@ -5,6 +5,7 @@ namespace croacworks\essentials\models;
 use croacworks\essentials\behaviors\AttachFileBehavior;
 use croacworks\essentials\models\Language;
 use Yii;
+use yii\helpers\Inflector;
 
 /**
  * This is the model class for table "pages".
@@ -46,9 +47,9 @@ class Page extends ModelCommon
     {
         return [
             [['page_section_id', 'status'], 'integer'],
-            [['slug', 'title'], 'required','on'=> self::SCENARIO_DEFAULT],
-            [['content', 'keywords','custom_js','custom_css','language_id'], 'string'],
-            [['created_at','updated_at'], 'safe'],
+            [['title'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            [['content', 'keywords', 'custom_js', 'custom_css', 'language_id'], 'string'],
+            [['created_at', 'updated_at'], 'safe'],
             [['slug', 'title'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 300],
             [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
@@ -77,7 +78,29 @@ class Page extends ModelCommon
             ],
         ]);
     }
-    
+
+    public function beforeValidate()
+    {
+        if (!parent::beforeValidate()) return false;
+
+        if (empty($this->slug)) {
+            // usa title, cai para description e por fim id
+            $baseStr = $this->title ?: $this->description ?: (string)$this->id;
+            $base    = Inflector::slug($baseStr) ?: (string)$this->id;
+
+            $try = $base;
+            $i = 2;
+            while (self::find()
+                ->andWhere(['post_section_id' => $this->post_section_id, 'slug' => $try])
+                ->andFilterWhere(['<>', 'id', $this->id])
+                ->exists()
+            ) {
+                $try = $base . '-' . $i++;
+            }
+            $this->slug = $try;
+        }
+        return true;
+    }
     /**
      * Gets query for [[Group]].
      *
@@ -105,24 +128,24 @@ class Page extends ModelCommon
             'custom_js' => Yii::t('app', 'Custom Javascript'),
             'custom_css' => Yii::t('app', 'Custom Style'),
             'keywords' => Yii::t('app', 'Keywords'),
-            'created_at' =>Yii::t('app', 'Created at'),
-            'updated_at' =>Yii::t('app', 'Updated at'),
+            'created_at' => Yii::t('app', 'Created at'),
+            'updated_at' => Yii::t('app', 'Updated at'),
             'status' => Yii::t('app', 'Active'),
         ];
     }
 
-        public function getPageFiles()
-        {
-            return $this->hasMany(PageFile::class, ['page_id' => 'id'])
-                ->inverseOf('page')
-                ->with('file');
-        }
+    public function getPageFiles()
+    {
+        return $this->hasMany(PageFile::class, ['page_id' => 'id'])
+            ->inverseOf('page')
+            ->with('file');
+    }
 
-        public function getFiles()
-        {
-            return $this->hasMany(File::class, ['id' => 'file_id'])
-                ->via('pageFiles');
-        }
+    public function getFiles()
+    {
+        return $this->hasMany(File::class, ['id' => 'file_id'])
+            ->via('pageFiles');
+    }
 
     /**
      * Gets query for [[PageSection]].
@@ -143,5 +166,5 @@ class Page extends ModelCommon
     public function getLanguage()
     {
         return $this->hasOne(Language::class, ['id' => 'language_id']);
-    }    
+    }
 }
