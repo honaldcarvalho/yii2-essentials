@@ -28,6 +28,7 @@ use yii\helpers\Inflector;
  * @property PageFiles[] $pageFiles
  * @property PageSection $pageSection
  * @property Group $group
+ * @property File $file
  */
 class Page extends ModelCommon
 {
@@ -167,4 +168,15 @@ class Page extends ModelCommon
     {
         return $this->hasOne(Language::class, ['id' => 'language_id']);
     }
+
+    /**
+     * Gets query for [[File]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFile()
+    {
+        return $this->hasOne(File::class, ['id' => 'file_id']);
+    }
+    
 }
