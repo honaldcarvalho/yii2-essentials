@@ -155,9 +155,8 @@ class Page extends ModelCommon
      */
     public function getPageSection()
     {
-        return $this->hasOne(PageSection::class, ['id' => 'page_section_id']);
+        return $this->hasOne(PageSection::class, ['id' => 'page_section_id'])->alias('pageSection');
     }
-
 
     /**
      * Gets query for [[PageSection]].
