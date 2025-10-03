@@ -123,6 +123,7 @@ class CommonController extends \yii\web\Controller
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $model = $this->findModel($id);
+        $model->scenario = $model::SCENARIO_STATUS;
         $model->status == 0 ? $model->status = 1 : $model->status = 0;
         $model->save();
         return ['success' => $model->save(), 'result' => $model->getErrors()];
@@ -238,21 +239,14 @@ class CommonController extends \yii\web\Controller
 
     public function actionClone($id)
     {
-        // Detecta automaticamente a classe do model com base no nome do controller
-        $controllerName = Yii::$app->controller->id;
-        $modelName = str_replace(' ', '', ucwords(str_replace('-', ' ', $controllerName)));
-
-        // Procura a classe do model
-        $modelClass = self::classExist($modelName);
-        if ($modelClass === null) {
-            throw new NotFoundHttpException("Model class for '$modelName' not found.");
-        }
-
+        
         // Busca o registro original
-        $originalModel = $modelClass::findOne($id);
+        $originalModel = $this->findModel($id);
         if (!$originalModel) {
             throw new NotFoundHttpException("Model with ID $id not found.");
         }
+        
+        $modelClass = get_class($originalModel);
 
         // Clona o model
         $clone = new $modelClass();
