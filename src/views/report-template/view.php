@@ -10,6 +10,24 @@ $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Report Templates'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
+$extra = [
+    [
+        'controller' => 'report-template',
+        'action' => 'report-preview',
+        'icon' => '<i class="fas fa-eye mr-2"></i>',
+        'text' => Yii::t('app', 'Preview Template'),
+        'link' => \yii\helpers\Url::to(['report-template/preview', 'id' => $model->id]),
+        'options' =>                    [
+            'id' => 'btn-preview',
+            'class' => 'btn btn-default btn-block-m',
+            'data-fancybox' => '',
+            'data-type' => "iframe",
+            'data-custom-class' => "fancybox-iframe",
+            'data-src'=>\yii\helpers\Url::to(['report-template/preview', 'id' => $model->id])
+        ],
+    ]
+];
+
 ?>
 
 
@@ -24,10 +42,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model])?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'extra'=>$extra])?>
                         </div>
                     </div>
-                    
+
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [
