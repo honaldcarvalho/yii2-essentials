@@ -147,6 +147,7 @@ class ReportTemplateController extends AuthorizationController
                     'margin_bottom' => 20,
                     'margin_left'   => 0,
                     'margin_right'  => 0,
+                    'setAutoTopMargin' => 'stretch',
                 ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
             ]
