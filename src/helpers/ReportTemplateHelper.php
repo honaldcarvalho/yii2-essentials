@@ -3,8 +3,7 @@
 namespace croacworks\essentials\helpers;
 
 use croacworks\essentials\models\ReportTemplate;
-use kartik\mpdf\Pdf;
-use Mpdf\Mpdf;
+use Knp\Snappy\Pdf\Pdf;
 use Yii;
 use yii\web\NotFoundHttpException;
 
