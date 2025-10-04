@@ -30,12 +30,12 @@ use yii\widgets\ActiveForm;
         'options' => ['rows' => 20],
         'cleanup' => false,
         'verify_html' => false,
-        'content_style' => $this->style,
+        'content_style' => $model->style,
     ]); ?>
     
     <?= $form->field($model, 'footer_html')->widget(TinyMCE::class, [
         'options' => ['rows' => 20],
-        'content_style' => $this->style,
+        'content_style' => $model->style,
     ]); ?>
 
     <?= $form->field($model, 'style')->widget(AceEditor::class, [
