@@ -125,11 +125,11 @@ class ReportTemplateHelper
 
         // 🔹 Generate QR Code (inline base64)
         try {
-            $qrText = $params['company.validation_url'] 
+            $qrText = $params['company.validation_url']
                 ?? (Yii::$app->request->hostInfo . Yii::$app->request->url);
 
             $qrPayload = "{$qrText}?hash={$hash}&uuid={$uuid}";
-            
+
             $options = new QROptions([
                 'outputType' => QRCode::OUTPUT_IMAGE_PNG,
                 'eccLevel'   => QRCode::ECC_L,
@@ -155,7 +155,7 @@ class ReportTemplateHelper
             // 🌐 System / User
             '{{ip}}'           => $ip,
             '{{hostname}}'     => $hostname,
-            '{{user_name}}'    => $user->name ?? 'Usuário não autenticado',
+            '{{user_name}}'    => $user->name ?? Yii::t('app', 'User is guest'),
             '{{user_email}}'   => $user->email ?? '',
             '{{user_group}}'   => method_exists($user, 'groupName') ? $user->groupName : '',
             '{{generated_by}}' => 'CroacWorks System v3.2',
@@ -174,18 +174,9 @@ class ReportTemplateHelper
             '{{pages}}'       => '{nbpg}',
             '{{page_info}}'   => 'Página {PAGENO} de {nbpg}',
             '{{file_name}}'   => Yii::$app->controller->id . '-' . date('YmdHis') . '.pdf',
-            '{{report_title}}'=> Yii::$app->view->title ?? 'Relatório',
+            '{{report_title}}' => Yii::$app->view->title ?? 'Relatório',
             '{{signature_line}}' => '_________________________',
             '{{qr_code}}'     => "<img src=\"{$qr_code}\" width=\"80\" height=\"80\" alt=\"QR Code\">",
-
-            // 🔁 Contextual placeholders (vazios por padrão)
-            '{{patient_name}}'        => '',
-            '{{professional_name}}'   => '',
-            '{{group_name}}'          => '',
-            '{{total_value}}'         => '',
-            '{{period}}'              => '',
-            '{{contract_number}}'     => '',
-            '{{invoice_number}}'      => '',
 
             // 🔒 Advanced info
             '{{uuid}}'        => $uuid,
@@ -196,7 +187,7 @@ class ReportTemplateHelper
             '{{runtime_env}}' => YII_ENV,
         ];
     }
-    
+
     public static function render(string $template, array $data = [], bool $applyDefaults = true): string
     {
         // Step 1: Process loops that use the data-each attribute
@@ -390,34 +381,28 @@ class ReportTemplateHelper
         // 🔹 Load template
         $template = ReportTemplate::findOne($params['templateId']);
         if (!$template) {
-            throw new \yii\web\NotFoundHttpException("Template not found");
+            throw new NotFoundHttpException("Template not found");
         }
 
-        // 🔹 Render HTML (template body or custom override)
+        // 🔹 Render HTML (body or custom)
         if (empty($params['custom_body'])) {
-            $html = self::render($template->body_html, $params['data'],true);
+            $html = self::render($template->body_html, $params['data']); // defaults já aplicados
         } else {
-            $html = self::render($params['custom_body'], $params['data'],true);
+            $html = self::render($params['custom_body'], $params['data']);
         }
 
-        // 🔹 Create mPDF instance with merged config
-        $mpdf = new \Mpdf\Mpdf($params['config']);
-
-        // 🔹 Prepare dynamic placeholders
-        $replacements = [
-            '{{date}}' => date('d/m/Y'),
-            '{{time}}' => date('H:i'),
-        ];
+        // 🔹 Create mPDF instance
+        $mpdf = new Mpdf($params['config']);
 
         // 🔹 Header
         if (!empty($template->header_html)) {
-            $header = strtr($template->header_html, $replacements);
+            $header = self::render($template->header_html, $params['data']); // defaults aplicados
             $mpdf->SetHTMLHeader($header);
         }
 
         // 🔹 Footer
         if (!empty($template->footer_html)) {
-            $footer = strtr($template->footer_html, $replacements);
+            $footer = self::render($template->footer_html, $params['data']); // defaults aplicados
             $mpdf->SetHTMLFooter($footer);
         }
 
