@@ -2,86 +2,92 @@
 
 namespace croacworks\essentials\helpers;
 
-use Mpdf\Mpdf;
-use yii\web\NotFoundHttpException;
-use croacworks\essentials\models\ReportTemplate;
-
+/**
+ * ReportTemplateHelper
+ * --------------------
+ * 
+ * A rendering helper for dynamic HTML report templates.
+ *
+ * This helper processes stored templates and replaces placeholders
+ * and loop sections (lists) with real data. It supports three loop syntaxes:
+ *
+ *  1. Classic Mustache-style:
+ *     {{#each items}} ... {{/each}}
+ *
+ *  2. Comment-based (safe inside tables for TinyMCE):
+ *     <!-- {{#each items}} --> ... <!-- {{/each}} -->
+ *
+ *  3. Attribute-based:
+ *     <tr data-each="items"> ... </tr>
+ *
+ * Each loop will repeat the inner block for every element in `$data['items']`.
+ *
+ * Simple placeholders like `{patient_name}` or `{total}` are also replaced.
+ *
+ * ## Example Template
+ * ```html
+ * <h2>Financial Report</h2>
+ * <table border="1" width="100%">
+ *   <thead>
+ *     <tr><th>Patient</th><th>Service</th><th>Date</th><th>Value</th></tr>
+ *   </thead>
+ *   <tbody>
+ *     <!-- {{#each items}} -->
+ *     <tr>
+ *       <td>{patient_name}</td>
+ *       <td>{service_name}</td>
+ *       <td>{date}</td>
+ *       <td style="text-align:right">{value}</td>
+ *     </tr>
+ *     <!-- {{/each}} -->
+ *   </tbody>
+ * </table>
+ * <p style="text-align:right"><b>Total:</b> {total}</p>
+ * ```
+ *
+ * ## Example Data
+ * ```php
+ * $data = [
+ *     'total' => '$1,250.00',
+ *     'items' => [
+ *         ['patient_name' => 'Alice', 'service_name' => 'Consultation', 'date' => '2025-10-01', 'value' => '$200.00'],
+ *         ['patient_name' => 'Bob',   'service_name' => 'X-Ray',        'date' => '2025-10-02', 'value' => '$400.00'],
+ *     ]
+ * ];
+ * 
+ * echo ReportTemplateHelper::render($templateHtml, $data);
+ * ```
+ */
 class ReportTemplateHelper
 {
     /**
-     * Render a template with placeholders and optional loops.
+     * Render a report template with dynamic data.
      *
-     * Placeholders use the syntax:
-     *   - Simple values: {field_name}
-     *   - Loops: {{#each items}} ... {subfield} ... {{/each}}
+     * Replaces:
+     *  - Simple placeholders: {key}
+     *  - Loops: {{#each key}} ... {{/each}}
+     *  - Comment-based loops: <!-- {{#each key}} --> ... <!-- {{/each}} -->
+     *  - Attribute loops: <tag data-each="key"> ... </tag>
      *
-     * Example of a template with simple values:
-     *   <h1>Patient Report</h1>
-     *   <p>Name: {patient_name}</p>
-     *   <p>Date: {date}</p>
-     *
-     * Example of a template with a list:
-     *   <h1>Financial Report</h1>
-     *   <p>Period: {date_start} - {date_end}</p>
-     *   <table border="1" width="100%">
-     *       <tr><th>Service</th><th>Value</th></tr>
-     *       {{#each items}}
-     *       <tr>
-     *           <td>{service_name}</td>
-     *           <td>{value}</td>
-     *       </tr>
-     *       {{/each}}
-     *   </table>
-     *   <p><b>Total:</b> {total}</p>
-     *
-     * Example of data for a single report:
-     *   $data = [
-     *       'patient_name' => 'John Doe',
-     *       'date' => '2025-10-04'
-     *   ];
-     *
-     * Example of data for a list report:
-     *   $data = [
-     *       'date_start' => '2025-10-01',
-     *       'date_end'   => '2025-10-04',
-     *       'total'      => '$500.00',
-     *       'items'      => [
-     *           ['service_name' => 'X-Ray', 'value' => '$200.00'],
-     *           ['service_name' => 'Consultation', 'value' => '$300.00'],
-     *       ],
-     *   ];
-     *
-     * @param string $template HTML template with placeholders
-     * @param array  $data     Data array to inject into placeholders
-     * @return string          Final rendered HTML
+     * @param string $template HTML template string.
+     * @param array $data      Data array for placeholders and loops.
+     * @return string          Rendered HTML.
      */
     public static function render(string $template, array $data): string
     {
-        // Replace simple placeholders {key}
+        // Step 1: Process loops that use the data-each attribute
+        $template = self::renderDataEachAttribute($template, $data);
+
+        // Step 2: Process comment-based loops (safe for TinyMCE)
+        $template = self::renderCommentLoops($template, $data);
+
+        // Step 3: Process classic {{#each}} ... {{/each}} loops
+        $template = self::renderClassicLoops($template, $data);
+
+        // Step 4: Replace simple placeholders {key}
         foreach ($data as $key => $value) {
             if (!is_array($value)) {
-                $template = str_replace("{" . $key . "}", (string)$value, $template);
-            }
-        }
-
-        // Process loops {{#each items}} ... {{/each}}
-        if (preg_match_all('/\{\{#each (.*?)\}\}([\s\S]*?)\{\{\/each\}\}/', $template, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $arrayKey = $match[1];
-                $block    = $match[2];
-                $rendered = '';
-
-                if (isset($data[$arrayKey]) && is_array($data[$arrayKey])) {
-                    foreach ($data[$arrayKey] as $row) {
-                        $rowHtml = $block;
-                        foreach ($row as $col => $val) {
-                            $rowHtml = str_replace("{" . $col . "}", (string)$val, $rowHtml);
-                        }
-                        $rendered .= $rowHtml;
-                    }
-                }
-
-                $template = str_replace($match[0], $rendered, $template);
+                $template = str_replace('{' . $key . '}', (string)$value, $template);
             }
         }
 
@@ -89,52 +95,108 @@ class ReportTemplateHelper
     }
 
     /**
-     * Render and generate a PDF file using an existing ReportTemplate from DB.
+     * Render loops defined as: {{#each key}} ... {{/each}}
      *
-     * The template is loaded from the "report_template" table and can define:
-     *   - header_html (PDF header, optional)
-     *   - footer_html (PDF footer, optional)
-     *   - body_html   (main template with placeholders)
-     *
-     * Example:
-     *   return ReportTemplateHelper::generatePdf(
-     *       $templateId,
-     *       [
-     *           'patient_name' => 'John Doe',
-     *           'date' => '2025-10-04'
-     *       ],
-     *       'Patient_Report'
-     *   );
-     *
-     * @param int    $templateId Template ID from DB
-     * @param array  $data       Data array for placeholders
-     * @param string $filename   Output filename (without extension)
-     * @param string $mode       Output mode: "inline" (default) or "download"
-     * @return mixed
-     * @throws NotFoundHttpException
+     * @param string $tpl  HTML template
+     * @param array  $data Data source
+     * @return string
      */
-    public static function generatePdf(int $templateId, array $data, string $filename = 'Report', string $mode = 'inline')
+    protected static function renderClassicLoops(string $tpl, array $data): string
     {
-        $template = ReportTemplate::findOne($templateId);
-        if (!$template) {
-            throw new NotFoundHttpException("Template not found");
+        if (preg_match_all('/\{\{#each\s+([A-Za-z0-9_\-]+)\s*\}\}([\s\S]*?)\{\{\/each\}\}/', $tpl, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $key   = $m[1];
+                $block = $m[2];
+                $out   = self::repeatBlock($block, $data[$key] ?? []);
+                $tpl   = str_replace($m[0], $out, $tpl);
+            }
+        }
+        return $tpl;
+    }
+
+    /**
+     * Render loops defined as HTML comments:
+     * <!-- {{#each key}} --> ... <!-- {{/each}} -->
+     *
+     * @param string $tpl  HTML template
+     * @param array  $data Data source
+     * @return string
+     */
+    protected static function renderCommentLoops(string $tpl, array $data): string
+    {
+        if (preg_match_all('/<!--\s*\{\{#each\s+([A-Za-z0-9_\-]+)\s*\}\}\s*-->([\s\S]*?)<!--\s*\{\{\/each\}\}\s*-->/', $tpl, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $key   = $m[1];
+                $block = $m[2];
+                $out   = self::repeatBlock($block, $data[$key] ?? []);
+                $tpl   = str_replace($m[0], $out, $tpl);
+            }
+        }
+        return $tpl;
+    }
+
+    /**
+     * Render loops defined as: <tag data-each="key"> ... </tag>
+     *
+     * @param string $tpl  HTML template
+     * @param array  $data Data source
+     * @return string
+     */
+    protected static function renderDataEachAttribute(string $tpl, array $data): string
+    {
+        // Matches any element with a "data-each" attribute
+        if (preg_match_all('/<([a-zA-Z0-9:\-]+)([^>]*)\sdata-each="([A-Za-z0-9_\-]+)"([^>]*)>([\s\S]*?)<\/\1>/', $tpl, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $tag        = $m[1];
+                $beforeAttr = $m[2];
+                $key        = $m[3];
+                $afterAttr  = $m[4];
+                $inner      = $m[5];
+
+                $items = $data[$key] ?? [];
+                $out   = '';
+
+                if (is_array($items)) {
+                    foreach ($items as $row) {
+                        $rowHtml = $inner;
+                        foreach ($row as $col => $val) {
+                            $rowHtml = str_replace('{' . $col . '}', (string)$val, $rowHtml);
+                        }
+                        $out .= "<{$tag}{$beforeAttr}{$afterAttr}>{$rowHtml}</{$tag}>";
+                    }
+                }
+
+                $tpl = str_replace($m[0], $out, $tpl);
+            }
+        }
+        return $tpl;
+    }
+
+    /**
+     * Helper: repeat a block for each row in a dataset.
+     *
+     * @param string $block Inner HTML of the loop.
+     * @param array  $rows  Data array for iteration.
+     * @return string
+     */
+    protected static function repeatBlock(string $block, array $rows): string
+    {
+        $rendered = '';
+
+        if (!is_array($rows)) {
+            return $rendered;
         }
 
-        $html = self::render($template->body_html, $data);
-
-        $mpdf = new Mpdf(['format' => 'A4']);
-        if ($template->header_html) {
-            $mpdf->SetHeader($template->header_html);
+        foreach ($rows as $row) {
+            $rowHtml = $block;
+            if (is_array($row)) {
+                foreach ($row as $col => $val) {
+                    $rowHtml = str_replace('{' . $col . '}', (string)$val, $rowHtml);
+                }
+            }
+            $rendered .= $rowHtml;
         }
-        if ($template->footer_html) {
-            $mpdf->SetFooter($template->footer_html);
-        }
 
-        $mpdf->WriteHTML($html);
-
-        $filename = $filename . '.pdf';
-        $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
-
-        return $mpdf->Output($filename, $dest);
+        return $rendered;
     }
 }
