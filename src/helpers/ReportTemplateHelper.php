@@ -245,8 +245,9 @@ class ReportTemplateHelper
         if ($template->footer_html) {
             $mpdf->SetFooter($template->footer_html);
         }
+        $clean = MpdfHelper::normalizeHtml($html);
 
-        $mpdf->WriteHTML($html);
+        $mpdf->WriteHTML($clean);
 
         $filename = $filename . '.pdf';
         $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
