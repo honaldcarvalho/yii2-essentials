@@ -2,9 +2,10 @@
 
 namespace croacworks\essentials\helpers;
 
-use croacworks\essentials\models\ReportTemplate;
-use Knp\Snappy\Pdf\Pdf;
+
 use Yii;
+use croacworks\essentials\models\ReportTemplate;
+use Spatie\Browsershot\Browsershot;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -231,6 +232,10 @@ class ReportTemplateHelper
      * @throws NotFoundHttpException
      */
 
+    use Spatie\Browsershot\Browsershot;
+    use yii\web\NotFoundHttpException;
+    use Yii;
+
     public static function generatePdf(
         int $templateId,
         array $data,
@@ -247,35 +252,54 @@ class ReportTemplateHelper
         $header = self::render((string)$template->header_html, $data);
         $footer = self::render((string)$template->footer_html, $data);
 
-        // Junta em um HTML completo
+        // HTML principal (sem header/footer fixos)
         $html = "
         <html>
         <head>
             <meta charset='utf-8'>
             <style>
-                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; margin:0; padding:20px; }
                 table { border-collapse: collapse; width: 100%; }
                 th, td { border: 1px solid #333; padding: 6px; }
                 th { background: #f5f5f5; }
             </style>
         </head>
         <body>
-            " . ($header ? "<header>{$header}</header>" : "") . "
             {$body}
-            " . ($footer ? "<footer>{$footer}</footer>" : "") . "
         </body>
         </html>
     ";
 
-        // Instancia Snappy (aponta para o binário do wkhtmltopdf)
-        $snappy = new Pdf(Yii::getAlias('@bin/wkhtmltopdf'));
-        // 👉 ajuste o path acima para o local real do seu wkhtmltopdf (/usr/bin/wkhtmltopdf em Ubuntu)
+        // Configura o Browsershot
+        $browsershot = Browsershot::html($html)
+            ->format('A4')
+            ->showBackground()
+            ->margins(60, 20, 60, 20) // top, right, bottom, left
+            ->setOption('printBackground', true)
+            ->setOption('displayHeaderFooter', true);
 
-        $snappy->setOption('margin-top', 20);
-        $snappy->setOption('margin-bottom', 20);
-        $snappy->setOption('encoding', 'UTF-8');
+        // Cabeçalho (todas as páginas)
+        if (trim($header) !== '') {
+            $headerTemplate = "
+            <div style='font-size:12px; width:100%; text-align:center; font-family:DejaVu Sans, sans-serif;'>
+                {$header}
+            </div>
+        ";
+            $browsershot->setOption('headerTemplate', $headerTemplate);
+        }
 
-        $output = $snappy->getOutputFromHtml($html);
+        // Rodapé (todas as páginas, com paginação)
+        $footerContent = $footer ?: '';
+        $footerTemplate = "
+        <div style='font-size:10px; width:100%; text-align:center; font-family:DejaVu Sans, sans-serif;'>
+            {$footerContent}
+            <span style='float:right;'>Página <span class='pageNumber'></span> de <span class='totalPages'></span></span>
+        </div>
+    ";
+        $browsershot->setOption('footerTemplate', $footerTemplate);
+
+        // Gera o PDF (string binária)
+        $output = $browsershot->pdf();
 
         $filename = $filename . '.pdf';
 
@@ -290,6 +314,7 @@ class ReportTemplateHelper
         // inline (abre no navegador)
         Yii::$app->response->headers->set('Content-Type', 'application/pdf');
         Yii::$app->response->headers->set('Content-Disposition', 'inline; filename="' . $filename . '"');
+
         return Yii::$app->response->sendContentAsFile($output, $filename, [
             'mimeType' => 'application/pdf',
             'inline'   => true
