@@ -23,7 +23,7 @@ use yii\widgets\ActiveForm;
     
     <?= $form->field($model, 'header_html')->widget(TinyMCE::class, [
         'options' => ['rows' => 20],
-        'content_style' => $this->style,
+        'content_style' => $model->style,
     ]); ?>
     
     <?= $form->field($model, 'body_html')->widget(TinyMCE::class, [
