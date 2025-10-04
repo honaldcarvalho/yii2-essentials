@@ -135,7 +135,7 @@ class ReportTemplateController extends AuthorizationController
         return \croacworks\essentials\helpers\ReportTemplateHelper::generatePdf(
             [
                 'templateId' => $model->id,
-                'data' => $fakeData ? $sampleData : '',
+                'data' => $fakeData ? $sampleData : [],
                 'custom_body' => $fakeData ? $fake_body_html : null,
                 'filename' => 'Report',
                 'mode' => 'inline',
