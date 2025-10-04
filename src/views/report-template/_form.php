@@ -22,17 +22,20 @@ use yii\widgets\ActiveForm;
     <?= $form->field($model, 'description')->textarea(['rows' => 6]) ?>
     
     <?= $form->field($model, 'header_html')->widget(TinyMCE::class, [
-        'options' => ['rows' => 20]
+        'options' => ['rows' => 20],
+        'content_style' => $this->style,
     ]); ?>
     
     <?= $form->field($model, 'body_html')->widget(TinyMCE::class, [
         'options' => ['rows' => 20],
-        'cleanup' => false,                 // Disables automatic cleanup
-        'verify_html' => false,             // Prevents TinyMCE from reformatting unknown HTML
+        'cleanup' => false,
+        'verify_html' => false,
+        'content_style' => $this->style,
     ]); ?>
     
     <?= $form->field($model, 'footer_html')->widget(TinyMCE::class, [
-        'options' => ['rows' => 20]
+        'options' => ['rows' => 20],
+        'content_style' => $this->style,
     ]); ?>
 
     <?= $form->field($model, 'style')->widget(AceEditor::class, [
