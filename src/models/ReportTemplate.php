@@ -97,7 +97,7 @@ class ReportTemplate extends ModelCommon
 
             $this->header_html = <<<HTML
             <div style="width: 100%; text-align: center; border-bottom: 1px solid #287c36;">
-                <table width="100%">
+                <table width="100%" border="0">
                     <tr>
                         <td width="20%" style="text-align:left;">
                             <img src="https://croacworks.com.br/images/croacworks-logo-hq.png" height="60">
@@ -108,7 +108,7 @@ class ReportTemplate extends ModelCommon
                             <div style="font-size:9pt; color:#666;"><strong>CNPJ</strong> 07.481.906/0003-14</div>
                         </td>
                         <td width="20%" style="text-align:right; font-size:9pt; color:#666;">
-                            Data: {{date}}<br>Hora: {{time}}
+                            <strong>Data:</strong> {{date}}<br><strong>Hora:</strong> {{time}}
                         </td>
                     </tr>
                 </table>
