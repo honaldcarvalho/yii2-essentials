@@ -271,7 +271,45 @@ class ReportTemplateHelper
         if($config['normalizeHtml']){
             $html = MpdfHelper::normalizeHtml($html);
         }
+        $css = <<< CSS
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10pt;
+            color: #212529;
+        }
+        h1, h2, h3 {
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+        h2 {
+            font-size: 16pt;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+        thead th {
+            background-color:#287c36;
+            color: #fff;
+            text-align: center;
+            font-weight: 600;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .text-center { text-align: center; }
+        .text-end   { text-align: right; }
+        .fw-bold    { font-weight: bold; }
+        .small      { font-size: 8pt; }
+        CSS;
 
+        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html);
 
         $filename = $filename . '.pdf';
