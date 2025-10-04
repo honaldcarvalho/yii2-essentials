@@ -50,7 +50,21 @@ $this->params['breadcrumbs'][] = $this->title;
                             'created_at:datetime',
                             'updated_at:datetime',
                             [
-                                'class' => ActionColumnCustom::class
+                                'class' => ActionColumnCustom::class,
+                                'template' => '{view} {update} {delete} {preview}',
+                                'buttons' => [
+                                    'preview' => function ($url, $model) {
+                                        return \yii\helpers\Html::a(
+                                            '<i class="fas fa-eye"></i>',
+                                            ['preview', 'id' => $model->id],
+                                            [
+                                                'class' => 'btn btn-sm btn-outline-primary',
+                                                'title' => 'Preview Template',
+                                                'target' => '_blank'
+                                            ]
+                                        );
+                                    },
+                                ],
                             ],
                         ],
                     ]); ?>
