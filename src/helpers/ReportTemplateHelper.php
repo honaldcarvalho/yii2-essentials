@@ -250,9 +250,8 @@ class ReportTemplateHelper
                 'margin_right'  => 0,
                 'margin_header' => 0,
                 'margin_footer' => 30,
-                'setAutoTopMargin'    => 'stretch',
+                'setAutoTopMargin'    => false,//'stretch',
                 'setAutoBottomMargin' => false,//'pad'
-                'setAutoTopMargin' => 'stretch',
             ],
             'normalizeHtml' => false
         ]
