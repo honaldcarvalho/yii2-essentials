@@ -133,7 +133,7 @@ class ReportTemplateController extends AuthorizationController
         </div>
         HTML;
         $fakeData = Yii::$app->request->get('fakeData') ?? false;
-        // 🔹 Usa o helper para gerar e exibir o PDF direto no navegador
+
         return \croacworks\essentials\helpers\ReportTemplateHelper::generatePdf(
             [
                 'templateId' => $model->id,
@@ -143,10 +143,12 @@ class ReportTemplateController extends AuthorizationController
                 'mode' => 'inline',
                 'config' => [
                     'format'        => 'A4',
-                    'margin_top'    => Yii::$app->request->get('margin_top') ?? 40,
-                    'margin_bottom' => Yii::$app->request->get('margin_bottom') ?? 20,
-                    'margin_left'   => Yii::$app->request->get('margin_left') ?? 0,
-                    'margin_right'  => Yii::$app->request->get('margin_right') ?? 0,
+                    'margin_top'    => (int) Yii::$app->request->get('margin_top') ?? 40,
+                    'margin_bottom' => (int) Yii::$app->request->get('margin_bottom') ?? 20,
+                    'margin_left'   => (int) Yii::$app->request->get('margin_left') ?? 0,
+                    'margin_right'  => (int) Yii::$app->request->get('margin_right') ?? 0,
+                    'margin_header'  => (int) Yii::$app->request->get('margin_header') ?? 0,
+                    'margin_footer'  => (int) Yii::$app->request->get('margin_footer') ?? 0,
                     'setAutoTopMargin' => 'stretch',
                 ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
