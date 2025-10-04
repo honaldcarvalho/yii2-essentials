@@ -107,6 +107,7 @@ class ReportTemplateHelper
         // Company info (fallbacks)
         $company = [
             'name'    => $params['company.name']    ?? 'CroacWorks Tecnologia LTDA',
+            'representant'    => $params['company.representant']    ?? 'Honald Carvalho da Silva',
             'cnpj'    => $params['company.cnpj']    ?? '60.027.572/0001-96',
             'address' => $params['company.address'] ?? 'Rua 19 de Maio, nº 906 - Teresina/PI',
             'email'   => $params['company.email']   ?? 'contato@croacworks.com.br',
@@ -162,6 +163,7 @@ class ReportTemplateHelper
 
             // 🏢 Company
             '{{company_name}}'    => $company['name'],
+            '{{company_representant}}'    => $company['representant'],
             '{{company_cnpj}}'    => $company['cnpj'],
             '{{company_address}}' => $company['address'],
             '{{company_email}}'   => $company['email'],
