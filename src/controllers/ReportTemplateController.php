@@ -63,7 +63,7 @@ class ReportTemplateController extends AuthorizationController
             ],
         ];
 
-        $rendered = ReportTemplateHelper::render($model->body_html, $sampleData);
+        $rendered = ReportTemplateHelper::generatePdf($model->body_html, $sampleData);
 
         $header = $model->header_html ? "<div style='border-bottom:1px solid #ccc;padding:8px 0;margin-bottom:15px'>{$model->header_html}</div>" : '';
         $footer = $model->footer_html ? "<hr><div style='font-size:12px;color:#666;margin-top:15px'>{$model->footer_html}</div>" : '';

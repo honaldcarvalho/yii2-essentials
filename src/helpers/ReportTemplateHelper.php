@@ -2,6 +2,10 @@
 
 namespace croacworks\essentials\helpers;
 
+use croacworks\essentials\models\ReportTemplate;
+use Mpdf\Mpdf;
+use yii\web\NotFoundHttpException;
+
 /**
  * ReportTemplateHelper
  * --------------------
@@ -199,4 +203,55 @@ class ReportTemplateHelper
 
         return $rendered;
     }
+    
+    /**
+     * Render and generate a PDF file using an existing ReportTemplate from DB.
+     *
+     * The template is loaded from the "report_template" table and can define:
+     *   - header_html (PDF header, optional)
+     *   - footer_html (PDF footer, optional)
+     *   - body_html   (main template with placeholders)
+     *
+     * Example:
+     *   return ReportTemplateHelper::generatePdf(
+     *       $templateId,
+     *       [
+     *           'patient_name' => 'John Doe',
+     *           'date' => '2025-10-04'
+     *       ],
+     *       'Patient_Report'
+     *   );
+     *
+     * @param int    $templateId Template ID from DB
+     * @param array  $data       Data array for placeholders
+     * @param string $filename   Output filename (without extension)
+     * @param string $mode       Output mode: "inline" (default) or "download"
+     * @return mixed
+     * @throws NotFoundHttpException
+     */
+    public static function generatePdf(int $templateId, array $data, string $filename = 'Report', string $mode = 'inline')
+    {
+        $template = ReportTemplate::findOne($templateId);
+        if (!$template) {
+            throw new NotFoundHttpException("Template not found");
+        }
+
+        $html = self::render($template->body_html, $data);
+
+        $mpdf = new Mpdf(['format' => 'A4']);
+        if ($template->header_html) {
+            $mpdf->SetHeader($template->header_html);
+        }
+        if ($template->footer_html) {
+            $mpdf->SetFooter($template->footer_html);
+        }
+
+        $mpdf->WriteHTML($html);
+
+        $filename = $filename . '.pdf';
+        $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
+
+        return $mpdf->Output($filename, $dest);
+    }
+
 }
