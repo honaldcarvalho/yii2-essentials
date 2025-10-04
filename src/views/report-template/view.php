@@ -42,7 +42,7 @@ $extra = [
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'extra'=>$extra])?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'extras'=>$extra])?>
                         </div>
                     </div>
 
