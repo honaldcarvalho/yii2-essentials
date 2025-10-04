@@ -5,6 +5,7 @@ namespace croacworks\essentials\controllers;
 use croacworks\essentials\helpers\ReportTemplateHelper;
 use croacworks\essentials\models\ReportTemplate;
 use croacworks\essentials\models\ReportTemplateSearch;
+use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -116,6 +117,7 @@ class ReportTemplateController extends AuthorizationController
             [
                 'margin_top'    => 50, // espaço maior para header
                 'margin_bottom' => 40, // espaço maior para footer
+                'normalizeHtml' => Yii::$app->resquest->get('normalize') ?? false,
             ]
         );
     }
