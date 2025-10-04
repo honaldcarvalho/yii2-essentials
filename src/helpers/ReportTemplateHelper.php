@@ -2,10 +2,8 @@
 
 namespace croacworks\essentials\helpers;
 
-
-use Yii;
 use croacworks\essentials\models\ReportTemplate;
-use Spatie\Browsershot\Browsershot;
+use Mpdf\Mpdf;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -205,7 +203,7 @@ class ReportTemplateHelper
 
         return $rendered;
     }
-
+    
     /**
      * Render and generate a PDF file using an existing ReportTemplate from DB.
      *
@@ -231,93 +229,29 @@ class ReportTemplateHelper
      * @return mixed
      * @throws NotFoundHttpException
      */
-
-    use Spatie\Browsershot\Browsershot;
-    use yii\web\NotFoundHttpException;
-    use Yii;
-
-    public static function generatePdf(
-        int $templateId,
-        array $data,
-        string $filename = 'Report',
-        string $mode = 'inline'
-    ) {
+    public static function generatePdf(int $templateId, array $data, string $filename = 'Report', string $mode = 'inline')
+    {
         $template = ReportTemplate::findOne($templateId);
         if (!$template) {
             throw new NotFoundHttpException("Template not found");
         }
 
-        // Render placeholders no corpo, cabeçalho e rodapé
-        $body   = self::render((string)$template->body_html,   $data);
-        $header = self::render((string)$template->header_html, $data);
-        $footer = self::render((string)$template->footer_html, $data);
+        $html = self::render($template->body_html, $data);
 
-        // HTML principal (sem header/footer fixos)
-        $html = "
-        <html>
-        <head>
-            <meta charset='utf-8'>
-            <style>
-                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; margin:0; padding:20px; }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #333; padding: 6px; }
-                th { background: #f5f5f5; }
-            </style>
-        </head>
-        <body>
-            {$body}
-        </body>
-        </html>
-    ";
-
-        // Configura o Browsershot
-        $browsershot = Browsershot::html($html)
-            ->format('A4')
-            ->showBackground()
-            ->margins(60, 20, 60, 20) // top, right, bottom, left
-            ->setOption('printBackground', true)
-            ->setOption('displayHeaderFooter', true);
-
-        // Cabeçalho (todas as páginas)
-        if (trim($header) !== '') {
-            $headerTemplate = "
-            <div style='font-size:12px; width:100%; text-align:center; font-family:DejaVu Sans, sans-serif;'>
-                {$header}
-            </div>
-        ";
-            $browsershot->setOption('headerTemplate', $headerTemplate);
+        $mpdf = new Mpdf(['format' => 'A4']);
+        if ($template->header_html) {
+            $mpdf->SetHeader($template->header_html);
+        }
+        if ($template->footer_html) {
+            $mpdf->SetFooter($template->footer_html);
         }
 
-        // Rodapé (todas as páginas, com paginação)
-        $footerContent = $footer ?: '';
-        $footerTemplate = "
-        <div style='font-size:10px; width:100%; text-align:center; font-family:DejaVu Sans, sans-serif;'>
-            {$footerContent}
-            <span style='float:right;'>Página <span class='pageNumber'></span> de <span class='totalPages'></span></span>
-        </div>
-    ";
-        $browsershot->setOption('footerTemplate', $footerTemplate);
-
-        // Gera o PDF (string binária)
-        $output = $browsershot->pdf();
+        $mpdf->WriteHTML($html);
 
         $filename = $filename . '.pdf';
+        $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
 
-        if ($mode === 'download') {
-            return Yii::$app->response->sendContentAsFile(
-                $output,
-                $filename,
-                ['mimeType' => 'application/pdf']
-            );
-        }
-
-        // inline (abre no navegador)
-        Yii::$app->response->headers->set('Content-Type', 'application/pdf');
-        Yii::$app->response->headers->set('Content-Disposition', 'inline; filename="' . $filename . '"');
-
-        return Yii::$app->response->sendContentAsFile($output, $filename, [
-            'mimeType' => 'application/pdf',
-            'inline'   => true
-        ]);
+        return $mpdf->Output($filename, $dest);
     }
+
 }
