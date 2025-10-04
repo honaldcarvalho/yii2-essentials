@@ -4,6 +4,10 @@ namespace croacworks\essentials\helpers;
 
 use croacworks\essentials\models\ReportTemplate;
 use Mpdf\Mpdf;
+use Yii;
+use yii\helpers\StringHelper;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -77,7 +81,123 @@ class ReportTemplateHelper
      * @param array $data      Data array for placeholders and loops.
      * @return string          Rendered HTML.
      */
-    public static function render(string $template, array $data): string
+
+
+    /**
+     * Default replacements for any PDF/Report template.
+     * These values can be used in any {{placeholder}} within header, body, or footer.
+     *
+     * Example:
+     *   {{date}} → 04/10/2025
+     *   {{user_name}} → Honald Carvalho
+     *   {{company_name}} → CroacWorks Tecnologia LTDA
+     *   {{page}} / {{pages}} → Page counters
+     */
+    public static function defaultReplacements(): array
+    {
+        $user     = Yii::$app->user->identity ?? null;
+        $request  = Yii::$app->request ?? null;
+        $params   = Yii::$app->params ?? [];
+
+        // Basic info
+        $ip       = $request?->userIP ?? '0.0.0.0';
+        $hostname = $request?->hostName ?? gethostname();
+        $uuid     = strtoupper(StringHelper::basename(Yii::$app->security->generateRandomString(10)));
+
+        // Company info (fallbacks)
+        $company = [
+            'name'    => $params['company.name']    ?? 'CroacWorks Tecnologia LTDA',
+            'cnpj'    => $params['company.cnpj']    ?? '60.027.572/0001-96',
+            'address' => $params['company.address'] ?? 'Rua 19 de Maio, nº 906 - Teresina/PI',
+            'email'   => $params['company.email']   ?? 'contato@croacworks.com.br',
+            'phone'   => $params['company.phone']   ?? '(86) 4002-8922',
+            'site'    => $params['company.site']    ?? 'https://croacworks.com.br',
+            'logo'    => $params['company.logo']    ?? 'https://croacworks.com.br/images/croacworks-logo-hq.png',
+        ];
+
+        // Timezone
+        $tz = new \DateTimeZone(date_default_timezone_get());
+        $offsetHours = $tz->getOffset(new \DateTime()) / 3600;
+        $offset = sprintf("%+03d:00", $offsetHours);
+
+        // Unique token for QR/validation
+        $hash = strtoupper(substr(md5(uniqid('', true)), 0, 10));
+
+        // 🔹 Generate QR Code (inline base64)
+        try {
+            $qrText = $params['company.validation_url'] 
+                ?? (Yii::$app->request->hostInfo . Yii::$app->request->url);
+
+            $qrPayload = "{$qrText}?hash={$hash}&uuid={$uuid}";
+            
+            $options = new QROptions([
+                'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+                'eccLevel'   => QRCode::ECC_L,
+                'scale'      => 3,
+                'imageBase64' => true,
+            ]);
+
+            $qr_code = (new QRCode($options))->render($qrPayload);
+        } catch (\Throwable $e) {
+            $qr_code = ''; // fallback silencioso se não conseguir gerar
+        }
+
+        return [
+            // 🗓️ Date & Time
+            '{{date}}'         => date('d/m/Y'),
+            '{{time}}'         => date('H:i'),
+            '{{datetime}}'     => date('d/m/Y H:i'),
+            '{{date_extend}}'  => Yii::$app->formatter->asDate('now', 'php:j \d\e F \d\e Y'),
+            '{{weekday}}'      => Yii::$app->formatter->asDate('now', 'php:l'),
+            '{{month_name}}'   => Yii::$app->formatter->asDate('now', 'php:F'),
+            '{{year}}'         => date('Y'),
+
+            // 🌐 System / User
+            '{{ip}}'           => $ip,
+            '{{hostname}}'     => $hostname,
+            '{{user_name}}'    => $user->name ?? 'Usuário não autenticado',
+            '{{user_email}}'   => $user->email ?? '',
+            '{{user_group}}'   => method_exists($user, 'groupName') ? $user->groupName : '',
+            '{{generated_by}}' => 'CroacWorks System v3.2',
+
+            // 🏢 Company
+            '{{company_name}}'    => $company['name'],
+            '{{company_cnpj}}'    => $company['cnpj'],
+            '{{company_address}}' => $company['address'],
+            '{{company_email}}'   => $company['email'],
+            '{{company_phone}}'   => $company['phone'],
+            '{{company_site}}'    => $company['site'],
+            '{{company_logo}}'    => "<img src=\"{$company['logo']}\" height=\"40\">",
+
+            // 📄 Document & Page
+            '{{page}}'        => '{PAGENO}',
+            '{{pages}}'       => '{nbpg}',
+            '{{page_info}}'   => 'Página {PAGENO} de {nbpg}',
+            '{{file_name}}'   => Yii::$app->controller->id . '-' . date('YmdHis') . '.pdf',
+            '{{report_title}}'=> Yii::$app->view->title ?? 'Relatório',
+            '{{signature_line}}' => '_________________________',
+            '{{qr_code}}'     => "<img src=\"{$qr_code}\" width=\"80\" height=\"80\" alt=\"QR Code\">",
+
+            // 🔁 Contextual placeholders (vazios por padrão)
+            '{{patient_name}}'        => '',
+            '{{professional_name}}'   => '',
+            '{{group_name}}'          => '',
+            '{{total_value}}'         => '',
+            '{{period}}'              => '',
+            '{{contract_number}}'     => '',
+            '{{invoice_number}}'      => '',
+
+            // 🔒 Advanced info
+            '{{uuid}}'        => $uuid,
+            '{{hash}}'        => $hash,
+            '{{timestamp}}'   => time(),
+            '{{printed_at}}'  => date('d/m/Y H:i:s'),
+            '{{timezone}}'    => date_default_timezone_get() . " ({$offset})",
+            '{{runtime_env}}' => YII_ENV,
+        ];
+    }
+    
+    public static function render(string $template, array $data = [], bool $applyDefaults = true): string
     {
         // Step 1: Process loops that use the data-each attribute
         $template = self::renderDataEachAttribute($template, $data);
@@ -89,10 +209,16 @@ class ReportTemplateHelper
         $template = self::renderClassicLoops($template, $data);
 
         // Step 4: Replace simple placeholders {key}
+
         foreach ($data as $key => $value) {
             if (!is_array($value)) {
                 $template = str_replace('{' . $key . '}', (string)$value, $template);
             }
+        }
+
+        // 🔹 Aplica marcações globais se solicitado
+        if ($applyDefaults) {
+            $template = strtr($template, self::defaultReplacements());
         }
 
         return $template;
@@ -269,9 +395,9 @@ class ReportTemplateHelper
 
         // 🔹 Render HTML (template body or custom override)
         if (empty($params['custom_body'])) {
-            $html = self::render($template->body_html, $params['data']);
+            $html = self::render($template->body_html, $params['data'],true);
         } else {
-            $html = self::render($params['custom_body'], $params['data']);
+            $html = self::render($params['custom_body'], $params['data'],true);
         }
 
         // 🔹 Create mPDF instance with merged config
