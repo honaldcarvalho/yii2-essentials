@@ -205,6 +205,48 @@ class ReportTemplateHelper
     }
     
     /**
+     * Normalize HTML for mPDF compatibility.
+     *
+     * Fixes TinyMCE quirks and unsupported CSS:
+     *  - Converts rgb() colors → #hex
+     *  - margin:auto on <img> → text-align:center on parent
+     *  - Cleans unsupported attributes
+     *
+     * @param string $html
+     * @return string
+     */
+    protected static function normalizeForMpdf(string $html): string
+    {
+        // 1) rgb() → #hex
+        $html = preg_replace_callback(
+            '/rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i',
+            function ($m) {
+                return sprintf("#%02x%02x%02x", $m[1], $m[2], $m[3]);
+            },
+            $html
+        );
+
+        // 2) margin-left:auto + margin-right:auto → text-align:center
+        $html = preg_replace(
+            '/style="[^"]*margin-left:\s*auto;?\s*margin-right:\s*auto;?[^"]*"/i',
+            'style="text-align:center;"',
+            $html
+        );
+
+        // 3) Centraliza imagens que tenham margin auto
+        $html = preg_replace(
+            '/<p[^>]*style="[^"]*text-align:\s*center;?[^"]*"[^>]*>\s*<img/i',
+            '<p style="text-align:center;"><img style="display:inline-block;"',
+            $html
+        );
+
+        // 4) Remove atributos estranhos que mPDF não entende (exemplo)
+        $html = preg_replace('/style="[^"]*display:\s*block;?[^"]*"/i', '', $html);
+
+        return $html;
+    }
+
+    /**
      * Render and generate a PDF file using an existing ReportTemplate from DB.
      *
      * The template is loaded from the "report_template" table and can define:
@@ -238,7 +280,10 @@ class ReportTemplateHelper
 
         $html = self::render($template->body_html, $data);
 
+        $html = self::normalizeForMpdf($html);
+
         $mpdf = new Mpdf(['format' => 'A4']);
+
         if ($template->header_html) {
             $mpdf->SetHeader($template->header_html);
         }
@@ -253,5 +298,4 @@ class ReportTemplateHelper
 
         return $mpdf->Output($filename, $dest);
     }
-
 }
