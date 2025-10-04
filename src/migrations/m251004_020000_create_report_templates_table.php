@@ -3,13 +3,13 @@
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `report_template`.
+ * Handles the creation of table `report_templates`.
  */
-class m251004_020000_create_report_template_table extends Migration
+class m251004_020000_create_report_templates_table extends Migration
 {
     public function safeUp()
     {
-        $this->createTable('{{%report_template}}', [
+        $this->createTable('{{%report_templates}}', [
             'id' => $this->primaryKey(),
             'group_id' => $this->integer()->null()->comment('Tenant/Group'),
             'name' => $this->string(255)->notNull()->comment('Template name'),
@@ -22,12 +22,12 @@ class m251004_020000_create_report_template_table extends Migration
             'updated_at' => $this->dateTime()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
         ]);
 
-        $this->createIndex('idx_report_template_group', '{{%report_template}}', 'group_id');
-        $this->createIndex('idx_report_template_status', '{{%report_template}}', 'status');
+        $this->createIndex('idx_report_templates_group', '{{%report_templates}}', 'group_id');
+        $this->createIndex('idx_report_templates_status', '{{%report_templates}}', 'status');
     }
 
     public function safeDown()
     {
-        $this->dropTable('{{%report_template}}');
+        $this->dropTable('{{%report_templates}}');
     }
 }

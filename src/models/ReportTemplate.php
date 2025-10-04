@@ -22,7 +22,7 @@ class ReportTemplate extends ModelCommon
 {
     public static function tableName()
     {
-        return '{{%report_template}}';
+        return '{{%report_templates}}';
     }
 
     public function rules()
