@@ -46,35 +46,32 @@ class ReportTemplateController extends AuthorizationController
 
     public function actionPreview($id)
     {
-        $this->layout = false; // 🔹 remove o layout padrão (somente conteúdo)
+        // 🔹 O layout não é necessário em PDFs
+        $this->layout = false;
+
         $model = $this->findModel($id);
 
         // 🔹 Mock data (exemplo)
         $sampleData = [
             'patient_name' => 'John Doe',
-            'date' => date('d/m/Y'),
-            'date_start' => '01/10/2025',
-            'date_end'   => '04/10/2025',
-            'total'      => '$1,250.00',
+            'date'         => date('d/m/Y'),
+            'date_start'   => '01/10/2025',
+            'date_end'     => '04/10/2025',
+            'total'        => '$1,250.00',
             'items' => [
                 ['service_name' => 'Consultation', 'value' => '$200.00', 'date' => '01/10/2025'],
-                ['service_name' => 'X-Ray', 'value' => '$400.00', 'date' => '02/10/2025'],
-                ['service_name' => 'Ultrasound', 'value' => '$650.00', 'date' => '03/10/2025'],
+                ['service_name' => 'X-Ray',        'value' => '$400.00', 'date' => '02/10/2025'],
+                ['service_name' => 'Ultrasound',   'value' => '$650.00', 'date' => '03/10/2025'],
             ],
         ];
 
-        $rendered = ReportTemplateHelper::generatePdf($model->body_html, $sampleData);
-
-        $header = $model->header_html ? "<div style='border-bottom:1px solid #ccc;padding:8px 0;margin-bottom:15px'>{$model->header_html}</div>" : '';
-        $footer = $model->footer_html ? "<hr><div style='font-size:12px;color:#666;margin-top:15px'>{$model->footer_html}</div>" : '';
-
-        return $this->renderContent("
-        <div style='max-width:900px;margin:auto;padding:20px;font-family:Arial,sans-serif'>
-            {$header}
-            <div>{$rendered}</div>
-            {$footer}
-        </div>
-    ");
+        // 🔹 Usa o helper para gerar e exibir o PDF direto no navegador
+        return \croacworks\essentials\helpers\ReportTemplateHelper::generatePdf(
+            $model->id,         // ID do template (busca no banco)
+            $sampleData,        // Dados simulados
+            'Report_Preview',   // Nome do arquivo
+            'inline'            // Modo: 'inline' (abre no navegador) | 'download' (força download)
+        );
     }
 
     /**
