@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\widgets\AceEditor;
 use croacworks\essentials\widgets\TinyMCE;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
@@ -34,7 +35,11 @@ use yii\widgets\ActiveForm;
         'options' => ['rows' => 20]
     ]); ?>
 
-        <?= $form->field($model, 'status')->checkbox() ?>
+    <?= $form->field($model, 'css')->widget(AceEditor::class, [
+        'options' => ['rows' => 20]
+    ]); ?>
+
+    <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group">
         <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>

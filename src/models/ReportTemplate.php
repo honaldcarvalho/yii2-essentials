@@ -51,7 +51,71 @@ class ReportTemplate extends ModelCommon
             'updated_at' => Yii::t('app', 'Updated At'),
         ];
     }
+
+    public function init()
+    {
+        parent::init();
+
+        if ($this->isNewRecord) {
+            $this->css = <<<CSS
+            body { font-family: DejaVu Sans, sans-serif; font-size: 10pt; color: #212529; }
+            /* resto do CSS aqui... */
+            CSS;
+
+            $this->header_html = <<<HTML
+            <div style="width: 100%; text-align: center; border-bottom: 1px solid #287c36;">
+                <table width="100%">
+                    <tr>
+                        <td width="20%" style="text-align:left;">
+                            <img src="https://croacworks.com.br/images/croacworks-logo-hq.png" height="60">
+                        </td>
+                        <td width="60%" style="text-align:center;">
+                            <div style="font-size:14pt; font-weight:bold; color:#287c36;">CroacWorks</div>
+                            <div style="font-size:10pt; color:#666;">Saltando da ideia ao resultado com estilo e inovação.</div>
+                            <div style="font-size:9pt; color:#666;">CNPJ 07.481.906/0003-14</div>
+                        </td>
+                        <td width="20%" style="text-align:right; font-size:9pt; color:#666;">
+                            Data: {{date}}<br>Hora: {{time}}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            HTML;
+
+            $this->body_html = <<<HTML
+            <h1 style="text-align:center; color:#287c36;">Financial Report</h1>
+            <p><strong>Period:</strong> {date_start} - {date_end}</p>
+            <table border="1" width="100%" cellspacing="0" cellpadding="6">
+                <thead style="background:#f5f5f5;">
+                    <tr>
+                        <th>Patient</th>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th style="text-align:right;">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-each="items">
+                        <td>{patient_name}</td>
+                        <td>{service_name}</td>
+                        <td>{date}</td>
+                        <td style="text-align:right;">{value}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="text-align:right; margin-top:20px;"><strong>Total:</strong> {total}</p>
+            HTML;
+
+            $this->footer_html = <<<HTML
+            <div style="width:100%; border-top:1px solid #287c36; padding-top:5px; font-size:8pt; text-align:center; color:#666;">
+                <strong>CroacWorks</strong> — Relatório gerado em {{date}} às {{time}} — Página {PAGENO} de {nbpg}
+            </div>
+            HTML;
+        }
+    }
+
 }
+
 
 /** 
  * Example of use
