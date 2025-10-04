@@ -22,7 +22,9 @@ $config = [
     'modules' => [],
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
-        '@npm'   => '@vendor/npm-asset'
+        '@npm'   => '@vendor/npm-asset',
+        '@bin/wkhtmltopdf' => '/usr/bin/wkhtmltopdf',
+
     ],
     'modules' => [
         'common' => [

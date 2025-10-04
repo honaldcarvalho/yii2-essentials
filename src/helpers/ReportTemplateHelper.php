@@ -3,7 +3,9 @@
 namespace croacworks\essentials\helpers;
 
 use croacworks\essentials\models\ReportTemplate;
+use kartik\mpdf\Pdf;
 use Mpdf\Mpdf;
+use Yii;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -203,48 +205,6 @@ class ReportTemplateHelper
 
         return $rendered;
     }
-    
-    /**
-     * Normalize HTML for mPDF compatibility.
-     *
-     * Fixes TinyMCE quirks and unsupported CSS:
-     *  - Converts rgb() colors → #hex
-     *  - margin:auto on <img> → text-align:center on parent
-     *  - Cleans unsupported attributes
-     *
-     * @param string $html
-     * @return string
-     */
-    public static function normalizeForMpdf(string $html): string
-    {
-        // 1) rgb() → #hex
-        $html = preg_replace_callback(
-            '/rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i',
-            function ($m) {
-                return sprintf("#%02x%02x%02x", $m[1], $m[2], $m[3]);
-            },
-            $html
-        );
-
-        // 2) margin-left:auto + margin-right:auto → text-align:center
-        $html = preg_replace(
-            '/style="[^"]*margin-left:\s*auto;?\s*margin-right:\s*auto;?[^"]*"/i',
-            'style="text-align:center;"',
-            $html
-        );
-
-        // 3) Centraliza imagens que tenham margin auto
-        $html = preg_replace(
-            '/<p[^>]*style="[^"]*text-align:\s*center;?[^"]*"[^>]*>\s*<img/i',
-            '<p style="text-align:center;"><img style="display:inline-block;"',
-            $html
-        );
-
-        // 4) Remove atributos estranhos que mPDF não entende (exemplo)
-        $html = preg_replace('/style="[^"]*display:\s*block;?[^"]*"/i', '', $html);
-
-        return $html;
-    }
 
     /**
      * Render and generate a PDF file using an existing ReportTemplate from DB.
@@ -271,31 +231,69 @@ class ReportTemplateHelper
      * @return mixed
      * @throws NotFoundHttpException
      */
-    public static function generatePdf(int $templateId, array $data, string $filename = 'Report', string $mode = 'inline')
-    {
+
+    public static function generatePdf(
+        int $templateId,
+        array $data,
+        string $filename = 'Report',
+        string $mode = 'inline'
+    ) {
         $template = ReportTemplate::findOne($templateId);
         if (!$template) {
             throw new NotFoundHttpException("Template not found");
         }
 
-        $html = self::render($template->body_html, $data);
+        // Render placeholders no corpo, cabeçalho e rodapé
+        $body   = self::render((string)$template->body_html,   $data);
+        $header = self::render((string)$template->header_html, $data);
+        $footer = self::render((string)$template->footer_html, $data);
 
-        $html = self::normalizeForMpdf($html);
+        // Junta em um HTML completo
+        $html = "
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid #333; padding: 6px; }
+                th { background: #f5f5f5; }
+            </style>
+        </head>
+        <body>
+            " . ($header ? "<header>{$header}</header>" : "") . "
+            {$body}
+            " . ($footer ? "<footer>{$footer}</footer>" : "") . "
+        </body>
+        </html>
+    ";
 
-        $mpdf = new Mpdf(['format' => 'A4']);
+        // Instancia Snappy (aponta para o binário do wkhtmltopdf)
+        $snappy = new Pdf(Yii::getAlias('@bin/wkhtmltopdf'));
+        // 👉 ajuste o path acima para o local real do seu wkhtmltopdf (/usr/bin/wkhtmltopdf em Ubuntu)
 
-        if ($template->header_html) {
-            $mpdf->SetHeader($template->header_html);
-        }
-        if ($template->footer_html) {
-            $mpdf->SetFooter($template->footer_html);
-        }
+        $snappy->setOption('margin-top', 20);
+        $snappy->setOption('margin-bottom', 20);
+        $snappy->setOption('encoding', 'UTF-8');
 
-        $mpdf->WriteHTML($html);
+        $output = $snappy->getOutputFromHtml($html);
 
         $filename = $filename . '.pdf';
-        $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
 
-        return $mpdf->Output($filename, $dest);
+        if ($mode === 'download') {
+            return Yii::$app->response->sendContentAsFile(
+                $output,
+                $filename,
+                ['mimeType' => 'application/pdf']
+            );
+        }
+
+        // inline (abre no navegador)
+        Yii::$app->response->headers->set('Content-Type', 'application/pdf');
+        Yii::$app->response->headers->set('Content-Disposition', 'inline; filename="' . $filename . '"');
+        return Yii::$app->response->sendContentAsFile($output, $filename, [
+            'mimeType' => 'application/pdf',
+            'inline'   => true
+        ]);
     }
 }
