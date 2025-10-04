@@ -251,6 +251,7 @@ class ReportTemplateHelper
             'margin_bottom' => 30,
             'margin_left'   => 15,
             'margin_right'  => 15,
+            'normalizeHtml' => false
         ];
 
         // 🔹 Mescla defaults com opções passadas
@@ -267,10 +268,11 @@ class ReportTemplateHelper
             $mpdf->SetHTMLFooter($template->footer_html);
         }
 
-        // 🔹 Normaliza o HTML para mPDF
-        $clean = MpdfHelper::normalizeHtml($html);
+        if($config['normalizeHtml']){
+            $html = MpdfHelper::normalizeHtml($html);
+        }
 
-        $mpdf->WriteHTML($clean);
+        $mpdf->WriteHTML($html);
 
         $filename = $filename . '.pdf';
         $dest = ($mode === 'download')
