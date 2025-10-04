@@ -104,8 +104,8 @@ class ReportTemplate extends ModelCommon
                         </td>
                         <td width="60%" style="text-align:center;">
                             <div style="font-size:24pt; font-weight:bolder; color:#287c36;">CroacWorks</div>
-                            <div style="font-size:12pt; font-weight:bolde; color:#666;">Saltando da ideia ao resultado com estilo e inovação.</div>
-                            <div style="font-size:10pt; color:#666;">CNPJ 07.481.906/0003-14</div>
+                            <div style="font-size:12pt; font-weight:bolde; color:#666;"><strong>Saltando da ideia ao resultado com estilo e inovação.</strong></div>
+                            <div style="font-size:10pt; color:#666;"><strong>CNPJ</strong> 07.481.906/0003-14</div>
                         </td>
                         <td width="20%" style="text-align:right; font-size:9pt; color:#666;">
                             Data: {{date}}<br>Hora: {{time}}
