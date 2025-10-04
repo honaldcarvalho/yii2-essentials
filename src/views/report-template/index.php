@@ -13,6 +13,20 @@ use yii\widgets\Pjax;
 
 $this->title = Yii::t('app', 'Report Templates');
 $this->params['breadcrumbs'][] = $this->title;
+$style = <<< CSS
+    optgroup {
+        display:none;
+    }
+    .fancybox__content {
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height:90%!important;
+    }
+    .fancybox__slide::before, .fancybox__slide::after{
+        margin:0!important;
+    }
+CSS;
+$this->registerCss($style);
 ?>
 <div class="container-fluid">
     <div class="row">
@@ -54,7 +68,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'template' => '{view} {update} {delete} {preview}',
                                 'buttons' => [
                                     'preview' => function ($url, $model) {
-                                        $url = \yii\helpers\Url::to(['report-template/preview', 'id' => $model->id]);
+                                        $url = \yii\helpers\Url::to(['report-template/preview', 'id' => $model->id,'fakeData'=>1]);
                                         return \yii\helpers\Html::a(
                                             '<i class="fas fa-eye"></i>',
                                             $url,

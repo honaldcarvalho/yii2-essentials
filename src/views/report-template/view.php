@@ -23,7 +23,7 @@ $extra = [
             'data-fancybox' => '',
             'data-type' => "iframe",
             'data-custom-class' => "fancybox-iframe",
-            'data-src'=>\yii\helpers\Url::to(['report-template/preview', 'id' => $model->id])
+            'data-src'=>\yii\helpers\Url::to(['report-template/preview', 'id' => $model->id,'fakeData'=>1])
         ],
     ]
 ];
