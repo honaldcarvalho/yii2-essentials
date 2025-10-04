@@ -34,9 +34,8 @@ $style = <<< CSS
     .fancybox__content {
         padding: 0 !important;
         margin: 0 !important;
-        min-height:600px;
+        min-height:90%!important;
     }
-
     .fancybox__slide::before, .fancybox__slide::after{
         margin:0!important;
     }
