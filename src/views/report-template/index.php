@@ -54,13 +54,16 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'template' => '{view} {update} {delete} {preview}',
                                 'buttons' => [
                                     'preview' => function ($url, $model) {
+                                        $url = \yii\helpers\Url::to(['report-template/preview', 'id' => $model->id]);
                                         return \yii\helpers\Html::a(
                                             '<i class="fas fa-eye"></i>',
-                                            ['preview', 'id' => $model->id],
+                                            $url,
                                             [
-                                                'class' => 'btn btn-sm btn-outline-primary',
+                                                'class' => 'btn btn-sm btn-outline-primary btn-preview',
                                                 'title' => 'Preview Template',
-                                                'target' => '_blank'
+                                                'data-fancybox' => 'report-preview',
+                                                'data-type' => 'iframe',
+                                                'data-src' => $url,
                                             ]
                                         );
                                     },

@@ -46,46 +46,30 @@ class ReportTemplateController extends AuthorizationController
 
     public function actionPreview($id)
     {
+        $this->layout = false; // 🔹 remove o layout padrão (somente conteúdo)
         $model = $this->findModel($id);
 
-        // 🔹 Dados de exemplo (mock) — usados apenas na prévia
+        // 🔹 Mock data (exemplo)
         $sampleData = [
-            // Dados simples
             'patient_name' => 'John Doe',
             'date' => date('d/m/Y'),
             'date_start' => '01/10/2025',
-            'date_end' => '04/10/2025',
-            'total' => '$1,250.00',
-
-            // Dados de lista
+            'date_end'   => '04/10/2025',
+            'total'      => '$1,250.00',
             'items' => [
-                [
-                    'service_name' => 'Consultation',
-                    'value' => '$200.00',
-                    'date' => '01/10/2025',
-                ],
-                [
-                    'service_name' => 'X-Ray',
-                    'value' => '$400.00',
-                    'date' => '02/10/2025',
-                ],
-                [
-                    'service_name' => 'Ultrasound',
-                    'value' => '$650.00',
-                    'date' => '03/10/2025',
-                ],
+                ['service_name' => 'Consultation', 'value' => '$200.00', 'date' => '01/10/2025'],
+                ['service_name' => 'X-Ray', 'value' => '$400.00', 'date' => '02/10/2025'],
+                ['service_name' => 'Ultrasound', 'value' => '$650.00', 'date' => '03/10/2025'],
             ],
         ];
 
         $rendered = ReportTemplateHelper::render($model->body_html, $sampleData);
 
-        // 🔹 Renderiza header/footer, se existirem
         $header = $model->header_html ? "<div style='border-bottom:1px solid #ccc;padding:8px 0;margin-bottom:15px'>{$model->header_html}</div>" : '';
         $footer = $model->footer_html ? "<hr><div style='font-size:12px;color:#666;margin-top:15px'>{$model->footer_html}</div>" : '';
 
-        // 🔹 Exibe visualização simples e centralizada
         return $this->renderContent("
-        <div style='max-width:900px;margin:40px auto;font-family:Arial, sans-serif;'>
+        <div style='max-width:900px;margin:auto;padding:20px;font-family:Arial,sans-serif'>
             {$header}
             <div>{$rendered}</div>
             {$footer}
