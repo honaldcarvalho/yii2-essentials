@@ -141,10 +141,10 @@ class ReportTemplateController extends AuthorizationController
                 'mode' => 'inline',
                 'config' => [
                     'format'        => 'A4',
-                    'margin_top'    => 0,
-                    'margin_bottom' => 0,
-                    'margin_left'   => 0,
-                    'margin_right'  => 0,
+                    'margin_top'    => 40,
+                    'margin_bottom' => 30,
+                    'margin_left'   => 15,
+                    'margin_right'  => 15,
                 ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
                 
