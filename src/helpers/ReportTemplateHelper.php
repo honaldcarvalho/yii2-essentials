@@ -249,9 +249,9 @@ class ReportTemplateHelper
                 'margin_left'   => 0,
                 'margin_right'  => 0,
                 'margin_header' => 0,
-                'margin_footer' => 20,
+                'margin_footer' => 0,
                 'setAutoTopMargin'    => 'stretch',
-                'setAutoBottomMargin' => 'pad',
+                //'setAutoBottomMargin' => 'pad',
                 'setAutoTopMargin' => 'stretch',
             ],
             'normalizeHtml' => false
