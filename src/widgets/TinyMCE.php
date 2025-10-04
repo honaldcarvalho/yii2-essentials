@@ -15,6 +15,7 @@ class TinyMCE extends InputWidget
     public $language;
     public $clientOptions = [];
     public $cleanup = true;
+    public $content_style = '';
     public $verify_html = true;
 
     public function init(): void
@@ -40,6 +41,7 @@ class TinyMCE extends InputWidget
                 'searchreplace', 'wordcount', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media',
                 'table', 'emoticons', 'template', 'help'
             ],
+            'content_style' => $this->content_style,
             'toolbar' => "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | " .
                          "bullist numlist outdent indent | link image loremIpsumSmall loremIpsumBig| print preview media fullscreen | " .
                          "forecolor backcolor emoticons ",
