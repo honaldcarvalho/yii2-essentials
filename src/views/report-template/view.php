@@ -14,7 +14,7 @@ $extra = [
     [
         'controller' => 'report-template',
         'action' => 'report-preview',
-        'icon' => '<i class="fas fa-eye mr-2"></i>',
+        'icon' => '<i class="fas fa-eye mr-3"></i>',
         'text' => Yii::t('app', 'Preview Template'),
         'link' => \yii\helpers\Url::to(['report-template/preview', 'id' => $model->id]),
         'options' =>                    [

@@ -213,50 +213,58 @@ class ReportTemplateHelper
      *   - body_html   (main template with placeholders)
      *
      * Example:
-     *   return ReportTemplateHelper::generatePdf(
-     *       $templateId,
-     *       [
-     *           'patient_name' => 'John Doe',
-     *           'date' => '2025-10-04'
-     *       ],
-     *       'Patient_Report'
-     *   );
+        return \croacworks\essentials\helpers\ReportTemplateHelper::generatePdf(
+            [
+                'templateId' => $model->id,
+                'data' => $sampleData,
+                'filename' => 'Report',
+                'mode' => 'inline',
+                'config' => [
+                    'format'        => 'A4',
+                    'margin_top'    => 40,
+                    'margin_bottom' => 30,
+                    'margin_left'   => 15,
+                    'margin_right'  => 15,
+                ],
+                'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
+                
+            ]
+        );
      *
-     * @param int    $templateId Template ID from DB
-     * @param array  $data       Data array for placeholders
-     * @param string $filename   Output filename (without extension)
-     * @param string $mode       Output mode: "inline" (default) or "download"
+     * @param array  $defaults
      * @return mixed
      * @throws NotFoundHttpException
      */
     public static function generatePdf(
-        int $templateId,
-        array $data,
-        string $filename = 'Report',
-        string $mode = 'inline',
-        array $options = [] // 🔹 novas opções
+        array $defaults = [
+            'templateId' => null,
+            'data' => null,
+            'filename' => 'Report',
+            'mode' => 'inline',
+            'custom_body' => null,
+            'config' => [
+                'format'        => 'A4',
+                'margin_top'    => 40,
+                'margin_bottom' => 30,
+                'margin_left'   => 15,
+                'margin_right'  => 15,
+            ],
+            'normalizeHtml' => false
+        ]
     ) {
-        $template = ReportTemplate::findOne($templateId);
+
+        $template = ReportTemplate::findOne($defaults['templateId']);
+
         if (!$template) {
             throw new NotFoundHttpException("Template not found");
         }
 
-        // 🔹 Renderiza HTML substituindo placeholders por dados
-        $html = self::render($template->body_html, $data);
+        if(!$defaults['custom_body'])
+            $html = self::render($template->body_html, $defaults['data']);
+        else
+            $html = self::render($defaults['custom_body'], $defaults['data']);
 
-        // 🔹 Margens padrão (em mm)
-        $defaults = [
-            'format'        => 'A4',
-            'margin_top'    => 40,
-            'margin_bottom' => 30,
-            'margin_left'   => 15,
-            'margin_right'  => 15,
-            'normalizeHtml' => false
-        ];
-
-        $config = array_merge($defaults, $options);
-
-        $mpdf = new \Mpdf\Mpdf($config);
+        $mpdf = new \Mpdf\Mpdf($defaults['config']);
         $replacements = [
             '{{date}}' => date('d/m/Y'),
             '{{time}}' => date('H:i'),
@@ -276,14 +284,14 @@ class ReportTemplateHelper
             $mpdf->WriteHTML($template->style, \Mpdf\HTMLParserMode::HEADER_CSS);
         }
 
-        if($config['normalizeHtml']){
+        if($defaults['normalizeHtml']){
             $html = MpdfHelper::normalizeHtml($html);
         }
 
         $mpdf->WriteHTML($html);
 
-        $filename = $filename . '.pdf';
-        $dest = ($mode === 'download')
+        $filename = $defaults['filename'] . '.pdf';
+        $dest = ($defaults['mode'] === 'download')
             ? \Mpdf\Output\Destination::DOWNLOAD
             : \Mpdf\Output\Destination::INLINE;
 

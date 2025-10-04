@@ -107,17 +107,47 @@ class ReportTemplateController extends AuthorizationController
                 ['service_name' => 'Ultrasound',   'value' => '$650.00', 'date' => '03/10/2025'],
             ],
         ];
-
+        $fake_body_html = <<<HTML
+        <h1 style="text-align:center; color:#287c36;">Financial Report</h1>
+        <p><strong>Period:</strong> {date_start} - {date_end}</p>
+        <table border="1" width="100%" cellspacing="0" cellpadding="6">
+            <thead style="background:#f5f5f5;">
+                <tr>
+                    <th>Patient</th>
+                    <th>Service</th>
+                    <th>Date</th>
+                    <th style="text-align:right;">Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-each="items">
+                    <td>{patient_name}</td>
+                    <td>{service_name}</td>
+                    <td>{date}</td>
+                    <td style="text-align:right;">{value}</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="text-align:right; margin-top:20px;"><strong>Total:</strong> {total}</p>
+        HTML;
+        $fakeData = Yii::$app->request->get('fakeData') ?? false;
         // 🔹 Usa o helper para gerar e exibir o PDF direto no navegador
         return \croacworks\essentials\helpers\ReportTemplateHelper::generatePdf(
-            $model->id,         // ID do template (busca no banco)
-            $sampleData,        // Dados simulados
-            'Report_Preview',   // Nome do arquivo
-            'inline',           // Modo: 'inline' (abre no navegador) | 'download' (força download)
             [
-                'margin_top'    => 50, // espaço maior para header
-                'margin_bottom' => 40, // espaço maior para footer
+                'templateId' => $model->id,
+                'data' => $fakeData ? $sampleData : '',
+                'custom_body' => $fakeData ? $fake_body_html : null,
+                'filename' => 'Report',
+                'mode' => 'inline',
+                'config' => [
+                    'format'        => 'A4',
+                    'margin_top'    => 40,
+                    'margin_bottom' => 30,
+                    'margin_left'   => 15,
+                    'margin_right'  => 15,
+                ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
+                
             ]
         );
     }
