@@ -8,105 +8,32 @@ use yii\helpers\Json;
 use yii\widgets\InputWidget;
 use croacworks\essentials\themes\coreui\assets\PluginAsset;
 
-/**
- * TinyMCE Widget
- * --------------
- * 
- * A reusable, CoreUI-compatible TinyMCE integration for Yii2.
- *
- * This widget provides a rich-text editor with full HTML freedom and
- * special protection for Mustache/Handlebars-style placeholders such as:
- * 
- *     {{#each items}} ... {{/each}}
- *     {patient_name}, {total}, etc.
- *
- * It is particularly designed for editable HTML templates used in
- * report systems, allowing dynamic placeholders to remain intact.
- *
- * ## Features
- * - Fully integrated with Yii2 ActiveForm and InputWidget
- * - Preserves template placeholders (e.g., `{{#each}}` and `{field}`)
- * - Disables TinyMCE’s automatic HTML correction
- * - Allows all HTML elements and attributes
- * - Provides two "Lorem Ipsum" buttons for quick dummy text insertion
- * - Works seamlessly with the CoreUI theme asset pipeline
- *
- * ## Example Usage
- * 
- * ```php
- * use croacworks\essentials\widgets\TinyMCE;
- * 
- * echo $form->field($model, 'body_html')->widget(TinyMCE::class, [
- *     'language' => 'en',
- *     'clientOptions' => [
- *         'height' => 400,
- *     ],
- * ]);
- * ```
- *
- * ## Example Template (Preserved Intact)
- * ```html
- * <table border="1" width="100%">
- *   <thead>
- *     <tr><th>Item</th><th>Value</th></tr>
- *   </thead>
- *   <tbody>
- *     {{#each items}}
- *     <tr>
- *       <td>{item_name}</td>
- *       <td>{item_value}</td>
- *     </tr>
- *     {{/each}}
- *   </tbody>
- * </table>
- * ```
- */
+
 class TinyMCE extends InputWidget
 {
-    /**
-     * @var string|null Base URL for TinyMCE assets
-     */
     public $baseUrl;
-
-    /**
-     * @var string|null Editor language code (e.g., 'en', 'pt_br')
-     */
     public $language;
-
-    /**
-     * @var array TinyMCE configuration options merged with defaults
-     */
     public $clientOptions = [];
+    public $cleanup = true;
+    public $verify_html = true;
 
-    /**
-     * Initializes the widget.
-     *
-     * Registers TinyMCE assets, merges default configuration, 
-     * and defines custom toolbar buttons.
-     *
-     * Includes:
-     * - Mustache tag protection
-     * - Raw entity encoding
-     * - Disabled HTML cleanup and verification
-     *
-     * @return void
-     */
     public function init(): void
     {
         parent::init();
         $view = $this->getView();
-
-        // Register TinyMCE plugin asset
         $pluginAssets = PluginAsset::register($view)->add(['tinymce']);
         $this->baseUrl = $pluginAssets->baseUrl;
-
-        // Example long Lorem Ipsum content used by toolbar button
         $textBig = <<< HTML
         <h3>The standard Lorem Ipsum passage, used since the 1500s</h3>
-        <p>"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua..."</p>
+        <p>"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."</p>
+        <h3>Section 1.10.32 of "de Finibus Bonorum et Malorum", written by Cicero in 45 BC</h3>
+        <p>"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"</p>
+        <h3>1914 translation by H. Rackham</h3>
+        <p>"But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?"</p>
+        <h3>Section 1.10.33 of "de Finibus Bonorum et Malorum", written by Cicero in 45 BC</h3>
+        <p>"At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat."</p>
         HTML;
-
-        // Merge default TinyMCE options with any custom ones provided
+        // Adicionando o botão padrão "Lorem Ipsum" na configuração
         $this->clientOptions = array_merge([
             'plugins' => [
                 'advlist', 'autolink', 'link', 'image', 'lists', 'charmap', 'preview', 'anchor', 'pagebreak',
@@ -114,39 +41,33 @@ class TinyMCE extends InputWidget
                 'table', 'emoticons', 'template', 'help'
             ],
             'toolbar' => "undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | " .
-                         "bullist numlist outdent indent | link image loremIpsumSmall loremIpsumBig | " .
-                         "print preview media fullscreen | forecolor backcolor emoticons code",
-
+                         "bullist numlist outdent indent | link image loremIpsumSmall loremIpsumBig| print preview media fullscreen | " .
+                         "forecolor backcolor emoticons ",
             // === Protection and Behavior ===
             'entity_encoding' => 'raw',         // Prevents {{ }} from being HTML-encoded
-            'cleanup' => false,                 // Disables automatic cleanup
-            'verify_html' => false,             // Prevents TinyMCE from reformatting unknown HTML
+            'cleanup' => $this->cleanup,                 // Disables automatic cleanup
+            'verify_html' => $this->verify_html,             // Prevents TinyMCE from reformatting unknown HTML
             'valid_elements' => '*[*]',         // Allows all elements and attributes
             'protect' => [                      // Protects Mustache/Handlebars blocks from parsing
                 '/\{\{[\s\S]*?\}\}/g'
             ],
             'forced_root_block' => '',          // Prevents automatic <p> wrapping
-
-            // === Custom Toolbar Buttons ===
             'setup' => new \yii\web\JsExpression('function(editor) {
-                // Small Lorem Ipsum button
                 editor.ui.registry.addButton("loremIpsumSmall", {
                     text: "Lorem Small",
                     icon: "edit-block",
-                    tooltip: "Insert short Lorem Ipsum text",
+                    tooltip: "Inserir texto Lorem Ipsum",
                     onAction: function () {
                         let loremText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
                         editor.insertContent(loremText);
                     }
                 });
-
-                // Large Lorem Ipsum button
                 editor.ui.registry.addButton("loremIpsumBig", {
                     text: "Lorem Big",
                     icon: "edit-block",
-                    tooltip: "Insert long Lorem Ipsum text",
+                    tooltip: "Inserir texto Lorem Ipsum",
                     onAction: function () {
-                        let loremText = `' . $textBig . '`;
+                        let loremText = `'.$textBig.'`;
                         editor.insertContent(loremText);
                     }
                 });
@@ -154,37 +75,27 @@ class TinyMCE extends InputWidget
         ], $this->clientOptions);
     }
 
-    /**
-     * Renders the widget.
-     *
-     * Outputs the textarea and initializes TinyMCE using JavaScript.
-     * Automatically removes any existing instance on the same selector
-     * before initializing again.
-     *
-     * @return void
-     */
     public function run()
     {
+        $js = [];
         $view = $this->getView();
         $id = $this->options['id'];
+
         $this->clientOptions['selector'] = "#$id";
 
-        // Set editor language if specified
         if ($this->language !== null && $this->language !== 'en-US') {
             $this->clientOptions['language'] = strtolower(str_replace('-', '_', $this->language));
         }
 
         $options = Json::encode($this->clientOptions);
 
-        // Render the textarea
         if ($this->hasModel()) {
             echo Html::activeTextarea($this->model, $this->attribute, $this->options);
         } else {
             echo Html::textarea($this->name, $this->value, $this->options);
         }
 
-        // Initialize TinyMCE
-        $js = "tinymce.remove('#$id'); tinymce.init($options);";
-        $view->registerJs($js);
+        $js[] = "tinymce.remove('#$id'); tinymce.init($options);";
+        $view->registerJs(implode("\n", $js));
     }
 }
