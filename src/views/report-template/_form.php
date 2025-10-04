@@ -25,7 +25,9 @@ use yii\widgets\ActiveForm;
     ]); ?>
     
     <?= $form->field($model, 'body_html')->widget(TinyMCE::class, [
-        'options' => ['rows' => 20]
+        'options' => ['rows' => 20],
+        'cleanup' => false,                 // Disables automatic cleanup
+        'verify_html' => false,             // Prevents TinyMCE from reformatting unknown HTML
     ]); ?>
     
     <?= $form->field($model, 'footer_html')->widget(TinyMCE::class, [
