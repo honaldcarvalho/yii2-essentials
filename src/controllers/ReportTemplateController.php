@@ -108,6 +108,7 @@ class ReportTemplateController extends AuthorizationController
             ],
         ];
         $fake_body_html = <<<HTML
+        <div style="padding-left: 15mm; padding-right: 15mm;">
         <h1 style="text-align:center; color:#287c36;">Financial Report</h1>
         <p><strong>Period:</strong> {date_start} - {date_end}</p>
         <table border="1" width="100%" cellspacing="0" cellpadding="6">
@@ -129,6 +130,7 @@ class ReportTemplateController extends AuthorizationController
             </tbody>
         </table>
         <p style="text-align:right; margin-top:20px;"><strong>Total:</strong> {total}</p>
+        </div>
         HTML;
         $fakeData = Yii::$app->request->get('fakeData') ?? false;
         // 🔹 Usa o helper para gerar e exibir o PDF direto no navegador
@@ -142,12 +144,11 @@ class ReportTemplateController extends AuthorizationController
                 'config' => [
                     'format'        => 'A4',
                     'margin_top'    => 40,
-                    'margin_bottom' => 30,
-                    'margin_left'   => 15,
-                    'margin_right'  => 15,
+                    'margin_bottom' => 20,
+                    'margin_left'   => 0,
+                    'margin_right'  => 0,
                 ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
-                
             ]
         );
     }

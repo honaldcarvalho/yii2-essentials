@@ -246,8 +246,9 @@ class ReportTemplateHelper
                 'format'        => 'A4',
                 'margin_top'    => 40,
                 'margin_bottom' => 30,
-                'margin_left'   => 15,
-                'margin_right'  => 15,
+                'margin_left'   => 0,
+                'margin_right'  => 0,
+                'setAutoTopMargin' => 'stretch',
             ],
             'normalizeHtml' => false
         ]

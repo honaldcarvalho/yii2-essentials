@@ -116,6 +116,7 @@ class ReportTemplate extends ModelCommon
             HTML;
 
             $this->body_html = <<<HTML
+            <div style="padding-left: 15mm; padding-right: 15mm;">
             <h1 style="text-align:center; color:#287c36;">Financial Report</h1>
             <p><strong>Period:</strong> {date_start} - {date_end}</p>
             <table border="1" width="100%" cellspacing="0" cellpadding="6">
@@ -137,6 +138,7 @@ class ReportTemplate extends ModelCommon
                 </tbody>
             </table>
             <p style="text-align:right; margin-top:20px;"><strong>Total:</strong> {total}</p>
+            </div>
             HTML;
 
             $this->footer_html = <<<HTML
