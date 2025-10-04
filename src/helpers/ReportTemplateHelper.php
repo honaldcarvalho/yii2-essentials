@@ -215,7 +215,7 @@ class ReportTemplateHelper
      * @param string $html
      * @return string
      */
-    protected static function normalizeForMpdf(string $html): string
+    public static function normalizeForMpdf(string $html): string
     {
         // 1) rgb() → #hex
         $html = preg_replace_callback(
