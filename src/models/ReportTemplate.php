@@ -70,23 +70,23 @@ class ReportTemplate extends ModelCommon
             h2 {
                 font-size: 16pt;
             }
-            table {
+            #body table {
                 border-collapse: collapse;
                 width: 100%;
                 margin-top: 10px;
             }
-            th, td {
+            #body th, #body td {
                 border: 1px solid #dee2e6;
                 padding: 6px 8px;
                 vertical-align: middle;
             }
-            thead th {
+            #body thead th {
                 background-color:#287c36;
                 color: #fff;
                 text-align: center;
                 font-weight: 600;
             }
-            tbody tr:nth-child(even) {
+            #body tbody tr:nth-child(even) {
                 background-color: #f8f9fa;
             }
             .text-center { text-align: center; }
@@ -116,7 +116,7 @@ class ReportTemplate extends ModelCommon
             HTML;
 
             $this->body_html = <<<HTML
-            <div style="padding-left: 15mm; padding-right: 15mm;">
+            <div id="body" style="padding-left: 15mm; padding-right: 15mm;">
             <h1 style="text-align:center; color:#287c36;">Financial Report</h1>
             <p><strong>Period:</strong> {date_start} - {date_end}</p>
             <table border="1" width="100%" cellspacing="0" cellpadding="6">
