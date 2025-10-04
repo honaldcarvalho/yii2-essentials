@@ -147,7 +147,7 @@ $config = [
                         'group','user','role','role-template','language',
                         'source-message','message','menu','params','configuration','meta-tag',
                         'email-service','license-type','license','log','folder','file',
-                        'page-section','page','notification','notification-message',
+                        'page-section','page','notification','notification-message','report-template',
                         'rest/mail','rest/storage','rest/auth','rest/address',
                         'rest/instagram','rest/youtube','rest/cron'
                     ],
