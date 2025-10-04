@@ -35,7 +35,7 @@ use yii\widgets\ActiveForm;
         'options' => ['rows' => 20]
     ]); ?>
 
-    <?= $form->field($model, 'css')->widget(AceEditor::class, [
+    <?= $form->field($model, 'style')->widget(AceEditor::class, [
         'options' => ['rows' => 20]
     ]); ?>
 
