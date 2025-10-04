@@ -112,7 +112,11 @@ class ReportTemplateController extends AuthorizationController
             $model->id,         // ID do template (busca no banco)
             $sampleData,        // Dados simulados
             'Report_Preview',   // Nome do arquivo
-            'inline'            // Modo: 'inline' (abre no navegador) | 'download' (força download)
+            'inline',           // Modo: 'inline' (abre no navegador) | 'download' (força download)
+            [
+                'margin_top'    => 50, // espaço maior para header
+                'margin_bottom' => 40, // espaço maior para footer
+            ]
         );
     }
 

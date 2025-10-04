@@ -203,7 +203,7 @@ class ReportTemplateHelper
 
         return $rendered;
     }
-    
+
     /**
      * Render and generate a PDF file using an existing ReportTemplate from DB.
      *
@@ -229,30 +229,54 @@ class ReportTemplateHelper
      * @return mixed
      * @throws NotFoundHttpException
      */
-    public static function generatePdf(int $templateId, array $data, string $filename = 'Report', string $mode = 'inline')
-    {
+    public static function generatePdf(
+        int $templateId,
+        array $data,
+        string $filename = 'Report',
+        string $mode = 'inline',
+        array $options = [] // 🔹 novas opções
+    ) {
         $template = ReportTemplate::findOne($templateId);
         if (!$template) {
             throw new NotFoundHttpException("Template not found");
         }
 
+        // 🔹 Renderiza HTML substituindo placeholders por dados
         $html = self::render($template->body_html, $data);
 
-        $mpdf = new Mpdf(['format' => 'A4']);
+        // 🔹 Margens padrão (em mm)
+        $defaults = [
+            'format'        => 'A4',
+            'margin_top'    => 40,
+            'margin_bottom' => 30,
+            'margin_left'   => 15,
+            'margin_right'  => 15,
+        ];
+
+        // 🔹 Mescla defaults com opções passadas
+        $config = array_merge($defaults, $options);
+
+        // 🔹 Cria o mPDF já com margens corretas
+        $mpdf = new \Mpdf\Mpdf($config);
+
+        // 🔹 Header e Footer
         if ($template->header_html) {
-            $mpdf->SetHeader($template->header_html);
+            $mpdf->SetHTMLHeader($template->header_html);
         }
         if ($template->footer_html) {
-            $mpdf->SetFooter($template->footer_html);
+            $mpdf->SetHTMLFooter($template->footer_html);
         }
+
+        // 🔹 Normaliza o HTML para mPDF
         $clean = MpdfHelper::normalizeHtml($html);
 
         $mpdf->WriteHTML($clean);
 
         $filename = $filename . '.pdf';
-        $dest = ($mode === 'download') ? \Mpdf\Output\Destination::DOWNLOAD : \Mpdf\Output\Destination::INLINE;
+        $dest = ($mode === 'download')
+            ? \Mpdf\Output\Destination::DOWNLOAD
+            : \Mpdf\Output\Destination::INLINE;
 
         return $mpdf->Output($filename, $dest);
     }
-
 }
