@@ -117,7 +117,7 @@ class ReportTemplateController extends AuthorizationController
             [
                 'margin_top'    => 50, // espaço maior para header
                 'margin_bottom' => 40, // espaço maior para footer
-                'normalizeHtml' => Yii::$app->resquest->get('normalize') ?? false,
+                'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
             ]
         );
     }
