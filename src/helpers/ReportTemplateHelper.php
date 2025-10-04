@@ -235,8 +235,10 @@ class ReportTemplateHelper
      * @return mixed
      * @throws NotFoundHttpException
      */
-    public static function generatePdf(
-        array $defaults = [
+    public static function generatePdf(array $options = [])
+    {
+        // 🔹 Defaults
+        $defaults = [
             'templateId' => null,
             'data' => null,
             'filename' => 'Report',
@@ -251,51 +253,64 @@ class ReportTemplateHelper
                 'margin_header' => 0,
                 'margin_footer' => 0,
                 'setAutoTopMargin'    => 'stretch',
-                'setAutoBottomMargin' => 'pad'
+                'setAutoBottomMargin' => 'pad',
             ],
-            'normalizeHtml' => false
-        ]
-    ) {
+            'normalizeHtml' => false,
+        ];
 
-        $template = ReportTemplate::findOne($defaults['templateId']);
+        // 🔹 Merge user options over defaults
+        $params = array_replace_recursive($defaults, $options);
 
+        // 🔹 Load template
+        $template = ReportTemplate::findOne($params['templateId']);
         if (!$template) {
-            throw new NotFoundHttpException("Template not found");
+            throw new \yii\web\NotFoundHttpException("Template not found");
         }
 
-        if(!$defaults['custom_body'])
-            $html = self::render($template->body_html, $defaults['data']);
-        else
-            $html = self::render($defaults['custom_body'], $defaults['data']);
+        // 🔹 Render HTML (template body or custom override)
+        if (empty($params['custom_body'])) {
+            $html = self::render($template->body_html, $params['data']);
+        } else {
+            $html = self::render($params['custom_body'], $params['data']);
+        }
 
-        $mpdf = new \Mpdf\Mpdf($defaults['config']);
+        // 🔹 Create mPDF instance with merged config
+        $mpdf = new \Mpdf\Mpdf($params['config']);
+
+        // 🔹 Prepare dynamic placeholders
         $replacements = [
             '{{date}}' => date('d/m/Y'),
             '{{time}}' => date('H:i'),
         ];
 
-        if ($template->header_html) {
+        // 🔹 Header
+        if (!empty($template->header_html)) {
             $header = strtr($template->header_html, $replacements);
             $mpdf->SetHTMLHeader($header);
         }
 
-        if ($template->footer_html) {
+        // 🔹 Footer
+        if (!empty($template->footer_html)) {
             $footer = strtr($template->footer_html, $replacements);
             $mpdf->SetHTMLFooter($footer);
         }
 
-        if ($template->style) {
+        // 🔹 CSS Style
+        if (!empty($template->style)) {
             $mpdf->WriteHTML($template->style, \Mpdf\HTMLParserMode::HEADER_CSS);
         }
 
-        if($defaults['normalizeHtml']){
+        // 🔹 Normalize HTML if requested
+        if ($params['normalizeHtml']) {
             $html = MpdfHelper::normalizeHtml($html);
         }
 
+        // 🔹 Write final body
         $mpdf->WriteHTML($html);
 
-        $filename = $defaults['filename'] . '.pdf';
-        $dest = ($defaults['mode'] === 'download')
+        // 🔹 Output PDF
+        $filename = $params['filename'] . '.pdf';
+        $dest = ($params['mode'] === 'download')
             ? \Mpdf\Output\Destination::DOWNLOAD
             : \Mpdf\Output\Destination::INLINE;
 
