@@ -10,7 +10,7 @@ class m251004_020000_create_report_templates_table extends Migration
     public function safeUp()
     {
 
-        $css = <<< CSS
+        $css = '
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 10pt;
@@ -46,9 +46,9 @@ class m251004_020000_create_report_templates_table extends Migration
         .text-end   { text-align: right; }
         .fw-bold    { font-weight: bold; }
         .small      { font-size: 8pt; }
-        CSS;
+        ';
 
-        $header = <<< HTML
+        $header = '
             <div style="width: 100%; text-align: center; font-family: DejaVu Sans, sans-serif; font-size: 10pt; border-bottom: 1px solid #287c36; padding-bottom: 5px;">
             <table width="100%" style="border-collapse: collapse; height: 65.6562px; width: 100%; border-width: 0px;" border="1">
             <tbody>
@@ -64,9 +64,9 @@ class m251004_020000_create_report_templates_table extends Migration
             </tbody>
             </table>
             </div>
-        HTML;
+        ';
 
-        $body = <<< HTML
+        $body = '
             <h1 style="text-align: center; color: #287c36;">Financial Report</h1>
             <p><strong>Period:</strong> {date_start} - {date_end}</p>
             <table border="1" width="100%" cellspacing="0" cellpadding="6">
@@ -88,11 +88,11 @@ class m251004_020000_create_report_templates_table extends Migration
             </tbody>
             </table>
             <p style="text-align: right; margin-top: 20px;"><strong>Total:</strong> {total}</p>
-        HTML;
+        ';
 
-        $footer = <<< HTML
+        $footer = '
             <div style="width: 100%; border-top: 1px solid #287c36; padding-top: 5px; font-family: DejaVu Sans, sans-serif; font-size: 8pt; text-align: center; color: #666;"><strong>CroacWorks - </strong>Relatório gerado em {{date}} às {{time}} — Página {PAGENO} de {nbpg}</div>
-        HTML;
+        ';
 
         $this->createTable('{{%report_templates}}', [
             'id' => $this->primaryKey(),
