@@ -20,7 +20,7 @@ class m250320_260307_create_clients_table extends Migration
         $this->createTable('{{%clients}}', [
             'id' => $this->primaryKey(),
             'group_id' => $this->integer()->notNull(),
-            'file_id' => $this->integer(),
+            'file_id' => $this->bigInteger(),
             'fullname' => $this->string()->notNull(),
             'email' => $this->string()->notNull(),
             'phone' => $this->string()->notNull(),
