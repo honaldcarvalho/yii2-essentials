@@ -34,8 +34,9 @@ class DocumentUploadInstant extends Widget
     /** @var string Accepted file extensions */
     public $accept = '.pdf,.doc,.docx,.txt';
 
-    /** @var array|string The upload URL (defaults to /storage/upload) */
-    public $uploadUrl = ['/storage/upload'];
+    /** @var array|string REST endpoint for instant upload */
+    public $sendUrl = ['/rest/storage/send'];
+
 
     public function run(): string
     {
