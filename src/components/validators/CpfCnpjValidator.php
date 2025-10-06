@@ -1,6 +1,6 @@
 <?php
 
-namespace croacworks\essentials\validators;
+namespace croacworks\essentials\components\validators;
 
 use Yii;
 use yii\validators\Validator;

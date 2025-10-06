@@ -7,9 +7,9 @@ use croacworks\essentials\models\City;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\Group;
 use croacworks\essentials\models\State;
-use croacworks\essentials\validators\CpfCnpjValidator;
-use croacworks\essentials\validators\FullNameValidator;
-use croacworks\essentials\validators\PostalCodeValidator;
+use croacworks\essentials\components\validators\CpfCnpjValidator;
+use croacworks\essentials\components\validators\FullNameValidator;
+use croacworks\essentials\components\validators\PostalCodeValidator;
 
 /**
  * This is the model class for table "clients".
