@@ -10,6 +10,8 @@ use croacworks\essentials\models\State;
 use croacworks\essentials\components\validators\CpfCnpjValidator;
 use croacworks\essentials\components\validators\FullNameValidator;
 use croacworks\essentials\components\validators\PostalCodeValidator;
+use yii\behaviors\TimestampBehavior;
+use yii\db\Expression;
 
 /**
  * This is the model class for table "clients".
@@ -134,6 +136,18 @@ class Client extends Account
         ];
     }
 
+    public function behaviors()
+    {
+        return array_merge(parent::behaviors(), [
+            'timestamp' => [
+                'class' => TimestampBehavior::class,
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
+                'value' => new Expression('NOW()'),
+            ],
+        ]);
+    }
+    
     /**
      * Gets query for [[City]].
      *
