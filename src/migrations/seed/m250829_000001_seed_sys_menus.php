@@ -6,7 +6,7 @@ use yii\db\Migration;
  * Inserts sys_menus rows resolving parent_id by parent's label (no fixed IDs).
  * Idempotent: re-runs won't duplicate existing labels.
  */
-class m250926_181500_seed_sys_menus extends Migration
+class m250829_000001_seed_sys_menus extends Migration
 {
     private string $table = '{{%sys_menus}}';
 
