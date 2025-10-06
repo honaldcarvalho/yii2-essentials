@@ -394,10 +394,12 @@ class ReportTemplateHelper
         }
 
         // 🔹 Render HTML (body or custom)
+        $data = is_array($params['data']) ? $params['data'] : [];
+
         if (empty($params['custom_body'])) {
-            $html = self::render($template->body_html, $params['data']); // defaults já aplicados
+            $html = self::render($template->body_html, $data);
         } else {
-            $html = self::render($params['custom_body'], $params['data']);
+            $html = self::render($params['custom_body'], $data);
         }
 
         // 🔹 Create mPDF instance
