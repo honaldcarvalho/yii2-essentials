@@ -32,7 +32,6 @@ use croacworks\essentials\components\validators\PostalCodeValidator;
  * @property string|null $username
  * @property string $password
  * @property string|null $password_reset_token
- * @property string|null $verification_token
  * @property string|null $access_token
  * @property string|null $token_validate
  * @property int $status
@@ -90,7 +89,7 @@ class Client extends Account
             ['cpf_cnpj', CpfCnpjValidator::class, 'on' => self::SCENARIO_DEFAULT],
             ['cpf_cnpj', 'string', 'max' => 18, 'on' => self::SCENARIO_DEFAULT],
             ['cpf_cnpj', 'unique', 'targetAttribute' => ['cpf_cnpj','group_id'], 'message' => Yii::t('app','This CPF/CNPJ has already been taken.')],
-            [['file_id', 'fullname', 'email', 'phone', 'street', 'district', 'postal_code', 'username', 'password_hash', 'password_reset_token', 'verification_token'], 'string', 'max' => 255],
+            [['file_id', 'fullname', 'email', 'phone', 'street', 'district', 'postal_code', 'username', 'password_hash', 'password_reset_token'], 'string', 'max' => 255],
             [['cpf_cnpj'], 'string', 'max' => 18],
             [['auth_key'], 'string', 'max' => 32],
             ['postal_code', PostalCodeValidator::class, 'on' => self::SCENARIO_DEFAULT],
@@ -129,7 +128,6 @@ class Client extends Account
             'auth_key' => Yii::t('app','Auth Key'),
             'username' => Yii::t('app','Username'),
             'password_reset_token' => Yii::t('app','Password Reset Token'),
-            'verification_token' => Yii::t('app','Verification Token'),
             'status' => Yii::t('app','Status'),
             'created_at' => Yii::t('app','Created At'),
             'updated_at' => Yii::t('app','Updated At'),
