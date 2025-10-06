@@ -53,7 +53,6 @@ class ClientController extends AuthorizationController
             
             $name_array = explode(' ', $model->fullname);
             $model->username = strtolower($name_array[0] . '_' . end($name_array)).'_'.Yii::$app->security->generateRandomString(8);
-            $model->group_id = Yii::$app->session->get('group')->id;
             $model->password = Yii::$app->security->generatePasswordHash(6);
             $model->password_confirm = Yii::$app->security->generatePasswordHash(6);
             $model->auth_key = Yii::$app->security->generateRandomString(32);
