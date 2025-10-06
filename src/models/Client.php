@@ -64,7 +64,7 @@ class Client extends Account
         $scenarios[self::SCENARIO_SEARCH] = ['id', 'group_id','state_id','city_id', 'street','identity_number', 'district', 'postal_code', 'status', 'created_at', 'updated_at', 'email', 'phone', 'fullname', 'cpf_cnpj', 'username'];
         $scenarios[self::SCENARIO_UPDATE] = ['state_id','city_id', 'street','identity_number', 'district', 'status', 'postal_code', 'email', 'phone', 'fullname'];
         $scenarios[self::SCENARIO_PICTURE] = ['file_id'];
-        $scenarios[self::SCENARIO_PASSWORD] = ['password,password_confirm'];
+        $scenarios[self::SCENARIO_PASSWORD] = ['password_hash','password_confirm'];
         return $scenarios;
     }
 
@@ -84,13 +84,13 @@ class Client extends Account
         return [
             ['fullname', FullNameValidator::class, 'on' => self::SCENARIO_DEFAULT],
             [['group_id','state_id', 'city_id', 'number','identity_number','status'], 'integer'],
-            //[['fullname', 'email', 'phone', 'identity_number', 'cpf_cnpj','state_id', 'city_id', 'street', 'district', 'postal_code', 'auth_key', 'username', 'password'], 'required', 'on' => self::SCENARIO_DEFAULT],
-            [['fullname', 'email', 'cpf_cnpj', 'auth_key', 'username', 'password'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            //[['fullname', 'email', 'phone', 'identity_number', 'cpf_cnpj','state_id', 'city_id', 'street', 'district', 'postal_code', 'auth_key', 'username', 'password_hash'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            [['fullname', 'email', 'cpf_cnpj', 'auth_key', 'username', 'password_hash'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['created_at', 'updated_at'], 'safe'],
             ['cpf_cnpj', CpfCnpjValidator::class, 'on' => self::SCENARIO_DEFAULT],
             ['cpf_cnpj', 'string', 'max' => 18, 'on' => self::SCENARIO_DEFAULT],
             ['cpf_cnpj', 'unique', 'targetAttribute' => ['cpf_cnpj','group_id'], 'message' => Yii::t('app','This CPF/CNPJ has already been taken.')],
-            [['file_id', 'fullname', 'email', 'phone', 'street', 'district', 'postal_code', 'username', 'password', 'password_reset_token', 'verification_token'], 'string', 'max' => 255],
+            [['file_id', 'fullname', 'email', 'phone', 'street', 'district', 'postal_code', 'username', 'password_hash', 'password_reset_token', 'verification_token'], 'string', 'max' => 255],
             [['cpf_cnpj'], 'string', 'max' => 18],
             [['auth_key'], 'string', 'max' => 32],
             ['postal_code', PostalCodeValidator::class, 'on' => self::SCENARIO_DEFAULT],
@@ -128,7 +128,6 @@ class Client extends Account
             'postal_code' => Yii::t('app','Postal Code'),
             'auth_key' => Yii::t('app','Auth Key'),
             'username' => Yii::t('app','Username'),
-            'password' => Yii::t('app','Password'),
             'password_reset_token' => Yii::t('app','Password Reset Token'),
             'verification_token' => Yii::t('app','Verification Token'),
             'status' => Yii::t('app','Status'),

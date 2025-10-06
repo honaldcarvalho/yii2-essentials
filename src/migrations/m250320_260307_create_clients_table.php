@@ -18,11 +18,23 @@ class m250320_260307_create_clients_table extends Migration
             $tableOptions = 'CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE=InnoDB';
         }
         $this->createTable('{{%clients}}', [
+            //autentication fields
             'id' => $this->primaryKey(),
             'group_id' => $this->integer()->notNull(),
+            'group_id' => $this->integer()->null(),
+            'email' => $this->string(190)->notNull()->unique(),
+            'username' => $this->string(64)->notNull()->unique(),
+            'password_hash' => $this->string()->notNull(),
+            'auth_key' => $this->string(32)->notNull(),
+            'access_token' => $this->string(32)->notNull(),
+            'token_validate' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
+            'password_reset_token' => $this->string(190)->null()->unique(),
+            'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
+            'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),
+            'status' => $this->tinyInteger()->notNull()->defaultValue(1),
+            //profile fields
             'file_id' => $this->bigInteger()->unsigned()->defaultValue(null),
             'fullname' => $this->string()->notNull(),
-            'email' => $this->string()->notNull(),
             'phone' => $this->string()->notNull(),
             'identity_number' => $this->string(18),
             'cpf_cnpj' => $this->string(18)->notNull(),
@@ -34,16 +46,6 @@ class m250320_260307_create_clients_table extends Migration
             'postal_code' => $this->string(),
             'address_complement' => $this->string(),
             'notes' => 'MEDIUMTEXT',
-            'auth_key' => $this->string(32)->notNull(),
-            'username' => $this->string()->notNull(),
-            'password' => $this->string()->notNull(),
-            'password_reset_token' => $this->string()->unique(),
-            'verification_token' => $this->string()->defaultValue(null),
-            'access_token' => $this->string()->defaultValue(null),
-            'token_validate'=>$this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
-            'status' => $this->smallInteger()->notNull()->defaultValue(1),
-            'created_at' => $this->dateTime()->defaultValue(new \yii\db\Expression('NOW()')),
-            'updated_at' => $this->timestamp()->defaultValue(null)->append('ON UPDATE CURRENT_TIMESTAMP'),
         ],$tableOptions);
 
         $this->addForeignKey(
