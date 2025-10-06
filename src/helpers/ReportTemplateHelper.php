@@ -356,91 +356,79 @@ class ReportTemplateHelper
      */
     public static function generatePdf(array $options = [])
     {
-        // tempDir gravável
         $tempDir = Yii::getAlias('@runtime/mpdf');
         if (!is_dir($tempDir)) {
             @mkdir($tempDir, 0777, true);
         }
+        $config['tempDir'] = $tempDir;
 
-        // Defaults
+        // 🔹 Defaults
         $defaults = [
-            'templateId'   => null,
-            'data'         => [],            // ⚠️ agora padronizado como array
-            'filename'     => 'Report',
-            'mode'         => 'inline',
-            'custom_body'  => null,          // HTML do documento (content) a ser injetado em {content}
-            'config'       => [
-                'format'             => 'A4',
-                'margin_top'         => 40,
-                'margin_bottom'      => 30,
-                'margin_left'        => 0,
-                'margin_right'       => 0,
-                'margin_header'      => 0,
-                'margin_footer'      => 5,
-                'setAutoTopMargin'   => 'stretch',
+            'templateId' => null,
+            'data' => null,
+            'filename' => 'Report',
+            'mode' => 'inline',
+            'custom_body' => null,
+            'config' => [
+                'format'        => 'A4',
+                'margin_top'    => 40,
+                'margin_bottom' => 30,
+                'margin_left'   => 0,
+                'margin_right'  => 0,
+                'margin_header' => 0,
+                'margin_footer' => 5,
+                'setAutoTopMargin'    => 'stretch',
                 'setAutoBottomMargin' => 'pad',
-                'tempDir'            => $tempDir,
+                'tempDir'=> $tempDir
             ],
             'normalizeHtml' => false,
         ];
 
-        // Merge
+        // 🔹 Merge user options over defaults
         $params = array_replace_recursive($defaults, $options);
 
-        // Garante array
-        $data = is_array($params['data']) ? $params['data'] : [];
-
-        // Carrega template
+        // 🔹 Load template
         $template = ReportTemplate::findOne($params['templateId']);
         if (!$template) {
-            throw new NotFoundHttpException('Template not found');
+            throw new NotFoundHttpException("Template not found");
         }
 
+        // 🔹 Render HTML (body or custom)
+        if (empty($params['custom_body'])) {
+            $html = self::render($template->body_html, $params['data']); // defaults já aplicados
+        } else {
+            $html = self::render($params['custom_body'], $params['data']);
+        }
 
-        // =============================
-        // MERGE em 1 única passada
-        // =============================
-
-        // 1) injeta o custom_body cru em {content}
-        //    (use preg_replace com limite=1 se quiser garantir APENAS a 1ª ocorrência)
-        $baseBody = (string)$template->body_html;
-        $contentRaw = (string)($params['custom_body'] ?? '');
-        $baseBody = str_replace('{content}', $contentRaw, $baseBody);
-        // opcional (só 1ª ocorrência):
-        // $baseBody = preg_replace('/\{content\}/', $contentRaw, $baseBody, 1);
-
-        // 2) renderiza TODO o body (template + content) uma única vez
-        $html = self::render($baseBody, $data, true);
-
-        // Instancia mPDF
+        // 🔹 Create mPDF instance
         $mpdf = new Mpdf($params['config']);
 
-        // Header
+        // 🔹 Header
         if (!empty($template->header_html)) {
-            $header = self::render($template->header_html, $data, true);
+            $header = self::render($template->header_html, $params['data']); // defaults aplicados
             $mpdf->SetHTMLHeader($header);
         }
 
-        // Footer
+        // 🔹 Footer
         if (!empty($template->footer_html)) {
-            $footer = self::render($template->footer_html, $data, true);
+            $footer = self::render($template->footer_html, $params['data']); // defaults aplicados
             $mpdf->SetHTMLFooter($footer);
         }
 
-        // CSS
+        // 🔹 CSS Style
         if (!empty($template->style)) {
             $mpdf->WriteHTML($template->style, \Mpdf\HTMLParserMode::HEADER_CSS);
         }
 
-        // Normalização opcional
-        if (!empty($params['normalizeHtml'])) {
+        // 🔹 Normalize HTML if requested
+        if ($params['normalizeHtml']) {
             $html = MpdfHelper::normalizeHtml($html);
         }
 
-        // Body final
+        // 🔹 Write final body
         $mpdf->WriteHTML($html);
 
-        // Output
+        // 🔹 Output PDF
         $filename = $params['filename'] . '.pdf';
         $dest = ($params['mode'] === 'download')
             ? \Mpdf\Output\Destination::DOWNLOAD
