@@ -88,6 +88,8 @@ $this::registerJs($script);
 
     <?php $form = ActiveForm::begin(); ?>
 
+    <?= $form->field($model, 'nickname')->textInput(['maxlength' => true]) ?>
+
     <?= $form->field($model, 'fullname')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'email')->input('email', ['maxlength' => true]) ?>

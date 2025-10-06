@@ -35,6 +35,7 @@ class m250320_260307_create_clients_table extends Migration
             //profile fields
             'file_id' => $this->bigInteger()->unsigned()->defaultValue(null),
             'fullname' => $this->string()->notNull(),
+            'nickname' => $this->string(),
             'phone' => $this->string()->notNull(),
             'identity_number' => $this->string(18),
             'cpf_cnpj' => $this->string(18)->notNull(),
