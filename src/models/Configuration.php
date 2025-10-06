@@ -77,13 +77,13 @@ class Configuration extends ModelCommon
         return [
             [['description', 'host', 'title', 'slogan', 'bussiness_name', 'email'], 'required', 'on' => ['create', 'update']],
             [['file_id'], 'default', 'value' => null],
-            [['language_id', 'group_id', 'email_service_id', 'status', 'logging'], 'integer'],
+            [['language_id', 'email_service_id', 'status', 'logging'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['description', 'host', 'title', 'bussiness_name', 'email'], 'string', 'max' => 255],
             [['email_service_id'], 'exist', 'skipOnError' => true, 'targetClass' => EmailService::class, 'targetAttribute' => ['email_service_id' => 'id']],
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
-            [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
+            //[['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
         ];
     }
 
