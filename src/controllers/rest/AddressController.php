@@ -2,7 +2,6 @@
 
 namespace croacworks\essentials\controllers\rest;
 
-use croacworks\essentials\controllers\AuthorizationController;
 use Yii;
 
 use croacworks\essentials\models\City;
@@ -15,7 +14,7 @@ class AddressController extends Controller {
     public function __construct($id, $module, $config = array())
     {
         parent::__construct($id, $module, $config);
-        $this->free = ['cities', 'states'];
+        //$this->free = ['cities', 'states'];
     }
 
     public $serializer = [
