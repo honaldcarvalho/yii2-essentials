@@ -365,7 +365,7 @@ class ReportTemplateHelper
         // 🔹 Defaults
         $defaults = [
             'templateId' => null,
-            'data' => null,
+            'data' => [],
             'filename' => 'Report',
             'mode' => 'inline',
             'custom_body' => null,
