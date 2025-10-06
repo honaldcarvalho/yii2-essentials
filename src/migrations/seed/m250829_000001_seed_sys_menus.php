@@ -19,6 +19,7 @@ class m250829_000001_seed_sys_menus extends Migration
 
         // Children of System
         ['label' => 'Menus',           'parent' => 'System', 'icon' => 'fas fa-bars',            'icon_style' => 'fas', 'url' => '/menu/index',             'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\MenuController',           'action' => 'index', 'active' => 'menu',          'visible' => 'index'],
+        ['label' => 'Report Templates','parent' => 'System', 'icon' => 'fas fa-print',           'icon_style' => 'fas', 'url' => '/report-template/index',   'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\ReportTemplateController','action' => 'index', 'active' => 'report-template',          'visible' => 'index'],
         ['label' => 'Configurations',  'parent' => 'System', 'icon' => 'fas fa-clipboard-check', 'icon_style' => 'fas', 'url' => '/configuration/index',     'order' => 2,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\ConfigurationController','action' => 'index', 'active' => null,          'visible' => 'index'],
         ['label' => 'Authentication',  'parent' => 'System', 'icon' => 'fas fa-key',             'icon_style' => 'fas', 'url' => '#',                        'order' => 3,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
         ['label' => 'Dinamic Pages',   'parent' => 'System', 'icon' => 'fas fa-copy',            'icon_style' => 'fas', 'url' => '#',                        'order' => 3,   'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => null,                                           'action' => null,   'active' => null,          'visible' => null],
@@ -57,7 +58,8 @@ class m250829_000001_seed_sys_menus extends Migration
 
         // Children of Logs
         ['label' => 'Geral',           'parent' => 'Logs', 'icon' => '',                         'icon_style' => 'fas', 'url' => '/log/index',              'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LogController',        'action' => 'index', 'active' => 'index',       'visible' => 'index'],
-        ['label' => 'Autentication',   'parent' => 'Logs', 'icon' => 'fas fa-sign-in-alt',       'icon_style' => 'fas', 'url' => '/log/auth',               'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LogController',        'action' => 'auth',  'active' => 'auth',        'visible' => 'auth']
+        ['label' => 'Autentication',   'parent' => 'Logs', 'icon' => 'fas fa-sign-in-alt',       'icon_style' => 'fas', 'url' => '/log/auth',               'order' => 1000,'only_admin' => 0, 'status' => 1, 'show' => 1, 'controller' => 'croacworks\\essentials\\controllers\\LogController',        'action' => 'auth',  'active' => 'auth',        'visible' => 'auth'],
+
     ];
 
     public function safeUp()
