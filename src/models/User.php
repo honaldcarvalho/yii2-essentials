@@ -206,38 +206,4 @@ class User extends Account
         // Expande descendentes (mantém tua API e compatibilidade)
         return \croacworks\essentials\models\Group::getAllDescendantIds($ids);
     }
-
-    /**
-     * Gera hash de senha somente se $this->password vier preenchida.
-     * Mantém a senha atual no update quando os campos ficam vazios.
-     */
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-
-        // Garantir chaves obrigatórias
-        if (empty($this->auth_key)) {
-            $this->auth_key = Yii::$app->security->generateRandomString(32);
-        }
-        if (empty($this->access_token)) {
-            $this->access_token = Yii::$app->security->generateRandomString(32);
-        }
-
-        // Se o usuário informou uma nova senha, gerar hash
-        if (!empty($this->password)) {
-            $this->password_hash = Yii::$app->security->generatePasswordHash($this->password);
-        } else {
-            // No create, exigir que password_hash exista (por segurança)
-            if ($insert && empty($this->password_hash)) {
-                // Falha explícita se tentou criar sem senha
-                $this->addError('password', Yii::t('app', 'Password is required.'));
-                return false;
-            }
-            // No update e senha vazia: não mexe em password_hash (mantém)
-        }
-
-        return true;
-    }
 }
