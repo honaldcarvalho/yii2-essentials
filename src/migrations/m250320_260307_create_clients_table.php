@@ -47,6 +47,15 @@ class m250320_260307_create_clients_table extends Migration
         ],$tableOptions);
 
         $this->addForeignKey(
+            'fk-clients-file_id',
+            'clients',
+            'file_id',
+            'files',
+            'id',
+            'RESTRICT'
+        );
+
+        $this->addForeignKey(
             'fk-clients-group_id',
             'clients',
             'group_id',
