@@ -49,16 +49,6 @@ $config = [
             // 'db' => 'db',           // opcional (default 'db')
             'keyPrefix' => 'app_mutex_', // opcional
         ],
-        // 'storage' => [
-        //     'class' => \croacworks\essentials\components\StorageService::class,
-        //     'driver' => [
-        //         'class'   => \croacworks\essentials\components\storage\LocalStorageDriver::class,
-        //         'basePath' => '@webroot/uploads',
-        //         'baseUrl' => '@web/uploads',
-        //     ],
-        //     'defaultThumbSize' => 300,
-        //     'enableQueue'      => true, // usa jobs se existir queue
-        // ],
         'queue' => [
             'class' => \yii\queue\db\Queue::class,
             'db' => 'db',
@@ -88,16 +78,7 @@ $config = [
             'class' => 'yii\web\DbSession',
             'sessionTable' => 'yii_session',
         ],
-        'view' => [
-            // 'theme' => [
-            //     'basePath' => '@vendor/croacworks/yii2-essentials/src/themes/coreui',
-            //     'baseUrl' => '@vendor/croacworks/yii2-essentials/src/themes/coreui/web',
-            //     'pathMap' => [
-            //         '@app/views' => '@vendor/croacworks/yii2-essentials/src/themes/coreui/views',
-            //     ],  
-            // ],
-        ],
-
+        
         'formatter' => [
             'defaultTimeZone'    => 'America/Fortaleza',
             'dateFormat' => 'dd/MM/yyyy',
