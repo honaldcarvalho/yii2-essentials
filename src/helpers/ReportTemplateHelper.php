@@ -356,6 +356,12 @@ class ReportTemplateHelper
      */
     public static function generatePdf(array $options = [])
     {
+        $tempDir = Yii::getAlias('@runtime/mpdf');
+        if (!is_dir($tempDir)) {
+            @mkdir($tempDir, 0777, true);
+        }
+        $config['tempDir'] = $tempDir;
+
         // 🔹 Defaults
         $defaults = [
             'templateId' => null,
@@ -373,6 +379,7 @@ class ReportTemplateHelper
                 'margin_footer' => 5,
                 'setAutoTopMargin'    => 'stretch',
                 'setAutoBottomMargin' => 'pad',
+                'tempDir'=> $tempDir
             ],
             'normalizeHtml' => false,
         ];
