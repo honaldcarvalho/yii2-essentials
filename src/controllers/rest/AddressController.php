@@ -16,6 +16,11 @@ class AddressController extends AuthorizationController {
         parent::__construct($id, $module, $config);
         $this->free = ['cities', 'states'];
     }
+    
+    public $serializer = [
+        'class' => 'yii\rest\Serializer',
+        'collectionEnvelope' => 'items',
+    ];
 
     public function actionCities(){
         $body = Yii::$app->request->getBodyParams();
