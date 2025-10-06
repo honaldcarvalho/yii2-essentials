@@ -84,7 +84,8 @@ class Client extends Account
         return [
             ['fullname', FullNameValidator::class, 'on' => self::SCENARIO_DEFAULT],
             [['group_id','state_id', 'city_id', 'number','identity_number','status'], 'integer'],
-            [['fullname', 'email', 'phone', 'identity_number', 'cpf_cnpj','state_id', 'city_id', 'street', 'district', 'postal_code', 'auth_key', 'username', 'password'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            //[['fullname', 'email', 'phone', 'identity_number', 'cpf_cnpj','state_id', 'city_id', 'street', 'district', 'postal_code', 'auth_key', 'username', 'password'], 'required', 'on' => self::SCENARIO_DEFAULT],
+            [['fullname', 'email', 'cpf_cnpj', 'auth_key', 'username', 'password'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['created_at', 'updated_at'], 'safe'],
             ['cpf_cnpj', CpfCnpjValidator::class, 'on' => self::SCENARIO_DEFAULT],
             ['cpf_cnpj', 'string', 'max' => 18, 'on' => self::SCENARIO_DEFAULT],
