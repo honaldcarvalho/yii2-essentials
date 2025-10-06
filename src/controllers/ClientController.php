@@ -53,7 +53,7 @@ class ClientController extends AuthorizationController
             
             $name_array = explode(' ', $model->fullname);
             $model->username = strtolower($name_array[0] . '_' . end($name_array)).'_'.Yii::$app->security->generateRandomString(8);
-            $model->setPassword($model->password);
+            $model->setPassword(Yii::$app->security->generateRandomString(6));
             $model->generateAuthKey();
 
             if ($model->save()) {
