@@ -55,7 +55,6 @@ class ReportTemplateController extends AuthorizationController
         // 🔹 Mock data (exemplo)
         $sampleData = [
             'patient_name' => 'John Doe',
-            'date'         => date('d/m/Y'),
             'date_start'   => '01/10/2025',
             'date_end'     => '04/10/2025',
             'total'        => '$1,250.00',
