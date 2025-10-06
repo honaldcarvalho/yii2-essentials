@@ -77,7 +77,7 @@ inputFile.addEventListener('change', async (e) => {
     formData.append('file', file);
 
     try {
-        const res = await fetch('{$this->view->assetManager->publish(Url::to($this->uploadUrl))[1]}', {
+        const res = await fetch('{$this->view->assetManager->publish(Url::to($this->sendUrl))[1]}', {
             method: 'POST',
             body: formData
         });
