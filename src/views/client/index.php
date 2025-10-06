@@ -30,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->title;
                              ])?>
                         </div>
                     </div>
-                    <?php echo $this->render('@vendor/croacworks/essentials/src/views/_parts/filter', ['view' =>'/client','searchModel' => $searchModel]); 
+                    <?php echo $this->render('@vendor/croacworks/yii2-essentials/src/views/_parts/filter', ['view' =>'/client','searchModel' => $searchModel]); 
                     ?>
 
                     <?= GridView::widget([
