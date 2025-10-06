@@ -53,10 +53,8 @@ class ClientController extends AuthorizationController
             
             $name_array = explode(' ', $model->fullname);
             $model->username = strtolower($name_array[0] . '_' . end($name_array)).'_'.Yii::$app->security->generateRandomString(8);
-            $model->password = Yii::$app->security->generatePasswordHash(6);
-            $model->password_confirm = Yii::$app->security->generatePasswordHash(6);
-            $model->auth_key = Yii::$app->security->generateRandomString(32);
-            $model->status = 3;
+            $model->setPassword($model->password);
+            $model->generateAuthKey();
 
             if ($model->save()) {
                 return $this->redirect(['view', 'id' => $model->id]);
