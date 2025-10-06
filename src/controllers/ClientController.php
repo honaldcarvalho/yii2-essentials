@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers;
+namespace croacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\Client;
