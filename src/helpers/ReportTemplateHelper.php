@@ -396,23 +396,20 @@ class ReportTemplateHelper
             throw new NotFoundHttpException('Template not found');
         }
 
+
         // =============================
-        // MERGE EM 2 ETAPAS (sem hardcode)
+        // MERGE em 1 única passada
         // =============================
 
-        // 1) Renderiza o conteúdo do documento (custom_body) com $data
-        $renderedContent = '';
-        if (!empty($params['custom_body'])) {
-            $renderedContent = self::render($params['custom_body'], $data, true);
-        }
-
-        // 2) Injeta {content} no body_html do template
+        // 1) injeta o custom_body cru em {content}
+        //    (use preg_replace com limite=1 se quiser garantir APENAS a 1ª ocorrência)
         $baseBody = (string)$template->body_html;
-        if ($renderedContent !== '') {
-            $baseBody = str_replace('{content}', $renderedContent, $baseBody);
-        }
+        $contentRaw = (string)($params['custom_body'] ?? '');
+        $baseBody = str_replace('{content}', $contentRaw, $baseBody);
+        // opcional (só 1ª ocorrência):
+        // $baseBody = preg_replace('/\{content\}/', $contentRaw, $baseBody, 1);
 
-        // 3) Renderiza o body completo do template (placeholders restantes + loops)
+        // 2) renderiza TODO o body (template + content) uma única vez
         $html = self::render($baseBody, $data, true);
 
         // Instancia mPDF
