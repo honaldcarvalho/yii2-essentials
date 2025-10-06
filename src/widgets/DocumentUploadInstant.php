@@ -11,9 +11,11 @@ use yii\web\View;
  * DocumentUploadInstant
  * ---------------------
  *
- * A widget similar to UploadImageInstant, designed for document uploads (PDF/DOCX/TXT).
- * It uploads the file instantly via AJAX to `/storage/upload`, updates the model’s `file_id`,
- * and displays the uploaded file name and size.
+ * A lightweight widget for instant document uploads (PDF/DOCX/TXT),
+ * inspired by UploadImageInstant.
+ *
+ * Sends files via AJAX to `/rest/storage/send`, updates the model’s `file_id`,
+ * and shows the uploaded file name and size.
  *
  * Example:
  * ```php
@@ -28,15 +30,14 @@ class DocumentUploadInstant extends Widget
     /** @var \yii\db\ActiveRecord The model instance */
     public $model;
 
-    /** @var string The attribute name (usually 'file_id') */
+    /** @var string The model attribute name (usually 'file_id') */
     public $attribute;
 
-    /** @var string Accepted file extensions */
+    /** @var string Accepted file types */
     public $accept = '.pdf,.doc,.docx,.txt';
 
     /** @var array|string REST endpoint for instant upload */
     public $sendUrl = ['/rest/storage/send'];
-
 
     public function run(): string
     {
@@ -44,68 +45,75 @@ class DocumentUploadInstant extends Widget
         $name  = Html::getInputName($this->model, $this->attribute);
         $value = Html::getAttributeValue($this->model, $this->attribute);
 
-        // File input
+        // Visible file input
         $inputFile = Html::fileInput(null, null, [
             'id'     => $id . '-input',
             'accept' => $this->accept,
             'class'  => 'form-control',
         ]);
 
-        // Hidden field that stores file_id
+        // Hidden input that stores the uploaded file_id
         $inputHidden = Html::hiddenInput($name, $value, ['id' => $id]);
 
-        // Info section (shows current or uploaded file)
+        // File info display area
         $fileInfo = Html::tag(
             'div',
             $value
                 ? Yii::t('app', 'File already attached (ID: {id})', ['id' => $value])
                 : Yii::t('app', 'No file uploaded yet'),
-            ['id' => $id . '-info', 'class' => 'mt-2 text-muted small']
+            [
+                'id' => $id . '-info',
+                'class' => 'mt-2 text-muted small'
+            ]
         );
 
-        // JavaScript: handle upload instantly
+        $sendUrl = Url::to($this->sendUrl);
+
+        // JavaScript: handle instant upload
         $js = <<<JS
 const inputFile = document.getElementById('$id-input');
-inputFile.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+if (inputFile) {
+    inputFile.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    const info = document.getElementById('$id-info');
-    info.innerText = Yii.t('app', 'Uploading...');
+        const info = document.getElementById('$id-info');
+        info.innerText = Yii.t('app', 'Uploading...');
 
-    const formData = new FormData();
-    formData.append('file', file);
+        const formData = new FormData();
+        formData.append('file', file);
 
-    try {
-        const res = await fetch('{$this->sendUrl}', {
-            method: 'POST',
-            body: formData
-        });
-        const json = await res.json();
-
-        if (json.success && json.file_id) {
-            document.getElementById('$id').value = json.file_id;
-            info.innerText = `✅ \${file.name} (\${(file.size / 1024).toFixed(1)} KB)`;
-
-            Swal.fire({
-                icon: 'success',
-                title: Yii.t('app', 'Upload completed'),
-                text: file.name,
-                timer: 1500,
-                showConfirmButton: false
+        try {
+            const res = await fetch('{$sendUrl}', {
+                method: 'POST',
+                body: formData
             });
-        } else {
-            throw new Error(json.message || Yii.t('app', 'Upload failed'));
+            const json = await res.json();
+
+            if (json.success && json.file_id) {
+                document.getElementById('$id').value = json.file_id;
+                info.innerText = `✅ \${file.name} (\${(file.size / 1024).toFixed(1)} KB)`;
+
+                Swal.fire({
+                    icon: 'success',
+                    title: Yii.t('app', 'Upload completed'),
+                    text: file.name,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } else {
+                throw new Error(json.message || Yii.t('app', 'Upload failed'));
+            }
+        } catch (err) {
+            info.innerText = '❌ ' + Yii.t('app', 'Upload error');
+            Swal.fire(
+                Yii.t('app', 'Error'),
+                err.message,
+                'error'
+            );
         }
-    } catch (err) {
-        info.innerText = '❌ ' + Yii.t('app', 'Upload error');
-        Swal.fire(
-            Yii.t('app', 'Error'),
-            err.message,
-            'error'
-        );
-    }
-});
+    });
+}
 JS;
 
         $this->view->registerJs($js, View::POS_END);
