@@ -142,12 +142,14 @@ class ReportTemplateController extends AuthorizationController
                 'mode' => 'inline',
                 'config' => [
                     'format'        => 'A4',
-                    // 'margin_top'    => (int) Yii::$app->request->get('margin_top') ?? 40,
-                    // 'margin_bottom' => (int) Yii::$app->request->get('margin_bottom') ?? 20,
-                    // 'margin_left'   => (int) Yii::$app->request->get('margin_left') ?? 0,
-                    // 'margin_right'  => (int) Yii::$app->request->get('margin_right') ?? 0,
-                    // 'margin_header'  => (int) Yii::$app->request->get('margin_header') ?? 0,
-                    // 'margin_footer'  => (int) Yii::$app->request->get('margin_footer') ?? 5
+                    'margin_top'    => $model->margin_top ?? 40,
+                    'margin_bottom' => $model->margin_bottom ?? 20,
+                    'margin_left'   => $model->margin_left ?? 0,
+                    'margin_right'  => $model->margin_right ?? 0,
+                    'margin_header'  => $model->margin_header ?? 0,
+                    'margin_footer'  => $model->margin_footer ?? 30,
+                    'setAutoTopMargin'  => $model->setAutoTopMargin ?? 'stretch',
+                    'setAutoBottomMargin'  => $model->setAutoBottomMargin ?? 'pad'
                 ],
                 'normalizeHtml' => Yii::$app->request->get('normalize') ?? false,
             ]
