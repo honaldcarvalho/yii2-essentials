@@ -1,5 +1,5 @@
 <?php
-namespace croacworks\essentials\commands;
+namespace app\commands;
 
 use Yii;
 use yii\console\Controller;
