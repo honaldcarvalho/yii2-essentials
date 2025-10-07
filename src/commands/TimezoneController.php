@@ -34,7 +34,7 @@ class TimezoneController extends Controller
         // 1️⃣ Ajuste do timezone do sistema
         $output = null;
         $result = null;
-        exec("sudo timedatectl set-timezone {$timezone} 2>&1", $output, $result);
+        exec("timedatectl set-timezone {$timezone} 2>&1", $output, $result);
 
         if ($result === 0) {
             echo "[OK] System timezone set successfully:\n";
@@ -107,7 +107,7 @@ class TimezoneController extends Controller
         // 3️⃣ Reinicia o serviço do MariaDB
         restart:
         echo "Restarting MariaDB service...\n";
-        exec('sudo systemctl restart mariadb 2>/dev/null', $output, $result);
+        exec('systemctl restart mariadb 2>/dev/null', $output, $result);
 
         if ($result === 0) {
             echo "[OK] MariaDB restarted successfully.\n";
