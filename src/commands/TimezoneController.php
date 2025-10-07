@@ -9,39 +9,44 @@ use yii\db\Connection;
 /**
  * TimezoneController
  * ------------------
- * Sets the timezone to "America/Fortaleza" for both
- * the Linux system and the MariaDB/MySQL server.
+ * Sets the timezone to "America/Fortaleza" inside a Docker (Debian-based) container
+ * and updates the MariaDB timezone using Yii::$app->db connection.
  *
  * Usage:
  * ```
  * php yii timezone/set-fortaleza
  * ```
  *
- * Automatically uses Yii::$app->db credentials.
+ * Works even if systemd/timedatectl are not available.
  *
- * @author Honald Carvalho
+ * @author Honald
  */
 class TimezoneController extends Controller
 {
-    /**
-     * Sets timezone for system and MariaDB using Yii DB config.
-     */
     public function actionSetFortaleza(): int
     {
         $timezone = 'America/Fortaleza';
-        echo "=== Setting system timezone to {$timezone} ===\n";
+        echo "=== Setting container timezone to {$timezone} ===\n";
 
-        // 1️⃣ Ajuste do timezone do sistema
-        $output = null;
-        $result = null;
-        exec("timedatectl set-timezone {$timezone} 2>&1", $output, $result);
+        // 1️⃣ Atualiza arquivos de timezone no container
+        try {
+            $zoneFile = "/usr/share/zoneinfo/{$timezone}";
+            if (!file_exists($zoneFile)) {
+                echo "[ERROR] Timezone file {$zoneFile} not found.\n";
+                return ExitCode::UNSPECIFIED_ERROR;
+            }
 
-        if ($result === 0) {
-            echo "[OK] System timezone set successfully:\n";
-            system("timedatectl | grep 'Time zone'");
-        } else {
-            echo "[ERROR] Failed to set system timezone!\n";
-            echo implode("\n", $output) . "\n";
+            // Atualiza /etc/localtime e /etc/timezone
+            @unlink('/etc/localtime');
+            symlink($zoneFile, '/etc/localtime');
+            file_put_contents('/etc/timezone', "{$timezone}\n");
+
+            echo "[OK] System timezone updated to {$timezone}\n";
+
+            // Mostra hora atual para conferência
+            echo "Current system time: " . date('Y-m-d H:i:s T') . "\n";
+        } catch (\Throwable $e) {
+            echo "[ERROR] Failed to update container timezone: {$e->getMessage()}\n";
             return ExitCode::UNSPECIFIED_ERROR;
         }
 
@@ -49,88 +54,38 @@ class TimezoneController extends Controller
 
         /** @var Connection $db */
         $db = Yii::$app->db;
-        $dsn = $db->dsn;
-        $username = $db->username;
-        $password = $db->password;
 
-        // Extrai host (ex: mysql:host=localhost;dbname=test)
-        preg_match('/host=([^;]+)/', $dsn, $matches);
-        $host = $matches[1] ?? 'localhost';
-
-        // 2️⃣ Atualiza timezone global e de sessão
         try {
             $db->createCommand("SET GLOBAL time_zone = '{$timezone}'")->execute();
             $db->createCommand("SET time_zone = '{$timezone}'")->execute();
-            $tzValues = $db->createCommand("SELECT @@global.time_zone AS global_tz, @@session.time_zone AS session_tz")->queryOne();
+
+            $tzValues = $db->createCommand("
+                SELECT @@global.time_zone AS global_tz, @@session.time_zone AS session_tz
+            ")->queryOne();
 
             echo "[OK] MariaDB timezone updated successfully.\n";
             echo "Global: {$tzValues['global_tz']} | Session: {$tzValues['session_tz']}\n";
         } catch (\Throwable $e) {
-            echo "[ERROR] Failed to update MariaDB timezone: " . $e->getMessage() . "\n";
+            echo "[ERROR] Failed to update MariaDB timezone: {$e->getMessage()}\n";
             return ExitCode::UNSPECIFIED_ERROR;
         }
 
-        echo "\n=== Updating MariaDB configuration file ===\n";
+        echo "\n=== Verifying MariaDB timezone variables ===\n";
 
-        $confPaths = ['/etc/mysql/my.cnf', '/etc/my.cnf'];
-        $confFile = null;
-        foreach ($confPaths as $path) {
-            if (file_exists($path)) {
-                $confFile = $path;
-                break;
-            }
-        }
-
-        if (!$confFile) {
-            echo "[WARN] MariaDB configuration file not found.\n";
-            goto restart;
-        }
-
-        $conf = file_get_contents($confFile);
-        if (preg_match('/^default_time_zone/m', $conf)) {
-            $conf = preg_replace(
-                '/^default_time_zone.*/m',
-                "default_time_zone='{$timezone}'",
-                $conf
-            );
-        } else {
-            $conf = preg_replace(
-                '/^\[mysqld\]/m',
-                "[mysqld]\ndefault_time_zone='{$timezone}'",
-                $conf
-            );
-        }
-
-        file_put_contents($confFile, $conf);
-        echo "[OK] Directive default_time_zone applied in {$confFile}.\n";
-
-        // 3️⃣ Reinicia o serviço do MariaDB
-        restart:
-        echo "Restarting MariaDB service...\n";
-        exec('systemctl restart mariadb 2>/dev/null', $output, $result);
-
-        if ($result === 0) {
-            echo "[OK] MariaDB restarted successfully.\n";
-        } else {
-            echo "[WARN] Could not restart MariaDB automatically. Please restart manually.\n";
-        }
-
-        // 4️⃣ Teste final direto via Yii
         try {
-            $finalVars = $db->createCommand("
+            $rows = $db->createCommand("
                 SHOW VARIABLES LIKE 'time_zone';
                 SHOW VARIABLES LIKE 'system_time_zone';
             ")->queryAll();
 
-            echo "\n=== Final Test ===\n";
-            foreach ($finalVars as $row) {
-                echo "{$row['Variable_name']}: {$row['Value']}\n";
+            foreach ($rows as $r) {
+                echo "{$r['Variable_name']}: {$r['Value']}\n";
             }
         } catch (\Throwable $e) {
-            echo "[WARN] Could not verify final timezone: " . $e->getMessage() . "\n";
+            echo "[WARN] Could not verify MariaDB timezone variables: {$e->getMessage()}\n";
         }
 
-        echo "\n✅ Configuration completed successfully!\n";
+        echo "\n✅ Configuration completed successfully inside Docker container!\n";
         return ExitCode::OK;
     }
 }
