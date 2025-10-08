@@ -31,6 +31,12 @@ class License extends ModelCommon
         return 'licenses';
     }
 
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+        \croacworks\essentials\services\TriggerService::runForModel($this);
+    }
+    
     /**
      * {@inheritdoc}
      */
