@@ -124,12 +124,12 @@ class File extends ModelCommon
         }
 
         // Normalized uploads base directory
-        $base = Yii::getAlias('@webroot/uploads');
+        $base = Yii::getAlias('@webroot');
 
         // Ensure no double slashes
         return rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . ltrim($this->path, DIRECTORY_SEPARATOR);
     }
-    
+
     /**
      * Gets query for [[Group]].
      *
