@@ -580,7 +580,15 @@ class StorageController extends ControllerRest
                 }
 
                 if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                    dd($temp_file);
+    dd([
+        'filePathRoot' => $filePathRoot,
+        'tempFile' => $temp_file->tempName,
+        'is_writable' => is_writable(dirname($filePathRoot)),
+        'exists_tmp' => file_exists($temp_file->tempName),
+        'error_last' => error_get_last(),
+        'php_error' => $temp_file->error,
+        'posix_user' => posix_getpwuid(posix_geteuid())['name'] ?? null,
+    ]);
                     return self::errorResponse(
                         500,
                         'filesystem.write_failed',
