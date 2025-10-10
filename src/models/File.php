@@ -53,7 +53,7 @@ class File extends ModelCommon
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios['update'] = ['folder_id','description','caption'];
+        $scenarios['update'] = ['folder_id', 'description', 'caption'];
         return $scenarios;
     }
 
@@ -63,21 +63,21 @@ class File extends ModelCommon
     public function rules()
     {
         return [
-            [['folder_id', 'size','duration','caption','status'], 'integer'],
-            [['name', 'path', 'url', 'extension', 'size'],'required','on'=>self::SCENARIO_DEFAULT],
+            [['folder_id', 'size', 'duration', 'caption', 'status'], 'integer'],
+            [['name', 'path', 'url', 'extension', 'size'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['created_at', 'updated_at'], 'safe'],
             [['name', 'path', 'url', 'pathThumb', 'urlThumb'], 'string', 'max' => 300],
             [['description'], 'string', 'max' => 255],
-            [['extension','type'], 'string', 'max' => 6],
-            
-            ['file', 'file', 'skipOnEmpty' => true,'maxSize' => 1024 * 1024 * $this->max_size, 'extensions' => $this->extensions,'when'=> function($model){
+            [['extension', 'type'], 'string', 'max' => 6],
+
+            ['file', 'file', 'skipOnEmpty' => true, 'maxSize' => 1024 * 1024 * $this->max_size, 'extensions' => $this->extensions, 'when' => function ($model) {
                 return $model->file !== 'ajax' && $model->isNewRecord;
             }],
-                    
+
             // ['file', 'required','when'=> function($model){
             //     return $model->isNewRecord;
             // }],
-                    
+
             [['folder_id'], 'exist', 'skipOnError' => true, 'targetClass' => Folder::class, 'targetAttribute' => ['folder_id' => 'id']],
 
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
@@ -108,7 +108,28 @@ class File extends ModelCommon
             'updated_at' => Yii::t('app', 'Updated At'),
         ];
     }
+    /**
+     * Returns the absolute filesystem path of this file.
+     *
+     * Example:
+     *   /app/frontend/web/uploads/docs/document-6-v1.pdf
+     *
+     * @return string Absolute path on disk
+     * @throws \yii\base\Exception if the file path is not defined.
+     */
+    public function getAbsolutePath(): string
+    {
+        if (empty($this->path)) {
+            throw new \yii\base\Exception('File path is empty.');
+        }
 
+        // Normalized uploads base directory
+        $base = Yii::getAlias('@webroot/uploads');
+
+        // Ensure no double slashes
+        return rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . ltrim($this->path, DIRECTORY_SEPARATOR);
+    }
+    
     /**
      * Gets query for [[Group]].
      *
