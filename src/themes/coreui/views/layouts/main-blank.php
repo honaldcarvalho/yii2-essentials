@@ -12,37 +12,51 @@ use croacworks\essentials\themes\coreui\assets\PluginAsset;
 use yii\helpers\Html;
 use yii\web\View;
 
-PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap','fancybox','jquery-ui','toastr','select2','sweetalert2']);
+PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap', 'fancybox', 'jquery-ui', 'toastr', 'select2', 'sweetalert2']);
 PjaxHelperAsset::register($this);
 CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
 $configuration = Configuration::get();
 $assetDir = Yii::$app->assetManager->getPublishedUrl('@vendor/croacworks/yii2-essentials/src/themes/coreui/web');
-if(Yii::$app->user->identity === null){
-    return (new CommonController(0,0))->redirect(['site/login']); 
+if (Yii::$app->user->identity === null) {
+  return (new CommonController(0, 0))->redirect(['site/login']);
 }
 $theme = Yii::$app->user->identity->profile->theme;
 $this->registerJs("yii.t = function(category, message){ return message; };", View::POS_END);
 ?>
 <?php $this->beginPage() ?>
-<!doctype html >
+<!doctype html>
 <html lang="<?= Yii::$app->language ?>" data-coreui-theme="dark">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title><?= $this->title != '' ? $configuration->title . ' - ' . Html::encode($this->title) : $configuration->title  ?></title>
-    <?php 
-    $this->head(); 
-    $this->registerJs(<<<JS
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title><?= $this->title != '' ? $configuration->title . ' - ' . Html::encode($this->title) : $configuration->title  ?></title>
+  <script>
+    // Prevent CoreUI color-modes crash in blank layouts
+    window.showActiveTheme = function() {
+      try {
+        const el = document.querySelector('[data-coreui-theme-value]');
+        if (!el) return; // Skip safely
+        // Continue default CoreUI logic if available
+        if (window.CoreUI && CoreUI.updateTheme) CoreUI.updateTheme();
+      } catch (e) {
+        console.warn('CoreUI color-modes neutralized (blank layout)');
+      }
+    };
+  </script>
+  <?php
+  $this->head();
+  $this->registerJs(<<<JS
     try {
       showActiveTheme();
     } catch (e) {
       console.warn('CoreUI color-modes skipped (blank layout)');
     }
     JS, View::POS_END);
-    $this->registerJs(<<<JS
+  $this->registerJs(<<<JS
     onPjaxReady((root) => {
     // Fancybox bindings
     if (typeof Fancybox !== 'undefined') {
@@ -66,14 +80,16 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
     $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
     });
     JS);
-    ?>
-  </head>
-  <body>
-    <?php $this->beginBody() ?>
+  ?>
+</head>
 
-    <?= $this->render('content_blank', ['content' => $content, 'assetDir' => $assetDir,'theme'=>$theme,'configuration'=>$configuration]) ?>
+<body>
+  <?php $this->beginBody() ?>
 
-    <?php $this->endBody() ?>
-  </body>
+  <?= $this->render('content_blank', ['content' => $content, 'assetDir' => $assetDir, 'theme' => $theme, 'configuration' => $configuration]) ?>
+
+  <?php $this->endBody() ?>
+</body>
+
 </html>
 <?php $this->endPage() ?>
