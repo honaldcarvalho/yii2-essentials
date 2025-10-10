@@ -283,6 +283,17 @@ class StorageController extends ControllerRest
             'quality'         => 80
         ]
     ) {
+        
+        if (is_string($file) && file_exists($file)) {
+            $file = new UploadedFile([
+                'name' => basename($file),
+                'tempName' => $file,
+                'type' => mime_content_type($file),
+                'size' => filesize($file),
+                'error' => 0,
+            ]);
+        }
+
         $safeUnlink = function (?string $p) {
             if ($p && is_file($p)) {
                 @unlink($p);
@@ -580,15 +591,15 @@ class StorageController extends ControllerRest
                 }
 
                 if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-    dd([
-        'filePathRoot' => $filePathRoot,
-        'tempFile' => $temp_file->tempName,
-        'is_writable' => is_writable(dirname($filePathRoot)),
-        'exists_tmp' => file_exists($temp_file->tempName),
-        'error_last' => error_get_last(),
-        'php_error' => $temp_file->error,
-        'posix_user' => posix_getpwuid(posix_geteuid())['name'] ?? null,
-    ]);
+                    dd([
+                        'filePathRoot' => $filePathRoot,
+                        'tempFile' => $temp_file->tempName,
+                        'is_writable' => is_writable(dirname($filePathRoot)),
+                        'exists_tmp' => file_exists($temp_file->tempName),
+                        'error_last' => error_get_last(),
+                        'php_error' => $temp_file->error,
+                        'posix_user' => posix_getpwuid(posix_geteuid())['name'] ?? null,
+                    ]);
                     return self::errorResponse(
                         500,
                         'filesystem.write_failed',
