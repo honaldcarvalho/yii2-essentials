@@ -283,116 +283,78 @@ class StorageController extends ControllerRest
             'quality'         => 80
         ]
     ) {
-        
-        if (is_string($file) && file_exists($file)) {
-            $file = new UploadedFile([
-                'name' => basename($file),
-                'tempName' => $file,
-                'type' => mime_content_type($file),
-                'size' => filesize($file),
-                'error' => 0,
-            ]);
-        }
-
         $safeUnlink = function (?string $p) {
             if ($p && is_file($p)) {
                 @unlink($p);
             }
         };
 
-        $createdPaths = [
-            'file'  => null,
-            'thumb' => null,
-            'temp'  => null,
-        ];
-
+        $createdPaths = ['file' => null, 'thumb' => null, 'temp' => null];
         $response = ['code' => 500, 'success' => false, 'data' => []];
 
         try {
             $webroot       = Yii::getAlias('@webroot');
             $web           = Yii::getAlias('@web');
             $upload_folder = Yii::$app->params['upload.folder'];
-
             $files_folder  = "/{$upload_folder}";
             $upload_root   = "{$webroot}{$files_folder}";
             $webFiles      = "{$web}{$files_folder}";
 
-            $temp_file     = $file;
-            $group_id      = 1;
-            $folder_id     = null;
-            $duration      = 0;
-            $save          = 0;
-            $attach_model  = 0;
-            $name          = '';
-            $description   = '';
-            $filePath      = '';
-            $filePathThumb = '';
-            $fileUrl       = '';
-            $fileThumbUrl  = '';
-            $thumb_aspect  = null;
-            $ext           = '';
-            $type          = '';
-
-            $model         = new File();
-
-            if (($temp_file = $file) === null) {
-                $response = self::errorResponse(400, 'upload.no_file', 'No file received.', []);
-                return $response;
-            }
-
-            $file_name     = $options['file_name']       ?? false;
-            $description   = $options['description']     ?? $temp_file->name;
-            $folder_id     = $options['folder_id']       ?? 1;
-            $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
-            $save          = $options['save']            ?? 0;
-            $convert_video = $options['convert_video']   ?? true;
-            $thumb_aspect  = $options['thumb_aspect']    ?? 1;
-            $quality       = $options['quality']         ?? 80;
-            $group_id = (int)($options['group_id'] ?? 1);
-            if (!AuthorizationController::isMaster()) {
-                $group_id = AuthorizationController::userGroup(); // ou resolveParentGroupId(...), se preferir
-            }
-
-            $ext = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
-
-            if (!empty($file_name)) {
-                $name = "{$file_name}.{$ext}";
+            // ✅ Compatibilidade: aceitar string ou UploadedFile
+            if (is_string($file) && file_exists($file)) {
+                $temp_file = new \yii\web\UploadedFile([
+                    'name' => basename($file),
+                    'tempName' => $file,
+                    'type' => mime_content_type($file) ?: 'application/octet-stream',
+                    'size' => filesize($file),
+                    'error' => 0,
+                ]);
+            } elseif ($file instanceof \yii\web\UploadedFile) {
+                $temp_file = $file;
             } else {
-                $name = 'file_' . date('dmYHis') . Yii::$app->security->generateRandomString(6) . ".{$ext}";
+                return self::errorResponse(400, 'upload.invalid_file', 'Invalid file input.');
             }
 
-            $type = 'unknow';
+            $group_id      = (int)($options['group_id'] ?? 1);
+            $folder_id     = $options['folder_id'] ?? 1;
+            $description   = $options['description'] ?? $temp_file->name;
+            $file_name     = $options['file_name'] ?? pathinfo($temp_file->name, PATHINFO_FILENAME);
+            $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
+            $save          = (int)($options['save'] ?? 0);
+            $convert_video = (bool)($options['convert_video'] ?? true);
+            $thumb_aspect  = $options['thumb_aspect'] ?? 1;
+            $quality       = (int)($options['quality'] ?? 80);
+
+            if (!AuthorizationController::isMaster()) {
+                $group_id = AuthorizationController::userGroup();
+            }
+
+            // 🧩 Detect type
+            $ext = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
+            $type = 'unknown';
             if (!empty($temp_file->type) && strpos($temp_file->type, '/') !== false) {
                 [$type, $format] = explode('/', $temp_file->type);
             }
 
-            // ======== IMAGE ========
+            // ================================================
+            // ================   IMAGE   =====================
+            // ================================================
             if ($type === 'image') {
-                if ($folder_id === 1) {
-                    $folder_id = 2;
-                }
+                if ($folder_id === 1) $folder_id = 2;
 
-                $path          = "{$files_folder}/images";
-                $pathThumb     = "{$files_folder}/images/thumbs";
                 $pathRoot      = "{$upload_root}/images";
                 $pathThumbRoot = "{$upload_root}/images/thumbs";
+                $name          = "{$file_name}.{$ext}";
 
-                $filePath         = "{$path}/{$name}";
-                $filePathThumb    = "{$pathThumb}/{$name}";
+                FileHelper::createDirectory($pathRoot);
+                FileHelper::createDirectory($pathThumbRoot);
+
                 $filePathRoot     = "{$pathRoot}/{$name}";
                 $filePathThumbRoot = "{$pathThumbRoot}/{$name}";
+                $fileUrl          = "{$webFiles}/images/{$name}";
+                $fileThumbUrl     = "{$webFiles}/images/thumbs/{$name}";
 
-                $fileUrl       = "{$webFiles}/images/{$name}";
-                $fileThumbUrl  = "{$webFiles}/images/thumbs/{$name}";
-
-                if (!file_exists($pathRoot)) {
-                    FileHelper::createDirectory($pathRoot);
-                }
-                if (!file_exists($pathThumbRoot)) {
-                    FileHelper::createDirectory($pathThumbRoot);
-                }
-
-                if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
+                if (!$temp_file->saveAs($filePathRoot)) {
                     return self::errorResponse(
                         500,
                         'filesystem.write_failed',
@@ -402,204 +364,68 @@ class StorageController extends ControllerRest
                 }
                 $createdPaths['file'] = $filePathRoot;
 
+                // gera thumb
                 try {
-                    $thumb_aspect = $options['thumb_aspect'] ?? null;
-
-                    if (!$thumb_aspect || $thumb_aspect === '1') {
+                    if ($thumb_aspect === 1 || $thumb_aspect === '1') {
                         $image_size = getimagesize($filePathRoot);
-                        if (!$image_size) {
-                            return self::errorResponse(
-                                422,
-                                'image.get_size_failed',
-                                'Failed to read image size.',
-                                ['input' => $filePathRoot]
-                            );
-                        }
-
-                        $major = $image_size[0];
-                        $min   = $image_size[1];
-                        $mov   = ($major - $min) / 2;
-                        $point = [$mov, 0];
-
-                        if ($major < $min) {
-                            $major = $image_size[1];
-                            $min   = $image_size[0];
+                        if ($image_size) {
+                            $major = max($image_size[0], $image_size[1]);
+                            $min   = min($image_size[0], $image_size[1]);
                             $mov   = ($major - $min) / 2;
-                            $point = [0, $mov];
-                        }
-
-                        Image::crop($filePathRoot, $min, $min, $point)
-                            ->save($filePathThumbRoot, ['quality' => 100]);
-                        $createdPaths['thumb'] = $filePathThumbRoot;
-
-                        if ($min > 300) {
-                            Image::thumbnail($filePathThumbRoot, 300, 300)
+                            $point = ($image_size[0] > $image_size[1]) ? [$mov, 0] : [0, $mov];
+                            \yii\imagine\Image::crop($filePathRoot, $min, $min, $point)
                                 ->save($filePathThumbRoot, ['quality' => 100]);
                         }
                     } else {
-                        [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
-                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
-                        $createdPaths['thumb'] = $filePathThumbRoot;
+                        [$w, $h] = explode('/', $thumb_aspect);
+                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$w, (int)$h);
                     }
+                    $createdPaths['thumb'] = $filePathThumbRoot;
                 } catch (\Throwable $e) {
-                    $safeUnlink($createdPaths['thumb']);
-                    return self::mapException($e, ['stage' => 'image.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
+                    $safeUnlink($filePathThumbRoot);
+                    return self::mapException($e, ['stage' => 'image.thumb']);
                 }
 
-                // ======== VIDEO ========
+                // ================================================
+                // ================   VIDEO   =====================
+                // ================================================
             } elseif ($type === 'video') {
-                if ($folder_id === 1) {
-                    $folder_id = 3;
-                }
+                if ($folder_id === 1) $folder_id = 3;
 
-                if (!empty($file_name)) {
-                    $name = "{$file_name}.mp4";
-                } else {
-                    $name = 'file_' . date('dmYHis') . Yii::$app->security->generateRandomString(6) . ".mp4";
-                }
-
-                $fileTemp = "{$upload_root}/{$temp_file->name}";
-
-                $path     = "{$files_folder}/videos";
-                $pathRoot = "{$upload_root}/videos";
-                $filePath     = "{$path}/{$name}";
+                $pathRoot  = "{$upload_root}/videos";
+                $name      = "{$file_name}.mp4";
                 $filePathRoot = "{$pathRoot}/{$name}";
-                $fileUrl  = "{$webFiles}/videos/{$name}";
+                FileHelper::createDirectory($pathRoot);
 
-                if (!file_exists($pathRoot)) {
-                    FileHelper::createDirectory($pathRoot);
-                }
-
-                if ($convert_video && strtolower($ext) !== 'mp4') {
-                    if (!$temp_file->saveAs($fileTemp, ['quality' => $quality])) {
-                        return self::errorResponse(
-                            500,
-                            'filesystem.write_failed',
-                            'Failed to save temporary video file.',
-                            self::diagnoseWriteFailure($fileTemp, $temp_file)
-                        );
-                    }
-                    $createdPaths['temp'] = $fileTemp;
-
-                    try {
-                        $ffmpeg = FFMpeg::create();
-                        $video  = $ffmpeg->open($fileTemp);
-                        $video->save(new X264(), $filePathRoot);
-                    } catch (\Throwable $e) {
-                        $safeUnlink($createdPaths['temp']);
-                        $safeUnlink($filePathRoot);
-                        $createdPaths['temp'] = null;
-                        return self::mapException($e, ['stage' => 'video.encode', 'input' => $fileTemp, 'output' => $filePathRoot]);
-                    }
-
-                    $safeUnlink($createdPaths['temp']);
-                    $createdPaths['temp'] = null;
-                    $ext = 'mp4';
-                } else {
-                    if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                        return self::errorResponse(
-                            500,
-                            'filesystem.write_failed',
-                            'Failed to save video.',
-                            self::diagnoseWriteFailure($filePathRoot, $temp_file)
-                        );
-                    }
+                if (!$temp_file->saveAs($filePathRoot)) {
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save video file.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
                 }
                 $createdPaths['file'] = $filePathRoot;
 
-                $sec = 2;
-                $video_thumb_name  = str_replace('.', '_', $name) . '.jpg';
-                $pathThumb         = "{$files_folder}/videos/thumbs";
-                $pathThumbRoot     = "{$upload_root}/videos/thumbs";
-                $filePathThumb     = "{$pathThumb}/{$video_thumb_name}";
-                $filePathThumbRoot = "{$pathThumbRoot}/{$video_thumb_name}";
-                $fileThumbUrl      = "{$webFiles}/videos/thumbs/{$video_thumb_name}";
+                $fileUrl = "{$webFiles}/videos/{$name}";
+                $fileThumbUrl = "{$webFiles}/videos/thumbs/{$name}.jpg";
 
-                if (!file_exists($pathThumbRoot)) {
-                    FileHelper::createDirectory($pathThumbRoot);
-                }
-
-                try {
-                    $ffmpeg = FFMpeg::create();
-                    $video  = $ffmpeg->open($filePathRoot);
-                    $frame  = $video->frame(TimeCode::fromSeconds($sec));
-                    $frame->save($filePathThumbRoot);
-                    $createdPaths['thumb'] = $filePathThumbRoot;
-
-                    if ($thumb_aspect == 1) {
-                        $image_size = getimagesize($filePathThumbRoot);
-                        if (!$image_size) {
-                            return self::errorResponse(
-                                422,
-                                'image.get_size_failed',
-                                'Failed to read video thumbnail size.',
-                                ['input' => $filePathThumbRoot]
-                            );
-                        }
-
-                        $major = $image_size[0];
-                        $min   = $image_size[1];
-                        $mov   = ($major - $min) / 2;
-                        $point = [$mov, 0];
-
-                        if ($major < $min) {
-                            $major = $image_size[1];
-                            $min   = $image_size[0];
-                            $mov   = ($major - $min) / 2;
-                            $point = [0, $mov];
-                        }
-
-                        Image::crop($filePathThumbRoot, $min, $min, $point)
-                            ->save($filePathThumbRoot, ['quality' => 100]);
-
-                        if ($min > 300) {
-                            Image::thumbnail($filePathThumbRoot, 300, 300)
-                                ->save($filePathThumbRoot, ['quality' => 100]);
-                        }
-                    } else {
-                        [$thumbWidth, $thumbHeigh] = explode('/', $options['thumb_aspect']);
-                        self::createThumbnail($filePathThumbRoot, $filePathThumbRoot, (int)$thumbWidth, (int)$thumbHeigh);
-                    }
-                } catch (\Throwable $e) {
-                    $safeUnlink($createdPaths['thumb']);
-                    return self::mapException($e, ['stage' => 'video.thumb', 'input' => $filePathRoot, 'output' => $filePathThumbRoot]);
-                }
-
-                try {
-                    $ffprobe  = \FFMpeg\FFProbe::create();
-                    $duration = (int)$ffprobe->format($filePathRoot)->get('duration');
-                } catch (\Throwable $e) {
-                    $duration = 0;
-                }
-
-                // ======== DOC ========
+                // ================================================
+                // ================   DOC / PDF   =================
+                // ================================================
             } else {
                 $type = 'doc';
-                if ($folder_id === 1) {
-                    $folder_id = 4;
-                }
+                if ($folder_id === 1) $folder_id = 4;
 
-                $path     = "{$files_folder}/docs";
                 $pathRoot = "{$upload_root}/docs";
-                $filePath     = "{$path}/{$name}";
+                $name     = "{$file_name}.{$ext}";
+                FileHelper::createDirectory($pathRoot);
+
                 $filePathRoot = "{$pathRoot}/{$name}";
                 $fileUrl      = "{$webFiles}/docs/{$name}";
-                $fileThumbUrl = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO PREVIEW';
+                $fileThumbUrl = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO+PREVIEW';
 
-                if (!file_exists($pathRoot)) {
-                    FileHelper::createDirectory($pathRoot);
-                }
-
-                if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
-                    dd([
-                        'filePathRoot' => $filePathRoot,
-                        'tempFile' => $temp_file->tempName,
-                        'is_writable' => is_writable(dirname($filePathRoot)),
-                        'exists_tmp' => file_exists($temp_file->tempName),
-                        'error_last' => error_get_last(),
-                        'php_error' => $temp_file->error,
-                        'posix_user' => posix_getpwuid(posix_geteuid())['name'] ?? null,
-                    ]);
+                if (!$temp_file->saveAs($filePathRoot)) {
                     return self::errorResponse(
                         500,
                         'filesystem.write_failed',
@@ -610,82 +436,46 @@ class StorageController extends ControllerRest
                 $createdPaths['file'] = $filePathRoot;
             }
 
+            // ================================================
+            // ================   SAVE MODEL   ================
+            // ================================================
             $file_uploaded = [
                 'group_id'   => $group_id,
                 'folder_id'  => $folder_id,
                 'name'       => $name,
                 'description' => $description,
-                'path'       => $filePath,
+                'path'       => str_replace($webroot, '', $filePathRoot),
                 'url'        => $fileUrl,
-                'pathThumb'  => $filePathThumb,
+                'pathThumb'  => str_replace($webroot, '', $createdPaths['thumb'] ?? ''),
                 'urlThumb'   => $fileThumbUrl,
                 'extension'  => $ext,
                 'type'       => $type,
-                'size'       => filesize($createdPaths['file'] ?? $filePathRoot),
-                'duration'   => (int)$duration,
+                'size'       => filesize($createdPaths['file']),
                 'created_at' => date('Y-m-d H:i:s'),
             ];
 
             if ($save) {
-                $file_uploaded['group_id'] = $group_id;
-                if (!AuthorizationController::isMaster()) {
-                    $file_uploaded['group_id'] = AuthorizationController::userGroup();
-                }
-
-                $file_uploaded['class'] = File::class;
-                $file_uploaded['file']  = $temp_file;
-
-                /** @var File $model */
-                $model = Yii::createObject($file_uploaded);
-
+                $model = new \croacworks\essentials\models\File($file_uploaded);
                 if (!$model->save()) {
                     $safeUnlink($createdPaths['file']);
                     $safeUnlink($createdPaths['thumb']);
-
                     return self::errorResponse(
                         422,
                         'db.validation_failed',
                         'Failed to save file in database.',
-                        [
-                            'firstErrors' => $model->getFirstErrors(),
-                            'allErrors'   => $model->getErrors(),
-                            'attributes'  => $model->getAttributes(null, ['file']),
-                        ]
+                        ['errors' => $model->getErrors()]
                     );
                 }
-
-                if ($attach_model) {
-                    $className = $attach_model->class_name ?? null;
-                    $fieldA    = $attach_model->fields[0] ?? null; // ex.: 'page_id'
-                    $fieldB    = $attach_model->fields[1] ?? null; // ex.: 'file_id'
-                    $targetId  = (int)($attach_model->id ?? 0);
-
-                    if ($className && $fieldA && $fieldB && $targetId > 0) {
-                        /** @var \yii\db\ActiveRecord $attact */
-                        $attact = new $className([
-                            $fieldA => $targetId,
-                            $fieldB => $model->id,
-                        ]);
-                        if (!$attact->save()) {
-                            Yii::warning(['attach_error' => $attact->getErrors()], __METHOD__);
-                        }
-                    } else {
-                        Yii::warning(['attach_error' => 'attach_model incompleto'], __METHOD__);
-                    }
-                }
-
                 $response = ['code' => 200, 'success' => true, 'data' => $model];
-                return $response;
+            } else {
+                $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
             }
 
-            $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
             return $response;
         } catch (\Throwable $th) {
             $safeUnlink($createdPaths['file']);
             $safeUnlink($createdPaths['thumb']);
             $safeUnlink($createdPaths['temp']);
-
-            Yii::error("uploadFile error: {$th->getMessage()}\n{$th->getTraceAsString()}", __METHOD__);
             return self::mapException($th, ['stage' => 'uploadFile.catch']);
         }
     }
