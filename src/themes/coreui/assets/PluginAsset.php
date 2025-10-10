@@ -11,6 +11,10 @@ class PluginAsset extends AssetBundle
     ];
 
     public static $pluginMap = [
+        'color-mode' => [
+            'color-modes/color-modes.js',
+            'color-modes/colors.js',
+        ],
         'axios' => [
             'js' => 'axios/axios.min.js',
         ],

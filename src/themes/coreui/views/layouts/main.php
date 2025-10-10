@@ -17,7 +17,7 @@ use yii\web\View;
 PjaxHelperAsset::register($this);
 CoreuiAsset::register($this);
 FontAwesomeAsset::register($this);
-PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap', 'fancybox', 'jquery-ui', 'toastr', 'select2', 'sweetalert2']);
+PluginAsset::register($this)->add(['fontawesome', 'icheck-bootstrap', 'fancybox', 'jquery-ui', 'toastr', 'select2', 'sweetalert2','color-modes']);
 NotificationAsset::register($this);
 
 $configuration = Configuration::get();
