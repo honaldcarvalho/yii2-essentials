@@ -579,7 +579,8 @@ class StorageController extends ControllerRest
                     FileHelper::createDirectory($pathRoot);
                 }
 
-                if (!$temp_file->saveAs($filePathRoot)) {
+                if (!$temp_file->saveAs($filePathRoot, ['quality' => $quality])) {
+                    dd($temp_file);
                     return self::errorResponse(
                         500,
                         'filesystem.write_failed',
