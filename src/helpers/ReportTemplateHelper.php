@@ -434,6 +434,12 @@ class ReportTemplateHelper
             ? \Mpdf\Output\Destination::DOWNLOAD
             : \Mpdf\Output\Destination::INLINE;
 
+        $mode = $params['mode'] ?? 'inline';
+
+        if ($mode === 'string') {
+            return $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+        }
+
         return $mpdf->Output($filename, $dest);
     }
 }
