@@ -22,6 +22,7 @@ if( AuthorizationController::isGuest())
 
         <p>
             <?= \Yii::t('app','The above error occurred while the Web server was processing your request.'); ?></b>
+            <?= $message; ?></b>
         </p>
     </div>
 </div>
