@@ -37,11 +37,9 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
     $this->head(); 
     
     $this->registerJs(<<<JS
-    onPjaxReady((root) => {
+
     try {
-    if (window.Fancybox) {
-        Fancybox.bind(root.find('[data-fancybox]').get());
-    }
+      Fancybox.bind("[data-fancybox]");
     } catch(e) { /* ignore */ }
     // Overlay custom enquanto abre
     $(document).off('click.fbx','[data-fancybox]').on('click.fbx','[data-fancybox]', function(){
@@ -57,7 +55,7 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
 
     $(document).off('afterShow.fb.pjax').on('afterShow.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
     $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
-    });
+
     JS);
     ?>
   </head>
