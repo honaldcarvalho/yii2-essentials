@@ -88,7 +88,7 @@ if (($tableSchema = $generator->getTableSchema()) === false) {
                         'pager' => [
                             'class' => 'yii\bootstrap5\LinkPager',
                         ]
-                    ]); ?>" ?>
+                    ]); ?>
 
 
                     <?= "<?php Pjax::end(); ?>" ?>
