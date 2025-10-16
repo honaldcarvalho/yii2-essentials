@@ -19,10 +19,11 @@ if( AuthorizationController::isGuest())
 <div class="error-page">
     <div class="error-content" style="margin-left: auto;">
         <h3><i class="fas fa-exclamation-triangle text-danger"></i> <?= \Yii::t('app',$name); ?></h3>
-
         <p>
             <?= \Yii::t('app','The above error occurred while the Web server was processing your request.'); ?></b>
-            <?= $message; ?></b>
+        </p>
+        <p>
+            <?= $message; ?>
         </p>
     </div>
 </div>
