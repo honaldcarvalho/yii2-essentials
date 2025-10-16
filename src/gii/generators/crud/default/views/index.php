@@ -21,7 +21,7 @@ use yii\widgets\Pjax;
 /* @var \$dataProvider yii\\data\\ActiveDataProvider */
 
 $this->title = Yii::t('app', '<?= Inflector::pluralize(Inflector::camel2words(StringHelper::basename($generator->modelClass))) ?>');
-$this->params['breadcrumbs'][] = \$this->title;
+$this->params['breadcrumbs'][] = $this->title;
 ?>
 
 <div class="container-fluid">
