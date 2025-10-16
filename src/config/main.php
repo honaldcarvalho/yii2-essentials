@@ -231,14 +231,14 @@ if (YII_ENV_DEV) {
         'class' => yii\gii\Module::class,
         // uncomment the following to add your IP if you are not connecting from localhost.
         'allowedIPs' => ['*'],
-        // 'generators' => [ // here
-        //     'crud' => [ // generator name
-        //         'class' => 'yii\gii\generators\crud\Generator', // generator class
-        //         'templates' => [ // setting for our templates
-        //             'yii2-basics' => '@vendor/croacworks/yii2-essentials/src/gii/generators/crud/default' // template name => path to template
-        //         ]
-        //     ]
-        // ]
+        'generators' => [ // here
+            'crud' => [ // generator name
+                'class' => 'yii\gii\generators\crud\Generator', // generator class
+                'templates' => [ // setting for our templates
+                    'yii2-basics' => '@vendor/croacworks/yii2-essentials/src/gii/generators/crud/default' // template name => path to template
+                ]
+            ]
+        ]
     ];
 }
 
