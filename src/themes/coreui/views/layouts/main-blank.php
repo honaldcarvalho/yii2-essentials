@@ -58,7 +58,7 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
 
     JS);
 
-    $this->registerJs(<<<'CSS'
+    $this->registerCss(<<<'CSS'
         optgroup {
             display:none;
         }

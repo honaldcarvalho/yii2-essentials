@@ -83,7 +83,7 @@ $theme = Yii::$app->user->identity->profile->theme;
     'markOnOpen'    => true, // marque como lida ao abrir o modal
     ], JSON_UNESCAPED_SLASHES).';', \yii\web\View::POS_HEAD);
 
-    $this->registerJs(<<<'CSS'
+    $this->registerCss(<<<'CSS'
         optgroup {
             display:none;
         }
