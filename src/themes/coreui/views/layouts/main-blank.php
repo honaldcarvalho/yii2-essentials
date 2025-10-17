@@ -37,26 +37,41 @@ $this->registerJs("yii.t = function(category, message){ return message; };", Vie
     $this->head(); 
     
     $this->registerJs(<<<JS
+      try {
+        Fancybox.bind("[data-fancybox]");
+      } catch(e) { /* ignore */ }
 
-    try {
-      Fancybox.bind("[data-fancybox]");
-    } catch(e) { /* ignore */ }
-    // Overlay custom enquanto abre
-    $(document).off('click.fbx','[data-fancybox]').on('click.fbx','[data-fancybox]', function(){
-        if ($.fancybox == null) return;
-        $.fancybox.showLoading = function () {
-        if ($('#custom-loading').length === 0) {
-            $('body').append('<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>');
-        }
-        };
-        $.fancybox.hideLoading = function () { $('#custom-loading').remove(); };
-        $.fancybox.showLoading();
-    });
+      // Overlay custom enquanto abre
+      $(document).off('click.fbx','[data-fancybox]').on('click.fbx','[data-fancybox]', function(){
+          if ($.fancybox == null) return;
+          $.fancybox.showLoading = function () {
+          if ($('#custom-loading').length === 0) {
+              $('body').append('<div id="custom-loading" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">Carregando...</div>');
+          }
+          };
+          $.fancybox.hideLoading = function () { $('#custom-loading').remove(); };
+          $.fancybox.showLoading();
+      });
 
-    $(document).off('afterShow.fb.pjax').on('afterShow.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
-    $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
+      $(document).off('afterShow.fb.pjax').on('afterShow.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
+      $(document).off('afterClose.fb.pjax').on('afterClose.fb.pjax', function(){ $.fancybox?.hideLoading?.(); });
 
     JS);
+
+    $this->registerJs(<<<'CSS'
+        optgroup {
+            display:none;
+        }
+        .fancybox__content {
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height:90%!important;
+        }
+        .fancybox__slide::before, .fancybox__slide::after{
+            margin:0!important;
+        }
+    CSS);
+
     ?>
   </head>
   <body>

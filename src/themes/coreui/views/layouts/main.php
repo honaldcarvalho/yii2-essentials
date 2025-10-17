@@ -83,20 +83,19 @@ $theme = Yii::$app->user->identity->profile->theme;
     'markOnOpen'    => true, // marque como lida ao abrir o modal
     ], JSON_UNESCAPED_SLASHES).';', \yii\web\View::POS_HEAD);
 
-$style = <<< CSS
-    optgroup {
-        display:none;
-    }
-    .fancybox__content {
-        padding: 0 !important;
-        margin: 0 !important;
-        min-height:90%!important;
-    }
-    .fancybox__slide::before, .fancybox__slide::after{
-        margin:0!important;
-    }
-CSS;
-$this->registerCss($style);
+    $this->registerJs(<<<'CSS'
+        optgroup {
+            display:none;
+        }
+        .fancybox__content {
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height:90%!important;
+        }
+        .fancybox__slide::before, .fancybox__slide::after{
+            margin:0!important;
+        }
+    CSS);
 
     ?>
 </head>
