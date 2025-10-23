@@ -20,6 +20,7 @@ use croacworks\essentials\controllers\rest\StorageController;
 class AttachFileBehavior extends Behavior
 {
     public string $attribute = 'file_id';
+    public int|null $folder = null;
     public string $removeFlagParam = 'remove';
     public bool $deleteOldOnReplace = true;
     public bool $deleteOnOwnerDelete = false;
@@ -131,9 +132,9 @@ class AttachFileBehavior extends Behavior
 
             try {
                 if($this->thumb_aspect){
-                    $resp = StorageController::uploadFile($uploaded, ['save' => true, 'thumb_aspect' => $this->thumb_aspect]);
+                    $resp = StorageController::uploadFile($uploaded, ['folder_id'=>$this->folder_id, 'save' => true, 'thumb_aspect' => $this->thumb_aspect]);
                 } else {
-                    $resp = StorageController::uploadFile($uploaded, ['save' => true]); 
+                    $resp = StorageController::uploadFile($uploaded, ['folder_id'=>$this->folder_id, 'save' => true]); 
                 }
 
                 if (!empty($resp['success'])) {
