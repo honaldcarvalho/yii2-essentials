@@ -71,6 +71,20 @@ endif
     }
 <?php endif; ?>
 
+    // public function behaviors()
+    // {
+    //     return array_merge(parent::behaviors(), [
+    //         [
+    //             'class' => \croacworks\essentials\behaviors\AttachFileBehavior::class,
+    //             'attribute' => 'file_id',
+    //             'removeFlagParam' => 'remove',
+    //             'deleteOldOnReplace' => true,
+    //             'deleteOnOwnerDelete' => false,
+    //             'debug'=>true
+    //         ],
+    //     ]);
+    // }
+    
     /**
      * {@inheritdoc}
      */
