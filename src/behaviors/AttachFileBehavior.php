@@ -20,7 +20,7 @@ use croacworks\essentials\controllers\rest\StorageController;
 class AttachFileBehavior extends Behavior
 {
     public string $attribute = 'file_id';
-    public int|null $folder = null;
+    public int|null $folder_id = null;
     public string $removeFlagParam = 'remove';
     public bool $deleteOldOnReplace = true;
     public bool $deleteOnOwnerDelete = false;
