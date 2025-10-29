@@ -64,7 +64,7 @@ class Configuration extends ModelCommon
                 'removeFlagParam' => 'remove',
                 'deleteOldOnReplace' => true,
                 'deleteOnOwnerDelete' => false,
-                'debug' => true, // ligue por enquanto
+                'debug' => true,
             ],
         ]);
     }

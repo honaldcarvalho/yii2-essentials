@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\helpers\ModelHelper;
+use croacworks\essentials\helpers\TranslatorHelper;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\ModelCommon;
@@ -239,13 +240,13 @@ class CommonController extends \yii\web\Controller
 
     public function actionClone($id)
     {
-        
+
         // Busca o registro original
         $originalModel = $this->findModel($id);
         if (!$originalModel) {
             throw new NotFoundHttpException("Model with ID $id not found.");
         }
-        
+
         $modelClass = get_class($originalModel);
 
         // Clona o model
@@ -262,6 +263,49 @@ class CommonController extends \yii\web\Controller
         return $this->render('update', [
             'model' => $clone,
         ]);
+    }
+
+    /**
+     * Generic translation suggestion endpoint.
+     * Accepts a text and returns its automatic translation.
+     *
+     * @param string $language Target language code (e.g. 'pt', 'en', 'es', 'fr')
+     * @return array JSON response
+     */
+    public function actionSuggestTranslation($language,$to='auto')
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $body = Yii::$app->request->getBodyParams();
+        $text = $body['text'] ?? null;
+
+        if (!$text) {
+            return [
+                'success' => false,
+                'message' => Yii::t('app', 'Missing "text" parameter.')
+            ];
+        }
+
+        try {
+            // Use TranslatorHelper to translate the input text
+            $translated = TranslatorHelper::translate(
+                $text,
+                $language,
+                $to
+            );
+
+            return [
+                'success' => true,
+                'translation' => $translated,
+            ];
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), __METHOD__);
+            return [
+                'success' => false,
+                'message' => Yii::t('app', 'Error while suggesting translation.'),
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+            ];
+        }
     }
 
     // Generalized function to save or update a model
