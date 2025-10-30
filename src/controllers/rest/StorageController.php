@@ -339,6 +339,13 @@ public static function uploadFile(
 
         // 🔍 detecta tipo e extensão
         $ext  = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
+
+        if (!empty($file_name)) {
+            $name = "{$file_name}.{$ext}";
+        } else {
+            $name = 'file_' . date('dmYHis') . Yii::$app->security->generateRandomString(6) . ".{$ext}";
+        }
+
         $type = 'unknown';
         if (!empty($temp_file->type) && strpos($temp_file->type, '/') !== false) {
             [$type, $format] = explode('/', $temp_file->type);
