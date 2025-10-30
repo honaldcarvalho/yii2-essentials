@@ -267,235 +267,234 @@ class StorageController extends ControllerRest
             ->save($destImagePath, ['quality' => 100]);
     }
 
-public static function uploadFile(
-    $file,
-    $options = [
-        'file_name'       => null,
-        'description'     => null,
-        'folder_id'       => 1,
-        'group_id'        => 1,
-        'attach_model'    => 0,
-        'attact_fields'   => 0,
-        'attact_model_id' => 0,
-        'save'            => 0,
-        'convert_video'   => 1,
-        'thumb_aspect'    => 1,
-        'quality'         => 80
-    ]
-) {
-    $safeUnlink = function (?string $p) {
-        if ($p && is_file($p)) {
-            @unlink($p);
-        }
-    };
-
-    $createdPaths = ['file' => null, 'thumb' => null, 'temp' => null];
-    $response = ['code' => 500, 'success' => false, 'data' => []];
-
-    // ✅ helper local para salvar UploadedFile de forma segura
-    $safeSaveAs = function (\yii\web\UploadedFile $uploaded, string $target): bool {
-        if (is_uploaded_file($uploaded->tempName)) {
-            return $uploaded->saveAs($target);
-        }
-        return @copy($uploaded->tempName, $target);
-    };
-
-    try {
-        $webroot       = Yii::getAlias('@webroot');
-        $web           = Yii::getAlias('@web');
-        $upload_folder = Yii::$app->params['upload.folder'];
-        $files_folder  = "/{$upload_folder}";
-        $upload_root   = "{$webroot}{$files_folder}";
-        $webFiles      = "{$web}{$files_folder}";
-
-        // ✅ compatibilidade com caminho físico (string)
-        if (is_string($file) && file_exists($file)) {
-            $temp_file = new \yii\web\UploadedFile([
-                'name' => basename($file),
-                'tempName' => $file,
-                'type' => mime_content_type($file) ?: 'application/octet-stream',
-                'size' => filesize($file),
-                'error' => 0,
-            ]);
-        } elseif ($file instanceof \yii\web\UploadedFile) {
-            $temp_file = $file;
-        } else {
-            return self::errorResponse(400, 'upload.invalid_file', 'Invalid file input.');
-        }
-
-        $group_id      = (int)($options['group_id'] ?? 1);
-        $folder_id     = $options['folder_id'] ?? 1;
-        $description   = $options['description'] ?? $temp_file->name;
-        $file_name     = $options['file_name'] ?? null;
-        $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
-        $save          = (int)($options['save'] ?? 0);
-        $convert_video = (bool)($options['convert_video'] ?? true);
-        $thumb_aspect  = $options['thumb_aspect'] ?? 1;
-        $quality       = (int)($options['quality'] ?? 80);
-
-        if (!AuthorizationController::isMaster()) {
-            $group_id = AuthorizationController::userGroup();
-        }
-
-        // 🔍 detecta tipo e extensão
-        $ext  = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
-
-        if (!empty($file_name)) {
-            $name = "{$file_name}.{$ext}";
-        } else {
-            $name = 'file_' . date('dmYHis') . Yii::$app->security->generateRandomString(6) . ".{$ext}";
-        }
-
-        $type = 'unknown';
-        if (!empty($temp_file->type) && strpos($temp_file->type, '/') !== false) {
-            [$type, $format] = explode('/', $temp_file->type);
-        }
-
-        // ================================================
-        // ================   IMAGE   =====================
-        // ================================================
-        if ($type === 'image') {
-            if ($folder_id === 1) $folder_id = 2;
-
-            $pathRoot      = "{$upload_root}/images";
-            $pathThumbRoot = "{$upload_root}/images/thumbs";
-
-            FileHelper::createDirectory($pathRoot);
-            FileHelper::createDirectory($pathThumbRoot);
-
-            $filePathRoot      = "{$pathRoot}/{$name}";
-            $filePathThumbRoot = "{$pathThumbRoot}/{$name}";
-            $fileUrl           = "{$webFiles}/images/{$name}";
-            $fileThumbUrl      = "{$webFiles}/images/thumbs/{$name}";
-
-            if (!$safeSaveAs($temp_file, $filePathRoot)) {
-                return self::errorResponse(
-                    500,
-                    'filesystem.write_failed',
-                    'Failed to save original image.',
-                    self::diagnoseWriteFailure($filePathRoot, $temp_file)
-                );
+    public static function uploadFile(
+        $file,
+        $options = [
+            'file_name'       => null,
+            'description'     => null,
+            'folder_id'       => 1,
+            'group_id'        => 1,
+            'attach_model'    => 0,
+            'attact_fields'   => 0,
+            'attact_model_id' => 0,
+            'save'            => 0,
+            'convert_video'   => 1,
+            'thumb_aspect'    => 1,
+            'quality'         => 80
+        ]
+    ) {
+        $safeUnlink = function (?string $p) {
+            if ($p && is_file($p)) {
+                @unlink($p);
             }
-            $createdPaths['file'] = $filePathRoot;
+        };
 
-            try {
-                if ($thumb_aspect === 1 || $thumb_aspect === '1') {
-                    $image_size = getimagesize($filePathRoot);
-                    if ($image_size) {
-                        $major = max($image_size[0], $image_size[1]);
-                        $min   = min($image_size[0], $image_size[1]);
-                        $mov   = ($major - $min) / 2;
-                        $point = ($image_size[0] > $image_size[1]) ? [$mov, 0] : [0, $mov];
-                        \yii\imagine\Image::crop($filePathRoot, $min, $min, $point)
-                            ->save($filePathThumbRoot, ['quality' => 100]);
-                    }
-                } else {
-                    [$w, $h] = explode('/', $thumb_aspect);
-                    self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$w, (int)$h);
+        $createdPaths = ['file' => null, 'thumb' => null, 'temp' => null];
+        $response = ['code' => 500, 'success' => false, 'data' => []];
+
+        // ✅ helper local para salvar UploadedFile de forma segura
+        $safeSaveAs = function (\yii\web\UploadedFile $uploaded, string $target): bool {
+            if (is_uploaded_file($uploaded->tempName)) {
+                return $uploaded->saveAs($target);
+            }
+            return @copy($uploaded->tempName, $target);
+        };
+
+        try {
+            $webroot       = Yii::getAlias('@webroot');
+            $web           = Yii::getAlias('@web');
+            $upload_folder = Yii::$app->params['upload.folder'];
+            $files_folder  = "/{$upload_folder}";
+            $upload_root   = "{$webroot}{$files_folder}";
+            $webFiles      = "{$web}{$files_folder}";
+
+            // ✅ compatibilidade com caminho físico (string)
+            if (is_string($file) && file_exists($file)) {
+                $temp_file = new \yii\web\UploadedFile([
+                    'name' => basename($file),
+                    'tempName' => $file,
+                    'type' => mime_content_type($file) ?: 'application/octet-stream',
+                    'size' => filesize($file),
+                    'error' => 0,
+                ]);
+            } elseif ($file instanceof \yii\web\UploadedFile) {
+                $temp_file = $file;
+            } else {
+                return self::errorResponse(400, 'upload.invalid_file', 'Invalid file input.');
+            }
+
+            $group_id      = (int)($options['group_id'] ?? 1);
+            $folder_id     = $options['folder_id'] ?? 1;
+            $description   = $options['description'] ?? $temp_file->name;
+            $file_name     = $options['file_name'] ?? null;
+            $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
+            $save          = (int)($options['save'] ?? 0);
+            $convert_video = (bool)($options['convert_video'] ?? true);
+            $thumb_aspect  = $options['thumb_aspect'] ?? 1;
+            $quality       = (int)($options['quality'] ?? 80);
+
+            if (!AuthorizationController::isMaster()) {
+                $group_id = AuthorizationController::userGroup();
+            }
+
+            // 🔍 detecta tipo e extensão
+            $ext  = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
+
+            if (!empty($file_name)) {
+                $name = "{$file_name}.{$ext}";
+            } else {
+                $name = 'file_' . date('dmYHis') . Yii::$app->security->generateRandomString(6) . ".{$ext}";
+            }
+
+            $type = 'unknown';
+            if (!empty($temp_file->type) && strpos($temp_file->type, '/') !== false) {
+                [$type, $format] = explode('/', $temp_file->type);
+            }
+
+            // ================================================
+            // ================   IMAGE   =====================
+            // ================================================
+            if ($type === 'image') {
+                if ($folder_id === 1) $folder_id = 2;
+
+                $pathRoot      = "{$upload_root}/images";
+                $pathThumbRoot = "{$upload_root}/images/thumbs";
+
+                FileHelper::createDirectory($pathRoot);
+                FileHelper::createDirectory($pathThumbRoot);
+
+                $filePathRoot      = "{$pathRoot}/{$name}";
+                $filePathThumbRoot = "{$pathThumbRoot}/{$name}";
+                $fileUrl           = "{$webFiles}/images/{$name}";
+                $fileThumbUrl      = "{$webFiles}/images/thumbs/{$name}";
+
+                if (!$safeSaveAs($temp_file, $filePathRoot)) {
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save original image.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
                 }
-                $createdPaths['thumb'] = $filePathThumbRoot;
-            } catch (\Throwable $e) {
-                $safeUnlink($filePathThumbRoot);
-                return self::mapException($e, ['stage' => 'image.thumb']);
+                $createdPaths['file'] = $filePathRoot;
+
+                try {
+                    if ($thumb_aspect === 1 || $thumb_aspect === '1') {
+                        $image_size = getimagesize($filePathRoot);
+                        if ($image_size) {
+                            $major = max($image_size[0], $image_size[1]);
+                            $min   = min($image_size[0], $image_size[1]);
+                            $mov   = ($major - $min) / 2;
+                            $point = ($image_size[0] > $image_size[1]) ? [$mov, 0] : [0, $mov];
+                            \yii\imagine\Image::crop($filePathRoot, $min, $min, $point)
+                                ->save($filePathThumbRoot, ['quality' => 100]);
+                        }
+                    } else {
+                        [$w, $h] = explode('/', $thumb_aspect);
+                        self::createThumbnail($filePathRoot, $filePathThumbRoot, (int)$w, (int)$h);
+                    }
+                    $createdPaths['thumb'] = $filePathThumbRoot;
+                } catch (\Throwable $e) {
+                    $safeUnlink($filePathThumbRoot);
+                    return self::mapException($e, ['stage' => 'image.thumb']);
+                }
+
+                // ================================================
+                // ================   VIDEO   =====================
+                // ================================================
+            } elseif ($type === 'video') {
+                if ($folder_id === 1) $folder_id = 3;
+
+                $pathRoot = "{$upload_root}/videos";
+                $name     = "{$file_name}.mp4";
+
+                FileHelper::createDirectory($pathRoot);
+
+                $filePathRoot = "{$pathRoot}/{$name}";
+                $fileUrl      = "{$webFiles}/videos/{$name}";
+                $fileThumbUrl = "{$webFiles}/videos/thumbs/{$name}.jpg";
+
+                if (!$safeSaveAs($temp_file, $filePathRoot)) {
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save video.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
+                }
+                $createdPaths['file'] = $filePathRoot;
+
+                // ================================================
+                // ================   DOC / PDF   =================
+                // ================================================
+            } else {
+                $type = 'doc';
+                if ($folder_id === 1) $folder_id = 4;
+
+                $pathRoot = "{$upload_root}/docs";
+                $name     = "{$file_name}.{$ext}";
+
+                FileHelper::createDirectory($pathRoot);
+
+                $filePathRoot = "{$pathRoot}/{$name}";
+                $fileUrl      = "{$webFiles}/docs/{$name}";
+                $fileThumbUrl = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO+PREVIEW';
+
+                if (!$safeSaveAs($temp_file, $filePathRoot)) {
+                    return self::errorResponse(
+                        500,
+                        'filesystem.write_failed',
+                        'Failed to save document.',
+                        self::diagnoseWriteFailure($filePathRoot, $temp_file)
+                    );
+                }
+                $createdPaths['file'] = $filePathRoot;
             }
 
-        // ================================================
-        // ================   VIDEO   =====================
-        // ================================================
-        } elseif ($type === 'video') {
-            if ($folder_id === 1) $folder_id = 3;
+            // ================================================
+            // ================   SAVE MODEL   ================
+            // ================================================
+            $file_uploaded = [
+                'group_id'   => $group_id,
+                'folder_id'  => $folder_id,
+                'name'       => $name,
+                'description' => $description,
+                'path'       => str_replace($webroot, '', $filePathRoot),
+                'url'        => $fileUrl,
+                'pathThumb'  => str_replace($webroot, '', $createdPaths['thumb'] ?? ''),
+                'urlThumb'   => $fileThumbUrl,
+                'extension'  => $ext,
+                'type'       => $type,
+                'size'       => filesize($createdPaths['file']),
+                'created_at' => date('Y-m-d H:i:s'),
+            ];
 
-            $pathRoot = "{$upload_root}/videos";
-            $name     = "{$file_name}.mp4";
-
-            FileHelper::createDirectory($pathRoot);
-
-            $filePathRoot = "{$pathRoot}/{$name}";
-            $fileUrl      = "{$webFiles}/videos/{$name}";
-            $fileThumbUrl = "{$webFiles}/videos/thumbs/{$name}.jpg";
-
-            if (!$safeSaveAs($temp_file, $filePathRoot)) {
-                return self::errorResponse(
-                    500,
-                    'filesystem.write_failed',
-                    'Failed to save video.',
-                    self::diagnoseWriteFailure($filePathRoot, $temp_file)
-                );
+            if ($save) {
+                $model = new \croacworks\essentials\models\File($file_uploaded);
+                if (!$model->save()) {
+                    $safeUnlink($createdPaths['file']);
+                    $safeUnlink($createdPaths['thumb']);
+                    return self::errorResponse(
+                        422,
+                        'db.validation_failed',
+                        'Failed to save file in database.',
+                        ['errors' => $model->getErrors()]
+                    );
+                }
+                $response = ['code' => 200, 'success' => true, 'data' => $model];
+            } else {
+                $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
             }
-            $createdPaths['file'] = $filePathRoot;
 
-        // ================================================
-        // ================   DOC / PDF   =================
-        // ================================================
-        } else {
-            $type = 'doc';
-            if ($folder_id === 1) $folder_id = 4;
+            return $response;
+        } catch (\Throwable $th) {
+            $safeUnlink($createdPaths['file']);
+            $safeUnlink($createdPaths['thumb']);
+            $safeUnlink($createdPaths['temp']);
 
-            $pathRoot = "{$upload_root}/docs";
-            $name     = "{$file_name}.{$ext}";
-
-            FileHelper::createDirectory($pathRoot);
-
-            $filePathRoot = "{$pathRoot}/{$name}";
-            $fileUrl      = "{$webFiles}/docs/{$name}";
-            $fileThumbUrl = '/dummy/code.php?x=150x150/fff/000.jpg&text=NO+PREVIEW';
-
-            if (!$safeSaveAs($temp_file, $filePathRoot)) {
-                return self::errorResponse(
-                    500,
-                    'filesystem.write_failed',
-                    'Failed to save document.',
-                    self::diagnoseWriteFailure($filePathRoot, $temp_file)
-                );
-            }
-            $createdPaths['file'] = $filePathRoot;
+            return self::mapException($th, ['stage' => 'uploadFile.catch']);
         }
-
-        // ================================================
-        // ================   SAVE MODEL   ================
-        // ================================================
-        $file_uploaded = [
-            'group_id'   => $group_id,
-            'folder_id'  => $folder_id,
-            'name'       => $name,
-            'description'=> $description,
-            'path'       => str_replace($webroot, '', $filePathRoot),
-            'url'        => $fileUrl,
-            'pathThumb'  => str_replace($webroot, '', $createdPaths['thumb'] ?? ''),
-            'urlThumb'   => $fileThumbUrl,
-            'extension'  => $ext,
-            'type'       => $type,
-            'size'       => filesize($createdPaths['file']),
-            'created_at' => date('Y-m-d H:i:s'),
-        ];
-
-        if ($save) {
-            $model = new \croacworks\essentials\models\File($file_uploaded);
-            if (!$model->save()) {
-                $safeUnlink($createdPaths['file']);
-                $safeUnlink($createdPaths['thumb']);
-                return self::errorResponse(
-                    422,
-                    'db.validation_failed',
-                    'Failed to save file in database.',
-                    ['errors' => $model->getErrors()]
-                );
-            }
-            $response = ['code' => 200, 'success' => true, 'data' => $model];
-        } else {
-            $response = ['code' => 200, 'success' => true, 'data' => $file_uploaded];
-        }
-
-        return $response;
-
-    } catch (\Throwable $th) {
-        $safeUnlink($createdPaths['file']);
-        $safeUnlink($createdPaths['thumb']);
-        $safeUnlink($createdPaths['temp']);
-  
-        return self::mapException($th, ['stage' => 'uploadFile.catch']);
     }
-}
 
 
     public function actionSend()
@@ -546,31 +545,40 @@ public static function uploadFile(
                 return $result;
             }
 
-            $linkClass = $post['model_class'] ?? null;
-            $linkId    = $post['model_id']    ?? null;
-            $linkField = $post['model_field'] ?? null;
+            // Parse attach_model (JSON) se existir
+            $linkClass = $linkId = $linkFields = null;
             $deleteOld = (int)($post['delete_old'] ?? 1);
 
-            $linkRequested = !empty($linkClass) && $linkId !== null && !empty($linkField);
+            if (!empty($post['attach_model'])) {
+                $attach = json_decode($post['attach_model'], true);
+                if (is_array($attach)) {
+                    $linkClass  = $attach['class_name'] ?? null;
+                    $linkId     = $attach['id'] ?? null;
+                    $linkFields = $attach['fields'] ?? null;
+                }
+            }
+
+            $linkRequested = !empty($linkClass) && $linkId !== null && !empty($linkFields);
 
             if ($linkRequested) {
                 $fileData = $result['data'] ?? null;
-                $fileId   = 0;
-                if (is_object($fileData) && isset($fileData->id)) {
-                    $fileId = (int)$fileData->id;
-                } elseif (is_array($fileData) && isset($fileData['id'])) {
-                    $fileId = (int)$fileData['id'];
-                }
+                $fileId = is_object($fileData) ? ($fileData->id ?? 0) : ($fileData['id'] ?? 0);
 
-                if ($fileId <= 0) {
+                if ($fileId > 0) {
+                    // Permite múltiplos campos (ex: ['post_id','file_id'])
+                    $result['link'] = self::linkFileToModel(
+                        $fileId,
+                        $linkClass,
+                        (int)$linkId,
+                        $linkFields,
+                        $deleteOld
+                    );
+                } else {
                     $result['link'] = [
                         'linked' => false,
                         'error'  => Yii::t('app', 'Upload succeeded but file ID was not returned.'),
                     ];
-                    return $result;
                 }
-
-                $result['link'] = self::linkFileToModel($fileId, $linkClass, (int)$linkId, $linkField, $deleteOld);
             }
 
             return $result;
@@ -586,7 +594,7 @@ public static function uploadFile(
      * Vincula o arquivo ($fileId) ao modelo ($class::$id) no campo $field.
      * Se $deleteOld=1, remove o antigo quando diferente.
      */
-    protected static function linkFileToModel(int $fileId, string $class, int $id, string $field, int $deleteOld = 1): array
+    protected static function linkFileToModel(int $fileId, string $class, int $id, $field, int $deleteOld = 1): array
     {
         try {
             if (!class_exists($class)) {
@@ -596,7 +604,38 @@ public static function uploadFile(
                 return ['linked' => false, 'error' => Yii::t('app', "Class is not ActiveRecord: {class}", ['class' => $class])];
             }
 
-            /** @var \yii\db\ActiveRecord $model */
+            /** Caso seja um pivot model (campos múltiplos ex: ['post_id','file_id']) */
+            if (is_array($field)) {
+                $pivot = new $class();
+                foreach ($field as $f) {
+                    if ($f === 'file_id') {
+                        $pivot->$f = $fileId;
+                    } elseif ($f === 'post_id') {
+                        $pivot->$f = $id;
+                    } else {
+                        // fallback: tenta setar o id no primeiro campo
+                        $pivot->$f = $id;
+                    }
+                }
+
+                if ($pivot->save()) {
+                    return [
+                        'linked' => true,
+                        'model_class' => $class,
+                        'model_id' => $id,
+                        'table' => method_exists($class, 'tableName') ? $class::tableName() : '(unknown)',
+                        'file_id' => $fileId,
+                        'pivot_id' => $pivot->id,
+                        'note' => 'pivot relation created'
+                    ];
+                }
+                return [
+                    'linked' => false,
+                    'error' => $pivot->getErrors()
+                ];
+            }
+
+            /** Fallback: campo direto em ActiveRecord */
             $model = $class::findOne($id);
             if (!$model) {
                 return ['linked' => false, 'error' => Yii::t('app', "Model id #{id} not found for {class}", ['id' => $id, 'class' => $class])];
@@ -609,19 +648,17 @@ public static function uploadFile(
             $oldId = (int)$model->getAttribute($field);
 
             if ($oldId === $fileId) {
-                $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
                 return [
-                    'linked'       => true,
-                    'model_class'  => $class,
-                    'model_id'     => $id,
-                    'table'        => $table,
-                    'field'        => $field,
-                    'file_id'      => $fileId,
-                    'old_id'       => $oldId,
-                    'after'        => $after,
+                    'linked' => true,
+                    'model_class' => $class,
+                    'model_id' => $id,
+                    'table' => $table,
+                    'field' => $field,
+                    'file_id' => $fileId,
+                    'old_id' => $oldId,
                     'updated_rows' => 0,
-                    'removed_old'  => false,
-                    'note'         => 'already linked'
+                    'removed_old' => false,
+                    'note' => 'already linked'
                 ];
             }
 
@@ -632,7 +669,7 @@ public static function uploadFile(
                 $tx->commit();
             } catch (\Throwable $e) {
                 $tx->rollBack();
-                return ['linked' => false, 'error' => Yii::t('app', 'updateAttributes failed: {msg}', ['msg' => $e->getMessage()])];
+                return ['linked' => false, 'error' => 'updateAttributes failed: ' . $e->getMessage()];
             }
 
             $after = (int)$class::find()->select($field)->where(['id' => $id])->scalar();
@@ -644,22 +681,23 @@ public static function uploadFile(
             }
 
             return [
-                'linked'       => ($after === $fileId),
-                'model_class'  => $class,
-                'model_id'     => $id,
-                'table'        => $table,
-                'field'        => $field,
-                'file_id'      => $fileId,
-                'old_id'       => $oldId,
-                'after'        => $after,
+                'linked' => ($after === $fileId),
+                'model_class' => $class,
+                'model_id' => $id,
+                'table' => $table,
+                'field' => $field,
+                'file_id' => $fileId,
+                'old_id' => $oldId,
+                'after' => $after,
                 'updated_rows' => $updatedRows,
-                'removed_old'  => $removed,
-                'error'        => ($after === $fileId ? null : 'after-check mismatch')
+                'removed_old' => $removed,
+                'error' => ($after === $fileId ? null : 'after-check mismatch')
             ];
         } catch (\Throwable $e) {
             return ['linked' => false, 'error' => $e->getMessage()];
         }
     }
+
 
     public static function removeFile($id, array $opts = [])
     {
