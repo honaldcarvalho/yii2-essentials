@@ -54,7 +54,7 @@ class Score
     /**
      * TextRank word scoring with semantic boosts and adaptive cache.
      */
-    public function calculate(Graph $graph, array $text)
+    public function calculate(Graph $graph, $text): array
     {
 
         if ($text instanceof \croacworks\essentials\modules\textrank\Tool\Text) {
