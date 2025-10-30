@@ -13,6 +13,8 @@
 
 namespace croacworks\essentials\modules\textrank\Tool;
 
+use croacworks\essentials\modules\textrank\Tool\Text;
+
 class Score
 {
     /**
