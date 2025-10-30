@@ -17,11 +17,46 @@ use croacworks\essentials\modules\textrank\Tool\Text;
 
 class Score
 {
+
+    /**
+     * Normaliza a entrada ($text) em array de tokens.
+     * Aceita Tool\Text, array ou string.
+     *
+     * @param mixed $text
+     * @return string[]
+     */
+    private static function toTokenArray(Text|array|string $text): array
+    {
+        if ($text instanceof Text) {
+            // Tente métodos do seu fork; fallback para propriedades públicas
+            if (method_exists($text, 'getWords')) {
+                return (array) $text->getWords();
+            }
+            if (method_exists($text, 'getArray')) {
+                return (array) $text->getArray();
+            }
+            if (property_exists($text, 'words')) {
+                return (array) $text->words;
+            }
+        }
+
+        if (is_array($text)) {
+            return $text;
+        }
+
+        // Fallback: tokeniza string
+        $str = trim((string) $text);
+        if ($str === '') return [];
+        return preg_split('/\s+/u', $str, -1, PREG_SPLIT_NO_EMPTY);
+    }
+
     /**
      * TextRank word scoring with semantic boosts and adaptive cache.
      */
     public function calculate(Graph $graph, array $text): array
     {
+        $tokens = self::toTokenArray($text);
+
         $scores = [];
         $vertices = $graph->getVertices();
 
@@ -35,7 +70,7 @@ class Score
         }
 
         // Combina o texto em minúsculas (para análise semântica)
-        $joined = mb_strtolower(implode(' ', $text), 'UTF-8');
+        $joined = mb_strtolower(implode(' ', $tokens), 'UTF-8');
 
         foreach ($vertices as $word) {
             $w = trim($word);
