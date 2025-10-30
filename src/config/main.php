@@ -23,8 +23,7 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
-        '@bin/wkhtmltopdf' => '/usr/bin/wkhtmltopdf',
-        '@storage' => '@web/files'
+        '@bin/wkhtmltopdf' => '/usr/bin/wkhtmltopdf'
     ],
     'modules' => [
         'common' => [
@@ -41,7 +40,7 @@ $config = [
         ],
         'textrank' => [
             'class' => 'croacworks\essentials\modules\textrank\Module',
-            'dataPath' => '@storage/textrank',
+            //'dataPath' => '@storage/textrank',
         ],
     ],
     'components' => [
