@@ -127,7 +127,7 @@ class ModelCommon extends \yii\db\ActiveRecord
 
         return $query;
     }
-    
+
     public static function findOne($condition)
     {
         // Usa o find() do ModelCommon, que já aplica (ou não) o escopo de grupo.
@@ -170,9 +170,29 @@ class ModelCommon extends \yii\db\ActiveRecord
             return false;
         }
 
+        // Protection: If it's an update, 'group_id' must not be changed.
+        if (!$insert) {
+            return true;
+        }
+
+        // --- Only INSERT logic below ---
+
         if ($insert) {
             $user = AuthorizationController::User();
 
+            // Priority Rule: Check for 'master-group' parameter.
+            if ($this->hasAttribute('group_id')) {
+                // Get the 'master-group' value from Parameter model.
+                $masterGroupParam = Parameter::findOne(['name' => 'master-group'])?->value;
+
+                // If parameter is set, use it and ignore all other group assignment logic.
+                if ($masterGroupParam !== null) {
+                    $this->group_id = (int)$masterGroupParam;
+                    return true;
+                }
+            }
+
+            // Original logic for master users if 'master-group' is not set.
             if (AuthorizationController::isMaster()) {
                 if (!empty($this->group_id)) {
                     return true;
@@ -181,8 +201,9 @@ class ModelCommon extends \yii\db\ActiveRecord
                 }
             }
 
+            // Original fallback logic (main-group or user's group).
             if ($this->hasAttribute('group_id') && empty($this->group_id)) {
-                // Tenta usar parâmetro fixo (caso exista)
+
                 $mainGroup = Parameter::findOne(['name' => 'main-group'])?->value;
 
                 if ($mainGroup) {
@@ -190,10 +211,9 @@ class ModelCommon extends \yii\db\ActiveRecord
                 } else {
 
                     if ($user) {
-                        // Obtém todos os grupos do usuário
                         $userGroups = $user->getGroups()->all();
 
-                        // Tenta encontrar o grupo raiz (sem parent)
+                        // Tries to find the root group.
                         foreach ($userGroups as $group) {
                             if (!$group->parent_id) {
                                 $this->group_id = $group->id;
@@ -201,7 +221,7 @@ class ModelCommon extends \yii\db\ActiveRecord
                             }
                         }
 
-                        // Se não achar nenhum root, pega o primeiro grupo mesmo
+                        // Takes the first group if no root is found.
                         if (!$this->group_id && count($userGroups) > 0) {
                             $this->group_id = $userGroups[0]->id;
                         }
