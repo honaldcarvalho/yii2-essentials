@@ -24,7 +24,7 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
         '@bin/wkhtmltopdf' => '/usr/bin/wkhtmltopdf',
-
+        '@storage' => '@web/files'
     ],
     'modules' => [
         'common' => [
@@ -38,7 +38,11 @@ $config = [
             // message source
             'downloadAction' => 'gridview/export/download',
             // 'i18n' => []
-        ]
+        ],
+        'textrank' => [
+            'class' => 'croacworks\essentials\modules\textrank\Module',
+            'dataPath' => '@storage/textrank',
+        ],
     ],
     'components' => [
         'notify' => [
