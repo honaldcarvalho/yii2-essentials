@@ -326,7 +326,7 @@ public static function uploadFile(
         $group_id      = (int)($options['group_id'] ?? 1);
         $folder_id     = $options['folder_id'] ?? 1;
         $description   = $options['description'] ?? $temp_file->name;
-        $file_name     = $options['file_name'];
+        $file_name     = $options['file_name'] ?? null;
         $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
         $save          = (int)($options['save'] ?? 0);
         $convert_video = (bool)($options['convert_video'] ?? true);
@@ -462,7 +462,7 @@ public static function uploadFile(
             'size'       => filesize($createdPaths['file']),
             'created_at' => date('Y-m-d H:i:s'),
         ];
-      dd($file_uploaded);
+
         if ($save) {
             $model = new \croacworks\essentials\models\File($file_uploaded);
             if (!$model->save()) {
