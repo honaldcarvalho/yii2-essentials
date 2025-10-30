@@ -326,7 +326,7 @@ public static function uploadFile(
         $group_id      = (int)($options['group_id'] ?? 1);
         $folder_id     = $options['folder_id'] ?? 1;
         $description   = $options['description'] ?? $temp_file->name;
-        $file_name     = $options['file_name'] ?? pathinfo($temp_file->name, PATHINFO_FILENAME);
+        $file_name     = $options['file_name'];
         $attach_model  = isset($options['attach_model']) ? json_decode($options['attach_model']) : 0;
         $save          = (int)($options['save'] ?? 0);
         $convert_video = (bool)($options['convert_video'] ?? true);
