@@ -1,4 +1,5 @@
 <?php
+
 /**
  * CroacWorks Essentials — TextRank module
  *
@@ -53,8 +54,17 @@ class Score
     /**
      * TextRank word scoring with semantic boosts and adaptive cache.
      */
-    public function calculate(Graph $graph, array $text): array
+    public function calculates(Graph $graph, array $text): array
     {
+
+        if ($text instanceof \croacworks\essentials\modules\textrank\Tool\Text) {
+            $text = $text->getSentences();
+        }
+
+        if (!is_array($text)) {
+            throw new \InvalidArgumentException('Expected array or Text instance');
+        }
+
         $tokens = self::toTokenArray($text);
 
         $scores = [];
