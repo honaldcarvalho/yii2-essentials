@@ -462,7 +462,7 @@ public static function uploadFile(
             'size'       => filesize($createdPaths['file']),
             'created_at' => date('Y-m-d H:i:s'),
         ];
- w
+      dd($file_uploaded);
         if ($save) {
             $model = new \croacworks\essentials\models\File($file_uploaded);
             if (!$model->save()) {
@@ -486,7 +486,7 @@ public static function uploadFile(
         $safeUnlink($createdPaths['file']);
         $safeUnlink($createdPaths['thumb']);
         $safeUnlink($createdPaths['temp']);
-        dd($file_uploaded);
+  
         return self::mapException($th, ['stage' => 'uploadFile.catch']);
     }
 }
