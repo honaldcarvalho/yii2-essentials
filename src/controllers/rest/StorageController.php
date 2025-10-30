@@ -359,7 +359,6 @@ public static function uploadFile(
 
             $pathRoot      = "{$upload_root}/images";
             $pathThumbRoot = "{$upload_root}/images/thumbs";
-            $name          = "{$file_name}.{$ext}";
 
             FileHelper::createDirectory($pathRoot);
             FileHelper::createDirectory($pathThumbRoot);
