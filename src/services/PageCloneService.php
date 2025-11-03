@@ -1,7 +1,7 @@
 <?php
 // common/services/PageCloneService.php
 
-namespace blog\admin\services;
+namespace croacworks\essentials\services;
 
 use Yii;
 
