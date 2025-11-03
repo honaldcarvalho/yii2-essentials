@@ -29,6 +29,28 @@ $inputId = Html::getInputId($model, 'tagIds');
 
 $this->registerJs(<<<JS
 
+function setFieldText(fieldId, text) {
+  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
+    tinyMCE.get(fieldId).setContent(text || '');
+    return;
+  }
+  const el = document.getElementById(fieldId);
+  if (el) el.value = text || '';
+}
+
+// Pega o valor de um campo pelo ID
+function getTextValue(id) {
+  // Se for um campo TinyMCE ativo
+  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
+    return tinyMCE.get(id).getContent({ format: 'text' }).trim();
+  }
+
+  // Caso contrário, pega direto do input/textarea normal
+  var node = document.getElementById(id);
+  return node ? (node.value || '').trim() : '';
+}
+
+
 const langSelect = document.getElementById('page-language_id');
 const originalLang = langSelect.getAttribute('data-original') || langSelect.value;
 
@@ -194,27 +216,6 @@ el.select2({
   templateSelection: function (item) { return item.text || item.id; },
   escapeMarkup: function (m) { return m; }
 });
-
-function setFieldText(fieldId, text) {
-  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
-    tinyMCE.get(fieldId).setContent(text || '');
-    return;
-  }
-  const el = document.getElementById(fieldId);
-  if (el) el.value = text || '';
-}
-
-// Pega o valor de um campo pelo ID
-function getTextValue(id) {
-  // Se for um campo TinyMCE ativo
-  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
-    return tinyMCE.get(id).getContent({ format: 'text' }).trim();
-  }
-
-  // Caso contrário, pega direto do input/textarea normal
-  var node = document.getElementById(id);
-  return node ? (node.value || '').trim() : '';
-}
 
 // Adiciona uma tag no <select multiple>
 function addTagToSelect(selectId, text, value) {
