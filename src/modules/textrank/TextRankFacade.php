@@ -154,9 +154,9 @@ class TextRankFacade
 
         $normalized = [];
         foreach ($results as $word => $value) {
-            if($word === null)
+            if($word === null && is_string($word) )
                 continue;
-            
+
             $stem = preg_replace('/(s|es|os|as|mente|ções|ção|mento|mentos|dade|dades)$/u', '', mb_strtolower($word, 'UTF-8'));
             $skip = false;
             foreach ($normalized as $n => $v) {
