@@ -13,8 +13,11 @@ $name_user  = $name_split[0] . (isset($name_split[1]) ? ' ' . end($name_split) :
 $action = Yii::$app->controller->action->id;
 $languages = Language::find()->where(['status' => true])->all();
 $viewUrl   = Url::to(['notification/view']);
+$liveNotifications = $user->profile->live_notifications;
+$notificationsInterval = $user->profile->notifications_interval ?? 60000;
 
 $this->registerJs(<<<JS
+
 onPjaxReady((root) => {
     const header = document.querySelector('header.header');
     document.addEventListener('scroll', () => {
@@ -25,6 +28,8 @@ onPjaxReady((root) => {
 });
 
 (function(){
+    const liveNotifications = {$liveNotifications};
+    const notificationsInterval = = {$notificationsInterval};
     const badge = document.getElementById('notif-badge');
     const list  = document.getElementById('notif-list');
     const markAll = document.getElementById('notif-mark-all');
@@ -109,7 +114,8 @@ onPjaxReady((root) => {
 
     // polling
     fetchList();
-    setInterval(fetchList, 30000);
+    if(liveNotifications)
+        setInterval(fetchList, notificationsInterval);
 
     async function safeJson(res){
         const ct = res.headers.get('content-type') || '';

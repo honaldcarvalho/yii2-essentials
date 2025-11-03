@@ -39,6 +39,8 @@ use yii\bootstrap5\ActiveForm;
             
             <?= $form->field($profile, 'fullname')->textInput(['maxlength' => true]) ?>
             <?= $form->field($profile, 'cpf_cnpj')->textInput(['maxlength' => true]) ?>
+            <?= $form->field($profile, 'live_notifications')->checkbox() ?>
+            <?= $form->field($profile, 'notifications_interval')->input('number',['value'=>$profile->notifications_interval ?? 60000]) ?>
 
             <?= $form->field($profile, 'phone')->widget(\yii\widgets\MaskedInput::class, [
                 'mask' => '(99) 9 9999-9999',
