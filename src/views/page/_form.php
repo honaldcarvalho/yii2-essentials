@@ -28,7 +28,6 @@ if (!$model->isNewRecord && !empty($model->tagIds)) {
 $inputId = Html::getInputId($model, 'tagIds');
 
 $this->registerJs(<<<JS
-(function(){
 
   var el = $('#page-tagids');
 
@@ -53,26 +52,18 @@ $this->registerJs(<<<JS
     templateSelection: function(item){ return item.text || item.id; },
     escapeMarkup: function(m){ return m; }
   });
-})();
 
-  function getFieldText(fieldId) {
-    if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
-      return tinyMCE.get(fieldId).getContent({ format: 'raw' }) || '';
-    }
-    const el = document.getElementById(fieldId);
-    if (!el) return '';
-    return (el.value ?? el.textContent ?? '').trim();
+// Pega o valor de um campo pelo ID
+function getTextValue(id) {
+  // Se for um campo TinyMCE ativo
+  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
+    return tinyMCE.get(id).getContent({ format: 'text' }).trim();
   }
 
-  // Helper: seta texto traduzido no campo (TinyMCE ou input/textarea)
-  function setFieldText(fieldId, text) {
-    if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
-      tinyMCE.get(fieldId).setContent(text || '');
-      return;
-    }
-    const el = document.getElementById(fieldId);
-    if (el) el.value = text || '';
-  }
+  // Caso contrário, pega direto do input/textarea normal
+  var node = document.getElementById(id);
+  return node ? (node.value || '').trim() : '';
+}
 
 // Adiciona uma tag no <select multiple>
 function addTagToSelect(selectId, text, value) {
