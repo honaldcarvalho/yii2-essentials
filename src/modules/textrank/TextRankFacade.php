@@ -149,7 +149,14 @@ class TextRankFacade
         arsort($mergedResults);
         
         $results = $mergedResults;
-        
+
+        foreach ($results as $k => $v) {
+            if (!is_string($k) || $k === '') {
+                unset($results[$k]);
+            }
+        }
+
+        arsort($results);
         // --- FIM DA NOVA LÓGICA ---
 
         $normalized = [];
