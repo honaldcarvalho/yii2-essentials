@@ -250,6 +250,11 @@ class Page extends ModelCommon
             'status' => Yii::t('app', 'Active'),
         ];
     }
+    public function getTags()
+    {
+        return $this->hasMany(Tag::class, ['id' => 'tag_id'])
+            ->viaTable('{{%page_tags}}', ['page_id' => 'id']);
+    }
 
     public function getPageFiles()
     {
