@@ -18,11 +18,11 @@ $suggestUrl = Url::to(['/tag/suggest']);
 $searchUrl  = Url::to(['/tag/search']); // já existente
 
 if (!$model->isNewRecord && !empty($model->tagIds)) {
-  $initTags = Tag::find()
-    ->select(['name', 'id'])
-    ->where(['id' => (array)$model->tagIds])
-    ->indexBy('id')
-    ->column(); // [id => name]
+    $initTags = Tag::find()
+        ->select(['name', 'id'])
+        ->where(['id' => (array)$model->tagIds])
+        ->indexBy('id')
+        ->column(); // [id => name]
 }
 
 $inputId = Html::getInputId($model, 'tagIds');
@@ -280,7 +280,14 @@ JS);
 
     <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
+    <div class="row mb-3">
+        <div class="col-sm-12">
+            <?= $form->field($model, 'description')->textarea(['rows' => 2]) ?>
+            <button type="button" id="btn-auto-summary" class="btn btn-outline-secondary btn-sm">
+                <?= Yii::t('app', 'Gerar descrição automática') ?>
+            </button>
+        </div>
+    </div>
 
     <?= $form->field($model, 'content')->widget(TinyMCE::class, [
         'options' => ['rows' => 20]
