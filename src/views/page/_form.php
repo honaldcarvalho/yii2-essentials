@@ -29,6 +29,7 @@ $inputId = Html::getInputId($model, 'tagIds');
 
 $this->registerJs(<<<JS
 
+
 function setFieldText(fieldId, text) {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
     tinyMCE.get(fieldId).setContent(text || '');
@@ -37,7 +38,15 @@ function setFieldText(fieldId, text) {
   const el = document.getElementById(fieldId);
   if (el) el.value = text || '';
 }
-
+// Helper: obtém texto de um campo (input/textarea/TinyMCE)
+function getFieldText(fieldId) {
+  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
+    return tinyMCE.get(fieldId).getContent({ format: 'raw' }) || '';
+  }
+  const el = document.getElementById(fieldId);
+  if (!el) return '';
+  return (el.value ?? el.textContent ?? '').trim();
+}
 // Pega o valor de um campo pelo ID
 function getTextValue(id) {
   // Se for um campo TinyMCE ativo
@@ -49,7 +58,6 @@ function getTextValue(id) {
   var node = document.getElementById(id);
   return node ? (node.value || '').trim() : '';
 }
-
 
 const langSelect = document.getElementById('page-language_id');
 const originalLang = langSelect.getAttribute('data-original') || langSelect.value;
