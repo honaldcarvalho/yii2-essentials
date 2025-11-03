@@ -12,6 +12,7 @@ use yii\helpers\Inflector;
  *
  * @property int $id
  * @property int|null $group_id
+ * @property int|null $model_group_id
  * @property int|null $page_section_id
  * @property string $language_id
  * @property string $slug
@@ -23,6 +24,7 @@ use yii\helpers\Inflector;
  * @property string|null $custom_js
  * @property datetime|null $created_at
  * @property datetime|null $updated_at
+ * @property int|null $list
  * @property int|null $status
  *
  * @property PageFiles[] $pageFiles
@@ -47,7 +49,7 @@ class Page extends ModelCommon
     public function rules()
     {
         return [
-            [['page_section_id', 'status'], 'integer'],
+            [['page_section_id', 'list', 'status'], 'integer'],
             [['title'], 'required', 'on' => self::SCENARIO_DEFAULT],
             [['content', 'keywords', 'custom_js', 'custom_css', 'language_id'], 'string'],
             [['created_at', 'updated_at'], 'safe'],
@@ -121,6 +123,7 @@ class Page extends ModelCommon
             'id' => 'ID',
             'file_id' => Yii::t('app', 'Cover'),
             'page_section_id' => Yii::t('app', 'Page Section'),
+            'model_group_id' => Yii::t('app', 'Model Group'),
             'slug' => Yii::t('app', 'Slug'),
             'language' => Yii::t('app', 'Language'),
             'title' => Yii::t('app', 'Title'),
@@ -129,6 +132,7 @@ class Page extends ModelCommon
             'custom_js' => Yii::t('app', 'Custom Javascript'),
             'custom_css' => Yii::t('app', 'Custom Style'),
             'keywords' => Yii::t('app', 'Keywords'),
+            'list' => Yii::t('app', 'List?'),
             'created_at' => Yii::t('app', 'Created at'),
             'updated_at' => Yii::t('app', 'Updated at'),
             'status' => Yii::t('app', 'Active'),

@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\controllers;
 
+use blog\admin\services\PageCloneService;
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\models\Configuration;
 use croacworks\essentials\models\Language;
@@ -196,17 +197,64 @@ class PageController extends AuthorizationController
 
     public function actionClone($id)
     {
-        $model = new Page();
+        $original = $this->findModel($id); // use o mesmo findModel() que você já tem
 
-        if (!$this->request->isPost) {
-            $model = $this->findModel($id);
-        } else if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        // 1) GET -> mostra form de edição com um "rascunho" (id=null)
+        if (!Yii::$app->request->isPost) {
+            $draft = new Page();
+            $draft->attributes = $original->attributes;
+
+            // Forçar novos valores gerados no save (iguais ao Post)
+            $draft->id = null;
+            $draft->slug = null;                // deixa regenerar
+            // $draft->model_group_id mantém/zera apenas no POST, conforme regra na detecção
+
+            // Renderize a mesma view de edição (igual ao Post)
+            return $this->render('update', [
+                'model' => $draft,
+                // passe outros parâmetros que sua view "update" espera (ex.: listas, providers, etc.)
+                'isClone' => true, // flag opcional caso sua view trate rótulos/botões
+                'originalId' => $original->id,
+            ]);
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        // 2) POST -> usuário confirmou; carregar dados enviados e decidir o tipo de clone
+        $posted = Yii::$app->request->post();
+
+        // Carregue em um modelo "buffer" apenas para comparar campos relevantes e capturar overrides
+        $buffer = new Page();
+        $buffer->load($posted); // o índice ('Page' ou outro) deve bater com o name do form
+
+        // Monte os overrides a partir do buffer (sem suposições de campos específicos — copiamos tudo)
+        // OBS: se você precisa excluir alguns atributos controlados internamente, faça como no Post.
+        $overrides = $buffer->attributes;
+
+        // DETECÇÃO (espelhando o Post): 
+        // - Clone de idioma quando o usuário alterou apenas a língua (mantém o mesmo model_group_id)
+        // - Clone total quando for para "duplicar" para outro grupo (novo group) ou quando explicitamente marcado
+        //
+        // Se no seu Post há um campo/botão que força o modo, espelhe aqui:
+        $forceTotal = (bool)($posted['clone_mode'] ?? false) && $posted['clone_mode'] === 'total';
+        $forceLang  = (bool)($posted['clone_mode'] ?? false) && $posted['clone_mode'] === 'language';
+
+        // Heurística alinhada ao padrão do Post:
+        // - se explicitamente indicado no form, obedecer
+        // - senão, se a linguagem mudou e não há intenção explícita de novo grupo => cloneLanguage
+        // - caso contrário => cloneTotal
+        $languageChanged = (string)$buffer->language_id !== (string)$original->language_id;
+
+        // Importante: não fixamos model_group_id aqui — quem define é o serviço (como no Post)
+        // cloneLanguage: mantém group do original; cloneTotal: inicia novo group.
+
+        if ($forceLang || ($languageChanged && !$forceTotal)) {
+            $clone = PageCloneService::cloneLanguage($original, $overrides);
+        } else {
+            $clone = PageCloneService::cloneTotal($original, $overrides);
+        }
+
+        Yii::$app->session->addFlash('success', Yii::t('app', 'Página clonada com sucesso.'));
+        // Redirecione para a mesma rota que o Post usa após clonar (geralmente update/view do clone)
+        return $this->redirect(['update', 'id' => $clone->id]);
     }
 
 

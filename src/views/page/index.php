@@ -111,7 +111,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             ],
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                                'template' => '{view} {update} {delete} {public}',
+                                'template' => '{clone} {view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $m) {
                                         $home = rtrim(Configuration::get()->homepage, '/');

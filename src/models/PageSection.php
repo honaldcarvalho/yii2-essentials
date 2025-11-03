@@ -13,6 +13,7 @@ use yii\helpers\Inflector;
  * @property int|null $group_id
  * @property string|null $name
  * @property string $slug
+ * @property int|null $list
  * @property int|null $status
  *
  * @property Pages[] $pages
@@ -36,7 +37,7 @@ class PageSection extends ModelCommon
     public function rules()
     {
         return [
-            [['status'], 'integer'],
+            [['status','list'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [
                 ['slug', 'group_id'],
@@ -83,6 +84,8 @@ class PageSection extends ModelCommon
         return [
             'id' => 'ID',
             'name' => Yii::t('app', 'Name'),
+            'group' => Yii::t('app', 'Group'),
+            'list' => Yii::t('app', 'List?'),
             'status' => Yii::t('app', 'Active'),
         ];
     }

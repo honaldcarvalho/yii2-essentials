@@ -23,6 +23,8 @@ use yii\bootstrap5\ActiveForm;
     <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
     
     <?= $form->field($model, 'uri')->textInput(['maxlength' => true]) ?>
+    
+    <?= $form->field($model, 'list')->checkbox() ?>
 
     <?= $form->field($model, 'status')->checkbox() ?>
 

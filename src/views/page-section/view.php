@@ -35,6 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'name',
                             'slug',
                             'uri',
+                            'list:boolean',
                             'status:boolean',
                         ],
                     ]) ?>
