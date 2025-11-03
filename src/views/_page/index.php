@@ -51,7 +51,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                         </div>
                     </div>
 
-                    <?php Pjax::begin(['id'=>'grid-page']); ?>
+                    <?php Pjax::begin(); ?>
                     <?php echo $this->render('/_parts/filter', ['view' => '/page', 'searchModel' => $searchModel]); ?>
 
                     <?= GridView::widget([
@@ -111,8 +111,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             ],
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                                'template' => '{status} {view} {update} {delete} {public}',
-                                'uniqueId'=>'page',
+                                'template' => '{clone} {view} {update} {delete} {public}',
                                 'buttons' => [
                                     'public' => function ($url, $m) {
                                         $home = rtrim(Configuration::get()->homepage, '/');

@@ -25,7 +25,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model,'show' => ['index', 'clone', 'update', 'delete']]) ?>
                         </div>
                     </div>
 
@@ -41,7 +41,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'value' => function ($data) {
                                     if (!empty($data->file_id) && $data->file !== null) {
                                         $url = Yii::getAlias('@web') . $data->file->urlThumb;
-                                        return "<img class='brand-image img-circle elevation-3' width='150' src='{$url}' />";
+                                        return "<img class='brand-image img-circle elevation-3' width='50' src='{$url}' />";
                                     }
                                 }
                             ],

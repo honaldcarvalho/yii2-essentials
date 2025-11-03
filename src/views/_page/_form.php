@@ -11,6 +11,7 @@ use croacworks\essentials\widgets\UploadImageInstant;
 /** @var croacworks\essentials\models\Page $model */
 /** @var yii\widgets\ActiveForm $form */
 
+
 $this->registerJs(<<<JS
 (function(){
 
@@ -223,85 +224,89 @@ JS);
 
 <div class="page-form">
 
-    <?php $form = ActiveForm::begin(); ?>
+  <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'file_id')
-        ->fileInput([
-            'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
-            'accept' => 'image/*',
-            'style' => 'display:none'
-        ])->label(false) ?>
+  <?= $form->field($model, 'group_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\Group::find()
+    ->asArray()->all(), 'id', 'name'), ['class' => 'form-control'])->label(Yii::t('app', 'Group')) ?>
 
-    <?= UploadImageInstant::widget([
-        'mode'        => 'defer',
-        'model'       => $model,
-        'attribute'   => 'file_id',
-        'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
-        'imageUrl'    => $model->file->url ?? '',
-        'aspectRatio' => '4/3',
-    ]) ?>
+  <?= $form->field($model, 'file_id')
+    ->fileInput([
+      'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+      'accept' => 'image/*',
+      'style' => 'display:none'
+    ])->label(false) ?>
 
-    <?= $form->field($model, 'page_section_id')->dropDownList(
-        yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
-        ['prompt' => '-- selecione uma secção --']
+  <?= UploadImageInstant::widget([
+    'mode'        => 'defer',
+    'model'       => $model,
+    'attribute'   => 'file_id',
+    'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+    'imageUrl'    => $model->file->url ?? '',
+    'aspectRatio' => '1',
+  ]) ?>
+
+  <?= $form->field($model, 'page_section_id')->dropDownList(
+    yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
+    ['prompt' => '-- selecione uma secção --']
+  ) ?>
+
+  <div class="col-sm-3">
+    <?= $form->field($model, 'language_id')->dropDownList(
+      yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
+      [
+        'prompt' => Yii::t('app', 'Select Language'),
+        'options' => \yii\helpers\ArrayHelper::map(
+          Language::find()->all(),
+          'id',
+          fn($lang) => ['data-code' => $lang->code]
+        ),
+      ]
     ) ?>
+  </div>
 
-    <div class="col-sm-3">
-        <?= $form->field($model, 'language_id')->dropDownList(
-            yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
-            [
-                'prompt' => Yii::t('app', 'Select Language'),
-                'options' => \yii\helpers\ArrayHelper::map(
-                    Language::find()->all(),
-                    'id',
-                    fn($lang) => ['data-code' => $lang->code]
-                ),
-            ]
-        ) ?>
+  <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
+
+  <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+
+  <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
+
+  <?= $form->field($model, 'content')->widget(TinyMCE::class, [
+    'options' => ['rows' => 20]
+  ]); ?>
+
+  <?= $form->field($model, 'custom_css')->textarea(['rows' => 6]) ?>
+
+  <?= $form->field($model, 'custom_js')->textarea(['rows' => 6]) ?>
+
+  <?= $form->field($model, 'keywords')->textarea(['rows' => 6]) ?>
+
+  <div class="row mb-3">
+
+    <div class="col-sm-12 mb-3">
+      <?= $form->field($model, 'tagIds')->dropDownList(
+        $initTags, // opções já selecionadas com os textos
+        [
+          'id'       => $inputId,
+          'multiple' => true,
+          'class'    => 'form-control select2-plain', // classe só pra selecionar no JS/CSS
+        ]
+      )->label(Yii::t('app', 'Tags')) ?>
+
+      <button type="button" id="btn-suggest-tags" class="btn btn-outline-secondary btn-sm">
+        Sugerir tags
+      </button>
+      <div id="tag-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
     </div>
+  </div>
 
-    <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
+  <?= $form->field($model, 'list')->checkbox() ?>
 
-    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+  <?= $form->field($model, 'status')->checkbox() ?>
 
-    <?= $form->field($model, 'description')->textInput(['maxlength' => true]) ?>
+  <div class="form-group mb-3 mt-3">
+    <?= Html::submitButton('<i class="fas fa-save mr-2"></i>' . Yii::t('croacworks\essentials', 'Save'), ['class' => 'btn btn-success']) ?>
+  </div>
 
-    <?= $form->field($model, 'content')->widget(TinyMCE::class, [
-        'options' => ['rows' => 20]
-    ]); ?>
-
-    <?= $form->field($model, 'custom_css')->textarea(['rows' => 6]) ?>
-
-    <?= $form->field($model, 'custom_js')->textarea(['rows' => 6]) ?>
-
-    <?= $form->field($model, 'keywords')->textarea(['rows' => 6]) ?>
-    <div class="row mb-3">
-
-        <div class="col-sm-12 mb-3">
-            <?= $form->field($model, 'tagIds')->dropDownList(
-                $initTags, // opções já selecionadas com os textos
-                [
-                    'id'       => $inputId,
-                    'multiple' => true,
-                    'class'    => 'form-control select2-plain', // classe só pra selecionar no JS/CSS
-                ]
-            )->label(Yii::t('app', 'Tags')) ?>
-
-            <button type="button" id="btn-suggest-tags" class="btn btn-outline-secondary btn-sm">
-                Sugerir tags
-            </button>
-            <div id="tag-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
-        </div>
-    </div>
-
-    <?= $form->field($model, 'list')->checkbox() ?>
-    
-    <?= $form->field($model, 'status')->checkbox() ?>
-
-    <div class="form-group mb-3 mt-3">
-        <?= Html::submitButton('<i class="fas fa-save mr-2"></i>' . Yii::t('croacworks\essentials', 'Save'), ['class' => 'btn btn-success']) ?>
-    </div>
-
-    <?php ActiveForm::end(); ?>
+  <?php ActiveForm::end(); ?>
 
 </div>
