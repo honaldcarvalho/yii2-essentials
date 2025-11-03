@@ -216,6 +216,18 @@ function getTextValue(id) {
   return node ? (node.value || '').trim() : '';
 }
 
+// Pega o valor de um campo pelo ID
+function getTextValue(id) {
+  // Se for um campo TinyMCE ativo
+  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
+    return tinyMCE.get(id).getContent({ format: 'text' }).trim();
+  }
+
+  // Caso contrário, pega direto do input/textarea normal
+  var node = document.getElementById(id);
+  return node ? (node.value || '').trim() : '';
+}
+
 // Adiciona uma tag no <select multiple>
 function addTagToSelect(selectId, text, value) {
   var select = document.getElementById(selectId);
