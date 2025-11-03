@@ -3,10 +3,10 @@
 use yii\db\Migration;
 
 /**
- * m251101_210000_add_model_group_id_to_pages
+ * m251101_210000_add_list_to_page_sections
  * ------------------------------------
  */
-class m251101_210000_add_model_group_id_to_pages extends Migration
+class m251101_210000_add_list_to_page_sections extends Migration
 {
     public function safeUp()
     {
