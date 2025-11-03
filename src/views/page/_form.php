@@ -264,7 +264,7 @@ JS);
         'aspectRatio' => '4/3',
     ]) ?>
     
-    <div class="row">
+    <div class="row mb-3">
         <div class="col-sm-6">
             <?= $form->field($model, 'page_section_id')->dropDownList(
                 yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
@@ -286,10 +286,15 @@ JS);
             ) ?>
         </div>
     </div>
-
-    <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+    
+    <div class="row mb-3">
+        <div class="col-sm-3">
+            <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-sm-9">
+            <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+        </div>
+    </div>
 
     <div class="row mb-3">
         <div class="col-sm-12">
