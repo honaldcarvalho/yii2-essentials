@@ -39,7 +39,7 @@ $this->registerJs(<<<JS
     tokenSeparators: [','],
     minimumInputLength: 1,
     ajax: {
-      url: '/blog/tag/search',
+      url: '/tag/search',
       dataType: 'json',
       delay: 250,
       data: function(params){ return { q: params.term }; },
@@ -191,7 +191,7 @@ document.getElementById('btn-auto-summary').addEventListener('click', async func
     didOpen: () => Swal.showLoading(),
   });
 
-  const res = await fetch('/blog/tag/summarize', {
+  const res = await fetch('/tag/summarize', {
     method: 'page',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
     body: new URLSearchParams({ title, description, content, language_id: langId })
@@ -223,7 +223,7 @@ document.getElementById('btn-auto-summary').addEventListener('click', async func
 // Evento do botão principal
 document.getElementById('btn-suggest-tags').addEventListener('click', function() {
   fetchTagSuggestions(
-    '/blog/tag/suggest',
+    '/tag/suggest',
     'page-tagids',
     [
       { id: 'page-title', name: 'title' },
