@@ -1,6 +1,6 @@
 <?php
 
-namespace croacworks\essentials\componentss;
+namespace croacworks\essentials\components;
 
 use yii\db\ActiveQuery;
 use yii\db\Query;
