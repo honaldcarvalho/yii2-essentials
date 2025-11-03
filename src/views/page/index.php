@@ -111,7 +111,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             ],
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
-                                'template' => '{status} {view} {update} {delete} {public}',
+                                'template' => '{clone} {status} {view} {update} {delete} {public}',
                                 'uniqueId'=>'page',
                                 'buttons' => [
                                     'public' => function ($url, $m) {
