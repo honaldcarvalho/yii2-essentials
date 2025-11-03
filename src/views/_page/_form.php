@@ -13,7 +13,147 @@ use croacworks\essentials\widgets\UploadImageInstant;
 
 
 $this->registerJs(<<<JS
-(function(){
+  const langSelect = document.getElementById('page-language_id');
+  const originalLang = langSelect.getAttribute('data-original') || langSelect.value;
+
+  function showCloneAlert() {
+      const current = langSelect.value;
+      const isLanguageClone = current && originalLang && current !== originalLang;
+      if (isLanguageClone) {
+          Swal.fire({
+              icon: 'info',
+              title: 'Clone de Idioma',
+              text: 'Você alterou o idioma. O sistema criará uma tradução no mesmo grupo (clone de idioma).',
+              toast: true,
+              position: 'bottom-end',
+              timer: 6000,
+              showConfirmButton: false
+          });
+      } else {
+          Swal.fire({
+              icon: 'warning',
+              title: 'Clone Total',
+              text: 'O idioma é o mesmo. Será criado um novo grupo independente (clone total).',
+              toast: true,
+              position: 'bottom-end',
+              timer: 6000,
+              showConfirmButton: false
+          });
+      }
+  }
+
+  langSelect.addEventListener('change', async function(){
+
+    showCloneAlert();
+
+    const selectedOption = this.options[this.selectedIndex];
+    const targetCode = selectedOption?.dataset?.code || null;
+
+    if (!targetCode) {
+      Swal.fire({
+        icon: 'warning',
+        title: yii.t('app', 'Idioma inválido'),
+        text: yii.t('app', 'Não foi possível determinar o código da língua selecionada.'),
+      });
+      return;
+    }
+
+    // Idiomas suportados pelo Google Translate
+    const languages = [
+      { code: 'pt', name: 'Português' },
+      { code: 'en', name: 'English' },
+      { code: 'es', name: 'Español' }
+    ];
+
+    // Monta o combo de destino (target)
+    const targetOptions = languages.map(lang => `<option value="\${lang.code}">\${lang.name}</option>`).join('');
+    // Adiciona "auto" no início da lista de origem
+    const sourceOptions = `<option value="auto">Detectar automaticamente</option>` + targetOptions;
+
+    const result = await Swal.fire({
+      title: yii.t('app', 'Traduzir automaticamente?'),
+      html: `
+        <div class="text-start">
+          <p>\${yii.t('app', 'Deseja traduzir automaticamente os campos de texto do page para')} <b>\${selectedOption.text}</b>?</p>
+          <p class="mt-3">\${yii.t('app', 'Idioma de origem (opcional, use "auto" para detectar):')}</p>
+          <select id="swal-source-lang" class="swal2-select">\${sourceOptions}</select>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: yii.t('app', 'Sim, traduzir'),
+      cancelButtonText: yii.t('app', 'Não'),
+      preConfirm: () => {
+        const source = document.getElementById('swal-source-lang').value.trim() || 'auto';
+        return { source };
+      }
+    });
+
+    if (!result.isConfirmed) return;
+    const { source } = result.value;
+
+    const fields = [
+      { id: 'page-title', label: 'Título' },
+      { id: 'page-description', label: 'Descrição' },
+      { id: 'page-content', label: 'Conteúdo' },
+    ];
+
+    const toTranslate = fields
+      .map(f => ({ ...f, text: getFieldText(f.id) }))
+      .filter(f => f.text && f.text.length > 0);
+
+    if (!toTranslate.length) {
+      Swal.fire({
+        icon: 'info',
+        title: yii.t('app', 'Nada para traduzir'),
+        text: yii.t('app', 'Preencha título, descrição ou conteúdo antes.'),
+      });
+      return;
+    }
+
+    // Cria o modal de progresso
+    Swal.fire({
+      title: yii.t('app', 'Traduzindo...'),
+      html: `<div id="translation-status" class="text-start"></div>`,
+      allowOutsideClick: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    const statusDiv = () => document.getElementById('translation-status');
+    const appendStatus = (msg) => {
+      if (statusDiv()) {
+        statusDiv().innerHTML += `<div>\${msg}</div>`;
+        statusDiv().scrollTop = statusDiv().scrollHeight;
+      }
+    };
+
+    for (const f of toTranslate) {
+      appendStatus(`🔄 \${yii.t('app', 'Traduzindo')} \${f.label.toLowerCase()}...`);
+      try {
+        const res = await fetch(`/page/suggest-translation?language=\${encodeURIComponent(targetCode)}&to=\${encodeURIComponent(source)}`, {
+          method: 'page',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: f.text })
+        });
+        const json = await res.json();
+        if (json && json.success && json.translation) {
+          setFieldText(f.id, json.translation);
+          appendStatus(`✅ \${f.label} \${yii.t('app', 'traduzido com sucesso!')}`);
+        } else {
+          appendStatus(`⚠️ \${yii.t('app', 'Falha ao traduzir')} \${f.label.toLowerCase()}`);
+        }
+      } catch (e) {
+        appendStatus(`❌ \${yii.t('app', 'Erro ao traduzir')} \${f.label.toLowerCase()}`);
+        console.error('Translation error:', f.id, e);
+      }
+    }
+
+    appendStatus(`<hr><b>✅ \${yii.t('app', 'Tradução concluída!')}</b>`);
+
+    setTimeout(() => Swal.close(), 2000);
+  });
 
   var el = $('#page-tagids');
 
@@ -38,7 +178,7 @@ $this->registerJs(<<<JS
     templateSelection: function(item){ return item.text || item.id; },
     escapeMarkup: function(m){ return m; }
   });
-})();
+
 
 // Pega o valor de um campo pelo ID
 function getTextValue(id) {
