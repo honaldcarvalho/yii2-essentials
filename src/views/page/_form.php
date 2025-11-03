@@ -53,6 +53,15 @@ $this->registerJs(<<<JS
     escapeMarkup: function(m){ return m; }
   });
 
+    function setFieldText(fieldId, text) {
+    if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
+      tinyMCE.get(fieldId).setContent(text || '');
+      return;
+    }
+    const el = document.getElementById(fieldId);
+    if (el) el.value = text || '';
+  }
+
 // Pega o valor de um campo pelo ID
 function getTextValue(id) {
   // Se for um campo TinyMCE ativo
