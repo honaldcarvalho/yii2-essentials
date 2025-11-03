@@ -244,7 +244,7 @@ JS);
 
 ?>
 
-<div class="page-form row">
+<div class="page-form">
 
     <?php $form = ActiveForm::begin(); ?>
 
@@ -263,26 +263,28 @@ JS);
         'imageUrl'    => $model->file->url ?? '',
         'aspectRatio' => '4/3',
     ]) ?>
+    
+    <div class="row">
+        <div class="col-sm-6">
+            <?= $form->field($model, 'page_section_id')->dropDownList(
+                yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
+                ['prompt' => '-- selecione uma secção --']
+            ) ?>
+        </div>
 
-    <div class="col-sm-6">
-        <?= $form->field($model, 'page_section_id')->dropDownList(
-            yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
-            ['prompt' => '-- selecione uma secção --']
-        ) ?>
-    </div>
-
-    <div class="col-sm-6">
-        <?= $form->field($model, 'language_id')->dropDownList(
-            yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
-            [
-                'prompt' => Yii::t('app', 'Select Language'),
-                'options' => \yii\helpers\ArrayHelper::map(
-                    Language::find()->all(),
-                    'id',
-                    fn($lang) => ['data-code' => $lang->code]
-                ),
-            ]
-        ) ?>
+        <div class="col-sm-6">
+            <?= $form->field($model, 'language_id')->dropDownList(
+                yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
+                [
+                    'prompt' => Yii::t('app', 'Select Language'),
+                    'options' => \yii\helpers\ArrayHelper::map(
+                        Language::find()->all(),
+                        'id',
+                        fn($lang) => ['data-code' => $lang->code]
+                    ),
+                ]
+            ) ?>
+        </div>
     </div>
 
     <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
