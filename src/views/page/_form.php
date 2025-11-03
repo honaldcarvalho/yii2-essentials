@@ -264,12 +264,14 @@ JS);
         'aspectRatio' => '4/3',
     ]) ?>
 
-    <?= $form->field($model, 'page_section_id')->dropDownList(
-        yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
-        ['prompt' => '-- selecione uma secção --']
-    ) ?>
+    <div class="col-sm-6">
+        <?= $form->field($model, 'page_section_id')->dropDownList(
+            yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
+            ['prompt' => '-- selecione uma secção --']
+        ) ?>
+    </div>
 
-    <div class="col-sm-3">
+    <div class="col-sm-6">
         <?= $form->field($model, 'language_id')->dropDownList(
             yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
             [
