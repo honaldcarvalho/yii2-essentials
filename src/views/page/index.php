@@ -73,7 +73,7 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                             'slug',
                             'title',
                             'language.code:text:' . Yii::t('app', 'Language'),
-                            'description',
+                            //'description',
                             //'content:ntext',
                             //'keywords:ntext',
                             [
@@ -89,26 +89,26 @@ $this->registerJs($js, \yii\web\View::POS_READY);
                                 'filter' => Html::input('date', ucfirst(Yii::$app->controller->id) . 'Search[updated_at]', $searchModel->updated_at, ['class' => 'form-control dateandtime'])
                             ],
                             'status:boolean',
-                            [
-                                'label' => Yii::t('app', 'Public URL'),
-                                'format' => 'raw',
-                                'value' => function ($m) {
-                                    $home = rtrim(Configuration::get()->homepage, '/');
-                                    $g = (int)($m->group_id ?: 1);
-                                    $l = $m->language->code ?? $m->language->locale ?? $m->language_id ?? '';
-                                    $sec = $m->pageSection->slug ?? '';  // ajuste o nome da relação se for diferente
-                                    $slug = $m->slug;
+                            // [
+                            //     'label' => Yii::t('app', 'Public URL'),
+                            //     'format' => 'raw',
+                            //     'value' => function ($m) {
+                            //         $home = rtrim(Configuration::get()->homepage, '/');
+                            //         $g = (int)($m->group_id ?: 1);
+                            //         $l = $m->language->code ?? $m->language->locale ?? $m->language_id ?? '';
+                            //         $sec = $m->pageSection->slug ?? '';  // ajuste o nome da relação se for diferente
+                            //         $slug = $m->slug;
 
-                                    $path = "/p/{$g}" . ($sec ? "/" . rawurlencode($sec) : '') . ($l ? "/" . rawurlencode($l) : '') . "/" . rawurlencode($slug);
-                                    $url  = $home . $path;
+                            //         $path = "/p/{$g}" . ($sec ? "/" . rawurlencode($sec) : '') . ($l ? "/" . rawurlencode($l) : '') . "/" . rawurlencode($slug);
+                            //         $url  = $home . $path;
 
-                                    return Html::a($url, 'javascript:void(0);', [
-                                        'class' => 'copy-url-link text-decoration-none',
-                                        'data-url' => $url,
-                                        'title' => Yii::t('app', 'Click to copy URL'),
-                                    ]);
-                                },
-                            ],
+                            //         return Html::a($url, 'javascript:void(0);', [
+                            //             'class' => 'copy-url-link text-decoration-none',
+                            //             'data-url' => $url,
+                            //             'title' => Yii::t('app', 'Click to copy URL'),
+                            //         ]);
+                            //     },
+                            // ],
                             [
                                 'class' => croacworks\essentials\components\gridview\ActionColumnCustom::class,
                                 'template' => '{clone} {status} {view} {update} {delete} {public}',
