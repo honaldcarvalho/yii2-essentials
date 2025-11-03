@@ -29,7 +29,7 @@ onPjaxReady((root) => {
 
 (function(){
     const liveNotifications = {$liveNotifications};
-    const notificationsInterval = = {$notificationsInterval};
+    const notificationsInterval = {$notificationsInterval};
     const badge = document.getElementById('notif-badge');
     const list  = document.getElementById('notif-list');
     const markAll = document.getElementById('notif-mark-all');
