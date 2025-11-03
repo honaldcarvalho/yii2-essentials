@@ -55,17 +55,24 @@ $this->registerJs(<<<JS
   });
 })();
 
-// Pega o valor de um campo pelo ID
-function getTextValue(id) {
-  // Se for um campo TinyMCE ativo
-  if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
-    return tinyMCE.get(id).getContent({ format: 'text' }).trim();
+  function getFieldText(fieldId) {
+    if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
+      return tinyMCE.get(fieldId).getContent({ format: 'raw' }) || '';
+    }
+    const el = document.getElementById(fieldId);
+    if (!el) return '';
+    return (el.value ?? el.textContent ?? '').trim();
   }
 
-  // Caso contrário, pega direto do input/textarea normal
-  var node = document.getElementById(id);
-  return node ? (node.value || '').trim() : '';
-}
+  // Helper: seta texto traduzido no campo (TinyMCE ou input/textarea)
+  function setFieldText(fieldId, text) {
+    if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
+      tinyMCE.get(fieldId).setContent(text || '');
+      return;
+    }
+    const el = document.getElementById(fieldId);
+    if (el) el.value = text || '';
+  }
 
 // Adiciona uma tag no <select multiple>
 function addTagToSelect(selectId, text, value) {
