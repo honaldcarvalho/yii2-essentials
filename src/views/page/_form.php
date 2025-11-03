@@ -38,7 +38,7 @@ function setFieldText(fieldId, text) {
   const el = document.getElementById(fieldId);
   if (el) el.value = text || '';
 }
-// Helper: obtém texto de um campo (input/textarea/TinyMCE)
+
 function getFieldText(fieldId) {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
     return tinyMCE.get(fieldId).getContent({ format: 'raw' }) || '';
@@ -47,14 +47,11 @@ function getFieldText(fieldId) {
   if (!el) return '';
   return (el.value ?? el.textContent ?? '').trim();
 }
-// Pega o valor de um campo pelo ID
+
 function getTextValue(id) {
-  // Se for um campo TinyMCE ativo
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
     return tinyMCE.get(id).getContent({ format: 'text' }).trim();
   }
-
-  // Caso contrário, pega direto do input/textarea normal
   var node = document.getElementById(id);
   return node ? (node.value || '').trim() : '';
 }
