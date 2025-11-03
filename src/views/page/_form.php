@@ -2,14 +2,30 @@
 
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
+use croacworks\essentials\models\Tag;
 use yii\helpers\Html;
 use croacworks\essentials\widgets\form\ActiveForm;
 use croacworks\essentials\widgets\form\TinyMCE;
 use croacworks\essentials\widgets\UploadImageInstant;
+use yii\helpers\Url;
 
 /** @var yii\web\View $this */
 /** @var croacworks\essentials\models\Page $model */
 /** @var yii\widgets\ActiveForm $form */
+
+$initTags = [];
+$suggestUrl = Url::to(['/tag/suggest']);
+$searchUrl  = Url::to(['/tag/search']); // já existente
+
+if (!$model->isNewRecord && !empty($model->tagIds)) {
+  $initTags = Tag::find()
+    ->select(['name', 'id'])
+    ->where(['id' => (array)$model->tagIds])
+    ->indexBy('id')
+    ->column(); // [id => name]
+}
+
+$inputId = Html::getInputId($model, 'tagIds');
 
 $this->registerJs(<<<JS
 (function(){
@@ -295,7 +311,7 @@ JS);
     </div>
 
     <?= $form->field($model, 'list')->checkbox() ?>
-    
+
     <?= $form->field($model, 'status')->checkbox() ?>
 
     <div class="form-group mb-3 mt-3">
