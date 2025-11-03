@@ -244,7 +244,7 @@ JS);
 
 ?>
 
-<div class="page-form">
+<div class="page-form row">
 
     <?php $form = ActiveForm::begin(); ?>
 
