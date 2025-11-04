@@ -8,7 +8,7 @@ use Yii;
 use yii\helpers\Inflector;
 
 /**
- * This is the model class for table "pages".
+ * Model for table "pages".
  *
  * @property int $id
  * @property int|null $group_id
@@ -34,22 +34,19 @@ use yii\helpers\Inflector;
  */
 class Page extends ModelCommon
 {
+    /** Enable default group scoping from ModelCommon */
     public $verGroup = true;
+
     private $_oldSlug;
-    /** @var int[] Selected tag IDs (form helper) */
+
+    /** Selected tag IDs (form helper) */
     public $tagIds = [];
 
-    /**
-     * {@inheritdoc}
-     */
     public static function tableName()
     {
         return 'pages';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
@@ -59,15 +56,18 @@ class Page extends ModelCommon
             [['created_at', 'updated_at'], 'safe'],
             [['slug', 'title'], 'string', 'max' => 255],
             [['description'], 'string', 'max' => 300],
+
             [['page_section_id'], 'exist', 'skipOnError' => true, 'targetClass' => PageSection::class, 'targetAttribute' => ['page_section_id' => 'id']],
             [['language_id'], 'exist', 'skipOnError' => true, 'targetClass' => Language::class, 'targetAttribute' => ['language_id' => 'id']],
             [['group_id'], 'exist', 'skipOnError' => true, 'targetClass' => Group::class, 'targetAttribute' => ['group_id' => 'id']],
+
             [
                 ['slug', 'group_id', 'language_id', 'page_section_id'],
                 'unique',
                 'targetAttribute' => ['slug', 'group_id', 'language_id', 'page_section_id'],
-                'message' => Yii::t('app', 'Already exists a page with this Slug/Group/Language/Section combination.')
+                'message' => Yii::t('app', 'A page with this Slug/Group/Language/Section already exists.')
             ],
+
             [['file_id'], 'exist', 'skipOnError' => true, 'targetClass' => File::class, 'targetAttribute' => ['file_id' => 'id']],
         ];
     }
@@ -81,7 +81,7 @@ class Page extends ModelCommon
                 'removeFlagParam' => 'remove',
                 'deleteOldOnReplace' => true,
                 'deleteOnOwnerDelete' => false,
-                'debug' => true, // ligue por enquanto
+                'debug' => true, // keep enabled while stabilizing
             ],
         ]);
     }
@@ -90,9 +90,9 @@ class Page extends ModelCommon
     {
         parent::afterFind();
         $this->_oldSlug = $this->slug;
+        // Preload tagIds for form usage
         $this->tagIds = $this->getTags()->select('id')->column();
     }
-
 
     public function beforeValidate()
     {
@@ -100,41 +100,41 @@ class Page extends ModelCommon
             return false;
         }
 
-        // Se for um novo registro, forçar model_group_id = 0 se estiver nulo
+        // For new records, force model_group_id=0 when empty (service will set on insert)
         if ($this->isNewRecord && empty($this->model_group_id)) {
             $this->model_group_id = 0;
         }
 
-        // Correção 3: Se é um novo registro E tem um slug (veio de um clone),
-        // ou se o slug está vazio, gere o novo slug.
+        // Slug generation rules:
+        // - New + slug filled (from clone) => regenerate for uniqueness
+        // - New + slug empty => generate
+        // - Existing + slug changed => regenerate
         if ($this->isNewRecord) {
             if (!empty($this->slug)) {
-                // Força a regeneração do slug para garantir que seja único em um clone.
-                // Isso cobre o caso em que o slug foi copiado via $source->attributes
                 $this->slug = $this->generateUniqueSlug($this->slug);
             } elseif (empty($this->slug)) {
-                // Caso em que o slug está realmente vazio (comportamento original)
                 $this->slug = $this->generateUniqueSlug($this->slug);
             }
         } elseif ($this->_oldSlug !== $this->slug) {
-            // Se o slug foi modificado manualmente (comportamento original)
             $this->slug = $this->generateUniqueSlug($this->slug);
         }
 
         return true;
     }
 
+    /** True if this record is the owner of its model group */
     public function getIsGroupOwner(): bool
     {
         return (int)$this->id === (int)$this->model_group_id;
     }
 
+    /** Generate a unique slug within the current section scope */
     public function generateUniqueSlug(?string $baseTitle = null): string
     {
         $base = trim((string)($baseTitle ?? $this->title ?? $this->description ?? $this->id));
         $seed = Inflector::slug($base);
         if ($seed === '') {
-            $seed = (string)$this->id; // fallback duro
+            $seed = (string)$this->id; // hard fallback
         }
 
         $try = $seed;
@@ -150,33 +150,30 @@ class Page extends ModelCommon
         return $try;
     }
 
-    /** Sync pivot after save */
+    /** Sync pivot and group id after save */
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
 
-        // Garante que model_group_id seja atualizado se 0. Isso deve ocorrer apenas para o cloneTotal
+        // Set model_group_id to self on first insert when it was 0 (cloneTotal starts a new group)
         if ($insert && (int)$this->model_group_id === 0) {
             static::updateAll(['model_group_id' => $this->id], ['id' => $this->id]);
             $this->model_group_id = $this->id;
         }
 
-        // 1) Transform inputs (ids ou nomes) em IDs válidos
+        // Normalize tag inputs (IDs or names) and upsert tags
         $resolvedIds = [];
         foreach ((array)$this->tagIds as $val) {
             $val = is_string($val) ? trim($val) : $val;
-
             if ($val === '' || $val === null) {
                 continue;
             }
 
             if (ctype_digit((string)$val)) {
-                // já é ID
                 $resolvedIds[] = (int)$val;
                 continue;
             }
 
-            // é um "nome" digitado -> criar/achar tag
             $name = $val;
             $slug = Inflector::slug($name);
 
@@ -187,18 +184,15 @@ class Page extends ModelCommon
                     'slug'   => $slug,
                     'status' => 1,
                 ]);
-                // validação com i18n nas mensagens já está no model Tag
                 if (!$tag->save()) {
-                    // se falhar, pula silenciosamente (ou loga)
-                    \Yii::error(['tag_create_failed' => $tag->errors, 'name' => $name], __METHOD__);
+                    Yii::error(['tag_create_failed' => $tag->errors, 'name' => $name], __METHOD__);
                     continue;
                 }
             }
-
             $resolvedIds[] = (int)$tag->id;
         }
 
-        // 2) Sincroniza pivô
+        // Sync pivot table
         $resolvedIds = array_values(array_unique(array_map('intval', $resolvedIds)));
         $currentIds  = $this->getTags()->select('id')->column();
 
@@ -206,56 +200,53 @@ class Page extends ModelCommon
         $toDel = array_diff($currentIds, $resolvedIds);
 
         if ($toDel) {
-            \Yii::$app->db->createCommand()
+            Yii::$app->db->createCommand()
                 ->delete('{{%page_tags}}', ['page_id' => $this->id, 'tag_id' => $toDel])
                 ->execute();
         }
         foreach ($toAdd as $id) {
-            \Yii::$app->db->createCommand()
+            Yii::$app->db->createCommand()
                 ->insert('{{%page_tags}}', ['page_id' => $this->id, 'tag_id' => $id])
                 ->execute();
         }
     }
-    /**
-     * Gets query for [[Group]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+
+    /** Relation: Group */
     public function getGroup()
     {
         return $this->hasOne(Group::class, ['id' => 'group_id']);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'file_id' => Yii::t('app', 'Cover'),
+            'id'              => 'ID',
+            'file_id'         => Yii::t('app', 'Cover'),
             'page_section_id' => Yii::t('app', 'Page Section'),
-            'model_group_id' => Yii::t('app', 'Model Group'),
-            'slug' => Yii::t('app', 'Slug'),
-            'language' => Yii::t('app', 'Language'),
-            'title' => Yii::t('app', 'Title'),
-            'description' => Yii::t('app', 'Description'),
-            'content' => Yii::t('app', 'Content'),
-            'custom_js' => Yii::t('app', 'Custom Javascript'),
-            'custom_css' => Yii::t('app', 'Custom Style'),
-            'keywords' => Yii::t('app', 'Keywords'),
-            'list' => Yii::t('app', 'List?'),
-            'created_at' => Yii::t('app', 'Created at'),
-            'updated_at' => Yii::t('app', 'Updated at'),
-            'status' => Yii::t('app', 'Active'),
+            'model_group_id'  => Yii::t('app', 'Model Group'),
+            'slug'            => Yii::t('app', 'Slug'),
+            'language'        => Yii::t('app', 'Language'),
+            'title'           => Yii::t('app', 'Title'),
+            'description'     => Yii::t('app', 'Description'),
+            'content'         => Yii::t('app', 'Content'),
+            'custom_js'       => Yii::t('app', 'Custom JavaScript'),
+            'custom_css'      => Yii::t('app', 'Custom CSS'),
+            'keywords'        => Yii::t('app', 'Keywords'),
+            'list'            => Yii::t('app', 'Show in lists'),
+            'created_at'      => Yii::t('app', 'Created at'),
+            'updated_at'      => Yii::t('app', 'Updated at'),
+            'status'          => Yii::t('app', 'Active'),
         ];
     }
+
+    /** Relation: Tags (via pivot) */
     public function getTags()
     {
         return $this->hasMany(Tag::class, ['id' => 'tag_id'])
             ->viaTable('{{%page_tags}}', ['page_id' => 'id']);
     }
 
+    /** Relation: PageFiles (+ eager File) */
     public function getPageFiles()
     {
         return $this->hasMany(PageFile::class, ['page_id' => 'id'])
@@ -263,37 +254,26 @@ class Page extends ModelCommon
             ->with('file');
     }
 
+    /** Relation: Files via PageFiles */
     public function getFiles()
     {
         return $this->hasMany(File::class, ['id' => 'file_id'])
             ->via('pageFiles');
     }
 
-    /**
-     * Gets query for [[PageSection]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+    /** Relation: PageSection */
     public function getPageSection()
     {
         return $this->hasOne(PageSection::class, ['id' => 'page_section_id'])->alias('pageSection');
     }
 
-    /**
-     * Gets query for [[PageSection]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+    /** Relation: Language */
     public function getLanguage()
     {
         return $this->hasOne(Language::class, ['id' => 'language_id']);
     }
 
-    /**
-     * Gets query for [[File]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+    /** Relation: File (cover) */
     public function getFile()
     {
         return $this->hasOne(File::class, ['id' => 'file_id']);

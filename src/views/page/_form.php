@@ -13,9 +13,9 @@ use yii\helpers\Url;
 /** @var croacworks\essentials\models\Page $model */
 /** @var yii\widgets\ActiveForm $form */
 
-$initTags = [];
+$initTags  = [];
 $suggestUrl = Url::to(['/tag/suggest']);
-$searchUrl  = Url::to(['/tag/search']); // já existente
+$searchUrl  = Url::to(['/tag/search']);
 
 if (!$model->isNewRecord && !empty($model->tagIds)) {
     $initTags = Tag::find()
@@ -28,7 +28,7 @@ if (!$model->isNewRecord && !empty($model->tagIds)) {
 $inputId = Html::getInputId($model, 'tagIds');
 
 $this->registerJs(<<<JS
-
+// TinyMCE helpers
 function setFieldText(fieldId, text) {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
     tinyMCE.get(fieldId).setContent(text || '');
@@ -37,8 +37,6 @@ function setFieldText(fieldId, text) {
   const el = document.getElementById(fieldId);
   if (el) el.value = text || '';
 }
-
-// Helper: obtém texto de um campo (input/textarea/TinyMCE)
 function getFieldText(fieldId) {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(fieldId)) {
     return tinyMCE.get(fieldId).getContent({ format: 'raw' }) || '';
@@ -47,19 +45,15 @@ function getFieldText(fieldId) {
   if (!el) return '';
   return (el.value ?? el.textContent ?? '').trim();
 }
-
-// Pega o valor de um campo pelo ID
 function getTextValue(id) {
-  // Se for um campo TinyMCE ativo
   if (typeof tinyMCE !== 'undefined' && tinyMCE.get(id)) {
     return tinyMCE.get(id).getContent({ format: 'text' }).trim();
   }
-
-  // Caso contrário, pega direto do input/textarea normal
-  var node = document.getElementById(id);
+  const node = document.getElementById(id);
   return node ? (node.value || '').trim() : '';
 }
 
+// Clone hint on language change
 const langSelect = document.getElementById('page-language_id');
 const originalLang = langSelect.getAttribute('data-original') || langSelect.value;
 
@@ -69,8 +63,8 @@ function showCloneAlert() {
   if (isLanguageClone) {
     Swal.fire({
       icon: 'info',
-      title: 'Clone de Idioma',
-      text: 'Você alterou o idioma. O sistema criará uma tradução no mesmo grupo (clone de idioma).',
+      title: yii.t('app', 'Language Clone'),
+      text: yii.t('app', 'You changed the language. The system will create a translation within the same group (language clone).'),
       toast: true,
       position: 'bottom-end',
       timer: 6000,
@@ -79,8 +73,8 @@ function showCloneAlert() {
   } else {
     Swal.fire({
       icon: 'warning',
-      title: 'Clone Total',
-      text: 'O idioma é o mesmo. Será criado um novo grupo independente (clone total).',
+      title: yii.t('app', 'Full Clone'),
+      text: yii.t('app', 'Same language detected. A new independent group will be created (full clone).'),
       toast: true,
       position: 'bottom-end',
       timer: 6000,
@@ -90,7 +84,6 @@ function showCloneAlert() {
 }
 
 langSelect.addEventListener('change', async function () {
-
   showCloneAlert();
 
   const selectedOption = this.options[this.selectedIndex];
@@ -99,36 +92,34 @@ langSelect.addEventListener('change', async function () {
   if (!targetCode) {
     Swal.fire({
       icon: 'warning',
-      title: yii.t('app', 'Idioma inválido'),
-      text: yii.t('app', 'Não foi possível determinar o código da língua selecionada.'),
+      title: yii.t('app', 'Invalid language'),
+      text: yii.t('app', 'Could not determine the selected language code.')
     });
     return;
   }
 
-  // Idiomas suportados pelo Google Translate
+  // Minimal language list for the dialog
   const languages = [
-    { code: 'pt', name: 'Português' },
+    { code: 'pt', name: 'Portuguese' },
     { code: 'en', name: 'English' },
-    { code: 'es', name: 'Español' }
+    { code: 'es', name: 'Spanish' }
   ];
 
-  // Monta o combo de destino (target)
   const targetOptions = languages.map(lang => `<option value="\${lang.code}">\${lang.name}</option>`).join('');
-  // Adiciona "auto" no início da lista de origem
-  const sourceOptions = `<option value="auto">Detectar automaticamente</option>` + targetOptions;
+  const sourceOptions = `<option value="auto">\${yii.t('app', 'Auto-detect')}</option>` + targetOptions;
 
   const result = await Swal.fire({
-    title: yii.t('app', 'Traduzir automaticamente?'),
+    title: yii.t('app', 'Auto-translate?'),
     html: `
-          <div class="text-start">
-            <p>\${yii.t('app', 'Deseja traduzir automaticamente os campos de texto do page para')} <b>\${selectedOption.text}</b>?</p>
-            <p class="mt-3">\${yii.t('app', 'Idioma de origem (opcional, use "auto" para detectar):')}</p>
-            <select id="swal-source-lang" class="swal2-select">\${sourceOptions}</select>
-          </div>
-        `,
+      <div class="text-start">
+        <p>\${yii.t('app', 'Translate page text fields to')} <b>\${selectedOption.text}</b>?</p>
+        <p class="mt-3">\${yii.t('app', 'Source language (optional, use "auto" to detect):')}</p>
+        <select id="swal-source-lang" class="swal2-select">\${sourceOptions}</select>
+      </div>
+    `,
     showCancelButton: true,
-    confirmButtonText: yii.t('app', 'Sim, traduzir'),
-    cancelButtonText: yii.t('app', 'Não'),
+    confirmButtonText: yii.t('app', 'Yes, translate'),
+    cancelButtonText: yii.t('app', 'No'),
     preConfirm: () => {
       const source = document.getElementById('swal-source-lang').value.trim() || 'auto';
       return { source };
@@ -139,9 +130,9 @@ langSelect.addEventListener('change', async function () {
   const { source } = result.value;
 
   const fields = [
-    { id: 'page-title', label: 'Título' },
-    { id: 'page-description', label: 'Descrição' },
-    { id: 'page-content', label: 'Conteúdo' },
+    { id: 'page-title', label: yii.t('app', 'Title') },
+    { id: 'page-description', label: yii.t('app', 'Description') },
+    { id: 'page-content', label: yii.t('app', 'Content') }
   ];
 
   const toTranslate = fields
@@ -151,21 +142,18 @@ langSelect.addEventListener('change', async function () {
   if (!toTranslate.length) {
     Swal.fire({
       icon: 'info',
-      title: yii.t('app', 'Nada para traduzir'),
-      text: yii.t('app', 'Preencha título, descrição ou conteúdo antes.'),
+      title: yii.t('app', 'Nothing to translate'),
+      text: yii.t('app', 'Fill title, description or content first.')
     });
     return;
   }
 
-  // Cria o modal de progresso
   Swal.fire({
-    title: yii.t('app', 'Traduzindo...'),
+    title: yii.t('app', 'Translating...'),
     html: `<div id="translation-status" class="text-start"></div>`,
     allowOutsideClick: false,
     showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
+    didOpen: () => Swal.showLoading()
   });
 
   const statusDiv = () => document.getElementById('translation-status');
@@ -177,33 +165,32 @@ langSelect.addEventListener('change', async function () {
   };
 
   for (const f of toTranslate) {
-    appendStatus(`🔄 \${yii.t('app', 'Traduzindo')} \${f.label.toLowerCase()}...`);
+    appendStatus(`🔄 \${yii.t('app', 'Translating')} \${f.label.toLowerCase()}...`);
     try {
       const res = await fetch(`/page/suggest-translation?language=\${encodeURIComponent(targetCode)}&to=\${encodeURIComponent(source)}`, {
-        method: 'page',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: f.text })
       });
       const json = await res.json();
       if (json && json.success && json.translation) {
         setFieldText(f.id, json.translation);
-        appendStatus(`✅ \${f.label} \${yii.t('app', 'traduzido com sucesso!')}`);
+        appendStatus(`✅ \${f.label} \${yii.t('app', 'translated successfully!')}`);
       } else {
-        appendStatus(`⚠️ \${yii.t('app', 'Falha ao traduzir')} \${f.label.toLowerCase()}`);
+        appendStatus(`⚠️ \${yii.t('app', 'Failed to translate')} \${f.label.toLowerCase()}`);
       }
     } catch (e) {
-      appendStatus(`❌ \${yii.t('app', 'Erro ao traduzir')} \${f.label.toLowerCase()}`);
+      appendStatus(`❌ \${yii.t('app', 'Error translating')} \${f.label.toLowerCase()}`);
       console.error('Translation error:', f.id, e);
     }
   }
 
-  appendStatus(`<hr><b>✅ \${yii.t('app', 'Tradução concluída!')}</b>`);
-
+  appendStatus(`<hr><b>✅ \${yii.t('app', 'Translation finished!')}</b>`);
   setTimeout(() => Swal.close(), 2000);
 });
 
+// Select2 (AJAX search + free tagging)
 var el = $('#page-tagids');
-
 el.select2({
   width: '100%',
   placeholder: yii.t('app', 'Select or type tags...'),
@@ -226,7 +213,7 @@ el.select2({
   escapeMarkup: function (m) { return m; }
 });
 
-// Adiciona uma tag no <select multiple>
+// Add a tag into <select multiple>
 function addTagToSelect(selectId, text, value) {
   var select = document.getElementById(selectId);
   if (!select) return;
@@ -237,10 +224,11 @@ function addTagToSelect(selectId, text, value) {
   if (!exists) {
     var opt = new Option(text, val, true, true);
     select.add(opt);
-    $(select).trigger('change'); // dispara evento pro select2
+    $(select).trigger('change');
   }
 }
 
+// Fetch tag suggestions and render buttons
 function fetchTagSuggestions(url, selectId, fields) {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.triggerSave) {
     tinyMCE.triggerSave();
@@ -252,16 +240,19 @@ function fetchTagSuggestions(url, selectId, fields) {
   });
 
   if (!payload.title && !payload.description && !payload.content) {
-    alert('Preencha título, descrição ou conteúdo.');
+    Swal.fire({
+      icon: 'info',
+      title: yii.t('app', 'Nothing to suggest'),
+      text: yii.t('app', 'Fill title, description or content first.')
+    });
     return;
   }
 
-  // Adiciona seed aleatório para forçar novas sugestões
   payload.seed = Math.floor(Math.random() * 999999);
   payload.language_id = document.getElementById('page-language_id')?.value || '';
 
   fetch(url, {
-    method: 'page',
+    method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
     body: new URLSearchParams(payload)
   })
@@ -270,17 +261,14 @@ function fetchTagSuggestions(url, selectId, fields) {
       var list = (json && json.suggestions) ? json.suggestions : [];
       var wrap = document.getElementById('tag-suggestions');
 
-      // Cria estrutura principal se ainda não existir
       if (!wrap.querySelector('.suggestion-container')) {
         wrap.innerHTML = `
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>Sugestões de tags</strong>
-            <button id="btn-clear-suggestions" type="button" class="btn btn-sm btn-outline-danger">Limpar</button>
+            <strong>\${yii.t('app', 'Tag suggestions')}</strong>
+            <button id="btn-clear-suggestions" type="button" class="btn btn-sm btn-outline-danger">\${yii.t('app', 'Clear')}</button>
           </div>
           <div class="suggestion-container"></div>
         `;
-
-        // Evento do botão de limpar
         wrap.querySelector('#btn-clear-suggestions').addEventListener('click', function () {
           wrap.innerHTML = '';
         });
@@ -290,15 +278,14 @@ function fetchTagSuggestions(url, selectId, fields) {
 
       if (!list.length) {
         if (!container.innerHTML.trim()) {
-          container.innerHTML = '<small class="text-muted">Nenhuma sugestão encontrada</small>';
+          container.innerHTML = '<small class="text-muted">' + yii.t('app', 'No suggestions found') + '</small>';
         }
         return;
       }
 
-      // Adiciona novas sugestões (sem duplicar)
       list.forEach(sug => {
         var existsBtn = Array.from(container.querySelectorAll('button')).some(btn =>
-          btn.textContent.trim().toLowerCase() === sug.text.toLowerCase()
+          btn.textContent.trim().toLowerCase() === String(sug.text || '').toLowerCase()
         );
         if (existsBtn) return;
 
@@ -307,12 +294,9 @@ function fetchTagSuggestions(url, selectId, fields) {
         b.className = 'btn btn-sm me-1 mb-1 ' + (sug.exists ? 'btn-outline-primary' : 'btn-outline-success');
         b.textContent = sug.text;
 
-        // Ao clicar: adiciona ao select e remove o botão
         b.addEventListener('click', function () {
           addTagToSelect(selectId, sug.text, sug.id || null);
           b.remove();
-
-          // Remove bloco se não houver mais sugestões
           if (!container.querySelector('button')) {
             wrap.innerHTML = '';
           }
@@ -323,10 +307,15 @@ function fetchTagSuggestions(url, selectId, fields) {
     })
     .catch(err => {
       console.error(err);
-      alert('Erro ao gerar sugestões.');
+      Swal.fire({
+        icon: 'error',
+        title: yii.t('app', 'Error'),
+        text: yii.t('app', 'Failed to generate suggestions.')
+      });
     });
 }
 
+// Auto-summarize description
 document.getElementById('btn-auto-summary').addEventListener('click', async function () {
   if (typeof tinyMCE !== 'undefined' && tinyMCE.triggerSave) tinyMCE.triggerSave();
 
@@ -338,20 +327,20 @@ document.getElementById('btn-auto-summary').addEventListener('click', async func
   if (!title && !description && !content) {
     Swal.fire({
       icon: 'info',
-      title: yii.t('app', 'Nada para resumir'),
-      text: yii.t('app', 'Preencha título, descrição ou conteúdo antes.'),
+      title: yii.t('app', 'Nothing to summarize'),
+      text: yii.t('app', 'Fill title, description or content first.')
     });
     return;
   }
 
   Swal.fire({
-    title: yii.t('app', 'Gerando resumo...'),
+    title: yii.t('app', 'Generating summary...'),
     allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
+    didOpen: () => Swal.showLoading()
   });
 
   const res = await fetch('/tag/summarize', {
-    method: 'page',
+    method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
     body: new URLSearchParams({ title, description, content, language_id: langId })
   });
@@ -363,8 +352,8 @@ document.getElementById('btn-auto-summary').addEventListener('click', async func
     setFieldText('page-description', json.summary);
     Swal.fire({
       icon: 'success',
-      title: yii.t('app', 'Resumo gerado!'),
-      text: yii.t('app', 'A descrição foi preenchida automaticamente.'),
+      title: yii.t('app', 'Summary generated!'),
+      text: yii.t('app', 'The description field was filled automatically.'),
       toast: true,
       position: 'bottom-end',
       timer: 4000,
@@ -373,25 +362,24 @@ document.getElementById('btn-auto-summary').addEventListener('click', async func
   } else {
     Swal.fire({
       icon: 'error',
-      title: yii.t('app', 'Erro ao gerar resumo'),
-      text: json.message || 'Ocorreu um erro ao gerar a descrição.',
+      title: yii.t('app', 'Failed to generate summary'),
+      text: json.message || yii.t('app', 'An error occurred while generating the description.')
     });
   }
 });
 
-// Evento do botão principal
+// Suggest tags (button)
 document.getElementById('btn-suggest-tags').addEventListener('click', function () {
   fetchTagSuggestions(
     '/tag/suggest',
     'page-tagids',
     [
-      { id: 'page-title', name: 'title' },
+      { id: 'page-title',       name: 'title' },
       { id: 'page-description', name: 'description' },
-      { id: 'page-content', name: 'content' }
+      { id: 'page-content',     name: 'content' }
     ]
   );
 });
-
 JS);
 
 ?>
@@ -408,7 +396,7 @@ JS);
         ])->label(false) ?>
 
     <?= UploadImageInstant::widget([
-        'mode'        => 'defer',
+        'mode'        => 'defer', // upload on submit
         'model'       => $model,
         'attribute'   => 'file_id',
         'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
@@ -420,7 +408,7 @@ JS);
         <div class="col-sm-6">
             <?= $form->field($model, 'page_section_id')->dropDownList(
                 yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
-                ['prompt' => '-- selecione uma secção --']
+                ['prompt' => Yii::t('app', '-- select a section --')]
             ) ?>
         </div>
 
@@ -428,7 +416,7 @@ JS);
             <?= $form->field($model, 'language_id')->dropDownList(
                 yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
                 [
-                    'prompt' => Yii::t('app', 'Select Language'),
+                    'prompt'  => Yii::t('app', 'Select Language'),
                     'options' => \yii\helpers\ArrayHelper::map(
                         Language::find()->all(),
                         'id',
@@ -452,7 +440,7 @@ JS);
         <div class="col-sm-12">
             <?= $form->field($model, 'description')->textarea(['rows' => 2]) ?>
             <button type="button" id="btn-auto-summary" class="btn btn-outline-secondary btn-sm">
-                <?= Yii::t('app', 'Gerar descrição automática') ?>
+                <?= Yii::t('app', 'Generate automatic description') ?>
             </button>
         </div>
     </div>
@@ -462,32 +450,29 @@ JS);
     ]); ?>
 
     <?= $form->field($model, 'custom_css')->textarea(['rows' => 6]) ?>
-
     <?= $form->field($model, 'custom_js')->textarea(['rows' => 6]) ?>
-
     <?= $form->field($model, 'keywords')->textarea(['rows' => 6]) ?>
-    <div class="row mb-3">
 
+    <div class="row mb-3">
         <div class="col-sm-12 mb-3">
             <?= $form->field($model, 'tagIds')->dropDownList(
-                $initTags, // opções já selecionadas com os textos
+                $initTags,
                 [
                     'id'       => $inputId,
                     'multiple' => true,
-                    'class'    => 'form-control select2-plain', // classe só pra selecionar no JS/CSS
+                    'class'    => 'form-control select2-plain',
                 ]
             )->label(Yii::t('app', 'Tags')) ?>
 
             <button type="button" id="btn-suggest-tags" class="btn btn-outline-secondary btn-sm">
-                Sugerir tags
+                <?= Yii::t('app', 'Suggest tags') ?>
             </button>
             <div id="tag-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
         </div>
     </div>
 
-    <?= $form->field($model, 'list')->checkbox() ?>
-
-    <?= $form->field($model, 'status')->checkbox() ?>
+    <?= $form->field($model, 'list')->checkbox()->label(Yii::t('app', 'Show in lists')) ?>
+    <?= $form->field($model, 'status')->checkbox()->label(Yii::t('app', 'Active')) ?>
 
     <div class="form-group mb-3 mt-3">
         <?= Html::submitButton('<i class="fas fa-save mr-2"></i>' . Yii::t('croacworks\essentials', 'Save'), ['class' => 'btn btn-success']) ?>

@@ -11,45 +11,33 @@ use Yii;
 use yii\web\NotFoundHttpException;
 
 /**
- * PageController implements the CRUD actions for Page model.
+ * CRUD for Page model.
  */
 class PageController extends AuthorizationController
 {
-
+    /** Actions that do not require auth */
     public $free = ['login', 'signup', 'error', 'public'];
 
-    /**
-     * Lists all Page models.
-     *
-     * @return string
-     */
+    /** List pages with search scenario */
     public function actionIndex()
     {
         $searchModel = new Page();
         $searchModel->scenario = Page::SCENARIO_SEARCH;
         $dataProvider = $searchModel->search($this->request->queryParams);
 
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return $this->render('index', compact('searchModel', 'dataProvider'));
     }
 
-    /**
-     * Displays a single Page model.
-     * @param int $id ID
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    /** Show a single page */
     public function actionView($id)
     {
         $model = $this->findModel($id);
-
-        return $this->render('view', [
-            'model' => $model
-        ]);
+        return $this->render('view', compact('model'));
     }
 
+    /**
+     * Find active page by composite key (throws 404 if missing/inactive).
+     */
     protected function findByKey(string $slug, int $groupId, int $languageId, int $sectionId): Page
     {
         $model = Page::find()
@@ -65,10 +53,14 @@ class PageController extends AuthorizationController
         if (!$model) {
             throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
         }
-
         return $model;
     }
 
+    /**
+     * Public “show” by slug + context (group/language/section).
+     * - If ?modal=1 -> use blank layout
+     * - If group not provided: use user group or 1 for guests
+     */
     public function actionShow(
         string $page,
         int $language = 2,
@@ -80,26 +72,19 @@ class PageController extends AuthorizationController
             $this->layout = 'main-blank';
         }
 
-        // group: se não vier, usa do usuário; se guest, usa 1
-        $groupId = $group ?? (self::isGuest() ? 1 : (int) self::userGroup());
-
-        $sectionId = (int)($section ?: 1);
+        $groupId    = $group ?? (self::isGuest() ? 1 : (int) self::userGroup());
+        $sectionId  = (int)($section ?: 1);
         $languageId = (int)$language;
 
         $model = $this->findByKey($page, $groupId, $languageId, $sectionId);
-
-        return $this->render('page', ['model' => $model]);
+        return $this->render('page', compact('model'));
     }
 
     /**
-     * Displays public page.
-     * @param string $slug
-     * @param string|null $section
-     * @param string|int|null $lang
-     * @param int $group
-     * @param int|null $modal
-     * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * Public page resolver:
+     * - Finds by slug, group and status
+     * - Optional section by section slug (or null)
+     * - Optional language (id or code); falls back to null-language or default config language
      */
     public function actionPublic(string $slug, string $section = null, $lang = null, $group = 1, $modal = null)
     {
@@ -113,22 +98,20 @@ class PageController extends AuthorizationController
             ->andWhere(['pages.slug' => $slug])
             ->andWhere(['pages.status' => 1])
             ->andWhere(['group_id' => (int)$group]);
-            
 
         $section = PageSection::findOne(['slug' => $section]);
-
         if ($section) {
-            $q->andWhere(['page_section_id' => $section?->id]);
-        } else { 
+            $q->andWhere(['page_section_id' => $section->id]);
+        } else {
             $q->andWhere(['IS', 'page_section_id', null]);
         }
 
         if ($lang && ($language = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang])) !== null) {
             $q->andWhere(['language_id' => $language->id]);
         } else {
+            // prefer language_id IS NULL, otherwise default configured language
             $query = $q;
             $query->andWhere(['IS', 'language_id', null]);
-            
             if (!$query->one()) {
                 $lang = Configuration::get()->language;
                 $q->andWhere(['language_id' => $lang->id]);
@@ -136,19 +119,14 @@ class PageController extends AuthorizationController
         }
 
         $model = $q->one();
-
         if (!$model) {
-            throw new \yii\web\NotFoundHttpException(\Yii::t('app', 'Page not found or inactive.'));
+            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
         }
 
-        return $this->render('page', ['model' => $model]);
+        return $this->render('page', compact('model'));
     }
 
-    /**
-     * Creates a new Page model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return string|\yii\web\Response
-     */
+    /** Create page (auto-assign current user group) */
     public function actionCreate()
     {
         $model = new Page();
@@ -161,18 +139,10 @@ class PageController extends AuthorizationController
             $model->loadDefaultValues();
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->render('create', compact('model'));
     }
 
-    /**
-     * Updates an existing Page model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    /** Update page */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -181,69 +151,42 @@ class PageController extends AuthorizationController
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', compact('model'));
     }
 
     /**
-     * Updates an existing Page model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * Clone workflow:
+     * - GET: render update view with a draft (id=null) so user edits before cloning
+     * - POST: detect clone type and delegate to PageCloneService
+     *   * Language clone -> keeps group; Total clone -> new group
      */
-
     public function actionClone($id)
     {
-        $original = $this->findModel($id); // use o mesmo findModel() que você já tem
+        $original = $this->findModel($id);
 
-        // 1) GET -> mostra form de edição com um "rascunho" (id=null)
+        // GET -> show draft form
         if (!Yii::$app->request->isPost) {
             $draft = new Page();
             $draft->attributes = $original->attributes;
+            $draft->id = null;         // ensure new record
+            $draft->slug = null;       // allow slug regeneration
 
-            // Forçar novos valores gerados no save (iguais ao Post)
-            $draft->id = null;
-            $draft->slug = null;                // deixa regenerar
-            // $draft->model_group_id mantém/zera apenas no POST, conforme regra na detecção
-
-            // Renderize a mesma view de edição (igual ao Post)
             return $this->render('update', [
-                'model' => $draft,
-                // passe outros parâmetros que sua view "update" espera (ex.: listas, providers, etc.)
-                'isClone' => true, // flag opcional caso sua view trate rótulos/botões
+                'model'      => $draft,
+                'isClone'    => true,
                 'originalId' => $original->id,
             ]);
         }
 
-        // 2) POST -> usuário confirmou; carregar dados enviados e decidir o tipo de clone
-        $posted = Yii::$app->request->post();
-
-        // Carregue em um modelo "buffer" apenas para comparar campos relevantes e capturar overrides
-        $buffer = new Page();
-        $buffer->load($posted); // o índice ('Page' ou outro) deve bater com o name do form
-
-        // Monte os overrides a partir do buffer (sem suposições de campos específicos — copiamos tudo)
-        // OBS: se você precisa excluir alguns atributos controlados internamente, faça como no Post.
+        // POST -> decide clone mode and apply overrides
+        $posted  = Yii::$app->request->post();
+        $buffer  = new Page();
+        $buffer->load($posted);
         $overrides = $buffer->attributes;
 
-        // DETECÇÃO (espelhando o Post): 
-        // - Clone de idioma quando o usuário alterou apenas a língua (mantém o mesmo model_group_id)
-        // - Clone total quando for para "duplicar" para outro grupo (novo group) ou quando explicitamente marcado
-        //
-        // Se no seu Post há um campo/botão que força o modo, espelhe aqui:
-        $forceTotal = (bool)($posted['clone_mode'] ?? false) && $posted['clone_mode'] === 'total';
-        $forceLang  = (bool)($posted['clone_mode'] ?? false) && $posted['clone_mode'] === 'language';
-
-        // Heurística alinhada ao padrão do Post:
-        // - se explicitamente indicado no form, obedecer
-        // - senão, se a linguagem mudou e não há intenção explícita de novo grupo => cloneLanguage
-        // - caso contrário => cloneTotal
+        $forceTotal = (isset($posted['clone_mode']) && $posted['clone_mode'] === 'total');
+        $forceLang  = (isset($posted['clone_mode']) && $posted['clone_mode'] === 'language');
         $languageChanged = (string)$buffer->language_id !== (string)$original->language_id;
-
-        // Importante: não fixamos model_group_id aqui — quem define é o serviço (como no Post)
-        // cloneLanguage: mantém group do original; cloneTotal: inicia novo group.
 
         if ($forceLang || ($languageChanged && !$forceTotal)) {
             $clone = PageCloneService::cloneLanguage($original, $overrides);
@@ -255,29 +198,21 @@ class PageController extends AuthorizationController
             $clone->save();
         }
 
-        Yii::$app->session->addFlash('success', Yii::t('app', 'Página clonada com sucesso.'));
-        // Redirecione para a mesma rota que o Post usa após clonar (geralmente update/view do clone)
+        Yii::$app->session->addFlash('success', Yii::t('app', 'Page cloned successfully.'));
         return $this->redirect(['view', 'id' => $clone->id]);
     }
 
-
-    /**
-     * Deletes an existing Page model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    /** Delete page via service (handles linked data) */
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
 
         try {
             PageCloneService::deletePage($model);
-            Yii::$app->session->addFlash('success', Yii::t('app', 'Post deleted.'));
+            Yii::$app->session->addFlash('success', Yii::t('app', 'Page deleted.'));
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
-            Yii::$app->session->addFlash('danger', Yii::t('app', 'Failed to delete post.'));
+            Yii::$app->session->addFlash('danger', Yii::t('app', 'Failed to delete page.'));
         }
 
         return $this->redirect(['index']);
