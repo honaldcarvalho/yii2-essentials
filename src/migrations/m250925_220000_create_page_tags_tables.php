@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `{{%page_tags}}`.
  */
-class m250925_210000_create_page_tags_tables extends Migration
+class m250925_220000_create_page_tags_tables extends Migration
 {
     public function safeUp()
     {
