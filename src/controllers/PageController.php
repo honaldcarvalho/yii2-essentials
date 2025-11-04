@@ -253,7 +253,7 @@ class PageController extends AuthorizationController
 
         Yii::$app->session->addFlash('success', Yii::t('app', 'Página clonada com sucesso.'));
         // Redirecione para a mesma rota que o Post usa após clonar (geralmente update/view do clone)
-        return $this->redirect(['update', 'id' => $clone->id]);
+        return $this->redirect(['view', 'id' => $clone->id]);
     }
 
 
@@ -267,11 +267,15 @@ class PageController extends AuthorizationController
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
-        $files = $model->getFiles()->all();
-        foreach ($files as $file) {
-            $ok = Yii::$app->storage->deleteById($id);
+
+        try {
+            PageCloneService::deletePage($model);
+            Yii::$app->session->addFlash('success', Yii::t('app', 'Post deleted.'));
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), __METHOD__);
+            Yii::$app->session->addFlash('danger', Yii::t('app', 'Failed to delete post.'));
         }
-        $this->findModel($id)->delete();
+
         return $this->redirect(['index']);
     }
 }
