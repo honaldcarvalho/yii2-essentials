@@ -24,44 +24,11 @@ class m250925_210000_create_tags_tables extends Migration
             'updated_at' => $this->integer()->notNull(),
         ], $tableOptions);
 
-        // === Tabela intermediária post_tags ===
-        $this->createTable('{{%post_tags}}', [
-            'post_id' => $this->integer()->notNull(),
-            'tag_id'  => $this->integer()->notNull(),
-            'PRIMARY KEY(post_id, tag_id)',
-        ], $tableOptions);
-
-        // Índices + FKs
-        $this->createIndex('idx-post_tags-post_id', '{{%post_tags}}', 'post_id');
-        $this->createIndex('idx-post_tags-tag_id', '{{%post_tags}}', 'tag_id');
-
-        $this->addForeignKey(
-            'fk-post_tags-post_id',
-            '{{%post_tags}}',
-            'post_id',
-            '{{%posts}}',
-            'id',
-            'CASCADE',
-            'CASCADE'
-        );
-
-        $this->addForeignKey(
-            'fk-post_tags-tag_id',
-            '{{%post_tags}}',
-            'tag_id',
-            '{{%tags}}',
-            'id',
-            'CASCADE',
-            'CASCADE'
-        );
     }
 
     public function safeDown()
     {
         $this->dropForeignKey('fk-post_tags-tag_id', '{{%post_tags}}');
-        $this->dropForeignKey('fk-post_tags-post_id', '{{%post_tags}}');
-
-        $this->dropTable('{{%post_tags}}');
         $this->dropTable('{{%tags}}');
     }
 }
