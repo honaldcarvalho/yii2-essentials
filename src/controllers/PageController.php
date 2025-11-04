@@ -156,50 +156,86 @@ class PageController extends AuthorizationController
 
     /**
      * Clone workflow:
-     * - GET: render update view with a draft (id=null) so user edits before cloning
-     * - POST: detect clone type and delegate to PageCloneService
-     *   * Language clone -> keeps group; Total clone -> new group
+     * - GET: render editable clone draft
+     * - PAGE: detect clone type (language/total) and persist via service
      */
     public function actionClone($id)
     {
         $original = $this->findModel($id);
+        if (!$original) {
+            throw new NotFoundHttpException(Yii::t('app', 'Page with ID {id} not found.', ['id' => $id]));
+        }
 
-        // GET -> show draft form
+        // Base draft clone
+        $clone = new Page();
+        $clone->attributes = $original->attributes;
+        $clone->setIsNewRecord(true);
+        $clone->id = null;
+
+        // Carry tagIds so user can keep/change them
+        $clone->tagIds = $original->tagIds;
+
+        // GET -> let user edit before saving
         if (!Yii::$app->request->isPost) {
-            $draft = new Page();
-            $draft->attributes = $original->attributes;
-            $draft->id = null;         // ensure new record
-            $draft->slug = null;       // allow slug regeneration
-
-            return $this->render('update', [
-                'model'      => $draft,
-                'isClone'    => true,
-                'originalId' => $original->id,
+            return $this->render('clone', [
+                'model' => $clone,
             ]);
         }
 
-        // POST -> decide clone mode and apply overrides
-        $posted  = Yii::$app->request->post();
-        $buffer  = new Page();
-        $buffer->load($posted);
-        $overrides = $buffer->attributes;
+        // PAGE -> confirm clone
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            if ($clone->load(Yii::$app->request->post())) {
 
-        $forceTotal = (isset($posted['clone_mode']) && $posted['clone_mode'] === 'total');
-        $forceLang  = (isset($posted['clone_mode']) && $posted['clone_mode'] === 'language');
-        $languageChanged = (string)$buffer->language_id !== (string)$original->language_id;
+                // Build overrides (include tagIds which is not a column)
+                $overrides = [];
 
-        if ($forceLang || ($languageChanged && !$forceTotal)) {
-            $clone = PageCloneService::cloneLanguage($original, $overrides);
-            $clone->slug = $clone->generateUniqueSlug($clone->slug);
-            $clone->save();
-        } else {
-            $clone = PageCloneService::cloneTotal($original, $overrides);
-            $clone->slug = $clone->generateUniqueSlug($clone->slug);
-            $clone->save();
+                if (isset($clone->tagIds)) {
+                    $overrides['tagIds'] = $clone->tagIds;
+                }
+
+                // Compare other attributes against original
+                $attributesToCompare = $original->attributes();
+                foreach ($attributesToCompare as $key) {
+                    if ($key === 'id') continue;
+                    if (!is_array($clone->$key) && $clone->$key !== $original->$key) {
+                        $overrides[$key] = $clone->$key;
+                    }
+                }
+
+                // Detect clone type by language change
+                $langAttr      = 'language_id';
+                $originalLang  = $original->$langAttr ?? null;
+                $newLang       = $clone->$langAttr ?? ($overrides[$langAttr] ?? null);
+                $isLanguageClone = ($originalLang && $newLang && $originalLang !== $newLang);
+
+                // Execute appropriate clone
+                if ($isLanguageClone) {
+                    $newPage = PageCloneService::cloneLanguage($original, $overrides);
+                    $newPage->slug = $newPage->generateUniqueSlug($newPage->slug);
+                    $newPage->save();
+                    Yii::$app->session->addFlash('success', Yii::t('app', 'Language clone created successfully.'));
+                } else {
+                    $newPage = PageCloneService::cloneTotal($original, $overrides);
+                    $newPage->slug = $newPage->generateUniqueSlug($newPage->slug);
+                    $newPage->save();
+                    Yii::$app->session->addFlash('success', Yii::t('app', 'Total clone created (new group).'));
+                }
+
+                $transaction->commit();
+                return $this->redirect(['view', 'id' => $newPage->id]);
+            }
+
+            // Validation failed -> re-render form
+            return $this->render('update', [
+                'model' => $clone,
+            ]);
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            Yii::error($e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('danger', Yii::t('app', 'Failed to clone page: {msg}', ['msg' => $e->getMessage()]));
+            return $this->redirect(['view', 'id' => $id]);
         }
-
-        Yii::$app->session->addFlash('success', Yii::t('app', 'Page cloned successfully.'));
-        return $this->redirect(['view', 'id' => $clone->id]);
     }
 
     /** Delete page via service (handles linked data) */
