@@ -212,13 +212,9 @@ class PageController extends AuthorizationController
                 // Execute appropriate clone
                 if ($isLanguageClone) {
                     $newPage = PageCloneService::cloneLanguage($original, $overrides);
-                    $newPage->slug = $newPage->generateUniqueSlug($newPage->slug);
-                    $newPage->save();
                     Yii::$app->session->addFlash('success', Yii::t('app', 'Language clone created successfully.'));
                 } else {
                     $newPage = PageCloneService::cloneTotal($original, $overrides);
-                    $newPage->slug = $newPage->generateUniqueSlug($newPage->slug);
-                    $newPage->save();
                     Yii::$app->session->addFlash('success', Yii::t('app', 'Total clone created (new group).'));
                 }
 
