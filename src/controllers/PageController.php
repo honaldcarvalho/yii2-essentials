@@ -247,8 +247,12 @@ class PageController extends AuthorizationController
 
         if ($forceLang || ($languageChanged && !$forceTotal)) {
             $clone = PageCloneService::cloneLanguage($original, $overrides);
+            $clone->slug = $clone->generateUniqueSlug($clone->slug);
+            $clone->save();
         } else {
             $clone = PageCloneService::cloneTotal($original, $overrides);
+            $clone->slug = $clone->generateUniqueSlug($clone->slug);
+            $clone->save();
         }
 
         Yii::$app->session->addFlash('success', Yii::t('app', 'Página clonada com sucesso.'));
