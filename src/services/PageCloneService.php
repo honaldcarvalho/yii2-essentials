@@ -77,6 +77,7 @@ class PageCloneService
                 $clone->$k = $v;
             }
 
+            $clone->slug = $clone->generateUniqueSlug(null);
             // Save (beforeValidate may null file_id due to AttachFileBehavior)
             if (!$clone->save(false)) {
                 throw new \RuntimeException('Failed to save language clone.');
@@ -132,7 +133,8 @@ class PageCloneService
             foreach ($overrides as $k => $v) {
                 $clone->$k = $v;
             }
-
+            
+            $clone->slug = $clone->generateUniqueSlug(null);
             if (!$clone->save(false)) {
                 throw new \RuntimeException('Failed to save total clone.');
             }
