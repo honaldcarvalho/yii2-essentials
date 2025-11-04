@@ -16,7 +16,7 @@ class m250925_210000_create_tags_tables extends Migration
 
         // === Tabela de tags ===
         $this->createTable('{{%tags}}', [
-            'id' => $this->primaryKey(),
+            'id' => $this->bigPrimaryKey(),
             'name' => $this->string(100)->notNull()->unique(),
             'slug' => $this->string(120)->notNull()->unique(),
             'status' => $this->smallInteger()->notNull()->defaultValue(1),

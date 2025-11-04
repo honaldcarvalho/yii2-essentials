@@ -16,8 +16,8 @@ class m250925_220000_create_page_tags_tables extends Migration
 
         // === Tabela intermediária page_tags ===
         $this->createTable('{{%page_tags}}', [
-            'page_id' => $this->integer()->notNull(),
-            'tag_id'  => $this->integer()->notNull(),
+            'page_id' => $this->big()->notNull(),
+            'tag_id'  => $this->bigInteger()->notNull(),
             'PRIMARY KEY(page_id, tag_id)',
         ], $tableOptions);
 
