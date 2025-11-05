@@ -1,6 +1,6 @@
 <?php
 
-use app\models\FormField;
+use croacworks\essentials\models\FormField;
 use croacworks\essentials\enums\FormFieldType;
 use weebz\yii2basics\helpers\ModelHelper;
 use weebz\yii2basics\widgets\AppendModel;
