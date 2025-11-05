@@ -1,13 +1,14 @@
 <?php
 
-use yii\helpers\Html;
-
 /* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\AccessLog */
+/* @var $model app\models\FormResponse */
 
-$this->title = Yii::t('app', 'Yii::t('app', 'Create Access Log')');
-$this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', 'Yii::t('app', 'Access Logs')'), 'url' => ['index']];
-$this->params['breadcrumbs'][] = $this->title;
+$this->title = Yii::t('app', 'Update Form Response: {name}', [
+    'name' => $model->id,
+]);
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Form Responses'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
+$this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 ?>
 
 <div class="container-fluid">

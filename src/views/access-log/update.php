@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model common\models\AccessLog */
+/* @var $model croacworks\essentials\models\AccessLog */
 
 $this->title = Yii::t('app', 'Update Access Log: {name}', [
     'name' => $model->id,

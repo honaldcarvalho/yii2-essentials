@@ -11,7 +11,7 @@ use Yii;
  *
  * Usage:
  *   TriggerService::runForModel($license);
- *   TriggerService::runForClass(common\models\License::class);
+ *   TriggerService::runForClass(croacworks\essentials\models\License::class);
  */
 class TriggerService
 {

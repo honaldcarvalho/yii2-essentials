@@ -13,7 +13,7 @@ $this->title = $model->isNewRecord ? Yii::t('app', 'Create Trigger') : Yii::t('a
             <?php $form = ActiveForm::begin(); ?>
 
             <?= $form->field($model, 'name') ?>
-            <?= $form->field($model, 'model_class')->textInput(['placeholder' => 'common\models\License']) ?>
+            <?= $form->field($model, 'model_class')->textInput(['placeholder' => 'croacworks\essentials\models\License']) ?>
             <?= $form->field($model, 'expression')->textarea(['rows' => 3, 'placeholder' => '$license->daysToExpire() <= 30']) ?>
             <?= $form->field($model, 'action_type')->dropDownList([
                 'notify' => 'Notify',

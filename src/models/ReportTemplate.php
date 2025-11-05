@@ -160,7 +160,7 @@ class ReportTemplate extends ModelCommon
  public function actionRenderReport($id, $template_id)
 {
     $model = $this->findModel($id, ServiceOrder::class);
-    $template = \app\models\ReportTemplate::findOne($template_id);
+    $template = \croacworks\essentials\models\ReportTemplate::findOne($template_id);
 
     if (!$template) {
         throw new NotFoundHttpException("Template não encontrado");

@@ -21,7 +21,6 @@ class m250320_260307_create_clients_table extends Migration
             //autentication fields
             'id' => $this->primaryKey(),
             'group_id' => $this->integer()->notNull(),
-            'group_id' => $this->integer()->null(),
             'email' => $this->string(190)->notNull()->unique(),
             'username' => $this->string(64)->notNull()->unique(),
             'password_hash' => $this->string()->notNull(),

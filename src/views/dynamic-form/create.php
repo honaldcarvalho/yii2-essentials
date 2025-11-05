@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\AccessLog */
+/* @var $model app\models\DynamicForm */
 
-$this->title = Yii::t('app', 'Yii::t('app', 'Create Access Log')');
-$this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', 'Yii::t('app', 'Access Logs')'), 'url' => ['index']];
+$this->title = Yii::t('app', Yii::t('app', 'Create Dynamic Form'));
+$this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', Yii::t('app', 'Dynamic Forms')), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
