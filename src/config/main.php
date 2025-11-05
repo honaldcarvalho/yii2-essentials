@@ -129,7 +129,7 @@ $config = [
             'rules' => array_merge(
                 customControllersUrl(
                     [
-                        'dashboard','role','util','site','client',
+                        'dashboard','role','util','site','client','dynamic-form','form-field','form-response',
                         'group','user','role','role-template','language',
                         'source-message','message','menu','params','configuration','meta-tag',
                         'email-service','license-type','license','log','folder','file',
