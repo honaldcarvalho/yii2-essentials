@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= \weebz\yii2basics\widgets\DefaultButtons::widget([
+                            <?= \croacworks\essentials\widgets\DefaultButtons::widget([
                                 'controller' => 'DynamicForm',
                                 'show' => ['create'],
                                 'buttons_name' => ['create' => Yii::t('app', 'Create Dynamic Form')],
@@ -39,7 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'description',
                             'status:boolean',
 
-                            ['class' => 'weebz\yii2basics\components\gridview\ActionColumn'],
+                            ['class' => 'croacworks\essentials\components\gridview\ActionColumn'],
                         ],
                         'summaryOptions' => ['class' => 'summary mb-2'],
                         'pager' => [

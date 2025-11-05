@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= \weebz\yii2basics\widgets\DefaultButtons::widget([
+                        <?= \croacworks\essentials\widgets\DefaultButtons::widget([
                             'controller' => 'FormResponse',
                             'model' => $model,
                             'verGroup' => false

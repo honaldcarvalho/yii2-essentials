@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= \weebz\yii2basics\widgets\DefaultButtons::widget([
+                            <?= \croacworks\essentials\widgets\DefaultButtons::widget([
                                 'controller' => 'FormResponse',
                                 'show' => ['create'],
                                 'buttons_name' => ['create' => Yii::t('app','Create Form Response')],
@@ -49,7 +49,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'created_at',
                                 'updated_at',
 
-                                ['class' => 'weebz\yii2basics\components\gridview\ActionColumn'],
+                                ['class' => 'croacworks\essentials\components\gridview\ActionColumn'],
                             ],
                             'summaryOptions' => ['class' => 'summary mb-2'],
                             'pager' => ['class' => 'yii\bootstrap5\LinkPager'],

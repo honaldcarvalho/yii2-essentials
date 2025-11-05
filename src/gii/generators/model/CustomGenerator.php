@@ -1,6 +1,6 @@
 <?php
 
-namespace weebz\yii2basics\gii\generators\model;
+namespace croacworks\essentials\gii\generators\model;
 
 class CustomGenerator extends Generator
 {

@@ -2,7 +2,7 @@
 
 use croacworks\essentials\enums\FormField;
 use croacworks\essentials\enums\FormFieldType;
-use weebz\yii2basics\widgets\AppendModel;
+use croacworks\essentials\widgets\AppendModel;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= \weebz\yii2basics\widgets\DefaultButtons::widget(['controller' => 'FormField', 'model' => $model, 'verGroup' => false]) ?>                    </p>
+                        <?= \croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'FormField', 'model' => $model, 'verGroup' => false]) ?>                    </p>
                     <?= DetailView::widget([
                         'model' => $model,
                         'attributes' => [

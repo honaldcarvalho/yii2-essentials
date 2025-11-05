@@ -2,8 +2,8 @@
 
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\enums\FormFieldType;
-use weebz\yii2basics\helpers\ModelHelper;
-use weebz\yii2basics\widgets\AppendModel;
+use croacworks\essentials\helpers\ModelHelper;
+use croacworks\essentials\widgets\AppendModel;
 use yii\helpers\ArrayHelper;
 use yii\widgets\DetailView;
 
@@ -271,7 +271,7 @@ $extra = [
             <div class="row">
                 <div class="col-md-12">
                     <p>
-                        <?= \weebz\yii2basics\widgets\DefaultButtons::widget(['controller' => 'DynamicForm', 'model' => $model, 'verGroup' => false, 'extras' => $extra]) ?>
+                        <?= \croacworks\essentials\widgets\DefaultButtons::widget(['controller' => 'DynamicForm', 'model' => $model, 'verGroup' => false, 'extras' => $extra]) ?>
                     </p>
                     <?= DetailView::widget([
                         'model' => $model,
