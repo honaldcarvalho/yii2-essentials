@@ -1,12 +1,10 @@
 <?php
 
-namespace app\controllers;
+namespace roacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\FormField;
-use croacworks\essentials\models\AgendaSearch;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * FormFieldController implements the CRUD actions for FormField model.

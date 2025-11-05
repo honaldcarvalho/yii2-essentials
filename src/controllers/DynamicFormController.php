@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers;
+namespace roacworks\essentials\controllers;
 
 use Yii;
 use croacworks\essentials\models\DynamicForm;
