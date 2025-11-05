@@ -8,7 +8,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormField */
+/* @var $model croacworks\essentials\models\FormField */
 
 $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Form Fields'), 'url' => ['index']];

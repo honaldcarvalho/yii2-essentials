@@ -8,7 +8,7 @@ use yii\helpers\ArrayHelper;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\DynamicForm */
+/* @var $model croacworks\essentials\models\DynamicForm */
 
 $this->title = $model->name;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Dynamic Forms'), 'url' => ['index']];

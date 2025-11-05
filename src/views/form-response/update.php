@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormResponse */
+/* @var $model croacworks\essentials\models\FormResponse */
 
 $this->title = Yii::t('app', 'Update Form Response: {name}', [
     'name' => $model->id,

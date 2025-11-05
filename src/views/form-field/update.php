@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormField */
+/* @var $model croacworks\essentials\models\FormField */
 
 $this->title = Yii::t('app', 'Update Form Field: {name}', [
     'name' => $model->name,

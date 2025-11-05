@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model app\models\custom\Client */
+/* @var $model croacworks\essentials\models\custom\Client */
 
 $this->title = Yii::t('app', 'Update Client: {name}', [
     'fullname' => $model->fullname,

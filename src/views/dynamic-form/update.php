@@ -1,7 +1,7 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $model app\models\DynamicForm */
+/* @var $model croacworks\essentials\models\DynamicForm */
 
 $this->title = Yii::t('app', 'Update Dynamic Form: {name}', [
     'name' => $model->name,

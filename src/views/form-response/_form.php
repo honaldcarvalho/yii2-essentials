@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormResponse */
+/* @var $model croacworks\essentials\models\FormResponse */
 /* @var $form yii\bootstrap5\ActiveForm */
 ?>
 

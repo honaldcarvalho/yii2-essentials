@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormField */
+/* @var $model croacworks\essentials\models\FormField */
 
 $this->title = Yii::t('app', Yii::t('app', 'Create Form Field'));
 $this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', Yii::t('app', 'Form Fields')), 'url' => ['index']];

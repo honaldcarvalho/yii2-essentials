@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormField */
+/* @var $model croacworks\essentials\models\FormField */
 /* @var $form yii\bootstrap5\ActiveForm */
 ?>
 
@@ -14,7 +14,7 @@ use yii\bootstrap5\ActiveForm;
 
     <?= $form->field($model, 'id')->textInput() ?>
 
-    <?= $form->field($model, 'dynamic_form_id')->dropDownList(yii\helpers\ArrayHelper::map(app\models\DynamicForm::find()->asArray()->all(), 'id', 'name')) ?>
+    <?= $form->field($model, 'dynamic_form_id')->dropDownList(yii\helpers\ArrayHelper::map(croacworks\essentials\models\DynamicForm::find()->asArray()->all(), 'id', 'name')) ?>
 
     <?= $form->field($model, 'label')->textInput(['maxlength' => true]) ?>
 

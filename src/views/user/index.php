@@ -6,7 +6,7 @@ use yii\grid\GridView;
 use yii\widgets\Pjax;
 
 /** @var yii\web\View $this */
-/** @var app\models\Ucroacworks\essentials\ */
+/** @var croacworks\essentials\models\Ucroacworks\essentials\ */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
 $this->title = Yii::t('app', 'Users');

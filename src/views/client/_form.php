@@ -7,7 +7,7 @@ use yii\bootstrap5\ActiveForm;
 use yii\helpers\ArrayHelper;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\custom\ServiceOrigin */
+/* @var $model croacworks\essentials\models\custom\ServiceOrigin */
 /* @var $form yii\bootstrap5\ActiveForm */
 
 // Get the initial saved city data (note $model->city is an array of city ids)

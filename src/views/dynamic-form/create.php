@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\DynamicForm */
+/* @var $model croacworks\essentials\models\DynamicForm */
 
 $this->title = Yii::t('app', Yii::t('app', 'Create Dynamic Form'));
 $this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', Yii::t('app', 'Dynamic Forms')), 'url' => ['index']];

@@ -7,7 +7,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel app\models\custom\ServiceOriginSearch */
+/* @var $searchModel croacworks\essentials\models\custom\ServiceOriginSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = Yii::t('app', 'Clients');

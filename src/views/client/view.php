@@ -6,7 +6,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\custom\ServiceOrigin */
+/* @var $model croacworks\essentials\models\custom\ServiceOrigin */
 
 $this->title = $model->fullname;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Client'), 'url' => ['index']];

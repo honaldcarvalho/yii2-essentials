@@ -5,7 +5,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\custom\ServiceOriginSearch */
+/* @var $model croacworks\essentials\models\custom\ServiceOriginSearch */
 /* @var $form yii\widgets\ActiveForm */
 $script = <<< JS
  $('#client-state_id').select2({width:'100%',allowClear:true,placeholder:'Select one state'});

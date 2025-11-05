@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\FormResponse */
+/* @var $model croacworks\essentials\models\FormResponse */
 
 $this->title = Yii::t('app', Yii::t('app', 'Create Form Response'));
 $this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', Yii::t('app', 'Form Responses')), 'url' => ['index']];
