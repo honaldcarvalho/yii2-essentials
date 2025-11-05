@@ -1,7 +1,7 @@
 <?php
 
+use croacworks\essentials\components\widgets\DynamicFormWidget;
 use yii\widgets\Pjax;
-use app\components\widgets\DynamicFormWidget;
 
 ?>
 
