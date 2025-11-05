@@ -49,7 +49,7 @@ class DynamicFormController extends  \croacworks\essentials\controllers\Authoriz
 
     public function actionShow($id)
     {
-        $this->layout = 'blank';
+        $this->layout = 'main-blank';
         return $this->render('show', [
             'model' => $this->findModel($id),
         ]);
