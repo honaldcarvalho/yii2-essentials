@@ -17,9 +17,10 @@ class FormFieldType extends yii\db\ActiveRecord
     const TYPE_EMAIL       = 8;
     const TYPE_PHONE       = 9;
     const TYPE_IDENTIFIER  = 10;
-    const TYPE_MODEL  = 11;
-    const TYPE_SQL  = 12;
+    const TYPE_MODEL       = 11;
+    const TYPE_SQL         = 12;
     const TYPE_DATETIME    = 13;
+    const TYPE_FILE        = 14;
 
     public static $list = [];
 
@@ -38,7 +39,7 @@ class FormFieldType extends yii\db\ActiveRecord
     {
         return [
             self::TYPE_TEXT       => Yii::t('app', 'Text'),
-            self::TYPE_HIDDEN       => Yii::t('app', 'Hidden'),
+            self::TYPE_HIDDEN     => Yii::t('app', 'Hidden'),
             self::TYPE_NUMBER     => Yii::t('app', 'Number'),
             self::TYPE_TEXTAREA   => Yii::t('app', 'Textarea'),
             self::TYPE_DATE       => Yii::t('app', 'Date'),
@@ -49,8 +50,9 @@ class FormFieldType extends yii\db\ActiveRecord
             self::TYPE_EMAIL      => Yii::t('app', 'Email'),
             self::TYPE_PHONE      => Yii::t('app', 'Phone'),
             self::TYPE_IDENTIFIER => Yii::t('app', 'Identifier'),
-            self::TYPE_MODEL => Yii::t('app', 'Model'),
-            self::TYPE_SQL => Yii::t('app', 'Script SQL'),
+            self::TYPE_MODEL      => Yii::t('app', 'Model'),
+            self::TYPE_SQL        => Yii::t('app', 'Script SQL'),
+            self::TYPE_FILE       => Yii::t('app', 'File'),
         ];
     }
 

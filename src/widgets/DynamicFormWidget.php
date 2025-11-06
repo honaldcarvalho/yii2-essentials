@@ -110,6 +110,10 @@ class DynamicFormWidget extends Widget
                     echo $form->field($model, $name)->input('date', $options);
                     break;
 
+                case FormFieldType::TYPE_FILE:
+                    echo $form->field($model, $name)->fileInput($options);
+                    break;
+
                 case FormFieldType::TYPE_DATETIME:
                     echo $form->field($model, $name)->input('datetime-local', $options);
                     break;
