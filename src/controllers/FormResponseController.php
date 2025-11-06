@@ -2,51 +2,33 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\enums\FormFieldType;
 use Yii;
-use croacworks\essentials\models\FormResponse;
-use croacworks\essentials\models\FormField;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
+use yii\web\UploadedFile;
+use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\models\FormField;
+use croacworks\essentials\models\FormResponse;
+use croacworks\essentials\controllers\rest\StorageController;
 
-/**
- * FormResponseController implements the CRUD actions for FormResponse model.
- */
-class FormResponseController extends  \croacworks\essentials\controllers\AuthorizationController
+class FormResponseController extends AuthorizationController
 {
-
-    /**
-     * Lists all FormResponse models.
-     * @return mixed
-     */
     public function actionIndex()
     {
         $searchModel = new FormResponse();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC], 'order' => false]);
+        $dataProvider = $searchModel->search(
+            Yii::$app->request->queryParams,
+            ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC], 'order' => false]
+        );
 
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return $this->render('index', compact('searchModel', 'dataProvider'));
     }
 
-    /**
-     * Displays a single FormResponse model.
-     * @param int $id ID
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
     public function actionView($id)
     {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
+        return $this->render('view', ['model' => $this->findModel($id)]);
     }
 
-    /**
-     * Creates a new FormResponse model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
     public function actionCreate()
     {
         $model = new FormResponse();
@@ -54,19 +36,9 @@ class FormResponseController extends  \croacworks\essentials\controllers\Authori
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->render('create', ['model' => $model]);
     }
 
-    /**
-     * Updates an existing FormResponse model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param int $id ID
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -74,56 +46,72 @@ class FormResponseController extends  \croacworks\essentials\controllers\Authori
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->render('update', ['model' => $model]);
     }
 
     public function actionUpdateJson($id)
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $model = FormResponse::findOne($id);
-        if (!$model) {
-            return ['success' => false, 'error' => 'Resposta não encontrada'];
-        }
+        $model = FormResponse::findOne((int)$id);
+        if (!$model) return ['success' => false, 'error' => 'FormResponse not found'];
 
         $postData = Yii::$app->request->post('DynamicModel', []);
-        $casted = [];
-
-        // Pega os tipos dos campos da fila
         $fields = FormField::find()
-            ->where(['dynamic_form_id' => $model->dynamic_form_id]) // ou ajuste se o nome for dynamic_form_id
+            ->where(['dynamic_form_id' => $model->dynamic_form_id])
             ->indexBy('name')
             ->all();
 
-        foreach ($postData as $name => $value) {
-            $field = $fields[$name] ?? null;
+        $data = $this->decodeResponseData($model->response_data);
+
+        foreach ($fields as $name => $field) {
+            $type = (int)$field->type;
+
+            // FILE via StorageController
+            if ($type === FormFieldType::TYPE_FILE) {
+                $uploaded = UploadedFile::getInstanceByName($name);
+
+                if (!$uploaded) {
+                    if ((string)($postData[$name . '_clear'] ?? '0') === '1') {
+                        $data[$name] = null;
+                    }
+                    continue;
+                }
+
+                if ($name === 'matrix') {
+                    $isPdf = in_array($uploaded->type, ['application/pdf'], true) || preg_match('/\.pdf$/i', $uploaded->name);
+                    if (!$isPdf) return ['success' => false, 'error' => 'Matrix must be a PDF'];
+                }
+
+                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
+                if (!$fileId) return ['success' => false, 'error' => 'Upload failed'];
+
+                $data[$name] = (string)$fileId;
+                continue;
+            }
+
+            // Valores vindos do POST para os demais tipos
+            $value = $postData[$name] ?? null;
 
             if ($value === '') {
-                $casted[$name] = null;
+                $data[$name] = null;
                 continue;
             }
 
-            if (!$field) {
-                $casted[$name] = $value;
-                continue;
-            }
-
-            switch ((int) $field->type) {
+            switch ($type) {
                 case FormFieldType::TYPE_NUMBER:
-                    $casted[$name] = is_numeric($value) ? $value + 0 : null;
+                    $data[$name] = is_numeric($value) ? $value + 0 : null;
                     break;
 
                 case FormFieldType::TYPE_CHECKBOX:
                 case FormFieldType::TYPE_MULTIPLE:
-                    $casted[$name] = (array)$value;
+                    $data[$name] = (array)$value;
                     break;
 
                 case FormFieldType::TYPE_DATE:
                 case FormFieldType::TYPE_DATETIME:
-                    $casted[$name] = date('Y-m-d H:i:s', strtotime($value));
+                    $ts = strtotime((string)$value);
+                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
                     break;
 
                 case FormFieldType::TYPE_PHONE:
@@ -135,29 +123,58 @@ class FormResponseController extends  \croacworks\essentials\controllers\Authori
                 case FormFieldType::TYPE_MODEL:
                 case FormFieldType::TYPE_EMAIL:
                 default:
-                    $casted[$name] = $value;
+                    $data[$name] = $value;
                     break;
             }
         }
 
-        $model->response_data = $casted;
+        $model->response_data = $data;
 
         if ($model->save(false)) {
-            return ['success' => true, 'message' => 'Dados atualizados com sucesso'];
+            return ['success' => true, 'message' => 'Data updated'];
         }
-
-        return ['success' => false, 'error' => 'Erro ao salvar dados'];
+        return ['success' => false, 'error' => 'Save failed'];
     }
 
     public function actionEdit($id)
     {
         $model = FormResponse::findOne($id);
         if (!$model) {
-            throw new NotFoundHttpException('Resposta não encontrada.');
+            throw new NotFoundHttpException('FormResponse not found.');
         }
+        return $this->renderAjax('_form_widget', ['model' => $model]);
+    }
 
-        return $this->renderAjax('_form_widget', [
-            'model' => $model,
+    private function decodeResponseData($raw): array
+    {
+        if (is_array($raw)) return $raw;
+        if (is_string($raw)) {
+            $d = json_decode($raw, true);
+            return is_array($d) ? $d : [];
+        }
+        return [];
+    }
+
+    private function storeWithStorage(UploadedFile $uploaded, string $description): ?int
+    {
+        $groupId = (int)(Yii::$app->user->identity->group_id ?? 1);
+
+        $res = StorageController::uploadFile($uploaded, [
+            'file_name'     => null,
+            'description'   => $description,
+            'folder_id'     => 1,
+            'group_id'      => $groupId,
+            'attach_model'  => 0,
+            'save'          => 1,
+            'convert_video' => 0,
+            'thumb_aspect'  => 1,
+            'quality'       => 80,
         ]);
+
+        if (!($res['success'] ?? false)) return null;
+
+        $data = $res['data'] ?? null;
+        $id = is_object($data) ? ($data->id ?? null) : ($data['id'] ?? null);
+        return $id ? (int)$id : null;
     }
 }

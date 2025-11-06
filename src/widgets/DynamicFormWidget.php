@@ -188,10 +188,12 @@ class DynamicFormWidget extends Widget
                     }
                     echo $form->field($model, $name)->dropDownList($list, array_merge($options, ['prompt' => 'Selecione...']));
                     break;
+                    
                 case FormFieldType::TYPE_HIDDEN:
                     echo $form->field($model, $name)->hiddenInput($options);
                     break;
                 default:
+
                 case FormFieldType::TYPE_TEXT:
                     echo $form->field($model, $name)->textInput($options);
                     break;
