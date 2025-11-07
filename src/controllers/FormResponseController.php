@@ -41,11 +41,12 @@ class FormResponseController extends AuthorizationController
 
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        // Blindagem: se veio post/arquivo, trate como JSON
+        if (Yii::$app->request->isPost || !empty($_FILES)) {
+            return $this->actionUpdateJson($id); // chama direto o handler certo
         }
+
+        $model = $this->findModel($id);
         return $this->render('update', ['model' => $model]);
     }
 
