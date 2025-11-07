@@ -17,7 +17,19 @@ class DynamicFormWidget extends Widget
     public $ajax = true;
     public $model;
     public $action = null;
+    /** @var callable|null fn(int $fileId): string|array rota/URL para abrir arquivo */
+    public $fileUrlCallback = null;
 
+    /** @var bool Mostrar bloco do anexo atual acima do input file */
+    public $showCurrentFile = true;
+
+    public function init(){
+        if ($this->fileUrlCallback === null) {
+            $this->fileUrlCallback = static function (int $fileId) {
+                return ['/file/view', 'id' => $fileId];
+            };
+        }
+    }
     private function parseOptions($optionsString)
     {
         $options = [];
@@ -116,7 +128,46 @@ class DynamicFormWidget extends Widget
                     break;
 
                 case FormFieldType::TYPE_FILE:
-                    echo $form->field($model, $name)->fileInput($options);
+                    $name      = $field->name;
+                    $label     = $field->label ?: $name;
+                    $inputName = "DynamicModel[{$name}]";
+
+                    // valor atual vindo do JSON do FormResponse
+                    $data = is_array($this->model->response_data)
+                        ? $this->model->response_data
+                        : (is_string($this->model->response_data) ? json_decode($this->model->response_data, true) : []);
+                    $currentId = (int)($data[$name] ?? 0);
+
+                    // bloco HTML
+                    echo '<div class="mb-3">';
+                    echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
+
+                    if ($this->showCurrentFile) {
+                        if ($currentId > 0) {
+                            $url = call_user_func($this->fileUrlCallback, $currentId);
+                            echo '<div class="d-flex align-items-center gap-2 mb-2">';
+                            echo '<span class="badge bg-info">Anexo atual: #'.(int)$currentId.'</span>';
+                            echo \yii\helpers\Html::a('Abrir', $url, [
+                                'class'  => 'btn btn-sm btn-outline-primary',
+                                'target' => '_blank',
+                                'rel'    => 'noopener',
+                            ]);
+                            echo '</div>';
+                        } else {
+                            echo '<div class="text-muted small mb-2">(sem arquivo)</div>';
+                        }
+                    }
+
+                    echo '<input type="file" name="'.$inputName.'" class="form-control"/>';
+
+                    $clearName = "DynamicModel[{$name}_clear]";
+                    $clearId   = "clear-{$name}";
+                    echo '<div class="form-check mt-2">';
+                    echo '<input class="form-check-input" type="checkbox" id="'.$clearId.'" name="'.$clearName.'" value="1">';
+                    echo '<label class="form-check-label" for="'.$clearId.'">Remover arquivo</label>';
+                    echo '</div>';
+
+                    echo '</div>';
                     break;
 
                 case FormFieldType::TYPE_DATETIME:
