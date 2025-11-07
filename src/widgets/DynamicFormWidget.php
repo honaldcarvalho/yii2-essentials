@@ -79,6 +79,7 @@ class DynamicFormWidget extends Widget
             'id' => 'dynamic-form-' . $formId,
             'options' => ['data-pjax' => $this->ajax ? 1 : 0],
             'enableClientScript' => true,
+            'enctype'=>'multipart/form-data',
             'action' => $this->action,
         ]);
 
