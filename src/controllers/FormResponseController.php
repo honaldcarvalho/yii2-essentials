@@ -162,7 +162,6 @@ class FormResponseController extends AuthorizationController
 
         $res = StorageController::uploadFile($uploaded, [
             'file_name'     => null,
-            'description'   => $description,
             'folder_id'     => 1,
             'group_id'      => $groupId,
             'attach_model'  => 0,
