@@ -69,7 +69,7 @@ class FormResponseController extends AuthorizationController
 
             // FILE via StorageController
             if ($type === FormFieldType::TYPE_FILE) {
-                $uploaded = UploadedFile::getInstanceByName($name);
+                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
 
                 if (!$uploaded) {
                     if ((string)($postData[$name . '_clear'] ?? '0') === '1') {
