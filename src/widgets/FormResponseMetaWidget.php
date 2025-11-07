@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials\widgets;
 
 use Yii;
@@ -138,9 +139,10 @@ class FormResponseMetaWidget extends Widget
         $content = $this->renderList($rows);
 
         if ($this->card) {
-            return Html::tag('div',
+            return Html::tag(
+                'div',
                 Html::tag('div', Html::tag('h5', Html::encode($this->title), ['class' => 'mb-0']), ['class' => 'card-header']) .
-                Html::tag('div', $content, ['class' => 'card-body']),
+                    Html::tag('div', $content, ['class' => 'card-body']),
                 ['class' => 'card mb-3'] + $this->options
             );
         }
@@ -193,12 +195,33 @@ class FormResponseMetaWidget extends Widget
      */
     protected function fetchFieldsIndexed(int $dynamicFormId): array
     {
-        $q = FormField::find()->where(['dynamic_form_id' => (int)$dynamicFormId]);
-        if ($this->orderBySort && $q->hasProperty('orderBy')) {
-            $q->orderBy(['sort' => SORT_ASC, 'id' => SORT_ASC]);
+        $schema = Yii::$app->db->schema->getTableSchema(\croacworks\essentials\models\FormField::tableName(), true);
+        $cols   = $schema ? array_keys($schema->columns) : [];
+
+        // candidatos comuns para ordenar
+        $candidates = ['sort', 'position', 'sort_order', 'ord', 'order', 'weight'];
+
+        // pega o primeiro que existir na tabela; senão cai para id
+        $orderCol = null;
+        foreach ($candidates as $c) {
+            if (in_array($c, $cols, true)) {
+                $orderCol = $c;
+                break;
+            }
         }
-        /** @var FormField[] $list */
+
+        $q = \croacworks\essentials\models\FormField::find()
+            ->where(['dynamic_form_id' => (int)$dynamicFormId]);
+
+        if ($orderCol !== null) {
+            $q->orderBy([$orderCol => SORT_ASC, 'id' => SORT_ASC]);
+        } else {
+            $q->orderBy(['id' => SORT_ASC]);
+        }
+
+        /** @var \croacworks\essentials\models\FormField[] $list */
         $list = $q->all();
+
         $byName = [];
         foreach ($list as $f) {
             $byName[$f->name] = $f;
@@ -235,7 +258,7 @@ class FormResponseMetaWidget extends Widget
         });
 
         return $data;
-        }
+    }
 
     protected function formatValue(?int $type, $value, string $name): string
     {
@@ -296,10 +319,12 @@ class FormResponseMetaWidget extends Widget
         // Definition list responsivo (duas colunas)
         $html = Html::beginTag('div', ['class' => 'row row-cols-1 row-cols-md-2 g-3']);
         foreach ($rows as $r) {
-            $html .= Html::tag('div',
-                Html::tag('div',
+            $html .= Html::tag(
+                'div',
+                Html::tag(
+                    'div',
                     Html::tag('div', $r['label'], ['class' => 'text-muted small']) .
-                    Html::tag('div', $r['value'] === '' ? Html::tag('span', Yii::t('app','(empty)'), ['class'=>'text-muted']) : $r['value'], ['class' => 'fw-semibold']),
+                        Html::tag('div', $r['value'] === '' ? Html::tag('span', Yii::t('app', '(empty)'), ['class' => 'text-muted']) : $r['value'], ['class' => 'fw-semibold']),
                     ['class' => 'p-3 border rounded-3 h-100']
                 ),
                 ['class' => 'col']
