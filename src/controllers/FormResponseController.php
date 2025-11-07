@@ -64,28 +64,51 @@ class FormResponseController extends AuthorizationController
             ->all();
 
         $data = $this->decodeResponseData($model->response_data);
+        $existing = $data;
 
         foreach ($fields as $name => $field) {
             $type = (int)$field->type;
 
             // FILE via StorageController
             if ($type === FormFieldType::TYPE_FILE) {
+                // nome do input file deve ser DynamicModel[<name>]
                 $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+                $wantsClear = (string)($postData[$name . '_clear'] ?? '0') === '1';
 
-                if (!$uploaded) {
-                    if ((string)($postData[$name . '_clear'] ?? '0') === '1') {
-                        $data[$name] = null;
+                // ID antigo (se existir)
+                $oldId = (int)($existing[$name] ?? 0);
+
+                // 1) Remoção explícita (sem upload novo)
+                if ($wantsClear && !$uploaded) {
+                    if ($oldId > 0) {
+                        $this->deleteFileId($oldId); // remove do storage
                     }
+                    $data[$name] = null;
                     continue;
                 }
 
+                // 2) Sem upload e sem clear => mantém
+                if (!$uploaded) {
+                    // nada a fazer; preserva valor atual
+                    continue;
+                }
+
+                // (opcional) validações específicas por campo
                 if ($name === 'matrix') {
                     $isPdf = in_array($uploaded->type, ['application/pdf'], true) || preg_match('/\.pdf$/i', $uploaded->name);
                     if (!$isPdf) return ['success' => false, 'error' => 'Matrix must be a PDF'];
                 }
 
+                // 3) Faz upload do novo
                 $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
-                if (!$fileId) return ['success' => false, 'error' => 'Upload failed'];
+                if (!$fileId) {
+                    return ['success' => false, 'error' => 'Upload failed'];
+                }
+
+                // 4) Se havia antigo e mudou, apaga o antigo
+                if ($oldId > 0 && (int)$fileId !== $oldId) {
+                    $this->deleteFileId($oldId);
+                }
 
                 $data[$name] = (string)$fileId;
                 continue;
@@ -144,6 +167,29 @@ class FormResponseController extends AuthorizationController
             throw new NotFoundHttpException('FormResponse not found.');
         }
         return $this->renderAjax('_form_widget', ['model' => $model]);
+    }
+    
+    private function deleteFileId(int $fileId, array $opts = []): bool
+    {
+        if ($fileId <= 0) return true;
+
+        // defaults seguros: respeita grupo, ignora físico ausente, remove thumb
+        $opts = array_merge([
+            'force'         => false,  // true só para master/batch
+            'ignoreMissing' => true,
+            'deleteThumb'   => true,
+        ], $opts);
+
+        try {
+            $res = \croacworks\essentials\controllers\rest\StorageController::removeFile($fileId, $opts);
+            if (is_array($res) && ($res['success'] ?? false) === true) {
+                return true;
+            }
+            Yii::warning('removeFile failed: ' . var_export($res, true), __METHOD__);
+        } catch (\Throwable $e) {
+            Yii::error("removeFile exception for #$fileId: " . $e->getMessage(), __METHOD__);
+        }
+        return false;
     }
 
     private function decodeResponseData($raw): array
