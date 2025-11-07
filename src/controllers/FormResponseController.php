@@ -161,7 +161,6 @@ class FormResponseController extends AuthorizationController
         $groupId = (int)(Yii::$app->user->identity->group_id ?? 1);
 
         $res = StorageController::uploadFile($uploaded, [
-            'file_name'     => null,
             'folder_id'     => 1,
             'group_id'      => $groupId,
             'attach_model'  => 0,
