@@ -80,7 +80,7 @@ class FormResponseMetaWidget extends Widget
             // Default fallback route (ajuste conforme seu StorageController/rotas)
             $this->fileUrlCallback = static function (int $fileId) {
                 // Tente uma rota padrão de download/visualização
-                return ['/storage/file/view', 'id' => $fileId];
+                return ['/file/view', 'id' => $fileId];
             };
         }
 
