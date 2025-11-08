@@ -362,7 +362,8 @@ $extra = [
             [
                 'name' => 'model_class',
                 'type' => 'dropdown',
-                'value' => ModelHelper::getAllModelClasses()
+                'value' => ModelHelper::getAllModelClasses(),
+                'options' => ['prompt' => '']
             ],
             [
                 'name' => 'model_field',
