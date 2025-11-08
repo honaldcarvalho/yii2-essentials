@@ -135,7 +135,7 @@ class DynamicFormWidget extends Widget
                     // valor atual vindo do JSON do FormResponse
                     $data = is_array($this->model?->response_data)
                         ? $this->model->response_data
-                        : (is_string($this->model->response_data) ? json_decode($this->model->response_data, true) : []);
+                        : (is_string($this->model?->response_data) ? json_decode($this->model?->response_data, true) : []);
                     $currentId = (int)($data[$name] ?? 0);
 
                     // bloco HTML
