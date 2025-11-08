@@ -457,7 +457,6 @@ class AppendModel extends \yii\bootstrap5\Widget
 
         foreach ($this->fields as $key => $field) {
             $field_str .= '<div class="col-md-12">';
-
             $before = $field['before'] ?? '';
             $after = $field['after'] ?? '';
             $fieldId = "{$this->uniqueId}-{$field['name']}";
@@ -472,11 +471,11 @@ class AppendModel extends \yii\bootstrap5\Widget
 
             if ($field['type'] == 'text')
                 $field_str .= $form->field($model, $field['name'])->textInput(
-                    array_merge($this->options, ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
+                    array_merge($field['options'] ?? [], ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
                 );
             else if ($field['type'] == 'textarea')
                 $field_str .=  $form->field($model, $field['name'])->textarea(
-                    array_merge($this->options, ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
+                    array_merge($field['options'] ?? [], ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
                 );
             else if ($field['type'] == 'ace')
                 $field_str .=  AceEditor::widget([
@@ -492,25 +491,25 @@ class AppendModel extends \yii\bootstrap5\Widget
             else if ($field['type'] == 'number')
                 $field_str .=  $form->field($model, $field['name'])->input(
                     'number',
-                    array_merge($this->options, ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
+                    array_merge($field['options'] ?? [], ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
                 );
             else if ($field['type'] == 'hidden')
                 $field_str .=  $form->field($model, $field['name'])->hiddenInput(
-                    array_merge($this->options, ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
+                    array_merge($field['options'] ?? [], ['id' => "{$this->uniqueId}-{$field['name']}", 'maxlength' => true, 'value' => $field['value'] ?? ''])
                 )->label(false);
             else if ($field['type'] == 'checkbox')
                 $field_str .=  $form->field($model, $field['name'])->checkbox(
-                    array_merge($this->options, ['id' => "{$this->uniqueId}-{$field['name']}",])
+                    array_merge($field['options'] ?? [], ['id' => "{$this->uniqueId}-{$field['name']}",])
                 );
             else if ($field['type'] == 'dropdown') {
                 $field_str .=  $form->field($model, $field['name'])->dropDownList(
                     $field['value'] ?? '',
-                    array_merge($this->options, ['class' => 'form-control dropdown', 'id' => "{$this->uniqueId}-{$field['name']}"])
+                    array_merge($field['options'] ?? [], ['class' => 'form-control dropdown', 'id' => "{$this->uniqueId}-{$field['name']}"])
                 );
             } else if ($field['type'] == 'select2') {
                 $field_str .= $form->field($model, $field['name'])->dropDownList(
                     $field['value'] ?? [],
-                    array_merge($this->options, [
+                    array_merge($field['options'] ?? [], [
                         'id' => "{$this->uniqueId}-{$field['name']}",
                         'class' => 'form-control dropdown-select2 select2',
                         'prompt' => 'Selecione',
