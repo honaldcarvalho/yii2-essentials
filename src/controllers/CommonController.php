@@ -414,7 +414,7 @@ class CommonController extends \yii\web\Controller
         return $modelClassNamespace::findOne($id)->delete();
     }
 
-    public function actionOrderMenu()
+    public function actionOrderModel()
     {
         $items = [];
         $resuts = [];
