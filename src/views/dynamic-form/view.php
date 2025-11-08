@@ -368,7 +368,8 @@ $extra = [
             [
                 'name' => 'model_field',
                 'type' => 'dropdown',
-                'value' => []
+                'value' => [],
+                'options' => ['prompt' => '']
             ],
             [
                 'name' => 'model_criteria',
