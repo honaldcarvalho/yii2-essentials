@@ -178,7 +178,7 @@ class DynamicFormWidget extends Widget
 
                     echo UploadImageInstant::widget([
                             'mode'        => 'defer',
-                            'model'       => $model,
+                            'model'       => null,
                             'attribute'   => $name,
                             'fileInputId' => \yii\helpers\Html::getInputId($model, $name),
                             'imageUrl'    => $model->file->url ?? '',
