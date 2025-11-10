@@ -185,13 +185,11 @@ class DynamicFormWidget extends Widget
                     $attrName  = $field->name;
                     $label     = $field->label ?: $attrName;
 
-                    // valor atual vindo do JSON do FormResponse
                     $data = is_array($this->model?->response_data)
                         ? $this->model->response_data
                         : (is_string($this->model?->response_data) ? json_decode($this->model?->response_data, true) : []);
                     $currentId = (int)($data[$attrName] ?? 0);
 
-                    // URL da imagem (se houver)
                     $imageUrl = '';
                     if ($currentId > 0) {
                         $imageUrl = call_user_func($this->pictureUrlCallback, $currentId);
@@ -201,30 +199,27 @@ class DynamicFormWidget extends Widget
                     }
 
                     echo '<div class="mb-3">';
-                    echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
+                    echo '<label class="form-label">'.Html::encode($label).'</label>';
 
-                    // 1) fileInput escondido (accept image/*) — o UploadImageInstant usa este input
+                    // File input padrão (para upload no mesmo POST)
                     echo $form->field($model, $attrName)
                         ->fileInput([
-                            'id'    => \yii\helpers\Html::getInputId($model, $attrName),
+                            'id'    => Html::getInputId($model, $attrName),
                             'accept'=> 'image/*',
                             'style' => 'display:none'
                         ])->label(false);
 
-                    // 2) UploadImageInstant em modo "defer" SEM model (evita getPrimaryKey)
-                    //    Ele apenas injeta o file_id no input DynamicModel[$attrName]
+                    // UploadImageInstant apenas como interface visual
                     echo \croacworks\essentials\widgets\UploadImageInstant::widget([
-                        'mode'             => 'defer',
-                        'model'            => null, // <- IMPORTANTE: evita getPrimaryKey() no widget
-                        'attribute'        => $attrName, // DynamicModel[$attrName]
-                        'fileInputId'      => \yii\helpers\Html::getInputId($model, $attrName),
-                        'imageUrl'         => $imageUrl,
-                        'aspectRatio'      => $options['aspectRatio'] ?? '1',
-                        'linkModelOnSend'  => false,         // não envia model_class/id
-                        'deleteOldOnReplace' => false,       // sem efeito em 'defer'
+                        'mode'        => 'passive', // novo modo visual (não faz upload AJAX)
+                        'model'       => null,
+                        'attribute'   => $attrName,
+                        'fileInputId' => Html::getInputId($model, $attrName),
+                        'imageUrl'    => $imageUrl,
+                        'aspectRatio' => $options['aspectRatio'] ?? '1',
                     ]);
 
-                    // 3) opção "remover" (zera o file_id no JSON)
+                    // Checkbox de remoção
                     $clearName = "DynamicModel[{$attrName}_clear]";
                     $clearId   = "clear-{$attrName}";
                     echo '<div class="form-check mt-2">';
@@ -234,6 +229,8 @@ class DynamicFormWidget extends Widget
 
                     echo '</div>';
                     break;
+
+                    
                 case FormFieldType::TYPE_DATETIME:
                     echo $form->field($model, $name)->input('datetime-local', $options);
                     break;
