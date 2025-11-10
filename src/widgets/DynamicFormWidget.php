@@ -10,6 +10,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\models\File;
 use croacworks\essentials\widgets\UploadImageInstant;
 
 class DynamicFormWidget extends Widget
@@ -172,21 +173,24 @@ class DynamicFormWidget extends Widget
                             echo '<div class="text-muted small mb-2">(sem arquivo)</div>';
                         }
                     }
-                    
+                    $file = null;
+                    if($currentId){
+                        $file = File::findOne($currentId);
+                    }
                     echo $form->field($model, $name)
                             ->fileInput([
                                 'id' => \yii\helpers\Html::getInputId($model, $name),
                                 'accept' => 'image/*',
                                 'style' => 'display:none'
                             ])->label(false);
-dd($url);
+
                     echo UploadImageInstant::widget([
                             'mode'        => 'defer',
                             'model'       => $model,
                             'modelId'     => $field->id,
                             'attribute'   => $name,
                             'fileInputId' => \yii\helpers\Html::getInputId($model, $name),
-                            'imageUrl'    => $url ?? '',
+                            'imageUrl'    => $file?->url ?? '',
                             'aspectRatio' => '1',
                     ]);
 
