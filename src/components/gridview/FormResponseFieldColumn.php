@@ -194,7 +194,7 @@ class FormResponseFieldColumn extends DataColumn
 
             if($id){
                 $file = File::findOne($id);
-                $url = $file?->url;
+                $url = $file?->urlThumb;
             } else {
                 return Yii::t('app','No image selected');
             }
