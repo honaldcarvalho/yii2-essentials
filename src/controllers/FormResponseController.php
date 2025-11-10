@@ -31,12 +31,135 @@ class FormResponseController extends AuthorizationController
 
     public function actionCreate()
     {
-        $model = new FormResponse();
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        // Se veio POST/arquivos, trata como JSON (mesma ideia do update)
+        if (Yii::$app->request->isPost || !empty($_FILES)) {
+            return $this->actionCreateJson();
         }
+
+        $model = new FormResponse();
         return $this->render('create', ['model' => $model]);
+    }
+
+    /**
+     * Cria um FormResponse recebendo os dados do DynamicModel (e arquivos) via JSON/AJAX.
+     * Espera receber o dynamic_form_id. Pode vir em:
+     * - POST['dynamic_form_id']
+     * - POST['FormResponse']['dynamic_form_id']
+     * - GET['dynamic_form_id']
+     */
+    public function actionCreateJson()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $req = Yii::$app->request;
+
+        $dynamicFormId =
+            (int)$req->post('dynamic_form_id', 0)
+            ?: (int)($req->post('FormResponse')['dynamic_form_id'] ?? 0)
+            ?: (int)$req->get('dynamic_form_id', 0);
+
+        if ($dynamicFormId <= 0) {
+            return ['success' => false, 'error' => 'Missing dynamic_form_id'];
+        }
+
+        // Campos do DynamicForm
+        $fields = FormField::find()
+            ->where(['dynamic_form_id' => $dynamicFormId])
+            ->indexBy('name')
+            ->all();
+
+        // Dados vindos do formulário (sem arquivos)
+        $postData = $req->post('DynamicModel', []);
+
+        $data = [];
+
+        foreach ($fields as $name => $field) {
+            $type = (int)$field->type;
+
+            // Arquivo via StorageController
+            if ($type === FormFieldType::TYPE_FILE) {
+                // nome do input file deve ser DynamicModel[<name>]
+                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+
+                // sem upload => null
+                if (!$uploaded) {
+                    $data[$name] = null;
+                    continue;
+                }
+
+                // (opcional) validações específicas por campo
+                if ($name === 'matrix') {
+                    $isPdf = in_array($uploaded->type, ['application/pdf'], true) || preg_match('/\.pdf$/i', $uploaded->name);
+                    if (!$isPdf) return ['success' => false, 'error' => 'Matrix must be a PDF'];
+                }
+
+                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
+                if (!$fileId) {
+                    return ['success' => false, 'error' => 'Upload failed'];
+                }
+
+                $data[$name] = (string)$fileId;
+                continue;
+            }
+
+            // Tipos não-arquivo
+            $value = $postData[$name] ?? null;
+
+            if ($value === '') {
+                $data[$name] = null;
+                continue;
+            }
+
+            switch ($type) {
+                case FormFieldType::TYPE_NUMBER:
+                    $data[$name] = is_numeric($value) ? $value + 0 : null;
+                    break;
+
+                case FormFieldType::TYPE_CHECKBOX:
+                case FormFieldType::TYPE_MULTIPLE:
+                    $data[$name] = (array)$value;
+                    break;
+
+                case FormFieldType::TYPE_DATE:
+                case FormFieldType::TYPE_DATETIME:
+                    $ts = strtotime((string)$value);
+                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
+                    break;
+
+                case FormFieldType::TYPE_PHONE:
+                case FormFieldType::TYPE_IDENTIFIER:
+                case FormFieldType::TYPE_TEXT:
+                case FormFieldType::TYPE_TEXTAREA:
+                case FormFieldType::TYPE_SELECT:
+                case FormFieldType::TYPE_SQL:
+                case FormFieldType::TYPE_MODEL:
+                case FormFieldType::TYPE_EMAIL:
+                default:
+                    $data[$name] = $value;
+                    break;
+            }
+        }
+
+        // Cria o registro
+        $model = new FormResponse();
+        $model->dynamic_form_id = $dynamicFormId;
+        $model->response_data   = $data;
+
+        // Preenche group_id automaticamente se existir no AR
+        if ($model->hasAttribute('group_id')) {
+            $model->group_id = (int)(Yii::$app->user->identity->group_id ?? $model->group_id ?? 1);
+        }
+
+        if ($model->save(false)) {
+            return [
+                'success'  => true,
+                'message'  => 'Data created',
+                'id'       => (int)$model->id,
+                'redirect' => $this->createUrl(['view', 'id' => $model->id]),
+            ];
+        }
+
+        return ['success' => false, 'error' => 'Save failed'];
     }
 
     public function actionUpdate($id)
@@ -168,7 +291,7 @@ class FormResponseController extends AuthorizationController
         }
         return $this->renderAjax('_form_widget', ['model' => $model]);
     }
-    
+
     private function deleteFileId(int $fileId, array $opts = []): bool
     {
         if ($fileId <= 0) return true;
