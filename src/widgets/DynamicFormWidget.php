@@ -17,6 +17,7 @@ class DynamicFormWidget extends Widget
     public $formId;
     public $ajax = true;
     public $model;
+    public $file = null;
     public $action = null;
     /** @var callable|null fn(int $fileId): string|array rota/URL para abrir arquivo */
     public $fileUrlCallback = null;
@@ -33,6 +34,7 @@ class DynamicFormWidget extends Widget
                 return ['/file/view', 'id' => $fileId];
             };
         }
+
         if ($this->pictureUrlCallback === null) {
             // tente rota "raw"; ajuste se sua app servir a imagem por outra rota
             $this->pictureUrlCallback = static function (int $fileId) {
@@ -153,6 +155,8 @@ class DynamicFormWidget extends Widget
                     echo '<div class="mb-3">';
                     echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
 
+                    $url = '';
+
                     if ($this->showCurrentFile) {
                         if ($currentId > 0) {
                             $url = call_user_func($this->fileUrlCallback, $currentId);
@@ -182,7 +186,7 @@ class DynamicFormWidget extends Widget
                             'modelId'     => $field->id,
                             'attribute'   => $name,
                             'fileInputId' => \yii\helpers\Html::getInputId($model, $name),
-                            'imageUrl'    => $model->file->url ?? '',
+                            'imageUrl'    => $url ?? '',
                             'aspectRatio' => '1',
                     ]);
 
