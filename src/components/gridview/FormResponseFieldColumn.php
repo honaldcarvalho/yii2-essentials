@@ -1,5 +1,6 @@
 <?php
-namespace croacworks\essentials\gridview;
+
+namespace croacworks\essentials\components\gridview;
 
 use Yii;
 use yii\grid\DataColumn;
