@@ -97,7 +97,7 @@ class FormResponseController extends AuthorizationController
             foreach ($fields as $name => $field) {
                 $type = (int)$field->type;
 
-                if ($type === FormFieldType::TYPE_FILE) {
+                if ($type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE) {
                     $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
 
                     if (!$uploaded) {
