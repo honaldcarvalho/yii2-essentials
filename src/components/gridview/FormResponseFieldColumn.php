@@ -190,7 +190,6 @@ class FormResponseFieldColumn extends DataColumn
         $thumbs = [];
         foreach ($files as $f) {
             $id = (int)$f['id'];
-            $fullUrl  = Url::to(['/file', 'id' => $id]);
 
             if($id){
                 $file = File::findOne($id);
@@ -199,8 +198,8 @@ class FormResponseFieldColumn extends DataColumn
                 return Yii::t('app','No image selected');
             }
             $thumbs[] = Html::a(
-                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1','width:50']),
-                $fullUrl,
+                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1','width'=>'50']),
+                $url,
                 [
                     'target' => '_blank', 
                     'rel' => 'noopener',
