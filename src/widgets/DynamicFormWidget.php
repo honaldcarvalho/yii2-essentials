@@ -154,8 +154,8 @@ class DynamicFormWidget extends Widget
                     // bloco HTML
                     echo '<div class="mb-3">';
                     echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
-
-                    $url = '';
+                    
+                    $url = null;
 
                     if ($this->showCurrentFile) {
                         if ($currentId > 0) {
