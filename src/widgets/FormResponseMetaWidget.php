@@ -8,6 +8,7 @@ use yii\base\Widget;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\models\File;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\models\FormResponse;
 
@@ -301,21 +302,25 @@ class FormResponseMetaWidget extends Widget
                 if ($fileId <= 0) return '';
                 $url = call_user_func($this->fileUrlCallback, $fileId);
                 return Html::a(Yii::t('app', 'Open file #{id}', ['id' => $fileId]), $url, ['target' => '_blank', 'rel' => 'noopener']);
-
+                
             case FormFieldType::TYPE_PICTURE:
                 $fileId = (int)$value;
-                if ($fileId <= 0) return '';
-                $url = call_user_func($this->pictureUrlCallback, $fileId);
-                if (is_array($url)) {
-                    $url = \yii\helpers\Url::to($url);
+                
+                $file = null;
+                if($fileId){
+                    $file = File::findOne($fileId);
+                    $url = $file?->url;
+                    $modelUrl = call_user_func($this->fileUrlCallback, $fileId);
+                } else {
+                    return Yii::t('app','No image selected');
                 }
-                // imagem responsiva com zoom simples ao clicar (abre em nova aba)
+                
                 return Html::a(
                     Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture']),
-                    $url,
+                    $modelUrl,
                     ['target' => '_blank', 'rel' => 'noopener']
                 );
-                
+
             case FormFieldType::TYPE_TEXT:
             case FormFieldType::TYPE_TEXTAREA:
             case FormFieldType::TYPE_SELECT:
