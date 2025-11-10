@@ -169,7 +169,21 @@ class DynamicFormWidget extends Widget
                         }
                     }
 
-                    echo '<input type="file" name="'.$inputName.'" class="form-control"/>';
+                    echo $form->field($model, $name)
+                            ->fileInput([
+                                'id' => \yii\helpers\Html::getInputId($model, $name),
+                                'accept' => 'image/*',
+                                'style' => 'display:none'
+                            ])->label(false);
+
+                    echo UploadImageInstant::widget([
+                            'mode'        => 'defer',
+                            'model'       => $model,
+                            'attribute'   => $name,
+                            'fileInputId' => \yii\helpers\Html::getInputId($model, $name),
+                            'imageUrl'    => $model->file->url ?? '',
+                            'aspectRatio' => '1',
+                    ]);
 
                     $clearName = "DynamicModel[{$name}_clear]";
                     $clearId   = "clear-{$name}";
