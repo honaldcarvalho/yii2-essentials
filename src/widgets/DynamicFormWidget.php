@@ -138,8 +138,6 @@ class DynamicFormWidget extends Widget
                     echo $form->field($model, $name)->input('date', $options);
                     break;
 
-                    
-
                 case FormFieldType::TYPE_PICTURE:
                     $name      = $field->name;
                     $label     = $field->label ?: $name;
