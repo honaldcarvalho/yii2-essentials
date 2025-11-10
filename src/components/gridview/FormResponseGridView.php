@@ -16,6 +16,7 @@ class FormResponseGridView extends GridView
 {
     /** @var DynamicForm */
     public DynamicForm $dynamicForm;
+    public $controller = 'form-response-crud';
 
     /**
      * @var string[]|null Field names to include (order respected).
@@ -90,8 +91,8 @@ class FormResponseGridView extends GridView
                 'contentOptions' => ['style' => 'white-space:nowrap;']
             ];
             $cols[] = [
-                'class' => 'yii\grid\ActionColumn',
-                'controller' => 'form-response-crud',
+                'class' => 'croacworks\essentials\components\gridview\ActionColumnCustom',
+                'controller' => $this->controller,
             ];
         }
 
