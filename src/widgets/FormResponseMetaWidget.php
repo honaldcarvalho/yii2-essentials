@@ -82,11 +82,6 @@ class FormResponseMetaWidget extends Widget
                 return ['/file/view', 'id' => $fileId];
             };
         }
-        if ($this->pictureUrlCallback === null) {
-            $this->pictureUrlCallback = static function (int $fileId) {
-                return ['/file/view', 'id' => $fileId];
-            };
-        }
 
         $this->options = ArrayHelper::merge(['class' => 'cw-formresponse-meta'], $this->options);
 
@@ -274,7 +269,7 @@ class FormResponseMetaWidget extends Widget
         }
 
         // Matriz de valores (ex.: multiple/checkbox)
-        if (is_array($value) && $type !== FormFieldType::TYPE_FILE) {
+        if (is_array($value) && $type !== FormFieldType::TYPE_FILE && $type !== FormFieldType::TYPE_PICTURE) {
             // Tente representar como badges
             $badges = array_map(fn($v) => Html::tag('span', Html::encode((string)$v), ['class' => 'badge bg-secondary me-1']), $value);
             return implode(' ', $badges);
