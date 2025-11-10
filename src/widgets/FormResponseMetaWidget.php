@@ -311,7 +311,7 @@ class FormResponseMetaWidget extends Widget
                 }
                 
                 return Html::a(
-                    Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture']),
+                    Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture', 'width'=>'200px']),
                     $modelUrl,
                     ['target' => '_blank', 'rel' => 'noopener']
                 );
