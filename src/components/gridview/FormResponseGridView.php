@@ -1,5 +1,5 @@
 <?php
-namespace croacworks\essentials\grid;
+namespace croacworks\essentials\gridview;
 
 use Yii;
 use yii\grid\GridView;
