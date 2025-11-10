@@ -77,9 +77,12 @@ class FormResponseMetaWidget extends Widget
         }
 
         if ($this->fileUrlCallback === null) {
-            // Default fallback route (ajuste conforme seu StorageController/rotas)
             $this->fileUrlCallback = static function (int $fileId) {
-                // Tente uma rota padrão de download/visualização
+                return ['/file/view', 'id' => $fileId];
+            };
+        }
+        if ($this->pictureUrlCallback === null) {
+            $this->pictureUrlCallback = static function (int $fileId) {
                 return ['/file/view', 'id' => $fileId];
             };
         }
@@ -299,6 +302,20 @@ class FormResponseMetaWidget extends Widget
                 $url = call_user_func($this->fileUrlCallback, $fileId);
                 return Html::a(Yii::t('app', 'Open file #{id}', ['id' => $fileId]), $url, ['target' => '_blank', 'rel' => 'noopener']);
 
+            case FormFieldType::TYPE_PICTURE:
+                $fileId = (int)$value;
+                if ($fileId <= 0) return '';
+                $url = call_user_func($this->pictureUrlCallback, $fileId);
+                if (is_array($url)) {
+                    $url = \yii\helpers\Url::to($url);
+                }
+                // imagem responsiva com zoom simples ao clicar (abre em nova aba)
+                return Html::a(
+                    Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture']),
+                    $url,
+                    ['target' => '_blank', 'rel' => 'noopener']
+                );
+                
             case FormFieldType::TYPE_TEXT:
             case FormFieldType::TYPE_TEXTAREA:
             case FormFieldType::TYPE_SELECT:
