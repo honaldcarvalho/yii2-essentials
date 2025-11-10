@@ -138,6 +138,49 @@ class DynamicFormWidget extends Widget
                     echo $form->field($model, $name)->input('date', $options);
                     break;
 
+                case FormFieldType::TYPE_PICTURE:
+                    $name      = $field->name;
+                    $label     = $field->label ?: $name;
+                    $inputName = "DynamicModel[{$name}]";
+
+                    // valor atual vindo do JSON do FormResponse
+                    $data = is_array($this->model?->response_data)
+                        ? $this->model->response_data
+                        : (is_string($this->model?->response_data) ? json_decode($this->model?->response_data, true) : []);
+                    $currentId = (int)($data[$name] ?? 0);
+
+                    // bloco HTML
+                    echo '<div class="mb-3">';
+                    echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
+
+                    if ($this->showCurrentFile) {
+                        if ($currentId > 0) {
+                            $url = call_user_func($this->fileUrlCallback, $currentId);
+                            echo '<div class="d-flex align-items-center gap-2 mb-2">';
+                            echo '<span class="badge bg-info">Anexo atual: #'.(int)$currentId.'</span>';
+                            echo \yii\helpers\Html::a('Abrir', $url, [
+                                'class'  => 'btn btn-sm btn-outline-primary',
+                                'target' => '_blank',
+                                'rel'    => 'noopener',
+                            ]);
+                            echo '</div>';
+                        } else {
+                            echo '<div class="text-muted small mb-2">(sem arquivo)</div>';
+                        }
+                    }
+
+                    echo '<input type="file" name="'.$inputName.'" class="form-control"/>';
+
+                    $clearName = "DynamicModel[{$name}_clear]";
+                    $clearId   = "clear-{$name}";
+                    echo '<div class="form-check mt-2">';
+                    echo '<input class="form-check-input" type="checkbox" id="'.$clearId.'" name="'.$clearName.'" value="1">';
+                    echo '<label class="form-check-label" for="'.$clearId.'">Remover arquivo</label>';
+                    echo '</div>';
+
+                    echo '</div>';
+                    break;
+
                 case FormFieldType::TYPE_FILE:
                     $name      = $field->name;
                     $label     = $field->label ?: $name;
@@ -180,57 +223,7 @@ class DynamicFormWidget extends Widget
 
                     echo '</div>';
                     break;
-                    
-                case FormFieldType::TYPE_PICTURE:
-                    $attrName  = $field->name;
-                    $label     = $field->label ?: $attrName;
 
-                    $data = is_array($this->model?->response_data)
-                        ? $this->model->response_data
-                        : (is_string($this->model?->response_data) ? json_decode($this->model?->response_data, true) : []);
-                    $currentId = (int)($data[$attrName] ?? 0);
-
-                    $imageUrl = '';
-                    if ($currentId > 0) {
-                        $imageUrl = call_user_func($this->pictureUrlCallback, $currentId);
-                        if (is_array($imageUrl)) {
-                            $imageUrl = \yii\helpers\Url::to($imageUrl);
-                        }
-                    }
-
-                    echo '<div class="mb-3">';
-                    echo '<label class="form-label">'.Html::encode($label).'</label>';
-
-                    // File input padrão (para upload no mesmo POST)
-                    echo $form->field($model, $attrName)
-                        ->fileInput([
-                            'id'    => Html::getInputId($model, $attrName),
-                            'accept'=> 'image/*',
-                            'style' => 'display:none'
-                        ])->label(false);
-
-                    // UploadImageInstant apenas como interface visual
-                    echo \croacworks\essentials\widgets\UploadImageInstant::widget([
-                        'mode'        => 'passive', // novo modo visual (não faz upload AJAX)
-                        'model'       => null,
-                        'attribute'   => $attrName,
-                        'fileInputId' => Html::getInputId($model, $attrName),
-                        'imageUrl'    => $imageUrl,
-                        'aspectRatio' => $options['aspectRatio'] ?? '1',
-                    ]);
-
-                    // Checkbox de remoção
-                    $clearName = "DynamicModel[{$attrName}_clear]";
-                    $clearId   = "clear-{$attrName}";
-                    echo '<div class="form-check mt-2">';
-                    echo '<input class="form-check-input" type="checkbox" id="'.$clearId.'" name="'.$clearName.'" value="1">';
-                    echo '<label class="form-check-label" for="'.$clearId.'">'.Yii::t('app','Remove image').'</label>';
-                    echo '</div>';
-
-                    echo '</div>';
-                    break;
-
-                    
                 case FormFieldType::TYPE_DATETIME:
                     echo $form->field($model, $name)->input('datetime-local', $options);
                     break;
