@@ -10,6 +10,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\widgets\UploadImageInstant;
 
 class DynamicFormWidget extends Widget
 {
@@ -23,13 +24,23 @@ class DynamicFormWidget extends Widget
     /** @var bool Mostrar bloco do anexo atual acima do input file */
     public $showCurrentFile = true;
 
+    /** @var callable|null fn(int $fileId): string|array rota/URL direto da imagem */
+    public $pictureUrlCallback = null;
+
     public function init(){
         if ($this->fileUrlCallback === null) {
             $this->fileUrlCallback = static function (int $fileId) {
                 return ['/file/view', 'id' => $fileId];
             };
         }
+        if ($this->pictureUrlCallback === null) {
+            // tente rota "raw"; ajuste se sua app servir a imagem por outra rota
+            $this->pictureUrlCallback = static function (int $fileId) {
+                return ['/file/view', 'id' => $fileId];
+            };
+        }
     }
+
     private function parseOptions($optionsString)
     {
         $options = [];
@@ -169,6 +180,64 @@ class DynamicFormWidget extends Widget
 
                     echo '</div>';
                     break;
+                    
+                    case FormFieldType::TYPE_PICTURE:
+                        $attrName  = $field->name;
+                        $label     = $field->label ?: $attrName;
+
+                        // valor atual vindo do JSON do FormResponse
+                        $data = is_array($this->model?->response_data)
+                            ? $this->model->response_data
+                            : (is_string($this->model?->response_data) ? json_decode($this->model?->response_data, true) : []);
+                        $currentId = (int)($data[$attrName] ?? 0);
+
+                        // URL da imagem (se houver)
+                        $imageUrl = '';
+                        if ($currentId > 0) {
+                            $imageUrl = call_user_func($this->pictureUrlCallback, $currentId);
+                            if (is_array($imageUrl)) {
+                                $imageUrl = \yii\helpers\Url::to($imageUrl);
+                            }
+                        }
+
+                        echo '<div class="mb-3">';
+                        echo '<label class="form-label">'.\yii\helpers\Html::encode($label).'</label>';
+
+                        // 1) fileInput escondido (accept image/*) — o UploadImageInstant usa este input
+                        echo $form->field($model, $attrName)
+                            ->fileInput([
+                                'id'    => \yii\helpers\Html::getInputId($model, $attrName),
+                                'accept'=> 'image/*',
+                                'style' => 'display:none'
+                            ])->label(false);
+
+                        // 2) UploadImageInstant (modo 'defer' grava o file_id no próprio atributo)
+                        if (class_exists(UploadImageInstant::class)) {
+                            echo UploadImageInstant::widget([
+                                'mode'        => 'defer', // sobe a imagem e preenche o input com o file_id
+                                'model'       => $model,
+                                'attribute'   => $attrName, // DynamicModel[$attrName]
+                                'fileInputId' => \yii\helpers\Html::getInputId($model, $attrName),
+                                'imageUrl'    => $imageUrl,
+                                // passe a proporção via options no FormField (ex.: options="aspectRatio:1.6")
+                                'aspectRatio' => $options['aspectRatio'] ?? '1',
+                            ]);
+                        } else {
+                            // fallback: se o widget não existir, cai para um input file simples
+                            echo '<div class="text-warning small mb-2">UploadImageInstant não encontrado. Usando input padrão.</div>';
+                            echo '<input type="file" accept="image/*" name="DynamicModel['.$attrName.']" class="form-control" />';
+                        }
+
+                        // opção "remover" (zera o file_id no JSON)
+                        $clearName = "DynamicModel[{$attrName}_clear]";
+                        $clearId   = "clear-{$attrName}";
+                        echo '<div class="form-check mt-2">';
+                        echo '<input class="form-check-input" type="checkbox" id="'.$clearId.'" name="'.$clearName.'" value="1">';
+                        echo '<label class="form-check-label" for="'.$clearId.'">'.Yii::t('app','Remove image').'</label>';
+                        echo '</div>';
+
+                        echo '</div>';
+                        break;
 
                 case FormFieldType::TYPE_DATETIME:
                     echo $form->field($model, $name)->input('datetime-local', $options);

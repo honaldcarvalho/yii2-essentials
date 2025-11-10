@@ -21,6 +21,7 @@ class FormFieldType extends yii\db\ActiveRecord
     const TYPE_SQL         = 12;
     const TYPE_DATETIME    = 13;
     const TYPE_FILE        = 14;
+    const TYPE_PICTURE     = 90;
 
     public static $list = [];
 
@@ -53,6 +54,7 @@ class FormFieldType extends yii\db\ActiveRecord
             self::TYPE_MODEL      => Yii::t('app', 'Model'),
             self::TYPE_SQL        => Yii::t('app', 'Script SQL'),
             self::TYPE_FILE       => Yii::t('app', 'File'),
+            self::TYPE_PICTURE    => Yii::t('app', 'Picture')
         ];
     }
 
