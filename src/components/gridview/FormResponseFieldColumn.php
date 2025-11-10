@@ -7,6 +7,7 @@ use yii\grid\DataColumn;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\models\File;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\models\FormResponse;
 
@@ -189,10 +190,17 @@ class FormResponseFieldColumn extends DataColumn
         $thumbs = [];
         foreach ($files as $f) {
             $id = (int)$f['id'];
-            $thumbUrl = Url::to(array_merge(['/storage/thumb', 'id' => $id], $this->thumb));
-            $fullUrl  = Url::to(['/storage/get', 'id' => $id]);
+
+            if($id){
+                $file = File::findOne($id);
+                $url = $file?->url;
+                $fullUrl = call_user_func($this->fileUrlCallback, $id);
+            } else {
+                return Yii::t('app','No image selected');
+            }
+
             $thumbs[] = Html::a(
-                Html::img($thumbUrl, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1']),
+                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1']),
                 $fullUrl,
                 ['target' => '_blank', 'rel' => 'noopener']
             );
