@@ -177,6 +177,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
 
   /** Model/attribute association */
   public $model = null; // \yii\db\ActiveRecord|null
+  public $modelId = null;
   public string $attribute = 'file_id';
 
   /** Optional: force the file input id of the model */
@@ -269,7 +270,7 @@ class UploadImageInstant extends \yii\bootstrap5\Widget
     // MODEL
     $haveModel  = $this->model !== null && $this->model->hasAttribute($this->attribute);
     $modelClass = $haveModel ? addslashes(get_class($this->model)) : '';
-    $modelId    = $haveModel ? (string)$this->model->getPrimaryKey() : '';
+    $modelId    = $haveModel ? $this->modelId  ?? (string)$this->model->getPrimaryKey() : '';
 
     // URL
     $sendUrl = Url::to($this->sendUrl);
