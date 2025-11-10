@@ -198,11 +198,17 @@ class FormResponseFieldColumn extends DataColumn
             } else {
                 return Yii::t('app','No image selected');
             }
-
             $thumbs[] = Html::a(
-                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1']),
+                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1','width:50']),
                 $fullUrl,
-                ['target' => '_blank', 'rel' => 'noopener']
+                [
+                    'target' => '_blank', 
+                    'rel' => 'noopener',
+                    'class' => 'btn btn-outline-secondary',
+                    'data-fancybox' => "",
+                    'data-type' => "image",
+                    'title' => \Yii::t('app', 'View')
+                ]
             );
         }
         return implode('', $thumbs);
