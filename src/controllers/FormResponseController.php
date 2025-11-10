@@ -10,6 +10,7 @@ use croacworks\essentials\enums\FormFieldType;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\models\FormResponse;
 use croacworks\essentials\controllers\rest\StorageController;
+use yii\helpers\Url;
 
 class FormResponseController extends AuthorizationController
 {
@@ -31,135 +32,165 @@ class FormResponseController extends AuthorizationController
 
     public function actionCreate()
     {
-        // Se veio POST/arquivos, trata como JSON (mesma ideia do update)
-        if (Yii::$app->request->isPost || !empty($_FILES)) {
-            return $this->actionCreateJson();
+        $model = new FormResponse();
+        // se seu controller já tem $this->formDef, preserve:
+        if (property_exists($this, 'formDef') && $this->formDef) {
+            $model->dynamic_form_id = (int)$this->formDef->id;
         }
 
-        $model = new FormResponse();
-        return $this->render('create', ['model' => $model]);
+        if (Yii::$app->request->isPost || !empty($_FILES)) {
+            // chama o handler sem forçar JSON
+            $result = $this->actionCreateJson(false);
+            if (is_array($result) && !empty($result['success'])) {
+                Yii::$app->session->addFlash('success', Yii::t('app', 'Saved successfully.'));
+                return $this->redirect(['view', 'id' => (int)$result['id']]);
+            }
+            // falha: exiba erro na UI
+            Yii::$app->session->addFlash('error', $result['error'] ?? Yii::t('app', 'Save failed.'));
+        }
+
+        return $this->render('/form-response-crud/create', [
+            'model'   => $model,
+            'formDef' => $this->formDef ?? null,
+        ]);
     }
 
     /**
-     * Cria um FormResponse recebendo os dados do DynamicModel (e arquivos) via JSON/AJAX.
-     * Espera receber o dynamic_form_id. Pode vir em:
-     * - POST['dynamic_form_id']
-     * - POST['FormResponse']['dynamic_form_id']
-     * - GET['dynamic_form_id']
+     * Quando $asJson=true, responde em JSON (para AJAX).
+     * Quando $asJson=false, apenas retorna o array com o resultado (uso interno).
      */
-    public function actionCreateJson()
+    public function actionCreateJson(bool $asJson = true)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        $req = Yii::$app->request;
-
-        $dynamicFormId =
-            (int)$req->post('dynamic_form_id', 0)
-            ?: (int)($req->post('FormResponse')['dynamic_form_id'] ?? 0)
-            ?: (int)$req->get('dynamic_form_id', 0);
-
-        if ($dynamicFormId <= 0) {
-            return ['success' => false, 'error' => 'Missing dynamic_form_id'];
+        $oldFormat = Yii::$app->response->format;
+        if ($asJson && Yii::$app->request->isAjax) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
         }
 
-        // Campos do DynamicForm
-        $fields = FormField::find()
-            ->where(['dynamic_form_id' => $dynamicFormId])
-            ->indexBy('name')
-            ->all();
+        try {
+            $req = Yii::$app->request;
 
-        // Dados vindos do formulário (sem arquivos)
-        $postData = $req->post('DynamicModel', []);
+            // Prioriza formDef se existir; senão, tenta POST/GET
+            $dynamicFormId = 0;
+            if (property_exists($this, 'formDef') && $this->formDef) {
+                $dynamicFormId = (int)$this->formDef->id;
+            }
+            if ($dynamicFormId <= 0) {
+                $dynamicFormId =
+                    (int)$req->post('dynamic_form_id', 0)
+                    ?: (int)($req->post('FormResponse')['dynamic_form_id'] ?? 0)
+                    ?: (int)$req->get('dynamic_form_id', 0);
+            }
 
-        $data = [];
+            if ($dynamicFormId <= 0) {
+                $out = ['success' => false, 'error' => 'Missing dynamic_form_id'];
+                return $this->finishCreateJson($out, $asJson, $oldFormat);
+            }
 
-        foreach ($fields as $name => $field) {
-            $type = (int)$field->type;
+            $fields = FormField::find()
+                ->where(['dynamic_form_id' => $dynamicFormId])
+                ->indexBy('name')
+                ->all();
 
-            // Arquivo via StorageController
-            if ($type === FormFieldType::TYPE_FILE) {
-                // nome do input file deve ser DynamicModel[<name>]
-                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+            $postData = $req->post('DynamicModel', []);
+            $data = [];
 
-                // sem upload => null
-                if (!$uploaded) {
+            foreach ($fields as $name => $field) {
+                $type = (int)$field->type;
+
+                if ($type === FormFieldType::TYPE_FILE) {
+                    $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+
+                    if (!$uploaded) {
+                        $data[$name] = null;
+                        continue;
+                    }
+
+                    if ($name === 'matrix') {
+                        $isPdf = in_array($uploaded->type, ['application/pdf'], true)
+                            || preg_match('/\.pdf$/i', $uploaded->name);
+                        if (!$isPdf) {
+                            $out = ['success' => false, 'error' => 'Matrix must be a PDF'];
+                            return $this->finishCreateJson($out, $asJson, $oldFormat);
+                        }
+                    }
+
+                    $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
+                    if (!$fileId) {
+                        $out = ['success' => false, 'error' => 'Upload failed'];
+                        return $this->finishCreateJson($out, $asJson, $oldFormat);
+                    }
+
+                    $data[$name] = (string)$fileId;
+                    continue;
+                }
+
+                $value = $postData[$name] ?? null;
+
+                if ($value === '') {
                     $data[$name] = null;
                     continue;
                 }
 
-                // (opcional) validações específicas por campo
-                if ($name === 'matrix') {
-                    $isPdf = in_array($uploaded->type, ['application/pdf'], true) || preg_match('/\.pdf$/i', $uploaded->name);
-                    if (!$isPdf) return ['success' => false, 'error' => 'Matrix must be a PDF'];
+                switch ($type) {
+                    case FormFieldType::TYPE_NUMBER:
+                        $data[$name] = is_numeric($value) ? $value + 0 : null;
+                        break;
+
+                    case FormFieldType::TYPE_CHECKBOX:
+                    case FormFieldType::TYPE_MULTIPLE:
+                        $data[$name] = (array)$value;
+                        break;
+
+                    case FormFieldType::TYPE_DATE:
+                    case FormFieldType::TYPE_DATETIME:
+                        $ts = strtotime((string)$value);
+                        $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
+                        break;
+
+                    default:
+                        $data[$name] = $value;
+                        break;
                 }
-
-                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
-                if (!$fileId) {
-                    return ['success' => false, 'error' => 'Upload failed'];
-                }
-
-                $data[$name] = (string)$fileId;
-                continue;
             }
 
-            // Tipos não-arquivo
-            $value = $postData[$name] ?? null;
+            $model = new FormResponse();
+            $model->dynamic_form_id = $dynamicFormId;
+            $model->response_data   = $data;
 
-            if ($value === '') {
-                $data[$name] = null;
-                continue;
+            if ($model->hasAttribute('group_id')) {
+                $model->group_id = (int)(Yii::$app->user->identity->group_id ?? $model->group_id ?? 1);
             }
 
-            switch ($type) {
-                case FormFieldType::TYPE_NUMBER:
-                    $data[$name] = is_numeric($value) ? $value + 0 : null;
-                    break;
+            if ($model->save(false)) {
+                $out = [
+                    'success'  => true,
+                    'message'  => 'Data created',
+                    'id'       => (int)$model->id,
+                    'redirect' => Url::to(['view', 'id' => (int)$model->id]),
+                ];
+                return $this->finishCreateJson($out, $asJson, $oldFormat);
+            }
 
-                case FormFieldType::TYPE_CHECKBOX:
-                case FormFieldType::TYPE_MULTIPLE:
-                    $data[$name] = (array)$value;
-                    break;
+            $out = ['success' => false, 'error' => 'Save failed'];
+            return $this->finishCreateJson($out, $asJson, $oldFormat);
 
-                case FormFieldType::TYPE_DATE:
-                case FormFieldType::TYPE_DATETIME:
-                    $ts = strtotime((string)$value);
-                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
-                    break;
-
-                case FormFieldType::TYPE_PHONE:
-                case FormFieldType::TYPE_IDENTIFIER:
-                case FormFieldType::TYPE_TEXT:
-                case FormFieldType::TYPE_TEXTAREA:
-                case FormFieldType::TYPE_SELECT:
-                case FormFieldType::TYPE_SQL:
-                case FormFieldType::TYPE_MODEL:
-                case FormFieldType::TYPE_EMAIL:
-                default:
-                    $data[$name] = $value;
-                    break;
+        } finally {
+            // segurança extra: se por algum fluxo não passou pelo finish, restaure
+            if (!$asJson) {
+                Yii::$app->response->format = $oldFormat;
             }
         }
+    }
 
-        // Cria o registro
-        $model = new FormResponse();
-        $model->dynamic_form_id = $dynamicFormId;
-        $model->response_data   = $data;
-
-        // Preenche group_id automaticamente se existir no AR
-        if ($model->hasAttribute('group_id')) {
-            $model->group_id = (int)(Yii::$app->user->identity->group_id ?? $model->group_id ?? 1);
+    /** Helper: garante restauração do formato e saída consistente. */
+    private function finishCreateJson(array $out, bool $asJson, $oldFormat)
+    {
+        if (!$asJson) {
+            Yii::$app->response->format = $oldFormat;
+            return $out;
         }
-
-        if ($model->save(false)) {
-            return [
-                'success'  => true,
-                'message'  => 'Data created',
-                'id'       => (int)$model->id,
-                'redirect' => $this->createUrl(['view', 'id' => $model->id]),
-            ];
-        }
-
-        return ['success' => false, 'error' => 'Save failed'];
+        // para chamadas AJAX, já está em JSON
+        return $out;
     }
 
     public function actionUpdate($id)
@@ -291,7 +322,7 @@ class FormResponseController extends AuthorizationController
         }
         return $this->renderAjax('_form_widget', ['model' => $model]);
     }
-
+    
     private function deleteFileId(int $fileId, array $opts = []): bool
     {
         if ($fileId <= 0) return true;
