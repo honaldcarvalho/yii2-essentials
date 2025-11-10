@@ -172,14 +172,14 @@ class DynamicFormWidget extends Widget
                             echo '<div class="text-muted small mb-2">(sem arquivo)</div>';
                         }
                     }
-
+                    
                     echo $form->field($model, $name)
                             ->fileInput([
                                 'id' => \yii\helpers\Html::getInputId($model, $name),
                                 'accept' => 'image/*',
                                 'style' => 'display:none'
                             ])->label(false);
-
+dd($url);
                     echo UploadImageInstant::widget([
                             'mode'        => 'defer',
                             'model'       => $model,
