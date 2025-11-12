@@ -371,19 +371,19 @@ class DynamicFormWidget extends Widget
                 if (!target.length || type === 'file') return;
 
                 if (type === 'checkbox') {
-                // group or single
-                var groupSrc = src.find('input[type="checkbox"][name="'+name+'"]');
-                if (groupSrc.length > 1) {
-                    var checkedVals = [];
-                    groupSrc.filter(':checked').each(function(){ checkedVals.push(this.value); });
-                    target.each(function(){ $(this).prop('checked', checkedVals.indexOf(this.value) !== -1).trigger('change'); });
-                    if (move) groupSrc.prop('checked', false).trigger('change');
-                } else {
-                    var checked = $(this).is(':checked');
-                    target.prop('checked', checked).trigger('change');
-                    if (move) $(this).prop('checked', false).trigger('change');
-                }
-                return;
+                    // group or single
+                    var groupSrc = src.find('input[type="checkbox"][name="'+name+'"]');
+                    if (groupSrc.length > 1) {
+                        var checkedVals = [];
+                        groupSrc.filter(':checked').each(function(){ checkedVals.push(this.value); });
+                        target.each(function(){ $(this).prop('checked', checkedVals.indexOf(this.value) !== -1).trigger('change'); });
+                        if (move) groupSrc.prop('checked', false).trigger('change');
+                    } else {
+                        var checked = $(this).is(':checked');
+                        target.prop('checked', checked).trigger('change');
+                        if (move) $(this).prop('checked', false).trigger('change');
+                    }
+                    return;
                 }
 
                 if (type === 'radio') {
@@ -407,9 +407,6 @@ class DynamicFormWidget extends Widget
                 if (move) $(this).val('').trigger('change');
             });
         }
-
-
-        {$functionForm}
 
         $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
             if({$ajax} === 0) return document.submit();
@@ -468,6 +465,7 @@ class DynamicFormWidget extends Widget
 
         $this->registerInputMaskAssets();
         Yii::$app->view->registerJs($js);
+        Yii::$app->view->registerJs('{$functionForm}',Yii::$app->view::POS_END);
 
         return $output;
     }
