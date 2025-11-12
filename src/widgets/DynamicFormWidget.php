@@ -466,7 +466,7 @@ class DynamicFormWidget extends Widget
         $js = <<< JS
 
         $('#dynamic-form-{$formId}').on('submit', function (e) {
-            if ({ $ajax } === '0') return; // deixe o submit normal
+            if ($ajax === 0) return; // deixe o submit normal
             e.preventDefault();
 
             var form = $(this); // agora é o <form>
@@ -515,7 +515,7 @@ class DynamicFormWidget extends Widget
         });
 
         $('#dynamic-form-{$formId} #btn-submit-dynamic-form').on('click', function (e) {
-            if ({ $ajax } === '1') e.preventDefault();
+            if ($ajax === 1) e.preventDefault();
             $(this).closest('form').trigger('submit');
         });
 
