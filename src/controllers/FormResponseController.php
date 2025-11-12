@@ -256,17 +256,6 @@ class FormResponseController extends AuthorizationController
         return $query->one();
     }
 
-    /** Helper: garante restauração do formato e saída consistente. */
-    private function finishCreateJson(array $out, bool $asJson, $oldFormat)
-    {
-        if (!$asJson) {
-            Yii::$app->response->format = $oldFormat;
-            return $out;
-        }
-        // para chamadas AJAX, já está em JSON
-        return $out;
-    }
-
     public function actionEdit($id)
     {
         $model = FormResponse::findOne($id);
