@@ -20,8 +20,6 @@ class DynamicFormWidget extends Widget
     public $model;
     public $file = null;
     public $action = null;
-    public $copyToForm = false;
-
     /** @var callable|null fn(int $fileId): string|array rota/URL para abrir arquivo */
     public $fileUrlCallback = null;
 
@@ -349,131 +347,14 @@ class DynamicFormWidget extends Widget
 
         $output = ob_get_clean();
         $ajax = $this->ajax ? 1 : 0;
-
-        if ($this->copyToForm !== false) {
-            $copyJs = <<<JS
-            (function () {
-                // Copia/move campos por [name] do form dinâmico -> form principal
-                function transferForm(fromSelector, toSelector, options) {
-                    var move = options && options.move === true;
-                    var src = $(fromSelector), dst = $(toSelector);
-
-                    // Remover clones anteriores
-                    dst.find('[data-dfw-clone="1"]').remove();
-
-                    src.find('input, textarea, select').each(function () {
-                        var el = this;
-                        var name = $(el).attr('name');
-                        if (!name) return;
-
-                        var type = (el.type || '').toLowerCase();
-                        var tag = (el.tagName || '').toLowerCase();
-
-                        // Arquivo não dá pra clonar por segurança do browser; deixe o upload ir no form do dinâmico (AJAX)
-                        if (type === 'file') return;
-
-                        // Checkbox (grupo ou single)
-                        if (type === 'checkbox') {
-                            var group = src.find('input[type="checkbox"][name="' + name + '"]');
-                            if (group.length > 1) {
-                                group.filter(':checked').each(function () {
-                                    var h = document.createElement('input');
-                                    h.type = 'hidden';
-                                    h.name = name;
-                                    h.value = this.value;
-                                    h.setAttribute('data-dfw-clone', '1');
-                                    dst[0].appendChild(h);
-                                });
-                                if (move) group.prop('checked', false).trigger('change');
-                            } else {
-                                var h = document.createElement('input');
-                                h.type = 'hidden';
-                                h.name = name;
-                                h.value = $(el).is(':checked') ? ($(el).val() || '1') : '';
-                                h.setAttribute('data-dfw-clone', '1');
-                                dst[0].appendChild(h);
-                                if (move) $(el).prop('checked', false).trigger('change');
-                            }
-                            return;
-                        }
-
-                        // Radio
-                        if (type === 'radio') {
-                            var selected = src.find('input[type="radio"][name="' + name + '"]:checked');
-                            if (selected.length) {
-                                var h = document.createElement('input');
-                                h.type = 'hidden';
-                                h.name = name;
-                                h.value = selected.val();
-                                h.setAttribute('data-dfw-clone', '1');
-                                dst[0].appendChild(h);
-                                if (move) selected.prop('checked', false).trigger('change');
-                            }
-                            return;
-                        }
-
-                        // Select
-                        if (tag === 'select') {
-                            if (el.multiple) {
-                                Array.from(el.selectedOptions).forEach(function (opt) {
-                                    var h = document.createElement('input');
-                                    h.type = 'hidden';
-                                    h.name = name;
-                                    h.value = opt.value;
-                                    h.setAttribute('data-dfw-clone', '1');
-                                    dst[0].appendChild(h);
-                                });
-                                if (move) $(el).val([]).trigger('change');
-                            } else {
-                                var h = document.createElement('input');
-                                h.type = 'hidden';
-                                h.name = name;
-                                h.value = $(el).val() ?? '';
-                                h.setAttribute('data-dfw-clone', '1');
-                                dst[0].appendChild(h);
-                                if (move) $(el).val('').trigger('change');
-                            }
-                            return;
-                        }
-
-                        // Inputs de texto/textarea/hidden/number/etc.
-                        var h = document.createElement('input');
-                        h.type = 'hidden';
-                        h.name = name;
-                        h.value = $(el).val() ?? '';
-                        h.setAttribute('data-dfw-clone', '1');
-                        dst[0].appendChild(h);
-                        if (move) $(el).val('').trigger('change');
-                    });
-                }
-
-                var mainFormSel = '{$this->copyToForm}';
-                var dynFormSel = '#dynamic-form-{$formId}';
-
-                var mainForm = document.querySelector(mainFormSel);
-                if (!mainForm) return;
-
-                mainForm.addEventListener('submit', function () {
-                    if (typeof tinyMCE !== 'undefined' && tinyMCE.triggerSave) tinyMCE.triggerSave();
-                    transferForm(dynFormSel, mainFormSel, { move: true });
-                });
-            })();
-            JS;
-            Yii::$app->view->registerJs($copyJs);
-        }
-
-
         $js = <<< JS
-
-        $('#dynamic-form-{$formId}').on('submit', function (e) {
-            if ($ajax === 0) return; // deixe o submit normal
-            e.preventDefault();
-
-            var form = $(this); // agora é o <form>
-            var btn = form.find('#btn-submit-dynamic-form');
-            var spinner = btn.find('.spinner-border');
-
-            btn.prop('disabled', true);
+        
+        $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
+            if({$ajax} === 0) return document.submit();
+            var form = $(this);
+            var submitBtn = $('#btn-submit-form');
+            var spinner = submitBtn.find('.spinner-border');
+            submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
 
             var fd = new FormData(form[0]);
@@ -486,37 +367,35 @@ class DynamicFormWidget extends Widget
                 processData: false,
                 cache: false
             }).done(function (res) {
-                btn.prop('disabled', false);
+                submitBtn.prop('disabled', false);
                 spinner.addClass('d-none');
-                if (res && res.success) {
+                if (res.success) {
                     Swal.fire({
-                        icon: 'success',
-                        title: yii.t('app', 'Success'),
-                        text: res.message || yii.t('app', 'Saved successfully.'),
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(function () {
-                        $('#modal-edit-response').modal('hide');
-                        if ($.pjax) $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
+                    icon: 'success',
+                    title: 'Sucesso!',
+                    text: res.message || 'Dados salvos com sucesso!',
+                    timer: 1500,
+                    showConfirmButton: false
+                    }).then(() => {
+                    $('#modal-edit-response').modal('hide');
+                    $.pjax && $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
                     });
                 } else {
                     Swal.fire({
-                        icon: 'error',
-                        title: yii.t('app', 'Save error'),
-                        html: (res && (res.error || res.errors)) ? (res.error || JSON.stringify(res.errors, null, 2)) : yii.t('app', 'Unknown error'),
-                        customClass: { popup: 'text-start' }
+                    icon: 'error',
+                    title: 'Erro ao salvar',
+                    html: (res.error || JSON.stringify(res.errors || res, null, 2)),
+                    customClass: { popup: 'text-start' }
                     });
                 }
-            }).fail(function () {
-                btn.prop('disabled', false);
+            })
+            .fail(function () {
+                submitBtn.prop('disabled', false);
                 spinner.addClass('d-none');
-                Swal.fire(yii.t('app', 'Error'), yii.t('app', 'Could not save. Try again.'), 'error');
+                Swal.fire('Erro', 'Não foi possível salvar. Tente novamente.', 'error');
             });
-        });
 
-        $('#dynamic-form-{$formId} #btn-submit-dynamic-form').on('click', function (e) {
-            if ($ajax === 1) e.preventDefault();
-            $(this).closest('form').trigger('submit');
+            return false;
         });
 
         $('.cpf-mask').inputmask({
