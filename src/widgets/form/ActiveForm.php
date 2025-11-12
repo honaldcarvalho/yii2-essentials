@@ -2,7 +2,7 @@
 
 namespace croacworks\essentials\widgets\form;
 
-use yii\widgets\ActiveForm as YiiActiveForm;
+use yii\bootstrap5\ActiveForm as YiiActiveForm;
 
 class ActiveForm extends YiiActiveForm
 {
