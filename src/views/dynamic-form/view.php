@@ -308,8 +308,8 @@ $extra = [
         'dataProvider' => new \yii\data\ActiveDataProvider([
             'query' => $model->getFormFields()->orderBy(['order' => SORT_ASC]),
         ]),
-        'showFields' => ['label','name','format','type','description','default','items',
-        'model_class', 'model_field', 'model_criteria', 'sql', 'script', 'show:boolean', 'status:boolean'],
+        'showFields' => ['label','name','format','type','description','default',
+        'model_class', 'model_field', 'model_criteria', 'show:boolean', 'status:boolean'],
         'fields' =>
         [
             [
