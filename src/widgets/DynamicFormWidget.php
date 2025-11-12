@@ -350,62 +350,66 @@ class DynamicFormWidget extends Widget
         $output = ob_get_clean();
         $ajax = $this->ajax ? 1 : 0;
 
-        if($this->copyToForm !== false)
-            $functionForm = "transferForm('#dynamic-form-{$formId}','{$this->copyToForm}',{ move: true});";
+        if($this->copyToForm !== false){
+            $functionForm = <<< JS
+            // Move/copy values from one form to another by [name].
+            // Pass options = { move: true } to move (copy + clear source).
+            function transferForm(fromSelector, toSelector, options) {
+                var move = options && options.move === true;
+                var src = $(fromSelector), dst = $(toSelector);
+
+                src.find('input, textarea, select').each(function () {
+                    var name = $(this).attr('name');
+                    if (!name) return;
+
+                    var type = (this.type || '').toLowerCase();
+                    var tag  = (this.tagName || '').toLowerCase();
+                    var target = dst.find('[name="'+name+'"]');
+                    if (!target.length || type === 'file') return;
+
+                    if (type === 'checkbox') {
+                        // group or single
+                        var groupSrc = src.find('input[type="checkbox"][name="'+name+'"]');
+                        if (groupSrc.length > 1) {
+                            var checkedVals = [];
+                            groupSrc.filter(':checked').each(function(){ checkedVals.push(this.value); });
+                            target.each(function(){ $(this).prop('checked', checkedVals.indexOf(this.value) !== -1).trigger('change'); });
+                            if (move) groupSrc.prop('checked', false).trigger('change');
+                        } else {
+                            var checked = $(this).is(':checked');
+                            target.prop('checked', checked).trigger('change');
+                            if (move) $(this).prop('checked', false).trigger('change');
+                        }
+                        return;
+                    }
+
+                    if (type === 'radio') {
+                    var selected = src.find('input[type="radio"][name="'+name+'"]:checked');
+                    var val = selected.val();
+                    target.filter('[value="'+val+'"]').prop('checked', true).trigger('change');
+                    if (move && selected.length) selected.prop('checked', false).trigger('change');
+                    return;
+                    }
+
+                    if (tag === 'select') {
+                    var value = $(this).val();
+                    target.val(value).trigger('change');
+                    if (move) $(this).val($(this).prop('multiple') ? [] : '').trigger('change');
+                    return;
+                    }
+
+                    // text/number/hidden/password/textarea etc.
+                    var value = $(this).val();
+                    target.val(value).trigger('change');
+                    if (move) $(this).val('').trigger('change');
+                });
+            }
+                transferForm('#dynamic-form-{$formId}','{$this->copyToForm}',{ move: true});
+            JS;
+            Yii::$app->view->registerJs("{$functionForm}",Yii::$app->view::POS_END);
+        }
 
         $js = <<< JS
-        // Move/copy values from one form to another by [name].
-        // Pass options = { move: true } to move (copy + clear source).
-        function transferForm(fromSelector, toSelector, options) {
-            var move = options && options.move === true;
-            var src = $(fromSelector), dst = $(toSelector);
-
-            src.find('input, textarea, select').each(function () {
-                var name = $(this).attr('name');
-                if (!name) return;
-
-                var type = (this.type || '').toLowerCase();
-                var tag  = (this.tagName || '').toLowerCase();
-                var target = dst.find('[name="'+name+'"]');
-                if (!target.length || type === 'file') return;
-
-                if (type === 'checkbox') {
-                    // group or single
-                    var groupSrc = src.find('input[type="checkbox"][name="'+name+'"]');
-                    if (groupSrc.length > 1) {
-                        var checkedVals = [];
-                        groupSrc.filter(':checked').each(function(){ checkedVals.push(this.value); });
-                        target.each(function(){ $(this).prop('checked', checkedVals.indexOf(this.value) !== -1).trigger('change'); });
-                        if (move) groupSrc.prop('checked', false).trigger('change');
-                    } else {
-                        var checked = $(this).is(':checked');
-                        target.prop('checked', checked).trigger('change');
-                        if (move) $(this).prop('checked', false).trigger('change');
-                    }
-                    return;
-                }
-
-                if (type === 'radio') {
-                var selected = src.find('input[type="radio"][name="'+name+'"]:checked');
-                var val = selected.val();
-                target.filter('[value="'+val+'"]').prop('checked', true).trigger('change');
-                if (move && selected.length) selected.prop('checked', false).trigger('change');
-                return;
-                }
-
-                if (tag === 'select') {
-                var value = $(this).val();
-                target.val(value).trigger('change');
-                if (move) $(this).val($(this).prop('multiple') ? [] : '').trigger('change');
-                return;
-                }
-
-                // text/number/hidden/password/textarea etc.
-                var value = $(this).val();
-                target.val(value).trigger('change');
-                if (move) $(this).val('').trigger('change');
-            });
-        }
 
         $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
             if({$ajax} === 0) return document.submit();
@@ -464,7 +468,6 @@ class DynamicFormWidget extends Widget
 
         $this->registerInputMaskAssets();
         Yii::$app->view->registerJs($js);
-        Yii::$app->view->registerJs("{$functionForm}",Yii::$app->view::POS_END);
 
         return $output;
     }
