@@ -16,7 +16,7 @@ use croacworks\essentials\widgets\UploadImageInstant;
 class DynamicFormWidget extends Widget
 {
     public $formId;
-    public $ajax = 1;
+    public $ajax = true;
     public $model;
     public $file = null;
     public $action = null;
@@ -346,10 +346,10 @@ class DynamicFormWidget extends Widget
         ActiveForm::end();
 
         $output = ob_get_clean();
-
-        $js = <<<JS
+        $ajax = $this->ajax ? 1 : 0;
+        $js = <<< JS
         $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
-                if({$this->ajax} === 0) return true;
+                if({$ajax} === 0) return document.submit();
                 var form = $(this);
                 var submitBtn = $('#btn-submit-form');
                 var spinner = submitBtn.find('.spinner-border');
