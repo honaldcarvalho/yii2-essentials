@@ -16,7 +16,7 @@ use croacworks\essentials\widgets\UploadImageInstant;
 class DynamicFormWidget extends Widget
 {
     public $formId;
-    public $ajax = true;
+    public $ajax = 1;
     public $model;
     public $file = null;
     public $action = null;
@@ -340,7 +340,7 @@ class DynamicFormWidget extends Widget
         if($this->showSave)
             echo Html::submitButton(
                 '<span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span> ' . Yii::t('app', 'Salvar'),
-                ['class' => 'btn btn-success', 'id' => 'btn-submit-form']
+                ['class' => 'btn btn-success', 'id' => 'btn-submit-dynamic-form']
             );
             
         ActiveForm::end();
@@ -348,8 +348,8 @@ class DynamicFormWidget extends Widget
         $output = ob_get_clean();
 
         $js = <<<JS
-        $(document).off('beforeSubmit', "#dynamic-form-{$formId}")
-            .on('beforeSubmit', "#dynamic-form-{$formId}", function () {
+        $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
+                if({$this->ajax} === 0) return true;
                 var form = $(this);
                 var submitBtn = $('#btn-submit-form');
                 var spinner = submitBtn.find('.spinner-border');
@@ -360,43 +360,42 @@ class DynamicFormWidget extends Widget
 
                 $.ajax({
                 url: form.attr('action'),
-                method: 'POST',
-                data: fd,
-                contentType: false,
-                processData: false,
-                cache: false
-                })
-                .done(function (res) {
-                submitBtn.prop('disabled', false);
-                spinner.addClass('d-none');
-                if (res.success) {
-                    Swal.fire({
-                    icon: 'success',
-                    title: 'Sucesso!',
-                    text: res.message || 'Dados salvos com sucesso!',
-                    timer: 1500,
-                    showConfirmButton: false
-                    }).then(() => {
-                    $('#modal-edit-response').modal('hide');
-                    $.pjax && $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
-                    });
-                } else {
-                    Swal.fire({
-                    icon: 'error',
-                    title: 'Erro ao salvar',
-                    html: (res.error || JSON.stringify(res.errors || res, null, 2)),
-                    customClass: { popup: 'text-start' }
-                    });
-                }
+                    method: 'POST',
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    cache: false
+                }).done(function (res) {
+                    submitBtn.prop('disabled', false);
+                    spinner.addClass('d-none');
+                    if (res.success) {
+                        Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: res.message || 'Dados salvos com sucesso!',
+                        timer: 1500,
+                        showConfirmButton: false
+                        }).then(() => {
+                        $('#modal-edit-response').modal('hide');
+                        $.pjax && $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
+                        });
+                    } else {
+                        Swal.fire({
+                        icon: 'error',
+                        title: 'Erro ao salvar',
+                        html: (res.error || JSON.stringify(res.errors || res, null, 2)),
+                        customClass: { popup: 'text-start' }
+                        });
+                    }
                 })
                 .fail(function () {
-                submitBtn.prop('disabled', false);
-                spinner.addClass('d-none');
-                Swal.fire('Erro', 'Não foi possível salvar. Tente novamente.', 'error');
+                    submitBtn.prop('disabled', false);
+                    spinner.addClass('d-none');
+                    Swal.fire('Erro', 'Não foi possível salvar. Tente novamente.', 'error');
                 });
 
                 return false;
-            });
+        });
 
         $('.cpf-mask').inputmask({
             mask: ['999.999.999-99', '99.999.999/9999-99'],
