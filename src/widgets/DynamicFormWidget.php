@@ -29,6 +29,8 @@ class DynamicFormWidget extends Widget
     /** @var callable|null fn(int $fileId): string|array rota/URL direto da imagem */
     public $pictureUrlCallback = null;
 
+    public $showSave = true;
+
     public function init(){
         if ($this->fileUrlCallback === null) {
             $this->fileUrlCallback = static function (int $fileId) {
@@ -335,10 +337,12 @@ class DynamicFormWidget extends Widget
             }
         }
 
-        echo Html::submitButton(
-            '<span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span> ' . Yii::t('app', 'Salvar'),
-            ['class' => 'btn btn-success', 'id' => 'btn-submit-form']
-        );
+        if($this->showSave)
+            echo Html::submitButton(
+                '<span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span> ' . Yii::t('app', 'Salvar'),
+                ['class' => 'btn btn-success', 'id' => 'btn-submit-form']
+            );
+            
         ActiveForm::end();
 
         $output = ob_get_clean();
