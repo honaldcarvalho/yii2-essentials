@@ -2,9 +2,9 @@
 namespace croacworks\essentials\widgets\form;
 
 use Yii;
-use yii\helpers\Html;
+use yii\bootstrap5\Html;
 use yii\helpers\Inflector;
-use yii\widgets\ActiveField as BaseActiveField;
+use yii\bootstrap5\ActiveField as BaseActiveField;
 
 class SearchActiveField extends BaseActiveField
 {
