@@ -349,52 +349,52 @@ class DynamicFormWidget extends Widget
         $ajax = $this->ajax ? 1 : 0;
         $js = <<< JS
         $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
-                if({$ajax} === 0) return document.submit();
-                var form = $(this);
-                var submitBtn = $('#btn-submit-form');
-                var spinner = submitBtn.find('.spinner-border');
-                submitBtn.prop('disabled', true);
-                spinner.removeClass('d-none');
+            if({$ajax} === 0) return document.submit();
+            var form = $(this);
+            var submitBtn = $('#btn-submit-form');
+            var spinner = submitBtn.find('.spinner-border');
+            submitBtn.prop('disabled', true);
+            spinner.removeClass('d-none');
 
-                var fd = new FormData(form[0]);
+            var fd = new FormData(form[0]);
 
-                $.ajax({
+            $.ajax({
                 url: form.attr('action'),
-                    method: 'POST',
-                    data: fd,
-                    contentType: false,
-                    processData: false,
-                    cache: false
-                }).done(function (res) {
-                    submitBtn.prop('disabled', false);
-                    spinner.addClass('d-none');
-                    if (res.success) {
-                        Swal.fire({
-                        icon: 'success',
-                        title: 'Sucesso!',
-                        text: res.message || 'Dados salvos com sucesso!',
-                        timer: 1500,
-                        showConfirmButton: false
-                        }).then(() => {
-                        $('#modal-edit-response').modal('hide');
-                        $.pjax && $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
-                        });
-                    } else {
-                        Swal.fire({
-                        icon: 'error',
-                        title: 'Erro ao salvar',
-                        html: (res.error || JSON.stringify(res.errors || res, null, 2)),
-                        customClass: { popup: 'text-start' }
-                        });
-                    }
-                })
-                .fail(function () {
-                    submitBtn.prop('disabled', false);
-                    spinner.addClass('d-none');
-                    Swal.fire('Erro', 'Não foi possível salvar. Tente novamente.', 'error');
-                });
+                method: 'POST',
+                data: fd,
+                contentType: false,
+                processData: false,
+                cache: false
+            }).done(function (res) {
+                submitBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+                if (res.success) {
+                    Swal.fire({
+                    icon: 'success',
+                    title: 'Sucesso!',
+                    text: res.message || 'Dados salvos com sucesso!',
+                    timer: 1500,
+                    showConfirmButton: false
+                    }).then(() => {
+                    $('#modal-edit-response').modal('hide');
+                    $.pjax && $.pjax.reload({ container: '#pjax-grid-responses', timeout: 3000 });
+                    });
+                } else {
+                    Swal.fire({
+                    icon: 'error',
+                    title: 'Erro ao salvar',
+                    html: (res.error || JSON.stringify(res.errors || res, null, 2)),
+                    customClass: { popup: 'text-start' }
+                    });
+                }
+            })
+            .fail(function () {
+                submitBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+                Swal.fire('Erro', 'Não foi possível salvar. Tente novamente.', 'error');
+            });
 
-                return false;
+            return false;
         });
 
         $('.cpf-mask').inputmask({
