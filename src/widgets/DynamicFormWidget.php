@@ -354,7 +354,6 @@ class DynamicFormWidget extends Widget
             $functionForm = "transferForm('#dynamic-form-{$formId}','{$this->copyToForm}',{ move: true});";
 
         $js = <<< JS
-
         // Move/copy values from one form to another by [name].
         // Pass options = { move: true } to move (copy + clear source).
         function transferForm(fromSelector, toSelector, options) {
@@ -465,7 +464,7 @@ class DynamicFormWidget extends Widget
 
         $this->registerInputMaskAssets();
         Yii::$app->view->registerJs($js);
-        Yii::$app->view->registerJs('{$functionForm}',Yii::$app->view::POS_END);
+        Yii::$app->view->registerJs("{$functionForm}",Yii::$app->view::POS_END);
 
         return $output;
     }
