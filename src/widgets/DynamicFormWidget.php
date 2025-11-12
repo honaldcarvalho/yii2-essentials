@@ -348,6 +348,45 @@ class DynamicFormWidget extends Widget
         $output = ob_get_clean();
         $ajax = $this->ajax ? 1 : 0;
         $js = <<< JS
+
+        function copyForm(fromSelector, toSelector) {
+            var src = $(fromSelector), dst = $(toSelector);
+            src.find('input, textarea, select').each(function () {
+                var name = $(this).attr('name');
+                if (!name) return;
+
+                var type = (this.type || '').toLowerCase();
+                var tag  = (this.tagName || '').toLowerCase();
+                var target = dst.find('[name="'+name+'"]');
+                if (!target.length || type === 'file') return;
+
+                if (type === 'checkbox') {
+                if (src.find('input[type="checkbox"][name="'+name+'"]').length > 1) {
+                    var checkedVals = [];
+                    src.find('input[type="checkbox"][name="'+name+'"]:checked').each(function(){ checkedVals.push(this.value); });
+                    target.each(function(){ $(this).prop('checked', checkedVals.indexOf(this.value) !== -1).trigger('change'); });
+                } else {
+                    target.prop('checked', $(this).is(':checked')).trigger('change');
+                }
+                return;
+                }
+
+                if (type === 'radio') {
+                var val = src.find('input[type="radio"][name="'+name+'"]:checked').val();
+                target.filter('[value="'+val+'"]').prop('checked', true).trigger('change');
+                return;
+                }
+
+                if (tag === 'select') {
+                target.val($(this).val()).trigger('change');
+                return;
+                }
+
+                // texto/number/hidden/password/textarea etc.
+                target.val($(this).val()).trigger('change');
+            });
+        }
+
         $("#dynamic-form-{$formId} #btn-submit-dynamic-form").on('click',function () {
             if({$ajax} === 0) return document.submit();
             var form = $(this);
