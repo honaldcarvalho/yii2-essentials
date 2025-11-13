@@ -100,23 +100,34 @@ class Page extends ModelCommon
             return false;
         }
 
-        // For new records, force model_group_id=0 when empty (service will set on insert)
+        // Default group id for new records
         if ($this->isNewRecord && empty($this->model_group_id)) {
             $this->model_group_id = 0;
         }
 
-        // Slug generation rules
+        $oldSlug  = $this->_oldSlug ?? null;
+        $oldTitle = $this->getOldAttribute('title');
+        $slugEmpty = empty($this->slug);
+        $titleChanged = $oldTitle !== $this->title;
+        $slugChanged  = $oldSlug !== $this->slug;
+
+        // ===== Slug logic =====
         if ($this->isNewRecord) {
-            // Generate only if slug is empty
-            if (empty($this->slug)) {
+            // New record: always generate if empty
+            if ($slugEmpty) {
                 $this->slug = $this->generateUniqueSlug($this->title);
             } else {
-                // Ensure uniqueness even if manually provided
                 $this->slug = $this->generateUniqueSlug($this->slug);
             }
-        } elseif ($this->_oldSlug !== $this->slug) {
-            // Regenerate only if user edited the slug
-            $this->slug = $this->generateUniqueSlug($this->slug);
+        } else {
+            // Update: regenerate if slug empty or title changed (and slug wasn't edited manually)
+            if ($slugEmpty || ($titleChanged && !$slugChanged)) {
+                $base = $this->title ?: $this->slug ?: (string)$this->id;
+                $this->slug = $this->generateUniqueSlug($base);
+            } elseif ($slugChanged) {
+                // If slug was manually edited, still ensure uniqueness
+                $this->slug = $this->generateUniqueSlug($this->slug);
+            }
         }
 
         return true;
