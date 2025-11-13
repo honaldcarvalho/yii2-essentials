@@ -71,7 +71,7 @@ class FormResponseController extends AuthorizationController
     // ============== CORE GENERIC METHODS ================
     // ====================================================
 
-    private function createJson(int $dynamicFormId): array
+    public function createJson(int $dynamicFormId): array
     {
         $req = Yii::$app->request;
         $fields = FormField::find()
@@ -152,7 +152,7 @@ class FormResponseController extends AuthorizationController
         return ['success' => false, 'error' => 'Save failed'];
     }
 
-    private function updateJson(FormResponse $model): array
+    public function updateJson(FormResponse $model): array
     {
         $req = Yii::$app->request;
         $postData = $req->post('DynamicModel', []);
@@ -265,7 +265,7 @@ class FormResponseController extends AuthorizationController
         return $this->renderAjax('_form_widget', ['model' => $model]);
     }
 
-    private function deleteFileId(int $fileId, array $opts = []): bool
+    public function deleteFileId(int $fileId, array $opts = []): bool
     {
         if ($fileId <= 0) return true;
 
@@ -288,7 +288,7 @@ class FormResponseController extends AuthorizationController
         return false;
     }
 
-    private function decodeResponseData($raw): array
+    public function decodeResponseData($raw): array
     {
         if (is_array($raw)) return $raw;
         if (is_string($raw)) {
@@ -298,7 +298,7 @@ class FormResponseController extends AuthorizationController
         return [];
     }
 
-    private function storeWithStorage(UploadedFile $uploaded, string $description): ?int
+    public function storeWithStorage(UploadedFile $uploaded, string $description): ?int
     {
         $groupId = (int)(Yii::$app->user->identity->group_id ?? 1);
 
