@@ -263,14 +263,11 @@ class FormResponseMetaWidget extends Widget
     {
         $fmt = Yii::$app->formatter;
 
-        // Null / vazio
         if ($value === null || $value === '') {
             return '';
         }
 
-        // Matriz de valores (ex.: multiple/checkbox)
         if (is_array($value) && $type !== FormFieldType::TYPE_FILE && $type !== FormFieldType::TYPE_PICTURE) {
-            // Tente representar como badges
             $badges = array_map(fn($v) => Html::tag('span', Html::encode((string)$v), ['class' => 'badge bg-secondary me-1']), $value);
             return implode(' ', $badges);
         }
@@ -292,35 +289,75 @@ class FormResponseMetaWidget extends Widget
                 return Html::a(Html::encode((string)$value), 'tel:' . preg_replace('/\D+/', '', (string)$value));
 
             case FormFieldType::TYPE_FILE:
-                // Espera-se que o value seja um file_id (int/string)
                 $fileId = (int)$value;
                 if ($fileId <= 0) return '';
                 $url = call_user_func($this->fileUrlCallback, $fileId);
                 return Html::a(Yii::t('app', 'Open file #{id}', ['id' => $fileId]), $url, ['target' => '_blank', 'rel' => 'noopener']);
-                
+
             case FormFieldType::TYPE_PICTURE:
                 $fileId = (int)$value;
-                
-                $file = null;
-                if($fileId){
-                    $file = File::findOne($fileId);
-                    $url = $file?->url;
-                    $modelUrl = call_user_func($this->fileUrlCallback, $fileId);
-                } else {
-                    return Yii::t('app','No image selected');
-                }
-                
+                if ($fileId <= 0) return Yii::t('app', 'No image selected');
+                $file = File::findOne($fileId);
+                if (!$file) return Yii::t('app', '(missing image)');
+                $url = $file->url;
+                $modelUrl = call_user_func($this->fileUrlCallback, $fileId);
                 return Html::a(
-                    Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture', 'width'=>'200px']),
+                    Html::img($url, ['class' => 'img-fluid rounded border', 'alt' => 'picture', 'width' => '200px']),
                     $modelUrl,
                     ['target' => '_blank', 'rel' => 'noopener']
                 );
+
+            case FormFieldType::TYPE_MODEL:
+                // Mostrar nome do modelo em vez de apenas o ID
+                $field = $this->fieldsByName[$name] ?? null;
+                if ($field && class_exists($field->model_class) && $field->model_field) {
+                    $model = $field->model_class::findOne((int)$value);
+                    if ($model) {
+                        // Mostra o valor do atributo definido em model_field
+                        $display = $model->{$field->model_field} ?? null;
+                        if ($display) {
+                            return Html::encode($display);
+                        }
+                    }
+                }
+                // fallback: mostrar o ID caso não encontre
+                return Html::encode((string)$value);
 
             case FormFieldType::TYPE_TEXT:
             case FormFieldType::TYPE_TEXTAREA:
             case FormFieldType::TYPE_SELECT:
             case FormFieldType::TYPE_SQL:
-            case FormFieldType::TYPE_MODEL:
+                $field = $this->fieldsByName[$name] ?? null;
+                $idVal = (int)$value;
+
+                if (!$field || !$field->sql || $idVal <= 0) {
+                    return Html::encode((string)$value);
+                }
+
+                try {
+                    $labelColumn = $field->sql_label ?: 'label';
+                    $sql = $field->sql;
+
+                    // encapsula a query base em uma subquery e filtra pelo id
+                    $query = "SELECT * FROM ({$sql}) AS t WHERE t.id = :id LIMIT 1";
+                    $row = Yii::$app->db->createCommand($query, [':id' => $idVal])->queryOne();
+
+                    if ($row && isset($row[$labelColumn])) {
+                        return Html::encode((string)$row[$labelColumn]);
+                    }
+
+                    // fallback: tenta 'label' genérico
+                    if ($row && isset($row['label'])) {
+                        return Html::encode((string)$row['label']);
+                    }
+
+                    // fallback final: mostra o próprio valor
+                    return Html::encode((string)$value);
+
+                } catch (\Throwable $e) {
+                    Yii::error("Error resolving SQL field label for {$name}: " . $e->getMessage(), __METHOD__);
+                    return Html::encode((string)$value);
+                }
             case FormFieldType::TYPE_IDENTIFIER:
             default:
                 return Html::encode(is_scalar($value) ? (string)$value : json_encode($value, JSON_UNESCAPED_UNICODE));
