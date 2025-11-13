@@ -105,17 +105,17 @@ class Page extends ModelCommon
             $this->model_group_id = 0;
         }
 
-        // Slug generation rules:
-        // - New + slug filled (from clone) => regenerate for uniqueness
-        // - New + slug empty => generate
-        // - Existing + slug changed => regenerate
+        // Slug generation rules
         if ($this->isNewRecord) {
-            if (!empty($this->slug)) {
-                $this->slug = $this->generateUniqueSlug($this->slug);
-            } elseif (empty($this->slug)) {
+            // Generate only if slug is empty
+            if (empty($this->slug)) {
+                $this->slug = $this->generateUniqueSlug($this->title);
+            } else {
+                // Ensure uniqueness even if manually provided
                 $this->slug = $this->generateUniqueSlug($this->slug);
             }
         } elseif ($this->_oldSlug !== $this->slug) {
+            // Regenerate only if user edited the slug
             $this->slug = $this->generateUniqueSlug($this->slug);
         }
 
