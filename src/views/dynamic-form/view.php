@@ -376,6 +376,10 @@ $extra = [
                 'type' => 'text'
             ],
             [
+                'name' => 'sql_label',
+                'type' => 'text'
+            ],
+            [
                 'name' => 'sql',
                 'type' => 'textarea'
             ],

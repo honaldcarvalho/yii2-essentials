@@ -21,6 +21,7 @@ class m250719_000002_create_form_fields_tables extends Migration
             'model_class' => $this->string(),
             'model_field' => $this->string(),
             'model_criteria' => $this->string(),
+            'sql_label' => $this->string(),
             'sql' => $this->text(),
             'script' => $this->text(),
             'order' => $this->integer()->notNull(),
