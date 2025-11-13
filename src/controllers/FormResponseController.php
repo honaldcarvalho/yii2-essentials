@@ -264,7 +264,7 @@ class FormResponseController extends AuthorizationController
         }
         return $this->renderAjax('_form_widget', ['model' => $model]);
     }
-    
+
     private function deleteFileId(int $fileId, array $opts = []): bool
     {
         if ($fileId <= 0) return true;
