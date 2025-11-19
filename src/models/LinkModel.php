@@ -54,4 +54,19 @@ class LinkModel extends ModelCommon
         ];
     }
 
+    /**
+     * Retorna a instância do objeto referenciado em 'model' e 'model_id'
+     * Uso: $link->relatedObject;
+     */
+    public function getRelatedObject()
+    {
+        $class = $this->model;
+        
+        if (class_exists($class) && is_subclass_of($class, '\yii\db\ActiveRecord')) {
+            return $class::findOne($this->model_id);
+        }
+
+        return null;
+    }
+
 }
