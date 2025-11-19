@@ -24,6 +24,7 @@ use croacworks\essentials\models\FormResponse;
  * 'viewMode'       => 'list', // 'list' (tabela) ou 'card' (grid de itens)
  * ]);
  */
+
 class FormResponseMetaWidget extends Widget
 {
     /** @var int|null */
