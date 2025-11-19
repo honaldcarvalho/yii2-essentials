@@ -18,14 +18,10 @@ use croacworks\essentials\models\FormResponse;
  *
  * Usage:
  * echo FormResponseMetaWidget::widget([
- *     'formResponseId' => $metaModel->id,
- *     // OR
- *     // 'dynamicFormId' => $dynamicFormId,
- *     // 'modelClass'    => common\models\Course::class,
- *     // 'modelId'       => $model->id,
- *     'title'          => 'Course metadata',
- *     'card'           => true,
- *     // 'fileUrlCallback' => fn(int $id) => ['/storage/file/view','id'=>$id],
+ * 'formResponseId' => $metaModel->id,
+ * 'title'          => 'Course metadata',
+ * 'card'           => true, // Envolve tudo num Card Container
+ * 'viewMode'       => 'list', // 'list' (tabela) ou 'card' (grid de itens)
  * ]);
  */
 class FormResponseMetaWidget extends Widget
@@ -45,8 +41,11 @@ class FormResponseMetaWidget extends Widget
     /** @var string Title shown above (if card=true) */
     public string $title = 'Metadata';
 
-    /** @var bool Wrap output in a CoreUI/Bootstrap card */
+    /** @var bool Wrap output in a CoreUI/Bootstrap card container */
     public bool $card = true;
+
+    /** @var string Define o layout interno dos dados: 'card' ou 'list' */
+    public string $viewMode = 'card';
 
     /** @var bool Show fields with empty/null values */
     public bool $showEmpty = false;
@@ -135,7 +134,12 @@ class FormResponseMetaWidget extends Widget
             }
         }
 
-        $content = $this->renderList($rows);
+        // Decide qual layout renderizar baseado na flag
+        if ($this->viewMode === 'list') {
+            $content = $this->renderTable($rows);
+        } else {
+            $content = $this->renderCards($rows);
+        }
 
         if ($this->card) {
             return Html::tag(
@@ -189,9 +193,6 @@ class FormResponseMetaWidget extends Widget
         return $resp;
     }
 
-    /**
-     * @return FormField[] indexed by name
-     */
     protected function fetchFieldsIndexed(int $dynamicFormId): array
     {
         $schema = Yii::$app->db->schema->getTableSchema(\croacworks\essentials\models\FormField::tableName(), true);
@@ -308,19 +309,16 @@ class FormResponseMetaWidget extends Widget
                 );
 
             case FormFieldType::TYPE_MODEL:
-                // Mostrar nome do modelo em vez de apenas o ID
                 $field = $this->fieldsByName[$name] ?? null;
                 if ($field && class_exists($field->model_class) && $field->model_field) {
                     $model = $field->model_class::findOne((int)$value);
                     if ($model) {
-                        // Mostra o valor do atributo definido em model_field
                         $display = $model->{$field->model_field} ?? null;
                         if ($display) {
                             return Html::encode($display);
                         }
                     }
                 }
-                // fallback: mostrar o ID caso não encontre
                 return Html::encode((string)$value);
 
             case FormFieldType::TYPE_TEXT:
@@ -338,20 +336,15 @@ class FormResponseMetaWidget extends Widget
                     $labelColumn = $field->sql_label ?: 'label';
                     $sql = $field->sql;
 
-                    // encapsula a query base em uma subquery e filtra pelo id
                     $query = "SELECT * FROM ({$sql}) AS t WHERE t.id = :id LIMIT 1";
                     $row = Yii::$app->db->createCommand($query, [':id' => $idVal])->queryOne();
 
                     if ($row && isset($row[$labelColumn])) {
                         return Html::encode((string)$row[$labelColumn]);
                     }
-
-                    // fallback: tenta 'label' genérico
                     if ($row && isset($row['label'])) {
                         return Html::encode((string)$row['label']);
                     }
-
-                    // fallback final: mostra o próprio valor
                     return Html::encode((string)$value);
 
                 } catch (\Throwable $e) {
@@ -364,13 +357,15 @@ class FormResponseMetaWidget extends Widget
         }
     }
 
-    protected function renderList(array $rows): string
+    /**
+     * Renderiza no formato de Cards (Grid de divs)
+     */
+    protected function renderCards(array $rows): string
     {
         if (empty($rows)) {
             return Html::tag('div', Html::encode(Yii::t('app', 'No metadata.')), ['class' => 'text-muted']);
         }
 
-        // Definition list responsivo (duas colunas)
         $html = Html::beginTag('div', ['class' => 'row row-cols-1 row-cols-md-2 g-3']);
         foreach ($rows as $r) {
             $html .= Html::tag(
@@ -385,6 +380,36 @@ class FormResponseMetaWidget extends Widget
             );
         }
         $html .= Html::endTag('div');
+        return $html;
+    }
+
+    /**
+     * Renderiza no formato de Lista (Tabela HTML)
+     */
+    protected function renderTable(array $rows): string
+    {
+        if (empty($rows)) {
+            return Html::tag('div', Html::encode(Yii::t('app', 'No metadata.')), ['class' => 'text-muted']);
+        }
+
+        // Estrutura de tabela limpa estilo DetailView
+        $html = Html::beginTag('table', ['class' => 'table table-striped table-bordered detail-view mb-0']);
+        $html .= Html::beginTag('tbody');
+
+        foreach ($rows as $r) {
+            $value = $r['value'] === ''
+                ? Html::tag('span', Yii::t('app', '(not set)'), ['class' => 'text-muted'])
+                : $r['value'];
+
+            $html .= Html::beginTag('tr');
+            $html .= Html::tag('th', $r['label'], ['style' => 'width: 30%; white-space: nowrap;']); // Coluna de Label
+            $html .= Html::tag('td', $value);
+            $html .= Html::endTag('tr');
+        }
+
+        $html .= Html::endTag('tbody');
+        $html .= Html::endTag('table');
+
         return $html;
     }
 }
