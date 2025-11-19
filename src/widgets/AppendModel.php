@@ -56,6 +56,7 @@ use yii\widgets\Pjax;
                 ]
             ]); ?>
  */
+
 class AppendModel extends \yii\bootstrap5\Widget
 {
 
