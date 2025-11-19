@@ -235,10 +235,10 @@ class AppendModel extends \yii\bootstrap5\Widget
 
         Yii::$app->view->registerJs(<<<JS
 
-        let modal_{$this->attactModel} = null;
+        let modal_{$this->uniqueId} = null;
 
         $(function(){
-            modal_{$this->attactModel} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
+            modal_{$this->uniqueId} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
                 keyboard: true
             });
             $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
@@ -287,7 +287,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                     if(response.success) {
                         toastr.success("Save!");
                         //clearForms{$this->attactModel}();
-                        modal_{$this->attactModel}.hide();
+                        modal_{$this->uniqueId}.hide();
                         $.pjax.reload({container: "#list-{$this->uniqueId}-grid", async: false});
                         {$this->callBack}
                     } else {
@@ -340,7 +340,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                                 }
                             }
                         });
-                        modal_{$this->attactModel}.show();
+                        modal_{$this->uniqueId}.show();
                         {$this->editCallBack}
                     }
                 }).fail(function (response) {
@@ -370,7 +370,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                     } else {
                         if(response.success) {
                             toastr.success("Status Changed!");
-                            modal_{$this->attactModel}.hide();
+                            modal_{$this->uniqueId}.hide();
                             $.pjax.reload({container: "#list-{$this->uniqueId}-grid", async: false});
                             {$this->callBack}
                         } else {
@@ -418,7 +418,7 @@ class AppendModel extends \yii\bootstrap5\Widget
         JS,Yii::$app->view::POS_END);
         $field_str = '';
 
-        $button = $this->new_button && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->attactModel}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
+        $button = $this->new_button && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->uniqueId}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
         $button_save = Yii::t('app', "Save");
         $button_cancel = Yii::t('app', 'Cancel');
         $begin = <<< HTML
@@ -428,7 +428,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="staticBackdropLabel">{$this->title}</h5>
-                            <button type="button" class="btn-close" onclick="javascript:modal_{$this->attactModel}.hide();" aria-label="Close"></button>
+                            <button type="button" class="btn-close" onclick="javascript:modal_{$this->uniqueId}.hide();" aria-label="Close"></button>
                         </div>
                         <div id="overlay-form-{$this->uniqueId}" class="overlay" style="height: 100%;position: absolute;width: 100%;z-index: 3000;display:none;top:0;left:0;">
                             <div class="fa-3x">
@@ -442,7 +442,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                         </div>
 
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="javascript:modal_{$this->attactModel}.hide();"> {$button_cancel} </button>
+                            <button type="button" class="btn btn-secondary" onclick="javascript:modal_{$this->uniqueId}.hide();"> {$button_cancel} </button>
                             <button id="btn-save-{$this->uniqueId}" onclick="save{$this->attactModel}()" type="button" class="btn btn-success"><i class="fas fa-plus-circle mr-2 icon"></i> {$button_save} </button>
                         </div>
                     </div>
