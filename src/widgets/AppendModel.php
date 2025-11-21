@@ -187,11 +187,11 @@ class AppendModel extends \yii\bootstrap5\Widget
                     $this->action_columns,
                     [
                         'status' => function ($url, $model, $key) {
-                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'status-model',$model) ?  Html::a(
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'status-model', $model) ?  Html::a(
                                 '<i class="fas fa-toggle-' . (!$model->status ? 'off' : 'on') . '"></i>',
                                 'javascript:;',
                                 [
-                                    'onclick' => "status{$this->attactModel}(this);",
+                                    'onclick' => "status{$this->uniqueId}(this);",
                                     'data-link' => "{$this->statusUrl}&id=$model->id",
                                     'class' => 'btn btn-outline-secondary status',
                                     "data-toggle" => "tooltip",
@@ -201,11 +201,11 @@ class AppendModel extends \yii\bootstrap5\Widget
                             ) : '';
                         },
                         'remove' => function ($url, $model, $key) {
-                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'remove-model',$model) ? Html::a(
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'remove-model', $model) ? Html::a(
                                 '<i class="fas fa-trash"></i>',
                                 'javascript:;',
                                 [
-                                    'onclick' => "remove{$this->attactModel}(this);",
+                                    'onclick' => "remove{$this->uniqueId}(this);",
                                     'data-link' => "{$this->removeUrl}&id=$model->id",
                                     'class' => 'btn btn-outline-secondary remove',
                                     "data-toggle" => "tooltip",
@@ -215,19 +215,19 @@ class AppendModel extends \yii\bootstrap5\Widget
                             ) : '';
                         },
                         'edit' => function ($url, $model, $key) {
-                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'get-model',$model) && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model',$model)
-                            ? Html::a(
-                                '<i class="fas fa-pen"></i>',
-                                'javascript:;',
-                                [
-                                    'onclick' => "get{$this->attactModel}(this);",
-                                    'data-link' => "{$this->getUrl}&id=$model->id",
-                                    'class' => 'btn btn-outline-secondary edit',
-                                    "data-toggle" => "tooltip",
-                                    "data-placement" => "top",
-                                    "title" => \Yii::t('*', "Edit {$this->attactModel}")
-                                ]
-                            ) : '';
+                            return AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'get-model', $model) && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model', $model)
+                                ? Html::a(
+                                    '<i class="fas fa-pen"></i>',
+                                    'javascript:;',
+                                    [
+                                        'onclick' => "get{$this->uniqueId}(this);",
+                                        'data-link' => "{$this->getUrl}&id=$model->id",
+                                        'class' => 'btn btn-outline-secondary edit',
+                                        "data-toggle" => "tooltip",
+                                        "data-placement" => "top",
+                                        "title" => \Yii::t('*', "Edit {$this->attactModel}")
+                                    ]
+                                ) : '';
                         },
                     ]
                 )
@@ -236,24 +236,24 @@ class AppendModel extends \yii\bootstrap5\Widget
 
         Yii::$app->view->registerJs(<<<JS
 
-        let modal_{$this->uniqueId} = null;
+            let modal_{$this->uniqueId} = null;
 
-        $(function(){
-            modal_{$this->uniqueId} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
-                keyboard: true
+            $(function(){
+                modal_{$this->uniqueId} = new bootstrap.Modal(document.getElementById('save-{$this->uniqueId}'), {
+                    keyboard: true
+                });
+                $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
+                
+                $(document).on('pjax:start', function() {
+                    $('#overlay-{$this->uniqueId}').show();
+                });
+                $(document).on('pjax:complete', function() {
+                    $('#overlay-{$this->uniqueId}').hide();
+                });
+                Fancybox.bind("[data-fancybox]");
             });
-            $('.dropdown-select2').select2({width:'100%',allowClear:true,placeholder:'Selecione',dropdownParent: $('#save-{$this->uniqueId}')});
-            
-            $(document).on('pjax:start', function() {
-                $('#overlay-{$this->uniqueId}').show();
-            });
-            $(document).on('pjax:complete', function() {
-                $('#overlay-{$this->uniqueId}').hide();
-            });
-            Fancybox.bind("[data-fancybox]");
-        });
 
-            function clearForms{$this->attactModel}() {
+            function clearForms{$this->uniqueId}() {
                 
                 const form = $("#form-{$this->uniqueId}");
 
@@ -276,7 +276,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 return true;
             } 
 
-            function save{$this->attactModel}(){
+            function save{$this->uniqueId}() {
                 $('#overlay-form-{$this->uniqueId}').show();
                 var formData = $("#form-{$this->uniqueId}").serialize();
                 console.log(formData);
@@ -287,7 +287,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 }).done(function(response) {       
                     if(response.success) {
                         toastr.success("Save!");
-                        //clearForms{$this->attactModel}();
+                        //clearForms{$this->uniqueId}();
                         modal_{$this->uniqueId}.hide();
                         $.pjax.reload({container: "#list-{$this->uniqueId}-grid", async: false});
                         {$this->callBack}
@@ -301,7 +301,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 });
             }
 
-            function get{$this->attactModel}(e) {
+            function get{$this->uniqueId}(e) {
 
                 let el = $(e);
 
@@ -352,7 +352,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 });
             }
 
-            function status{$this->attactModel}(e) {
+            function status{$this->uniqueId}(e) {
 
                 let el = $(e);
 
@@ -386,7 +386,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 });
             }
 
-            function remove{$this->attactModel}(e) {
+            function remove{$this->uniqueId}(e) {
 
                 let el = $(e);
                 if (confirm('You really can remove this {$lower}?')) {
@@ -416,7 +416,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                 }
                 return false;
             }
-        JS,Yii::$app->view::POS_END);
+        JS, Yii::$app->view::POS_END);
         $field_str = '';
 
         $button = $this->new_button && AuthorizationController::verAuthorization(get_class(Yii::$app->controller), 'save-model') ? Html::a('<i class="fas fa-plus-square"></i> Novo', "javascript:modal_{$this->uniqueId}.show();{$this->newCallBack}", ['class' => 'btn btn-success', 'id' => "btn-show-{$this->uniqueId}"]) : '';
@@ -444,7 +444,7 @@ class AppendModel extends \yii\bootstrap5\Widget
 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" onclick="javascript:modal_{$this->uniqueId}.hide();"> {$button_cancel} </button>
-                            <button id="btn-save-{$this->uniqueId}" onclick="save{$this->attactModel}()" type="button" class="btn btn-success"><i class="fas fa-plus-circle mr-2 icon"></i> {$button_save} </button>
+                            <button id="btn-save-{$this->uniqueId}" onclick="save{$this->uniqueId}()" type="button" class="btn btn-success"><i class="fas fa-plus-circle mr-2 icon"></i> {$button_save} </button>
                         </div>
                     </div>
                 </div>
@@ -488,7 +488,7 @@ class AppendModel extends \yii\bootstrap5\Widget
                     'options' => [
                         'id' => "{$this->uniqueId}-{$field['name']}",
                     ],
-                ]);   
+                ]);
             else if ($field['type'] == 'number')
                 $field_str .=  $form->field($model, $field['name'])->input(
                     'number',
