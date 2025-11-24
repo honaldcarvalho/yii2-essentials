@@ -19,7 +19,7 @@ class MenuController extends AuthorizationController
     public function actionIndex()
     {
         $searchModel  = new SysMenu();
-        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams,['pageSize' => 1000]);
+        $dataProvider = $searchModel->search(\Yii::$app->request->queryParams, ['pageSize' => 1000]);
 
         // Se não filtraram por parent_id, mostra apenas RAÍZES (parent_id IS NULL)
         if (!isset(\Yii::$app->request->queryParams['Menu']['parent_id'])) {
@@ -63,14 +63,14 @@ class MenuController extends AuthorizationController
             $model->id = $id;
 
             if ($model->save()) {
-                if (!empty($model->sysmenu_id) && $model->sysmenu_id !== null) {
-                    return $this->redirect(['view', 'id' => $model->sysmenu_id]);
+                if (!empty($model->parent_id) && $model->parent_id !== null) {
+                    return $this->redirect(['view', 'id' => $model->parent_id]);
                 }
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
 
-        $model->sysmenu_id = $id;
+        $model->parent_id = $id;
 
         return $this->render('create', [
             'model' => $model,
@@ -88,14 +88,14 @@ class MenuController extends AuthorizationController
             $model->id = $id;
 
             if ($model->save()) {
-                if (!empty($model->sysmenu_id) && $model->sysmenu_id !== null) {
-                    return $this->redirect(['view', 'id' => $model->sysmenu_id]);
+                if (!empty($model->parent_id) && $model->parent_id !== null) {
+                    return $this->redirect(['view', 'id' => $model->parent_id]);
                 }
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         }
 
-        $model->sysmenu_id = $id;
+        $model->parent_id = $id;
 
         return $this->render('add', [
             'model' => $model,
