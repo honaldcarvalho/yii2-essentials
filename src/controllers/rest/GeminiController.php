@@ -9,17 +9,6 @@ use yii\helpers\Json;
 
 class GeminiController extends ControllerRest
 {
-    // Define o formato de resposta sempre como JSON
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        $behaviors['contentNegotiator']['formats']['text/html'] = Response::FORMAT_JSON;
-        // Desabilita verificação CSRF para facilitar testes via Postman/cURL
-        $behaviors['corsFilter'] = [
-            'class' => \yii\filters\Cors::class,
-        ];
-        return $behaviors;
-    }
 
     public function beforeAction($action)
     {
