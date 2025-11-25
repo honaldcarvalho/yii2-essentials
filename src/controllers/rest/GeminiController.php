@@ -3,9 +3,6 @@
 namespace croacworks\essentials\controllers\rest;
 
 use Yii;
-use yii\rest\Controller;
-use yii\web\Response;
-use yii\helpers\Json;
 
 class GeminiController extends ControllerRest
 {
