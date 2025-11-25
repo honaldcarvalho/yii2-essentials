@@ -37,8 +37,8 @@ class OpenRouterController extends ControllerRest
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     // Headers exigidos/recomendados pelo OpenRouter para rankings
-                    'HTTP-Referer' => Yii::$app->params['siteUrl'] ?? 'http://localhost',
-                    'X-Title' => Yii::$app->params['siteName'] ?? 'Yii2 App',
+                    'HTTP-Referer' => Yii::$app->params['openRouter']['siteUrl'] ?? 'http://localhost',
+                    'X-Title' => Yii::$app->params['openRouter']['siteName'] ?? 'Yii2 App',
                     'Content-Type' => 'application/json',
                 ])
                 ->setFormat(Client::FORMAT_JSON)
