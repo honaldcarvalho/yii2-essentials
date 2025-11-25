@@ -27,7 +27,7 @@ class OpenRouterController extends ControllerRest
 
         // 2. Preparar o cliente HTTP
         $client = new Client();
-        $apiKey = Yii::$app->params['openRouterApiKey'];
+        $apiKey = Yii::$app->params['openRouter']['apiKey'];
 
         try {
             // 3. Configurar e enviar a requisição
