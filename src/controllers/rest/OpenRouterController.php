@@ -6,7 +6,7 @@ use Yii;
 use yii\httpclient\Client;
 use yii\rest\Controller;
 
-class OpenRouterController extends Controller
+class OpenRouterController extends ControllerRest
 {
     /**
      * Ação para enviar mensagens ao OpenRouter
