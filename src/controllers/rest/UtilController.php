@@ -27,14 +27,11 @@ class UtilController extends ControllerRest
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;
 
-        // Merge params (Body/JSON overrides GET)
         $params = array_merge($request->get(), $request->getBodyParams());
 
         $language = $params['language'] ?? null;
         $to       = $params['to'] ?? 'auto';
         $text     = $params['text'] ?? null;
-
-        // Check 'provider' and handle typo 'provide'
         $provider = $params['provider'] ?? $params['provide'] ?? 'default';
 
         if (!$text) {
@@ -57,14 +54,16 @@ class UtilController extends ControllerRest
             if ($provider === 'gemini') {
                 $sourceInstruction = ($to === 'auto') ? "Detect language" : "From {$to}";
 
+                // FIXED: Specific instruction to preserve HTML structure
                 $instruction = "You are a professional technical translator. {$sourceInstruction} to {$language}. " .
-                    "Return ONLY the translated text. Do not include markdown or explanations.";
+                    "The input contains HTML. **Preserve all HTML tags, attributes, and structure exactly.** " .
+                    "Translate only the text content inside the tags. " .
+                    "Return ONLY the translated result. Do not wrap in markdown code blocks.";
 
                 // Call static controller
                 $rawResult = \croacworks\essentials\controllers\rest\GeminiController::processRequest($instruction, $text, 0.1);
                 $translated = \croacworks\essentials\controllers\rest\GeminiController::cleanMarkdown($rawResult);
             } else {
-                // Fallback to legacy translator
                 $translated = TranslatorHelper::translate($text, $language, $to);
             }
 
