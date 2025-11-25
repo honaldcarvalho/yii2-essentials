@@ -4,7 +4,6 @@ namespace croacworks\essentials\controllers\rest;
 
 use Yii;
 use yii\httpclient\Client;
-use yii\web\Response;
 
 class OpenRouterController extends ControllerRest
 {
