@@ -49,7 +49,7 @@ class AuthController extends ControllerRest
                     }
 
                     return [
-                        'fullname' => $user->fullname,
+                        'fullname' => $user->profile->fullname,
                         'username' => $user->username,
                         'email' => $user->email,
                         'access_token' => $user->access_token,
