@@ -168,7 +168,8 @@ $config = [
                         'rest/youtube',
                         'rest/cron',
                         'rest/open-router',
-                        'rest/gemini'
+                        'rest/gemini',
+                        'rest/util'
                     ],
                     'common'
                 ),
