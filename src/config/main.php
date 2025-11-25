@@ -167,7 +167,8 @@ $config = [
                         'rest/instagram',
                         'rest/youtube',
                         'rest/cron',
-                        'rest/open-router'
+                        'rest/open-router',
+                        'rest/gemini'
                     ],
                     'common'
                 ),
