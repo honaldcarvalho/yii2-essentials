@@ -39,12 +39,14 @@ class User extends Account
     public $via;
 
     const SCENARIO_PROFILE = 'profile';
+    const SCENARIO_AUTH = 'auth';
+
 
     public function attributes()
     {
         return array_merge(parent::attributes(), ['via']);
     }
-    
+
     public static function tableName()
     {
         return 'users';
@@ -61,11 +63,12 @@ class User extends Account
             ],
         ]);
     }
-    
+
     public function scenarios()
     {
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_PROFILE] = ['file_id', 'theme', 'email', 'language_id', 'fullname', 'cpf_cnpj', 'phone', 'password', 'password_confirm'];
+        $scenarios[self::SCENARIO_AUTH] = ['access_token'];
         return $scenarios;
     }
 
