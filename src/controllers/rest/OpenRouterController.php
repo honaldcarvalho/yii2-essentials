@@ -9,34 +9,33 @@ use yii\rest\Controller;
 class OpenRouterController extends ControllerRest
 {
     /**
-     * Ação para enviar mensagens ao OpenRouter
      * POST /open-router/chat
      */
     public function actionChat()
     {
         $request = Yii::$app->request;
 
-        // 1. Obter dados do POST
+
         $userMessage = $request->post('message');
-        $model = $request->post('model') ?? Yii::$app->params['openRouter']['model']; // Modelo default
+        $model = $request->post('model') ?? Yii::$app->params['openRouter']['model'];
 
         if (!$userMessage) {
             Yii::$app->response->statusCode = 400;
-            return ['error' => 'O parâmetro "message" é obrigatório.'];
+            return ['error' => 'The "message" parameter is required.'];
         }
 
-        // 2. Preparar o cliente HTTP
+
         $client = new Client();
         $apiKey = Yii::$app->params['openRouter']['apiKey'];
 
         try {
-            // 3. Configurar e enviar a requisição
+
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl('https://openrouter.ai/api/v1/chat/completions')
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
-                    // Headers exigidos/recomendados pelo OpenRouter para rankings
+                    // Headers required/recommended by OpenRouter for rankings
                     'HTTP-Referer' => Yii::$app->params['openRouter']['siteUrl'] ?? 'http://localhost',
                     'X-Title' => Yii::$app->params['openRouter']['siteName'] ?? 'Yii2 App',
                     'Content-Type' => 'application/json',
@@ -50,27 +49,27 @@ class OpenRouterController extends ControllerRest
                             'content' => $userMessage
                         ]
                     ],
-                    // Outros parâmetros opcionais
+                    // Other optional parameters
                     // 'temperature' => 0.7,
                     // 'max_tokens' => 1000,
                 ])
                 ->send();
 
-            // 4. Verificar sucesso da requisição externa
+
             if ($response->isOk) {
                 return $response->data;
             } else {
-                // Repassar erro do OpenRouter para o cliente
+
                 Yii::$app->response->statusCode = $response->statusCode;
                 return [
-                    'error' => 'Erro na API OpenRouter',
+                    'error' => 'OpenRouter API Error',
                     'details' => $response->data
                 ];
             }
         } catch (\Exception $e) {
             Yii::$app->response->statusCode = 500;
             return [
-                'error' => 'Erro interno ao comunicar com IA',
+                'error' => 'Internal error communicating with AI',
                 'message' => $e->getMessage()
             ];
         }

@@ -14,35 +14,30 @@ class GeminiController extends ControllerRest
     }
 
     /**
-     * Endpoint Genérico: POST /gemini/ask
-     * Body esperado (JSON):
-     * {
-     * "instruction": "Você é um tradutor...", (Opcional - System Prompt)
-     * "content": "Texto a ser processado...", (Obrigatório)
-     * "temperature": 0.5 (Opcional, 0.0 a 1.0)
-     * }
+     * POST /gemini/ask
      */
     public function actionAsk()
     {
         $request = Yii::$app->request;
 
-        $instruction = $request->post('instruction', 'Você é um assistente útil.');
+        $instruction = $request->post('instruction', 'You are a helpful assistant.');
         $content = $request->post('content');
-        $temperature = $request->post('temperature', 0.7); // Padrão equilibrado
+        $temperature = $request->post('temperature', 0.7);
 
         if (!$content) {
             Yii::$app->response->statusCode = 400;
-            return ['status' => 'error', 'message' => 'O campo "content" é obrigatório.'];
+            return ['status' => 'error', 'message' => 'The "content" field is required.'];
         }
 
         try {
-            $result = $this->callGeminiApi($instruction, $content, $temperature);
+
+            $result = self::processRequest($instruction, $content, $temperature);
 
             return [
                 'status' => 'success',
                 'data' => [
                     'raw_response' => $result,
-                    'cleaned_response' => $this->cleanMarkdown($result) // Remove ```json ... ``` se houver
+                    'cleaned_response' => self::cleanMarkdown($result)
                 ]
             ];
         } catch (\Exception $e) {
@@ -51,16 +46,19 @@ class GeminiController extends ControllerRest
         }
     }
 
-    /**
-     * Faz a chamada real à API
-     */
-    private function callGeminiApi($instruction, $content, $temperature)
-    {
-        $apiKey = Yii::$app->params['gemini']['apiKey'];
-        $url = Yii::$app->params['gemini']['url'] . "?key=" . $apiKey;
 
-        // Combina instrução e conteúdo
-        // Existem formas de passar System Instruction separado, mas concatenar funciona bem no Flash e é mais simples
+    public static function processRequest($instruction, $content, $temperature)
+    {
+
+        $apiKey = Yii::$app->params['gemini']['apiKey'] ?? null;
+        $baseUrl = Yii::$app->params['gemini']['url'] ?? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+        if (!$apiKey) {
+            throw new \Exception("Gemini API Key not configured in Yii::\$app->params['gemini']['apiKey']");
+        }
+
+        $url = $baseUrl . "?key=" . $apiKey;
+
         $fullPrompt = $instruction . "\n\n---\n\nInput: " . $content;
 
         $payload = [
@@ -82,14 +80,12 @@ class GeminiController extends ControllerRest
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-
-        // Em produção, mantenha SSL verify como true. Em local windows as vezes precisa false.
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Change to false only if SSL error occurs locally
 
         $response = curl_exec($ch);
 
         if (curl_errno($ch)) {
-            throw new \Exception('Erro de conexão com o Google: ' . curl_error($ch));
+            throw new \Exception('Connection error with Google: ' . curl_error($ch));
         }
 
         curl_close($ch);
@@ -97,7 +93,7 @@ class GeminiController extends ControllerRest
         $json = json_decode($response, true);
 
         if (isset($json['error'])) {
-            throw new \Exception('Erro da API Gemini: ' . $json['error']['message']);
+            throw new \Exception('Gemini API Error: ' . $json['error']['message']);
         }
 
         if (isset($json['candidates'][0]['content']['parts'][0]['text'])) {
@@ -107,11 +103,10 @@ class GeminiController extends ControllerRest
         return null;
     }
 
-    /**
-     * Remove formatação Markdown (```json ... ```) caso a IA retorne código
-     */
-    private function cleanMarkdown($text)
+
+    public static function cleanMarkdown($text)
     {
+        if (!$text) return '';
         $text = preg_replace('/^```[a-z]*\n/', '', $text);
         $text = preg_replace('/\n```$/', '', $text);
         return trim($text);

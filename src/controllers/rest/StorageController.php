@@ -28,7 +28,7 @@ class StorageController extends ControllerRest
         string $message,
         array $context = []
     ): array {
-        // Captura a 1ª frame do chamador real (ignora a própria errorResponse)
+
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         $caller = null;
         foreach ($bt as $frame) {
@@ -63,15 +63,15 @@ class StorageController extends ControllerRest
      */
     private static function mapException(\Throwable $e, array $context = []): array
     {
-        // Você pode distinguir tipos aqui (db, image, video...) – mantive simples:
+
         $resp = self::errorResponse(
             500,
             'unhandled_exception',
-            $e->getMessage(), // use a própria mensagem do Throwable
+            $e->getMessage(),
             ['exception' => get_class($e), 'detail' => $e->getMessage()] + $context
         );
 
-        // Força o ponto exato do erro
+
         $resp['error']['file'] = $e->getFile();
         $resp['error']['line'] = $e->getLine();
 
@@ -292,7 +292,7 @@ class StorageController extends ControllerRest
         $createdPaths = ['file' => null, 'thumb' => null, 'temp' => null];
         $response = ['code' => 500, 'success' => false, 'data' => []];
 
-        // ✅ helper local para salvar UploadedFile de forma segura
+
         $safeSaveAs = function (\yii\web\UploadedFile $uploaded, string $target): bool {
             if (is_uploaded_file($uploaded->tempName)) {
                 return $uploaded->saveAs($target);
@@ -308,7 +308,7 @@ class StorageController extends ControllerRest
             $upload_root   = "{$webroot}{$files_folder}";
             $webFiles      = "{$web}{$files_folder}";
 
-            // ✅ compatibilidade com caminho físico (string)
+
             if (is_string($file) && file_exists($file)) {
                 $temp_file = new \yii\web\UploadedFile([
                     'name' => basename($file),
@@ -337,7 +337,7 @@ class StorageController extends ControllerRest
                 $group_id = AuthorizationController::userGroup();
             }
 
-            // 🔍 detecta tipo e extensão
+
             $ext  = $temp_file->extension ?: pathinfo($temp_file->name, PATHINFO_EXTENSION);
 
             if (!empty($file_name)) {
@@ -351,9 +351,7 @@ class StorageController extends ControllerRest
                 [$type, $format] = explode('/', $temp_file->type);
             }
 
-            // ================================================
-            // ================   IMAGE   =====================
-            // ================================================
+
             if ($type === 'image') {
                 if ($folder_id === 1) $folder_id = 2;
 
@@ -398,10 +396,6 @@ class StorageController extends ControllerRest
                     $safeUnlink($filePathThumbRoot);
                     return self::mapException($e, ['stage' => 'image.thumb']);
                 }
-
-                // ================================================
-                // ================   VIDEO   =====================
-                // ================================================
             } elseif ($type === 'video') {
                 if ($folder_id === 1) $folder_id = 3;
 
@@ -423,10 +417,6 @@ class StorageController extends ControllerRest
                     );
                 }
                 $createdPaths['file'] = $filePathRoot;
-
-                // ================================================
-                // ================   DOC / PDF   =================
-                // ================================================
             } else {
                 $type = 'doc';
                 if ($folder_id === 1) $folder_id = 4;
@@ -451,9 +441,7 @@ class StorageController extends ControllerRest
                 $createdPaths['file'] = $filePathRoot;
             }
 
-            // ================================================
-            // ================   SAVE MODEL   ================
-            // ================================================
+
             $file_uploaded = [
                 'group_id'   => $group_id,
                 'folder_id'  => $folder_id,
@@ -545,7 +533,7 @@ class StorageController extends ControllerRest
                 return $result;
             }
 
-            // Parse attach_model (JSON) se existir
+
             $linkClass = $linkId = $linkFields = null;
             $deleteOld = (int)($post['delete_old'] ?? 1);
 
@@ -565,7 +553,7 @@ class StorageController extends ControllerRest
                 $fileId = is_object($fileData) ? ($fileData->id ?? 0) : ($fileData['id'] ?? 0);
 
                 if ($fileId > 0) {
-                    // Permite múltiplos campos (ex: ['post_id','file_id'])
+
                     $result['link'] = self::linkFileToModel(
                         $fileId,
                         $linkClass,
@@ -591,8 +579,8 @@ class StorageController extends ControllerRest
     }
 
     /**
-     * Vincula o arquivo ($fileId) ao modelo ($class::$id) no campo $field.
-     * Se $deleteOld=1, remove o antigo quando diferente.
+     * Links the file ($fileId) to the model ($class::$id) in the field $field.
+     * If $deleteOld=1, removes the old one when different.
      */
     protected static function linkFileToModel(int $fileId, string $class, int $id, $field, int $deleteOld = 1): array
     {
@@ -604,7 +592,7 @@ class StorageController extends ControllerRest
                 return ['linked' => false, 'error' => Yii::t('app', "Class is not ActiveRecord: {class}", ['class' => $class])];
             }
 
-            /** Caso seja um pivot model (campos múltiplos ex: ['post_id','file_id']) */
+
             if (is_array($field)) {
                 $pivot = new $class();
                 foreach ($field as $f) {
@@ -613,7 +601,7 @@ class StorageController extends ControllerRest
                     } elseif ($f === 'post_id') {
                         $pivot->$f = $id;
                     } else {
-                        // fallback: tenta setar o id no primeiro campo
+
                         $pivot->$f = $id;
                     }
                 }
@@ -635,7 +623,7 @@ class StorageController extends ControllerRest
                 ];
             }
 
-            /** Fallback: campo direto em ActiveRecord */
+
             $model = $class::findOne($id);
             if (!$model) {
                 return ['linked' => false, 'error' => Yii::t('app', "Model id #{id} not found for {class}", ['id' => $id, 'class' => $class])];
@@ -702,17 +690,17 @@ class StorageController extends ControllerRest
     public static function removeFile($id, array $opts = [])
     {
         try {
-            $force         = (bool)($opts['force'] ?? false);   // permite forçar bypass (ex.: para master)
-            $ignoreMissing = (bool)($opts['ignoreMissing'] ?? true); // não falhar se arquivo físico não existir
+            $force         = (bool)($opts['force'] ?? false);
+            $ignoreMissing = (bool)($opts['ignoreMissing'] ?? true);
             $deleteThumb   = (bool)($opts['deleteThumb'] ?? true);
 
-            // ===== 1) Localiza o modelo =====
+
             if ($force || AuthorizationController::isMaster()) {
-                // Bypass total de escopo/grupo
+
                 $model = \croacworks\essentials\models\File::find(false)
                     ->where(['id' => (int)$id])->one();
             } else {
-                // Respeita os grupos do usuário
+
                 $user_groups = AuthorizationController::getUserGroups();
                 $model = \croacworks\essentials\models\File::find()
                     ->where(['id' => (int)$id])
@@ -724,7 +712,7 @@ class StorageController extends ControllerRest
                 return ['code' => 404, 'success' => false, 'message' => 'file_not_found_or_access_denied'];
             }
 
-            // Guarda nomes/caminhos antes do delete
+
             $fileName   = $model->name;
             $absPath    = Yii::getAlias('@webroot') . ($model->path ?? '');
             $absThumb   = $model->pathThumb ? Yii::getAlias('@webroot') . $model->pathThumb : null;
@@ -733,7 +721,7 @@ class StorageController extends ControllerRest
             $thumb   = Yii::t('app', "Could not remove thumb file {file}.", ['file' => $fileName]);
             $file    = Yii::t('app', "Could not remove file {file}.", ['file' => $fileName]);
 
-            // ===== 2) Remove do banco (mantendo sua ordem original) =====
+
             if ($model->delete() === false) {
                 return [
                     'code'    => 500,
@@ -744,19 +732,19 @@ class StorageController extends ControllerRest
 
             $message = Yii::t('app', "Model #{id} removed.", ['id' => $fileName]);
 
-            // ===== 3) Remove arquivo físico (ignora se não existir quando $ignoreMissing=true) =====
+
             if (is_string($absPath) && $absPath !== '') {
                 if (is_file($absPath)) {
                     if (@unlink($absPath)) {
                         $file = Yii::t('app', "File {file} removed.", ['file' => $fileName]);
                     }
                 } elseif ($ignoreMissing) {
-                    // ok, mantém sucesso mesmo sem arquivo físico
+
                     $file = Yii::t('app', "File {file} not found, skipped.", ['file' => $fileName]);
                 }
             }
 
-            // ===== 4) Remove thumb (se existir) =====
+
             if ($deleteThumb && $absThumb) {
                 if (is_file($absThumb)) {
                     if (@unlink($absThumb)) {
