@@ -4,8 +4,9 @@ namespace croacworks\essentials\controllers\rest;
 
 use Yii;
 use yii\httpclient\Client;
+use yii\rest\Controller;
 
-class OpenRouterController extends ControllerRest
+class OpenRouterController extends Controller
 {
     /**
      * Ação para enviar mensagens ao OpenRouter
