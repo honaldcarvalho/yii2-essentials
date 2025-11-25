@@ -9,24 +9,6 @@ use yii\web\Response;
 class OpenRouterController extends ControllerRest
 {
     /**
-     * @inheritdoc
-     */
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-
-        // Configuração de CORS (importante se for acessado por frontend JS externo)
-        $behaviors['corsFilter'] = [
-            'class' => \yii\filters\Cors::class,
-        ];
-
-        // Define o formato de resposta sempre como JSON
-        $behaviors['contentNegotiator']['formats']['application/json'] = Response::FORMAT_JSON;
-
-        return $behaviors;
-    }
-
-    /**
      * Ação para enviar mensagens ao OpenRouter
      * POST /open-router/chat
      */
