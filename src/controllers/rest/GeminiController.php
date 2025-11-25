@@ -56,10 +56,8 @@ class GeminiController extends ControllerRest
      */
     private function callGeminiApi($instruction, $content, $temperature)
     {
-        // RECOMENDAÇÃO: Coloque sua chave no params-local.php ou .env
         $apiKey = Yii::$app->params['gemini']['apiKey'];
-
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+        $url = Yii::$app->params['gemini']['url'] . "?key=" . $apiKey;
 
         // Combina instrução e conteúdo
         // Existem formas de passar System Instruction separado, mas concatenar funciona bem no Flash e é mais simples
