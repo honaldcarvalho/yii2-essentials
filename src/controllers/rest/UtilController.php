@@ -13,46 +13,66 @@ class UtilController extends ControllerRest
 {
 
     /**
-     * @param string $language Target language (e.g. 'pt', 'en')
-     * @param string $to Source language (default 'auto')
-     * @param string $provider 'default' ou 'gemini'
+     * Hybrid Endpoint: Accepts GET params or POST JSON body.
+     *
+     * JSON Payload Example:
+     * {
+     * "language": "en",
+     * "provider": "gemini",
+     * "text": "Text..."
+     * }
      */
-    public function actionSuggestTranslation($language, $to = 'auto', $provider = 'default')
+    public function actionSuggestTranslation()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $request = Yii::$app->request;
 
-        $body = Yii::$app->request->getBodyParams();
-        $text = $body['text'] ?? null;
+        // Merge params (Body/JSON overrides GET)
+        $params = array_merge($request->get(), $request->getBodyParams());
+
+        $language = $params['language'] ?? null;
+        $to       = $params['to'] ?? 'auto';
+        $text     = $params['text'] ?? null;
+
+        // Check 'provider' and handle typo 'provide'
+        $provider = $params['provider'] ?? $params['provide'] ?? 'default';
 
         if (!$text) {
-            return ['success' => false, 'message' => Yii::t('app', 'Missing "text" parameter.')];
+            return [
+                'success' => false,
+                'message' => Yii::t('app', 'Missing "text" parameter.')
+            ];
+        }
+
+        if (!$language) {
+            return [
+                'success' => false,
+                'message' => Yii::t('app', 'Missing "language" parameter (target language).')
+            ];
         }
 
         try {
             $translated = null;
 
             if ($provider === 'gemini') {
-                // 1. Prepara o Prompt de tradução
                 $sourceInstruction = ($to === 'auto') ? "Detect language" : "From {$to}";
 
                 $instruction = "You are a professional technical translator. {$sourceInstruction} to {$language}. " .
                     "Return ONLY the translated text. Do not include markdown or explanations.";
 
-                // 2. Chama o método ESTÁTICO do GeminiController
-                // Usamos temperatura 0.1 para maior precisão na tradução
-                $rawResult = GeminiController::processRequest($instruction, $text, 0.1);
-
-                // 3. Limpa o resultado
-                $translated = GeminiController::cleanMarkdown($rawResult);
+                // Call static controller
+                $rawResult = \croacworks\essentials\controllers\rest\GeminiController::processRequest($instruction, $text, 0.1);
+                $translated = \croacworks\essentials\controllers\rest\GeminiController::cleanMarkdown($rawResult);
             } else {
-                // Fallback para o tradutor antigo
+                // Fallback to legacy translator
                 $translated = TranslatorHelper::translate($text, $language, $to);
             }
 
             return [
                 'success' => true,
                 'translation' => $translated,
-                'provider' => $provider
+                'provider' => $provider,
+                'target_lang' => $language
             ];
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
