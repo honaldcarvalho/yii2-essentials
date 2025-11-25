@@ -18,7 +18,7 @@ class OpenRouterController extends ControllerRest
 
         // 1. Obter dados do POST
         $userMessage = $request->post('message');
-        $model = $request->post('model', 'google/gemini-2.0-flash-exp:free'); // Modelo default
+        $model = $request->post('model', Yii::$app->params['openRouter']['model']); // Modelo default
 
         if (!$userMessage) {
             Yii::$app->response->statusCode = 400;
