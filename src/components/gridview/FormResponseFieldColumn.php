@@ -6,6 +6,7 @@ use Yii;
 use yii\grid\DataColumn;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use yii\helpers\ArrayHelper;
 use croacworks\essentials\enums\FormFieldType;
 use croacworks\essentials\models\File;
 use croacworks\essentials\models\FormField;
@@ -13,7 +14,7 @@ use croacworks\essentials\models\FormResponse;
 
 class FormResponseFieldColumn extends DataColumn
 {
-    /** @var FormField Campo de definição (label, name, type, items etc.) */
+    /** @var FormField Definition field (label, name, type, items, etc.) */
     public FormField $field;
 
     /** @var bool Render empty values? */
@@ -29,13 +30,16 @@ class FormResponseFieldColumn extends DataColumn
             throw new \InvalidArgumentException('FormResponseFieldColumn requires $field.');
         }
         $this->label = $this->label ?: ($this->field->label ?: $this->field->name);
+
         // Compute value using a closure so filters/sorts still work for other columns
         $name  = $this->field->name;
         $type  = (int)$this->field->type;
+
         $this->value = function (FormResponse $model) use ($name, $type) {
             $raw = $model->getFieldValue($name);
             return $this->formatByType($type, $raw, $name, $model);
         };
+
         // Most cells output raw HTML (badges, links, imgs)
         $this->format = 'raw';
         $this->contentOptions = $this->contentOptions ?: ['style' => 'vertical-align:middle'];
@@ -77,7 +81,7 @@ class FormResponseFieldColumn extends DataColumn
             case FormFieldType::TYPE_DATE:
                 return $value ? Yii::$app->formatter->asDate($value) : '';
 
-            case FormFieldType::TYPE_DATETIME ?? 99901: // fallback if you have a datetime type
+            case FormFieldType::TYPE_DATETIME ?? 99901:
                 return $value ? Yii::$app->formatter->asDatetime($value) : '';
 
             case FormFieldType::TYPE_EMAIL ?? 99902:
@@ -88,12 +92,6 @@ class FormResponseFieldColumn extends DataColumn
                 $plain = preg_replace('/\D+/', '', (string)$value);
                 return Html::a(Html::encode((string)$value), 'tel:' . $plain);
 
-            // case FormFieldType::TYPE_LINK ?? 99904:
-            //     if (!$value) return '';
-            //     $label = is_array($value) ? ($value['label'] ?? ($value['url'] ?? 'link')) : (string)$value;
-            //     $url   = is_array($value) ? ($value['url'] ?? $label) : (string)$value;
-            //     return Html::a(Html::encode($label), $url, ['target' => '_blank', 'rel' => 'noopener']);
-
             case FormFieldType::TYPE_CHECKBOX:
                 $ok = (bool)$value;
                 $class = $ok ? 'badge bg-success' : 'badge bg-secondary';
@@ -101,21 +99,18 @@ class FormResponseFieldColumn extends DataColumn
                 return Html::tag('span', Html::encode($text), ['class' => $class]);
 
             case FormFieldType::TYPE_SELECT:
-                // single select: value may be "key" or {"value":"key","label":"..."}
-                if (is_array($value) && isset($value['label'])) {
-                    return Html::tag('span', Html::encode($value['label']), ['class' => 'badge bg-primary']);
-                }
-                return Html::tag('span', Html::encode((string)$value), ['class' => 'badge bg-primary']);
+                $label = $this->resolveOptionLabel($value);
+                return Html::tag('span', Html::encode($label), ['class' => 'badge bg-primary']);
 
             case FormFieldType::TYPE_MULTIPLE:
                 // multi-select: array of values/labels
                 $items = [];
-                if (is_array($value)) {
-                    foreach ($value as $v) {
-                        $label = is_array($v) ? ($v['label'] ?? ($v['value'] ?? '')) : (string)$v;
-                        if ($label === '') continue;
-                        $items[] = Html::tag('span', Html::encode($label), ['class' => 'badge bg-info me-1']);
-                    }
+                $values = is_array($value) ? $value : [$value];
+
+                foreach ($values as $v) {
+                    $label = $this->resolveOptionLabel($v);
+                    if ($label === '') continue;
+                    $items[] = Html::tag('span', Html::encode($label), ['class' => 'badge bg-info me-1']);
                 }
                 return $items ? implode(' ', $items) : '';
 
@@ -126,19 +121,13 @@ class FormResponseFieldColumn extends DataColumn
                 return $this->renderPicture($value);
 
             case FormFieldType::TYPE_MODEL ?? 99905:
-                // could be id or {id,label}
-                if (is_array($value)) {
-                    $label = $value['label'] ?? ($value['id'] ?? '');
-                    return Html::encode((string)$label);
-                }
-                return Html::encode((string)$value);
+                $label = $this->resolveModelLabel($value);
+                return Html::encode((string)$label);
 
             case FormFieldType::TYPE_SQL ?? 99906:
-                // free text or object -> JSON preview
                 return $this->renderJsonPreview($value);
 
             default:
-                // Fallback: encode strings, JSON-preview for arrays/objects
                 if (is_array($value) || is_object($value)) {
                     return $this->renderJsonPreview($value);
                 }
@@ -146,10 +135,71 @@ class FormResponseFieldColumn extends DataColumn
         }
     }
 
+    /**
+     * Parses the "items" string (key:Label;key2:Label2) and returns the label for a given key.
+     */
+    protected function resolveOptionLabel($key): string
+    {
+        // Handle case where value is already an array from legacy/JSON storage
+        if (is_array($key)) {
+            return $key['label'] ?? ($key['value'] ?? '');
+        }
+
+        if (empty($this->field->items)) {
+            return (string)$key;
+        }
+
+        // Lazy parsing of items string
+        $options = [];
+        $rawItems = explode(';', $this->field->items);
+        foreach ($rawItems as $item) {
+            $parts = explode(':', $item);
+            if (count($parts) >= 2) {
+                $options[trim($parts[0])] = trim($parts[1]);
+            }
+        }
+
+        return $options[$key] ?? (string)$key;
+    }
+
+    /**
+     * Resolves the label from a related ActiveRecord model based on dynamic form config.
+     */
+    protected function resolveModelLabel($id)
+    {
+        // Handle legacy/complex structure
+        if (is_array($id)) {
+            return $id['label'] ?? ($id['id'] ?? '');
+        }
+
+        if (empty($id) || empty($this->field->model_class) || empty($this->field->model_field)) {
+            return $id;
+        }
+
+        $relatedClass = $this->field->model_class;
+        $attribute = $this->field->model_field;
+
+        if (class_exists($relatedClass)) {
+            try {
+                // Find the record using ActiveRecord
+                /** @var \yii\db\ActiveRecord $record */
+                $record = $relatedClass::findOne($id);
+                if ($record) {
+                    return ArrayHelper::getValue($record, $attribute);
+                }
+            } catch (\Exception $e) {
+                // Fail silently and return ID if something is wrong with the class/db
+                Yii::error("Error resolving model label for field {$this->field->name}: " . $e->getMessage());
+            }
+        }
+
+        return $id;
+    }
+
     protected function renderJsonPreview($value): string
     {
         if ($value === null || $value === '') return '';
-        $json = is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+        $json = is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         if ($json === false) $json = (string)$value;
         return Html::tag('pre', Html::encode($json), [
             'class' => 'mb-0 small',
@@ -159,8 +209,8 @@ class FormResponseFieldColumn extends DataColumn
 
     /**
      * Accepts:
-     *  - int file_id
-     *  - {"id":123,"name":"file.pdf"} or list of these
+     * - int file_id
+     * - {"id":123,"name":"file.pdf"} or list of these
      */
     protected function renderFile($value): string
     {
@@ -179,8 +229,8 @@ class FormResponseFieldColumn extends DataColumn
 
     /**
      * Accepts:
-     *  - int file_id (image)
-     *  - {"id":123,"name":"img.png"} or list of these
+     * - int file_id (image)
+     * - {"id":123,"name":"img.png"} or list of these
      */
     protected function renderPicture($value): string
     {
@@ -191,22 +241,25 @@ class FormResponseFieldColumn extends DataColumn
         foreach ($files as $f) {
             $id = (int)$f['id'];
 
-            if($id){
+            if ($id) {
                 $file = File::findOne($id);
                 $url = $file?->urlThumb;
             } else {
-                return Yii::t('app','No image selected');
+                return Yii::t('app', 'No image selected');
             }
+            // Fallback if urlThumb is null/empty
+            if (!$url) return '';
+
             $thumbs[] = Html::a(
-                Html::img($url, ['alt' => $f['name'] ?? ('#'.$id), 'class' => 'img-thumbnail me-1','width'=>'50']),
+                Html::img($url, ['alt' => $f['name'] ?? ('#' . $id), 'class' => 'img-thumbnail me-1', 'width' => '50']),
                 $url,
                 [
-                    'target' => '_blank', 
+                    'target' => '_blank',
                     'rel' => 'noopener',
                     'class' => 'btn btn-outline-secondary',
                     'data-fancybox' => "",
                     'data-type' => "image",
-                    'title' => \Yii::t('app', 'View')
+                    'title' => Yii::t('app', 'View')
                 ]
             );
         }
