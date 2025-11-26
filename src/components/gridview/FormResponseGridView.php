@@ -4,13 +4,15 @@ namespace croacworks\essentials\components\gridview;
 
 use Yii;
 use yii\grid\GridView;
+use yii\helpers\ArrayHelper;
 use croacworks\essentials\models\DynamicForm;
 use croacworks\essentials\models\FormField;
+use croacworks\essentials\enums\FormFieldType;
 
 /**
  * GridView specialized for FormResponse listing.
  * - Auto builds DataColumns from DynamicForm->formFields
- * - You may choose which fields to show
+ * - Resolves Relations (Model) and Static Options (Select/Multiple)
  */
 class FormResponseGridView extends GridView
 {
@@ -18,19 +20,16 @@ class FormResponseGridView extends GridView
     public DynamicForm $dynamicForm;
     public $controller = 'form-response-crud';
 
-    /**
-     * @var string[]|null Field names to include (order respected).
-     *                    If null, shows all visible fields.
-     */
+    /** @var string[]|null */
     public ?array $visibleFields = null;
 
-    /** @var int|null Limit to first N fields (applied after visibleFields, if set). */
+    /** @var int|null */
     public ?int $limit = null;
 
-    /** @var bool Include default ID + created_at + action column */
+    /** @var bool */
     public bool $withSystemColumns = true;
 
-    /** @var array Options forwarded to FormResponseFieldColumn (e.g., ['thumb'=>['w'=>96,'h'=>96]]) */
+    /** @var array */
     public array $cellOptions = [];
 
     public function init()
@@ -41,7 +40,6 @@ class FormResponseGridView extends GridView
         if (empty($this->columns)) {
             $this->columns = $this->buildColumns();
         }
-        // Default table classes
         $this->tableOptions = $this->tableOptions ?: ['class' => 'table table-striped table-bordered align-middle'];
         parent::init();
     }
@@ -58,12 +56,10 @@ class FormResponseGridView extends GridView
             ];
         }
 
-        // Choose which fields to show
         $fields = $this->dynamicForm->formFields;
-        $fields = array_values(array_filter($fields, fn(FormField $f) => true)); // here you can filter by "show" if your schema has it
+        $fields = array_values(array_filter($fields, fn(FormField $f) => true));
 
         if ($this->visibleFields) {
-            // keep order as provided
             $map = [];
             foreach ($fields as $f) $map[$f->name] = $f;
             $ordered = [];
@@ -78,10 +74,74 @@ class FormResponseGridView extends GridView
         }
 
         foreach ($fields as $field) {
-            $cols[] = array_merge([
+            $columnConfig = [
                 'class' => FormResponseFieldColumn::class,
                 'field' => $field,
-            ], $this->cellOptions);
+            ];
+
+            // 1. Handle External Models (TYPE_MODEL)
+            if ($field->type == FormFieldType::TYPE_MODEL && !empty($field->model_class) && !empty($field->model_field)) {
+                $columnConfig['value'] = function ($model) use ($field) {
+                    $id = ArrayHelper::getValue($model, $field->name);
+                    if (empty($id)) return null;
+
+                    $relatedClass = $field->model_class;
+                    if (class_exists($relatedClass)) {
+                        /** @var \yii\db\ActiveRecord $relatedModel */
+                        $relatedModel = $relatedClass::findOne($id);
+                        if ($relatedModel) {
+                            return $relatedModel->{$field->model_field};
+                        }
+                    }
+                    return $id;
+                };
+            }
+            // 2. Handle Static Options (TYPE_SELECT or TYPE_MULTIPLE)
+            elseif (in_array($field->type, [FormFieldType::TYPE_SELECT, FormFieldType::TYPE_MULTIPLE])) {
+
+                // Parse items string: "KEY:Label;KEY2:Label2"
+                $options = [];
+                if (!empty($field->items)) {
+                    $rawItems = explode(';', $field->items);
+                    foreach ($rawItems as $item) {
+                        $parts = explode(':', $item);
+                        if (count($parts) >= 2) {
+                            // Trim to remove potential accidental spaces
+                            $key = trim($parts[0]);
+                            $label = trim($parts[1]);
+                            $options[$key] = $label;
+                        }
+                    }
+                }
+
+                $columnConfig['value'] = function ($model) use ($field, $options) {
+                    $value = ArrayHelper::getValue($model, $field->name);
+
+                    if ($value === null || $value === '') {
+                        return null;
+                    }
+
+                    // If Multiple Select
+                    if ($field->type == FormFieldType::TYPE_MULTIPLE) {
+                        // Decode if JSON, otherwise force array
+                        $values = is_string($value) ? json_decode($value, true) : $value;
+                        if (!is_array($values)) {
+                            $values = [$value];
+                        }
+
+                        $labels = [];
+                        foreach ($values as $v) {
+                            $labels[] = $options[$v] ?? $v;
+                        }
+                        return implode(', ', $labels);
+                    }
+
+                    // If Single Select
+                    return $options[$value] ?? $value;
+                };
+            }
+
+            $cols[] = array_merge($columnConfig, $this->cellOptions);
         }
 
         if ($this->withSystemColumns) {
