@@ -155,11 +155,14 @@ class PageController extends AuthorizationController
     }
 
     /**
-     * Clone workflow:
-     * - GET: render editable clone draft
-     * - PAGE: detect clone type (language/total) and persist via service
+     * Clone workflow with optional auto-translation.
+     *
+     * @param int $id
+     * @param string|null $target_lang Language code (e.g., 'en', 'es') to auto-translate the draft.
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException
      */
-    public function actionClone($id)
+    public function actionClone($id, $target_lang = null)
     {
         $original = $this->findModel($id);
         if (!$original) {
@@ -177,12 +180,29 @@ class PageController extends AuthorizationController
 
         // GET -> let user edit before saving
         if (!Yii::$app->request->isPost) {
+
+            // Apply translation if requested via GET param
+            if ($target_lang) {
+                $languageModel = Language::findOne(['code' => $target_lang]);
+
+                if ($languageModel) {
+                    // Set the new language ID
+                    $clone->language_id = $languageModel->id;
+
+                    // Perform translation using Gemini
+                    // Ensure you have "use" statements for GeminiHelper if relying on exception handling logic inside Page
+                    $clone->translateContent($target_lang, 'gemini');
+
+                    Yii::$app->session->addFlash('info', Yii::t('app', 'Content auto-translated to {0}. Please review before saving.', [$languageModel->name]));
+                }
+            }
+
             return $this->render('clone', [
                 'model' => $clone,
             ]);
         }
 
-        // PAGE -> confirm clone
+        // PAGE -> confirm clone (POST)
         $transaction = Yii::$app->db->beginTransaction();
         try {
             if ($clone->load(Yii::$app->request->post())) {
@@ -198,6 +218,7 @@ class PageController extends AuthorizationController
                 $attributesToCompare = $original->attributes();
                 foreach ($attributesToCompare as $key) {
                     if ($key === 'id') continue;
+                    // Check strict comparison to detect manual changes
                     if (!is_array($clone->$key) && $clone->$key !== $original->$key) {
                         $overrides[$key] = $clone->$key;
                     }
