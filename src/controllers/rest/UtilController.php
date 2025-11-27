@@ -3,6 +3,7 @@
 namespace croacworks\essentials\controllers\rest;
 
 use croacworks\essentials\controllers\rest\GeminiController;
+use croacworks\essentials\helpers\GeminiHelper;
 use croacworks\essentials\helpers\TranslatorHelper;
 use Yii;
 
@@ -61,8 +62,8 @@ class UtilController extends ControllerRest
                     "Return ONLY the translated result. Do not wrap in markdown code blocks.";
 
                 // Call static controller
-                $rawResult = \croacworks\essentials\controllers\rest\GeminiController::processRequest($instruction, $text, 0.1);
-                $translated = \croacworks\essentials\controllers\rest\GeminiController::cleanMarkdown($rawResult);
+                $rawResult = GeminiHelper::processRequest($instruction, $text, 0.1);
+                $translated = GeminiHelper::cleanMarkdown($rawResult);
             } else {
                 $translated = TranslatorHelper::translate($text, $language, $to);
             }
