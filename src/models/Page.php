@@ -231,7 +231,7 @@ class Page extends ModelCommon
      * @param string $provider 'gemini' or 'google'.
      * @return void
      */
-    public function translateContent($targetLanguageCode, $provider = 'gemini')
+    public function translateContent($targetLanguageCode, $provider = 'default')
     {
         // Attributes to be translated
         $attributes = ['title', 'description', 'keywords', 'content'];
