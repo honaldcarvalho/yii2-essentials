@@ -3,6 +3,8 @@
 namespace croacworks\essentials\models;
 
 use croacworks\essentials\behaviors\AttachFileBehavior;
+use croacworks\essentials\helpers\GeminiHelper;
+use croacworks\essentials\helpers\TranslatorHelper;
 use croacworks\essentials\models\Language;
 use Yii;
 use yii\helpers\Inflector;
@@ -219,6 +221,53 @@ class Page extends ModelCommon
             Yii::$app->db->createCommand()
                 ->insert('{{%page_tags}}', ['page_id' => $this->id, 'tag_id' => $id])
                 ->execute();
+        }
+    }
+
+    /**
+     * Translates specific page attributes to the target language.
+     *
+     * @param string $targetLanguageCode The language code (e.g., 'en', 'es').
+     * @param string $provider 'gemini' or 'google'.
+     * @return void
+     */
+    public function translateContent($targetLanguageCode, $provider = 'gemini')
+    {
+        // Attributes to be translated
+        $attributes = ['title', 'description', 'keywords', 'content'];
+
+        foreach ($attributes as $attribute) {
+            $value = $this->$attribute;
+
+            if (empty($value) || !is_string($value)) {
+                continue;
+            }
+
+            try {
+                $translatedText = null;
+
+                if ($provider === 'gemini') {
+                    // Specific instruction for HTML content
+                    if ($attribute === 'content') {
+                        $instruction = Yii::t('app', 'You are a professional translator. Translate the following HTML content to {0}. Preserve all HTML tags, classes, and structure exactly. Translate only the text content.', [$targetLanguageCode]);
+                    } else {
+                        $instruction = Yii::t('app', 'Translate the following text to {0}. Keep it concise.', [$targetLanguageCode]);
+                    }
+
+                    // Low temperature for accuracy
+                    $raw = GeminiHelper::processRequest($instruction, $value, 0.1);
+                    $translatedText = GeminiHelper::cleanMarkdown($raw);
+                } else {
+                    // Fallback or default Google Translate
+                    $translatedText = TranslatorHelper::translate($value, $targetLanguageCode);
+                }
+
+                if ($translatedText) {
+                    $this->$attribute = $translatedText;
+                }
+            } catch (\Exception $e) {
+                Yii::error("Translation failed for attribute {$attribute}: " . $e->getMessage(), __METHOD__);
+            }
         }
     }
 
