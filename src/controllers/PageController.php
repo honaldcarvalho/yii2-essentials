@@ -159,10 +159,11 @@ class PageController extends AuthorizationController
      *
      * @param int $id
      * @param string|null $target_lang Language code (e.g., 'en', 'es') to auto-translate the draft.
+     * @param string $provider Translation provider ('default' or 'gemini').
      * @return string|\yii\web\Response
      * @throws NotFoundHttpException
      */
-    public function actionClone($id, $target_lang = null)
+    public function actionClone($id, $target_lang = null, $provider = 'default')
     {
         $original = $this->findModel($id);
         if (!$original) {
@@ -191,9 +192,9 @@ class PageController extends AuthorizationController
 
                     // Perform translation using Gemini
                     // Ensure you have "use" statements for GeminiHelper if relying on exception handling logic inside Page
-                    $clone->translateContent($target_lang, 'gemini');
+                    $clone->translateContent($target_lang, $provider);
 
-                    Yii::$app->session->addFlash('info', Yii::t('app', 'Content auto-translated to {0}. Please review before saving.', [$languageModel->name]));
+                    Yii::$app->session->addFlash('info', Yii::t('app', 'Content auto-translated to {0} using {1}. Please review before saving.', [$languageModel->name, $provider]));
                 }
             }
 
