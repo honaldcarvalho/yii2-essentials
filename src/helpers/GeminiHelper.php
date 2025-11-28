@@ -10,15 +10,15 @@ class GeminiHelper
     /**
      * Sends a request to Google Gemini API.
      *
-     * @param string $instruction System instruction or context.
-     * @param string $content User content to be processed.
-     * @param float $temperature Creativity level (0.0 to 1.0).
-     * @return string|null The generated text or null.
+     * @param string $instruction System instruction.
+     * @param string $content User content.
+     * @param float $temperature Creativity level.
+     * @param int $maxOutputTokens Max response size (default 2048).
+     * @return string|null
      * @throws Exception
      */
-    public static function processRequest($instruction, $content, $temperature)
+    public static function processRequest($instruction, $content, $temperature = 0.7, $maxOutputTokens = 2048)
     {
-        // Get configuration from params
         $apiKey = Yii::$app->params['gemini']['apiKey'] ?? null;
         $baseUrl = Yii::$app->params['gemini']['url'] ?? 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
@@ -41,7 +41,7 @@ class GeminiHelper
             ],
             "generationConfig" => [
                 "temperature" => (float)$temperature,
-                "maxOutputTokens" => 2048,
+                "maxOutputTokens" => (int)$maxOutputTokens, // Uses the dynamic limit
             ]
         ];
 
@@ -76,12 +76,6 @@ class GeminiHelper
         return null;
     }
 
-    /**
-     * Removes markdown code blocks from the text.
-     *
-     * @param string $text
-     * @return string
-     */
     public static function cleanMarkdown($text)
     {
         if (!$text) return '';

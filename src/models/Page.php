@@ -247,15 +247,18 @@ class Page extends ModelCommon
                 $translatedText = null;
 
                 if ($provider === 'gemini') {
-                    // Specific instruction for HTML content
+                    // Determine max tokens based on attribute type
+                    // 'content' usually has HTML and needs more space (8192 tokens)
+                    $maxTokens = ($attribute === 'content') ? 8192 : 2048;
+
                     if ($attribute === 'content') {
-                        $instruction = Yii::t('app', 'You are a professional translator. Translate the following HTML content to {0}. Preserve all HTML tags, classes, and structure exactly. Translate only the text content.', [$targetLanguageCode]);
+                        $instruction = Yii::t('app', 'You are a professional translator. Translate the following HTML content to {0}. Preserve all HTML tags, classes, and structure exactly. Translate only the text content. Do not add markdown code blocks.', [$targetLanguageCode]);
                     } else {
                         $instruction = Yii::t('app', 'Translate the following text to {0}. Keep it concise.', [$targetLanguageCode]);
                     }
 
-                    // Low temperature for accuracy
-                    $raw = GeminiHelper::processRequest($instruction, $value, 0.1);
+                    // Pass the dynamic maxTokens
+                    $raw = GeminiHelper::processRequest($instruction, $value, 0.1, $maxTokens);
                     $translatedText = GeminiHelper::cleanMarkdown($raw);
                 } else {
                     // Fallback or default Google Translate
