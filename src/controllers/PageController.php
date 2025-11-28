@@ -7,6 +7,7 @@ use croacworks\essentials\models\Language;
 use croacworks\essentials\models\Page;
 use croacworks\essentials\models\PageSection;
 use croacworks\essentials\services\PageCloneService;
+use croacworks\essentials\traits\CloneActionTrait;
 use Yii;
 use yii\web\NotFoundHttpException;
 
@@ -15,6 +16,8 @@ use yii\web\NotFoundHttpException;
  */
 class PageController extends AuthorizationController
 {
+    use CloneActionTrait;
+
     /** Actions that do not require auth */
     public $free = ['login', 'signup', 'error', 'public'];
 
@@ -57,9 +60,7 @@ class PageController extends AuthorizationController
     }
 
     /**
-     * Public “show” by slug + context (group/language/section).
-     * - If ?modal=1 -> use blank layout
-     * - If group not provided: use user group or 1 for guests
+     * Public "show" by slug + context (group/language/section).
      */
     public function actionShow(
         string $page,
@@ -81,10 +82,7 @@ class PageController extends AuthorizationController
     }
 
     /**
-     * Public page resolver:
-     * - Finds by slug, group and status
-     * - Optional section by section slug (or null)
-     * - Optional language (id or code); falls back to null-language or default config language
+     * Public page resolver.
      */
     public function actionPublic(string $slug, string $section = null, $lang = null, $group = 1, $modal = null)
     {
@@ -156,104 +154,32 @@ class PageController extends AuthorizationController
 
     /**
      * Clone workflow with optional auto-translation.
+     * Uses CloneActionTrait for shared logic.
      *
      * @param int $id
-     * @param string|null $target_lang Language code (e.g., 'en', 'es') to auto-translate the draft.
-     * @param string $provider Translation provider ('default' or 'gemini').
+     * @param string|null $target_lang
+     * @param string $provider
      * @return string|\yii\web\Response
-     * @throws NotFoundHttpException
      */
     public function actionClone($id, $target_lang = null, $provider = 'default')
     {
-        $original = $this->findModel($id);
-        if (!$original) {
-            throw new NotFoundHttpException(Yii::t('app', 'Page with ID {id} not found.', ['id' => $id]));
-        }
+        // 1. Prepare draft using Trait
+        $clone = $this->prepareCloneDraft($id, Page::class, $target_lang, $provider);
 
-        // Base draft clone
-        $clone = new Page();
-        $clone->attributes = $original->attributes;
-        $clone->setIsNewRecord(true);
-        $clone->id = null;
+        // 2. Handle POST (Save) using Trait
+        if (Yii::$app->request->isPost && $clone->load(Yii::$app->request->post())) {
 
-        // Carry tagIds so user can keep/change them
-        $clone->tagIds = $original->tagIds;
+            $newPage = $this->processCloneSave($id, $clone, Page::class);
 
-        // GET -> let user edit before saving
-        if (!Yii::$app->request->isPost) {
-
-            // Apply translation if requested via GET param
-            if ($target_lang) {
-                $languageModel = Language::findOne(['code' => $target_lang]);
-
-                if ($languageModel) {
-                    // Set the new language ID
-                    $clone->language_id = $languageModel->id;
-
-                    // Perform translation using Gemini
-                    // Ensure you have "use" statements for GeminiHelper if relying on exception handling logic inside Page
-                    $clone->translateContent($target_lang, $provider);
-
-                    Yii::$app->session->addFlash('info', Yii::t('app', 'Content auto-translated to {0} using {1}. Please review before saving.', [$languageModel->name, $provider]));
-                }
-            }
-
-            return $this->render('clone', [
-                'model' => $clone,
-            ]);
-        }
-
-        // PAGE -> confirm clone (POST)
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            if ($clone->load(Yii::$app->request->post())) {
-
-                // Build overrides (include tagIds which is not a column)
-                $overrides = [];
-
-                if (isset($clone->tagIds)) {
-                    $overrides['tagIds'] = $clone->tagIds;
-                }
-
-                // Compare other attributes against original
-                $attributesToCompare = $original->attributes();
-                foreach ($attributesToCompare as $key) {
-                    if ($key === 'id') continue;
-                    // Check strict comparison to detect manual changes
-                    if (!is_array($clone->$key) && $clone->$key !== $original->$key) {
-                        $overrides[$key] = $clone->$key;
-                    }
-                }
-
-                // Detect clone type by language change
-                $langAttr      = 'language_id';
-                $originalLang  = $original->$langAttr ?? null;
-                $newLang       = $clone->$langAttr ?? ($overrides[$langAttr] ?? null);
-                $isLanguageClone = ($originalLang && $newLang && $originalLang !== $newLang);
-
-                // Execute appropriate clone
-                if ($isLanguageClone) {
-                    $newPage = PageCloneService::cloneLanguage($original, $overrides);
-                    Yii::$app->session->addFlash('success', Yii::t('app', 'Language clone created successfully.'));
-                } else {
-                    $newPage = PageCloneService::cloneTotal($original, $overrides);
-                    Yii::$app->session->addFlash('success', Yii::t('app', 'Total clone created (new group).'));
-                }
-
-                $transaction->commit();
+            if ($newPage) {
                 return $this->redirect(['view', 'id' => $newPage->id]);
             }
-
-            // Validation failed -> re-render form
-            return $this->render('update', [
-                'model' => $clone,
-            ]);
-        } catch (\Throwable $e) {
-            $transaction->rollBack();
-            Yii::error($e->getMessage(), __METHOD__);
-            Yii::$app->session->setFlash('danger', Yii::t('app', 'Failed to clone page: {msg}', ['msg' => $e->getMessage()]));
-            return $this->redirect(['view', 'id' => $id]);
         }
+
+        // 3. Render view (Controller specific)
+        return $this->render('clone', [
+            'model' => $clone,
+        ]);
     }
 
     /** Delete page via service (handles linked data) */
