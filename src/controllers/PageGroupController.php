@@ -40,7 +40,7 @@ class PageGroupController extends AuthorizationController
 
         $dataProvider = $searchModel->search($this->request->queryParams);
 
-        return $this->render('index', [
+        return $this->render('/page/index', [
             'searchModel'  => $searchModel,
             'dataProvider' => $dataProvider,
             'class'        => $this->classFQCN,
@@ -56,7 +56,7 @@ class PageGroupController extends AuthorizationController
         if ($this->classFQCN::hasDynamic)
             [$resp, $formId, $submitUrl] = $this->preparePageMeta($id);
 
-        return $this->render('view', [
+        return $this->render('/page/view', [
             'model'         => $model,
             'formResponse'  => $resp,
             'dynamicFormId' => $formId,
@@ -104,7 +104,7 @@ class PageGroupController extends AuthorizationController
             Yii::$app->session->addFlash('danger', $e->getMessage());
         }
 
-        return $this->render('create', [
+        return $this->render('/page/create', [
             'model'        => $model,
             'model_name'   => StringHelper::basename(get_class($model)),
             'dynamicForm'  => $this->getDynamicForm(),
@@ -145,7 +145,7 @@ class PageGroupController extends AuthorizationController
             }
         }
 
-        return $this->render('update', [
+        return $this->render('/page/update', [
             'model'         => $model,
             'responseModel' => $resp,
             'dynamicForm'   => $this->getDynamicForm(),
@@ -209,7 +209,7 @@ class PageGroupController extends AuthorizationController
             }
         }
 
-        return $this->render('clone', [
+        return $this->render('/page/clone', [
             'model'         => $clone,
             'responseModel' => $resp,
             'dynamicForm'   => $dynamicForm,
