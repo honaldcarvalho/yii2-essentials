@@ -1,17 +1,18 @@
 <?php
 
+use croacworks\essentials\widgets\FormResponseMetaWidget;
 use croacworks\essentials\widgets\ListFiles;
 use croacworks\essentials\widgets\StorageUploadMultiple;
-use yii\bootstrap5\Html;
+use yii\helpers\Html;
 use yii\widgets\DetailView;
 
-/* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\Page */
+/** @var yii\web\View $this */
+/** @var common\models\Page $model */
 
 $this->title = $model->title;
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Pages'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', $model_name), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
-\yii\web\YiiAsset::register($this);
+
 ?>
 
 <div class="container-fluid">
@@ -34,7 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'attributes' => [
                             'id',
                             'group.name:text:' . Yii::t('app', 'Group'),
-                            'section.name:text:' . Yii::t('app', 'Page Section'),
+                            'pageSection.name:text:' . Yii::t('app', 'Page Section'),
                             [
                                 'attribute' => 'file_id',
                                 'format' => 'raw',
@@ -48,13 +49,21 @@ $this->params['breadcrumbs'][] = $this->title;
                             'slug',
                             'title',
                             'description',
-                            'content:raw',
+                            //'content:raw',
                             'keywords:ntext',
                             'created_at:datetime',
                             'status:boolean',
                         ],
                     ]) ?>
-
+                    <?= $hasDynamic ? FormResponseMetaWidget::widget([
+                        'dynamicFormId' => $dynamicFormId,
+                        'modelClass'    => $class,
+                        'modelId'       => (int)$model->id,
+                        'title'         => Yii::t('app','Page metadata'),
+                        'card'          => true,
+                        'fileUrlCallback' => fn(int $id) => ['/storage/file/view','id'=>$id],
+                    ]) : '';
+                    ?>
                     <?= StorageUploadMultiple::widget([
                         'attach_model' => [
                             'class_name' => \croacworks\essentials\models\PageFile::class,

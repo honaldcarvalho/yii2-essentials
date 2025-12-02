@@ -1,31 +1,21 @@
 <?php
-
+use yii\widgets\ActiveForm;
 use yii\helpers\Html;
-use yii\bootstrap5\ActiveForm;
+use croacworks\essentials\widgets\DynamicFormWidget;
 
-/* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\FormResponse */
-/* @var $form yii\bootstrap5\ActiveForm */
-?>
+/** @var yii\web\View $this */
+/** @var croacworks\essentials\models\FormResponse $model */
 
-<div class="form-response-form">
+// The widget you sent exposes: public $model; public $ajax=true; public $action=null; etc.
+// It renders inputs for response_data according to the FormResponse->dynamic_form_id.
 
-    <?php $form = ActiveForm::begin(); ?>
+$form = ActiveForm::begin([
+    'options' => ['enctype' => 'multipart/form-data'],
+]);
 
-    <?= $form->field($model, 'id')->textInput() ?>
+echo DynamicFormWidget::widget([
+    'formId' =>  $model->dynamic_form_id,
+    'model' => $model
+]);
 
-    <?= $form->field($model, 'form_field_id')->textInput() ?>
-
-    <?= $form->field($model, 'value')->textarea(['rows' => 6]) ?>
-
-    <?= $form->field($model, 'created_at')->textInput() ?>
-
-    <?= $form->field($model, 'updated_at')->textInput() ?>
-
-    <div class="form-group">
-        <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
-    </div>
-
-    <?php ActiveForm::end(); ?>
-
-</div>
+ActiveForm::end();

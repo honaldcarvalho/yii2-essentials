@@ -1,5 +1,6 @@
 <?php
 
+use croacworks\essentials\controllers\AuthorizationController;
 use yii\helpers\Url;
 use yii\helpers\Html;
 use croacworks\essentials\models\Language;
@@ -19,6 +20,8 @@ $suggestUrl = Url::to(['/tag/suggest']);
 $searchUrl  = Url::to(['/tag/search']);
 $controller = strtolower($model_name);
 
+$token = AuthorizationController::User()->access_token;
+
 if (!$model->isNewRecord && !empty($model->tagIds)) {
   $initTags = Tag::find()
     ->select(['name', 'id'])
@@ -29,123 +32,152 @@ if (!$model->isNewRecord && !empty($model->tagIds)) {
 
 $inputId = Html::getInputId($model, 'tagIds');
 
+
 ?>
 
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+    <button class="nav-link active" id="nav-home-tab" data-coreui-toggle="tab" data-coreui-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">
+      <h5><?= Yii::t('app', 'Course Data'); ?></h5>
+    </button>
+    <button class="nav-link" id="nav-profile-tab" data-coreui-toggle="tab" data-coreui-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
+      <h5><?= Yii::t('app', 'Course MetaData'); ?></h5>
+    </button>
+  </div>
+</nav>
 <?php $form = ActiveForm::begin([
   'id' => 'page-form'
 ]); ?>
 
-<?= $form->field($model, 'file_id')
-  ->fileInput([
-    'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
-    'accept' => 'image/*',
-    'style' => 'display:none'
-  ])->label(false) ?>
+<div class="tab-content" id="nav-tabContent">
+  <div class="tab-pane fade show active mt-3" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0">
 
-<?= UploadImageInstant::widget([
-  'mode'        => 'defer', // upload on submit
-  'model'       => $model,
-  'attribute'   => 'file_id',
-  'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
-  'imageUrl'    => $model->file->url ?? '',
-  'aspectRatio' => '4/3',
-]) ?>
 
-<div class="row mb-3">
-  <div class="col-sm-6">
-    <?= $form->field($model, 'page_section_id')->dropDownList(
-      yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
-      ['prompt' => Yii::t('app', '-- select a section --')]
-    ) ?>
-  </div>
+    <?= $form->field($model, 'file_id')
+      ->fileInput([
+        'id' => \yii\helpers\Html::getInputId($model, 'file_id'),
+        'accept' => 'image/*',
+        'style' => 'display:none'
+      ])->label(false) ?>
 
-  <div class="col-sm-6">
-    <?= $form->field($model, 'language_id')->dropDownList(
-      yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
-      [
-        'prompt'  => Yii::t('app', 'Select Language'),
-        'options' => \yii\helpers\ArrayHelper::map(
-          Language::find()->all(),
-          'id',
-          fn($lang) => ['data-code' => $lang->code]
-        ),
-      ]
-    ) ?>
-  </div>
-</div>
+    <?= UploadImageInstant::widget([
+      'mode'        => 'defer', // upload on submit
+      'model'       => $model,
+      'attribute'   => 'file_id',
+      'fileInputId' => \yii\helpers\Html::getInputId($model, 'file_id'),
+      'imageUrl'    => $model->file->url ?? '',
+      'aspectRatio' => '4/3',
+    ]) ?>
 
-<div class="row mb-3">
-  <div class="col-sm-3">
-    <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
-  </div>
-  <div class="col-sm-9">
-    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
-  </div>
-</div>
+    <div class="row mb-3">
+      <div class="col-sm-6">
+        <?= $form->field($model, 'page_section_id')->dropDownList(
+          yii\helpers\ArrayHelper::map(PageSection::find()->all(), 'id', 'name'),
+          ['prompt' => Yii::t('app', '-- select a section --')]
+        ) ?>
+      </div>
 
-<div class="row mb-3">
-  <div class="col-sm-12">
-    <?= $form->field($model, 'description')->textarea(['rows' => 2]) ?>
-    <button type="button" id="btn-auto-summary" class="btn btn-outline-secondary btn-sm">
-      <?= Yii::t('app', 'Generate automatic description') ?>
-    </button>
-  </div>
-</div>
-
-<?= $form->field($model, 'content')->widget(TinyMCE::class, [
-  'options' => ['rows' => 20]
-]); ?>
-
-<div class="row mb-3">
-  <div class="col-sm-12 mb-3">
-    <?= $form->field($model, 'tagIds')->dropDownList(
-      $initTags,
-      [
-        'id'       => $inputId,
-        'multiple' => true,
-        'class'    => 'form-control select2-plain',
-      ]
-    )->label(Yii::t('app', 'Tags')) ?>
-
-    <button type="button" id="btn-suggest-tags" class="btn btn-outline-secondary btn-sm">
-      <?= Yii::t('app', 'Suggest tags') ?>
-    </button>
-    <div id="tag-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
-  </div>
-</div>
-
-<?= $form->field($model, 'list')->checkbox()->label(Yii::t('app', 'Show in lists')) ?>
-<?= $form->field($model, 'status')->checkbox()->label(Yii::t('app', 'Active')) ?>
-
-<div class="accordion" id="accordionHtmlCustom">
-
-  <div class="accordion-item">
-
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-        <?= Yii::t('app', 'HTML Customization'); ?>
-      </button>
-    </h2>
-
-    <div id="collapseTwo" class="accordion-collapse collapse" data-coreui-parent="#accordionHtmlCustom">
-      <div class="accordion-body">
-        <?= $form->field($model, 'custom_css')->textarea(['rows' => 6]) ?>
-        <?= $form->field($model, 'custom_js')->textarea(['rows' => 6]) ?>
-        <?= $form->field($model, 'keywords')->textarea(['rows' => 6]) ?>
+      <div class="col-sm-6">
+        <?= $form->field($model, 'language_id')->dropDownList(
+          yii\helpers\ArrayHelper::map(Language::find()->all(), 'id', 'name'),
+          [
+            'prompt'  => Yii::t('app', 'Select Language'),
+            'options' => \yii\helpers\ArrayHelper::map(
+              Language::find()->all(),
+              'id',
+              fn($lang) => ['data-code' => $lang->code]
+            ),
+          ]
+        ) ?>
       </div>
     </div>
+
+    <div class="row mb-3">
+      <div class="col-sm-3">
+        <?= $form->field($model, 'slug')->textInput(['maxlength' => true]) ?>
+      </div>
+      <div class="col-sm-9">
+        <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-sm-12">
+        <?= $form->field($model, 'description')->textarea(['rows' => 2]) ?>
+        <button type="button" id="btn-auto-summary" class="btn btn-outline-secondary btn-sm">
+          <?= Yii::t('app', 'Generate automatic description') ?>
+        </button>
+      </div>
+    </div>
+
+    <?= $form->field($model, 'content')->widget(TinyMCE::class, [
+      'options' => ['rows' => 20]
+    ]); ?>
+
+    <div class="row mb-3">
+      <div class="col-sm-12 mb-3">
+        <?= $form->field($model, 'tagIds')->dropDownList(
+          $initTags,
+          [
+            'id'       => $inputId,
+            'multiple' => true,
+            'class'    => 'form-control select2-plain',
+          ]
+        )->label(Yii::t('app', 'Tags')) ?>
+
+        <button type="button" id="btn-suggest-tags" class="btn btn-outline-secondary btn-sm">
+          <?= Yii::t('app', 'Suggest tags') ?>
+        </button>
+        <div id="tag-suggestions" class="d-flex flex-wrap gap-2 mt-2"></div>
+      </div>
+    </div>
+
+    <?= $form->field($model, 'list')->checkbox()->label(Yii::t('app', 'Show in lists')) ?>
+    <?= $form->field($model, 'status')->checkbox()->label(Yii::t('app', 'Active')) ?>
+
+    <div class="accordion" id="accordionHtmlCustom">
+
+      <div class="accordion-item">
+
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            <?= Yii::t('app', 'HTML Customization'); ?>
+          </button>
+        </h2>
+
+        <div id="collapseTwo" class="accordion-collapse collapse" data-coreui-parent="#accordionHtmlCustom">
+          <div class="accordion-body">
+            <?= $form->field($model, 'custom_css')->textarea(['rows' => 6]) ?>
+            <?= $form->field($model, 'custom_js')->textarea(['rows' => 6]) ?>
+            <?= $form->field($model, 'keywords')->textarea(['rows' => 6]) ?>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="tab-pane fade mt-3" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
+    <?= DynamicFormWidget::widget([
+      'formId' =>  $dynamicForm->id,
+      'model' => $responseModel,
+      'activeForm' => $form, // <--- Importante: Passa o form pai
+      'showSave' => false,
+      'ajax' => false
+    ]);
+    ?>
   </div>
 
 </div>
+<?php ActiveForm::end(); ?>
 
 <div class="form-group mb-3 mt-3">
-  <?= Html::submitButton(
+  <?= Html::button(
     '<i class="fas fa-save mr-2"></i>' . Yii::t('croacworks\essentials', 'Save'),
     ['class' => 'btn btn-success', 'id' => 'btn-save-page']
   ) ?>
 </div>
-
-<?php ActiveForm::end(); ?>
 
 <?php
 
@@ -291,13 +323,18 @@ langSelect.addEventListener('change', async function () {
   for (const f of toTranslate) {
     appendStatus(`🔄 \${yii.t('app', 'Translating')} \${f.label.toLowerCase()}...`);
     try {
-      const res = await fetch(`/util/suggest-translation`, {
+      const res = await fetch(`/rest/util/suggest-translation`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          // Authorization header structure
+          'Authorization': `Bearer {$token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ 
+          provider: 'gemini',
           to: encodeURIComponent(source),
           language: encodeURIComponent(targetCode),
-          text: f.text
+          text: f.text 
         })
       });
       const json = await res.json();
@@ -509,4 +546,74 @@ document.getElementById('btn-suggest-tags').addEventListener('click', function (
   );
 });
 
+(function () {
+  const saveBtn = document.getElementById('btn-save-page');
+  if (!saveBtn) return;
+
+  function appendHidden(form, name, value) {
+    if (value === null || typeof value === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = String(value);
+    form.appendChild(input);
+  }
+
+  function copyControlTo(form, el) {
+    // Radios: só envia o checado
+    if (el.type === 'radio') {
+      if (el.checked) appendHidden(form, el.name, el.value);
+      return;
+    }
+
+    // Checkbox: padroniza como 1/0
+    if (el.type === 'checkbox') {
+      appendHidden(form, el.name, el.checked ? 1 : 0);
+      return;
+    }
+
+    // Select múltiplo: envia N inputs
+    if (el.tagName === 'SELECT' && el.multiple) {
+      Array.from(el.selectedOptions).forEach(opt => {
+        appendHidden(form, el.name, opt.value);
+      });
+      return;
+    }
+
+    // Arquivos: precisa mover o próprio elemento para manter o FileList
+    if (el.type === 'file') {
+      form.appendChild(el); // move o nó
+      return;
+    }
+
+    // Demais inputs/textarea/select simples
+    appendHidden(form, el.name, el.value);
+  }
+
+  saveBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    // Garante que TinyMCE grave de volta nos textareas
+    if (typeof tinyMCE !== 'undefined' && tinyMCE.triggerSave) {
+      tinyMCE.triggerSave();
+    }
+
+    const pageForm = document.getElementById('page-form');
+    if (!pageForm) return;
+
+    // Procura o <form> interno do widget dentro do wrapper
+    // const metaForm = document.querySelector('#meta-wrap form');
+    // if (metaForm) {
+    //   // Move/copIa todos os campos do form de metadata para o pageForm
+    //   const controls = metaForm.querySelectorAll('input[name], textarea[name], select[name]');
+    //   controls.forEach(el => copyControlTo(pageForm, el));
+    // }
+
+    pageForm.submit();
+
+  });
+})();
+
 JS);
+
+?>

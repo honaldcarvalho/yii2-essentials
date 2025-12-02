@@ -1,27 +1,19 @@
 <?php
-
 use yii\helpers\Html;
 
-/* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\FormResponse */
+/** @var yii\web\View $this */
+/** @var croacworks\essentials\models\FormResponse $model */
+/** @var croacworks\essentials\models\DynamicForm $formDef */
 
-$this->title = Yii::t('app', Yii::t('app', 'Create Form Response'));
-$this->params['breadcrumbs'][] = ['label' =>  Yii::t('app', Yii::t('app', 'Form Responses')), 'url' => ['index']];
+$this->title = Yii::t('app', 'Create');
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', $model_name), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-12">
-                    <?=$this->render('_form', [
-                        'model' => $model
-                    ]) ?>
-                </div>
-            </div>
-        </div>
-        <!--.card-body-->
-    </div>
-    <!--.card-->
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0"><?= Html::encode($this->title) ?> — <?= Html::encode($formDef->name) ?></h5>
+  </div>
+  <div class="card-body">
+    <?= $this->render('_form', ['model' => $model]) ?>
+  </div>
 </div>

@@ -2,8 +2,9 @@
 
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
+use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
-use croacworks\essentials\widgets\form\ActiveForm;
+
 
 /* @var $this yii\web\View */
 /* @var $model croacworks\essentials\models\PageSearch */
@@ -36,12 +37,6 @@ use croacworks\essentials\widgets\form\ActiveForm;
     <?= $form->field($model, 'title') ?>
 
     <?= $form->field($model, 'description') ?>
-
-    <?php // echo $form->field($model, 'content') ?>
-
-    <?php // echo $form->field($model, 'keywords') ?>
-
-    <?php // echo $form->field($model, 'created_at') ?>
 
     <?= $form->field($model, 'status')->dropdownList([''=>'',0=>Yii::t('app','Disabled'),1=>Yii::t('app','Enabled')]) ?>
 

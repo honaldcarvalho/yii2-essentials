@@ -1,46 +1,33 @@
 <?php
-
 /* @var $this yii\web\View */
-/* @var $model croacworks\essentials\models\Page */
+/* @var $model app\models\Page */
+/* @var $model_name string */
+/* @var $dynamicForm \croacworks\essentials\models\DynamicForm */
+/* @var $dynamicModel \yii\base\DynamicModel */
 
-use yii\bootstrap5\Html;
+use yii\helpers\Url;
 
-$this->title = Yii::t('app', 'Update Page: {name}', [
-    'name' => $model->title,
-]);
-$this->params['breadcrumbs'][] = ['label' => Yii::t('app', 'Pages'), 'url' => ['index']];
+$this->title = Yii::t('app', "Update {$model_name}: {name}", ['name' => $model->title]);
+$this->params['breadcrumbs'][] = ['label' => Yii::t('app', $model_name), 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->title, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
+
 ?>
 
 <div class="container-fluid">
-    <div class="row">
+  <div class="card">
+    <div class="card-body">
+      <div class="row">
         <div class="col-md-12">
-
-            <h1><?= Html::encode($this->title) ?></h1>
-
-            <div class="card">
-                <div class="card-body">
-
-                    <div class="row mb-2">
-                        <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget([
-                                'show' => ['index'],
-                                'buttons_name' => ['index' => Yii::t('app', 'List') . ' ' . Yii::t('app', 'Pages')]
-                            ]) ?>
-                        </div>
-                    </div>
-
-                    <?= $this->render('_form', [
-                        'model' => $model
-                    ]) ?>
-
-                </div>
-                <!--.card-body-->
-            </div>
-            <!--.card-->
+          <?= $this->render($hasDynamic ? '_form_meta' : '_form', [
+            'model'         => $model,
+            'model_name'    => $model_name,
+            'dynamicForm'   => $dynamicForm,
+            'responseModel' => $responseModel,
+            'hasDynamic' => $hasDynamic,
+          ]) ?>
         </div>
-        <!--.col-md-12-->
+      </div>
     </div>
-    <!--.row-->
+  </div>
 </div>

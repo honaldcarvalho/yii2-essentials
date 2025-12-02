@@ -3,33 +3,51 @@
 namespace croacworks\essentials\controllers;
 
 use Yii;
-use yii\web\NotFoundHttpException;
+
 use yii\web\Response;
 use yii\web\UploadedFile;
-use croacworks\essentials\enums\FormFieldType;
-use croacworks\essentials\models\FormField;
-use croacworks\essentials\models\FormResponse;
-use croacworks\essentials\controllers\rest\StorageController;
 use yii\helpers\Url;
+use croacworks\essentials\enums\FormFieldType;
+use croacworks\essentials\models\FormResponse;
+use croacworks\essentials\models\FormField;
+use croacworks\essentials\controllers\rest\StorageController;
 
 class FormResponseController extends AuthorizationController
 {
+    /**
+     * Standard list view.
+     */
     public function actionIndex()
     {
         $searchModel = new FormResponse();
         $dataProvider = $searchModel->search(
             Yii::$app->request->queryParams,
-            ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC], 'order' => false]
+            ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]
         );
 
         return $this->render('index', compact('searchModel', 'dataProvider'));
     }
 
+    /**
+     * Standard detail view.
+     */
     public function actionView($id)
     {
         return $this->render('view', ['model' => $this->findModel($id)]);
     }
 
+    /**
+     * Returns the widget form via AJAX.
+     */
+    public function actionEdit($id)
+    {
+        $model = $this->findModel($id);
+        return $this->renderAjax('_form_widget', ['model' => $model]);
+    }
+
+    /**
+     * Creates a new response via JSON/AJAX.
+     */
     public function actionCreateJson(bool $asJson = true)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -38,267 +56,162 @@ class FormResponseController extends AuthorizationController
             $req = Yii::$app->request;
             $dynamicFormId =
                 (int)$req->post('dynamic_form_id', 0)
-                ?: (int)($req->post('FormResponse')['dynamic_form_id'] ?? 0)
-                ?: (int)($this->formDef->id ?? 0);
+                ?: (int)($req->post('FormResponse')['dynamic_form_id'] ?? 0);
 
             if ($dynamicFormId <= 0) {
-                return ['success' => false, 'error' => 'Missing dynamic_form_id'];
+                return ['success' => false, 'error' => Yii::t('app', 'Missing dynamic_form_id')];
             }
 
-            return $this->createJson($dynamicFormId);
+            // Create new instance
+            $model = new FormResponse(['dynamic_form_id' => $dynamicFormId]);
+
+            return $this->processAndSave($model);
         } catch (\Throwable $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
+    /**
+     * Updates an existing response via JSON/AJAX.
+     */
     public function actionUpdateJson($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            $model = FormResponse::findOne((int)$id);
-            if (!$model) {
-                return ['success' => false, 'error' => 'FormResponse not found'];
-            }
-
-            return $this->updateJson($model);
+            $model = $this->findModel($id);
+            return $this->processAndSave($model);
         } catch (\Throwable $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
     // ====================================================
-    // ============== CORE GENERIC METHODS ================
+    // ============== PROTECTED PROCESSOR =================
     // ====================================================
 
-    public function createJson(int $dynamicFormId): array
-    {
-        $req = Yii::$app->request;
-        $fields = FormField::find()
-            ->where(['dynamic_form_id' => $dynamicFormId])
-            ->indexBy('name')
-            ->all();
-
-        if (empty($fields)) {
-            return ['success' => false, 'error' => 'No fields found'];
-        }
-
-        $postData = $req->post('DynamicModel', []);
-        $data = [];
-
-        foreach ($fields as $name => $field) {
-            $type = (int)$field->type;
-
-            if ($type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE) {
-                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
-
-                if (!$uploaded) {
-                    $data[$name] = null;
-                    continue;
-                }
-
-                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
-                if (!$fileId) {
-                    return ['success' => false, 'error' => 'Upload failed'];
-                }
-
-                $data[$name] = (string)$fileId;
-                continue;
-            }
-
-            $value = $postData[$name] ?? null;
-
-            if ($value === '') {
-                $data[$name] = null;
-                continue;
-            }
-
-            switch ($type) {
-                case FormFieldType::TYPE_NUMBER:
-                    $data[$name] = is_numeric($value) ? $value + 0 : null;
-                    break;
-                case FormFieldType::TYPE_CHECKBOX:
-                case FormFieldType::TYPE_MULTIPLE:
-                    $data[$name] = (array)$value;
-                    break;
-                case FormFieldType::TYPE_DATE:
-                case FormFieldType::TYPE_DATETIME:
-                    $ts = strtotime((string)$value);
-                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
-                    break;
-                default:
-                    $data[$name] = $value;
-                    break;
-            }
-        }
-
-        $model = new FormResponse();
-        $model->dynamic_form_id = $dynamicFormId;
-        $model->response_data = $data;
-
-        if ($model->hasAttribute('group_id')) {
-            $model->group_id = (int)(Yii::$app->user->identity->group_id ?? 1);
-        }
-
-        if ($model->save(false)) {
-            return [
-                'success'  => true,
-                'message'  => 'Data created',
-                'id'       => (int)$model->id,
-                'redirect' => Url::to(['view', 'id' => (int)$model->id]),
-            ];
-        }
-
-        return ['success' => false, 'error' => 'Save failed'];
-    }
-
-    public function updateJson(FormResponse $model): array
+    /**
+     * Centralized logic to process fields, uploads and save logic.
+     * Keeps actions skinny.
+     */
+    protected function processAndSave(FormResponse $model): array
     {
         $req = Yii::$app->request;
         $postData = $req->post('DynamicModel', []);
+
+        // Find field definitions
         $fields = FormField::find()
             ->where(['dynamic_form_id' => $model->dynamic_form_id])
             ->indexBy('name')
             ->all();
 
-        $data = $this->decodeResponseData($model->response_data);
-        $existing = $data;
+        if (empty($fields)) {
+            return ['success' => false, 'error' => Yii::t('app', 'No fields found for this form')];
+        }
 
+        // Process inputs
         foreach ($fields as $name => $field) {
             $type = (int)$field->type;
 
-            if ($type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE) {
-                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
-                $wantsClear = (string)($postData[$name . '_clear'] ?? '0') === '1';
-                $oldId = (int)($existing[$name] ?? 0);
-
-                if ($wantsClear && !$uploaded) {
-                    if ($oldId > 0) {
-                        $this->deleteFileId($oldId);
-                    }
-                    $data[$name] = null;
-                    continue;
-                }
-
-                if (!$uploaded) {
-                    continue;
-                }
-
-                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
-                if (!$fileId) {
-                    return ['success' => false, 'error' => 'Upload failed'];
-                }
-
-                if ($oldId > 0 && (int)$fileId !== $oldId) {
-                    $this->deleteFileId($oldId);
-                }
-
-                $data[$name] = (string)$fileId;
+            // Handle File Uploads
+            if ($this->isFileType($type)) {
+                $this->handleFileUpload($model, $name, $field->label, $postData);
                 continue;
             }
 
+            // Handle Standard Inputs
             $value = $postData[$name] ?? null;
 
-            if ($value === '') {
-                $data[$name] = null;
-                continue;
-            }
-
-            switch ($type) {
-                case FormFieldType::TYPE_NUMBER:
-                    $data[$name] = is_numeric($value) ? $value + 0 : null;
-                    break;
-                case FormFieldType::TYPE_CHECKBOX:
-                case FormFieldType::TYPE_MULTIPLE:
-                    $data[$name] = (array)$value;
-                    break;
-                case FormFieldType::TYPE_DATE:
-                case FormFieldType::TYPE_DATETIME:
-                    $ts = strtotime((string)$value);
-                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
-                    break;
-                default:
-                    $data[$name] = $value;
-                    break;
-            }
+            // Use Magic Method __set on model
+            $model->$name = $this->formatValue($type, $value);
         }
-
-        $model->response_data = $data;
 
         if ($model->save(false)) {
-            return ['success' => true, 'message' => 'Data updated'];
+            return [
+                'success'  => true,
+                'message'  => $model->isNewRecord ? Yii::t('app', 'Data created') : Yii::t('app', 'Data updated'),
+                'id'       => (int)$model->id,
+                'redirect' => Url::to(['view', 'id' => (int)$model->id]),
+            ];
         }
 
-        return ['success' => false, 'error' => 'Save failed'];
+        return ['success' => false, 'error' => Yii::t('app', 'Save failed')];
     }
 
     // ====================================================
-    // ================= JSON SEARCH HELPER ===============
+    // ================= HELPER METHODS ===================
     // ====================================================
 
     /**
-     * Busca um FormResponse por um campo dentro do JSON response_data.
+     * Formats the value based on field type.
      */
-    public static function findByJsonField(string $field, $value, ?int $dynamicFormId = null): ?FormResponse
+    protected function formatValue(int $type, $value)
     {
-        $query = FormResponse::find();
-
-        if ($dynamicFormId) {
-            $query->andWhere(['dynamic_form_id' => $dynamicFormId]);
+        if ($value === '' || $value === null) {
+            return null;
         }
 
-        $query->andWhere([
-            '=',
-            new \yii\db\Expression("JSON_UNQUOTE(JSON_EXTRACT(response_data, '$.\"{$field}\"'))"),
-            $value
-        ]);
+        switch ($type) {
+            case FormFieldType::TYPE_NUMBER:
+                return is_numeric($value) ? $value + 0 : null;
 
-        return $query->one();
-    }
+            case FormFieldType::TYPE_CHECKBOX:
+            case FormFieldType::TYPE_MULTIPLE:
+                return (array)$value;
 
-    public function actionEdit($id)
-    {
-        $model = FormResponse::findOne($id);
-        if (!$model) {
-            throw new NotFoundHttpException('FormResponse not found.');
+            case FormFieldType::TYPE_DATE:
+            case FormFieldType::TYPE_DATETIME:
+                $ts = strtotime((string)$value);
+                return $ts ? date('Y-m-d H:i:s', $ts) : null;
+
+            default:
+                return $value;
         }
-        return $this->renderAjax('_form_widget', ['model' => $model]);
     }
 
-    public function deleteFileId(int $fileId, array $opts = []): bool
+    protected function isFileType(int $type): bool
     {
-        if ($fileId <= 0) return true;
+        return $type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE;
+    }
 
-        // defaults seguros: respeita grupo, ignora físico ausente, remove thumb
-        $opts = array_merge([
-            'force'         => false,  // true só para master/batch
-            'ignoreMissing' => true,
-            'deleteThumb'   => true,
-        ], $opts);
+    /**
+     * Handles upload, deletion of old files and setting model attributes.
+     */
+    protected function handleFileUpload(FormResponse $model, string $fieldName, ?string $label, array $postData): void
+    {
+        $uploaded = UploadedFile::getInstanceByName("DynamicModel[$fieldName]");
+        $wantsClear = (string)($postData[$fieldName . '_clear'] ?? '0') === '1';
 
-        try {
-            $res = \croacworks\essentials\controllers\rest\StorageController::removeFile($fileId, $opts);
-            if (is_array($res) && ($res['success'] ?? false) === true) {
-                return true;
+        // Use Magic Getter to find existing ID
+        $oldId = (int)($model->$fieldName ?? 0);
+
+        // User requested to clear the file
+        if ($wantsClear && !$uploaded) {
+            if ($oldId > 0) {
+                $this->deleteFileId($oldId);
             }
-            Yii::warning('removeFile failed: ' . var_export($res, true), __METHOD__);
-        } catch (\Throwable $e) {
-            Yii::error("removeFile exception for #$fileId: " . $e->getMessage(), __METHOD__);
+            $model->$fieldName = null;
+            return;
         }
-        return false;
+
+        // No new file and no clear request
+        if (!$uploaded) {
+            return;
+        }
+
+        // Process new upload
+        $fileId = $this->storeWithStorage($uploaded, $label ?? $uploaded->name);
+
+        if ($fileId) {
+            // Remove old file if it existed
+            if ($oldId > 0 && $fileId !== $oldId) {
+                $this->deleteFileId($oldId);
+            }
+            $model->$fieldName = (string)$fileId;
+        }
     }
 
-    public function decodeResponseData($raw): array
-    {
-        if (is_array($raw)) return $raw;
-        if (is_string($raw)) {
-            $d = json_decode($raw, true);
-            return is_array($d) ? $d : [];
-        }
-        return [];
-    }
-
-    public function storeWithStorage(UploadedFile $uploaded, string $description): ?int
+    protected function storeWithStorage(UploadedFile $uploaded, string $description): ?int
     {
         $groupId = (int)(Yii::$app->user->identity->group_id ?? 1);
 
@@ -317,5 +230,24 @@ class FormResponseController extends AuthorizationController
         $data = $res['data'] ?? null;
         $id = is_object($data) ? ($data->id ?? null) : ($data['id'] ?? null);
         return $id ? (int)$id : null;
+    }
+
+    protected function deleteFileId(int $fileId, array $opts = []): bool
+    {
+        if ($fileId <= 0) return true;
+
+        $opts = array_merge([
+            'force'         => false,
+            'ignoreMissing' => true,
+            'deleteThumb'   => true,
+        ], $opts);
+
+        try {
+            $res = StorageController::removeFile($fileId, $opts);
+            return is_array($res) && ($res['success'] ?? false) === true;
+        } catch (\Throwable $e) {
+            Yii::error("removeFile exception for #$fileId: " . $e->getMessage(), __METHOD__);
+        }
+        return false;
     }
 }
