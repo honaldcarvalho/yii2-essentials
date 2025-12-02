@@ -1,4 +1,5 @@
 <?php
+
 namespace croacworks\essentials;
 
 use Yii;
@@ -16,6 +17,7 @@ class Bootstrap implements BootstrapInterface
     {
         // Alias for this package
         Yii::setAlias('@croacworks/essentials', __DIR__);
+        Yii::setAlias('@essentials', __DIR__);
 
         // Example: register DI bindings if not already set
         $container = Yii::$container;
