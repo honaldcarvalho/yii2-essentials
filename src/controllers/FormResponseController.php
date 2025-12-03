@@ -123,6 +123,171 @@ class FormResponseController extends AuthorizationController
     }
 
     // ====================================================
+    // ============== CORE GENERIC METHODS ================
+    // ====================================================
+
+    public function createJson(int $dynamicFormId): array
+    {
+        $req = Yii::$app->request;
+        $fields = FormField::find()
+            ->where(['dynamic_form_id' => $dynamicFormId])
+            ->indexBy('name')
+            ->all();
+
+        if (empty($fields)) {
+            return ['success' => false, 'error' => 'No fields found'];
+        }
+
+        $postData = $req->post('DynamicModel', []);
+        $data = [];
+
+        foreach ($fields as $name => $field) {
+            $type = (int)$field->type;
+
+            if ($type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE) {
+                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+
+                if (!$uploaded) {
+                    $data[$name] = null;
+                    continue;
+                }
+
+                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
+                if (!$fileId) {
+                    return ['success' => false, 'error' => 'Upload failed'];
+                }
+
+                $data[$name] = (string)$fileId;
+                continue;
+            }
+
+            $value = $postData[$name] ?? null;
+
+            if ($value === '') {
+                $data[$name] = null;
+                continue;
+            }
+
+            switch ($type) {
+                case FormFieldType::TYPE_NUMBER:
+                    $data[$name] = is_numeric($value) ? $value + 0 : null;
+                    break;
+                case FormFieldType::TYPE_CHECKBOX:
+                case FormFieldType::TYPE_MULTIPLE:
+                    $data[$name] = (array)$value;
+                    break;
+                case FormFieldType::TYPE_DATE:
+                case FormFieldType::TYPE_DATETIME:
+                    $ts = strtotime((string)$value);
+                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
+                    break;
+                default:
+                    $data[$name] = $value;
+                    break;
+            }
+        }
+
+        $model = new FormResponse();
+        $model->dynamic_form_id = $dynamicFormId;
+        $model->response_data = $data;
+
+        if ($model->hasAttribute('group_id')) {
+            $model->group_id = (int)(Yii::$app->user->identity->group_id ?? 1);
+        }
+
+        if ($model->save(false)) {
+            return [
+                'success'  => true,
+                'message'  => 'Data created',
+                'id'       => (int)$model->id,
+                'redirect' => Url::to(['view', 'id' => (int)$model->id]),
+            ];
+        }
+
+        return ['success' => false, 'error' => 'Save failed'];
+    }
+
+    public function updateJson(FormResponse $model): array
+    {
+        $req = Yii::$app->request;
+        $postData = $req->post('DynamicModel', []);
+        $fields = FormField::find()
+            ->where(['dynamic_form_id' => $model->dynamic_form_id])
+            ->indexBy('name')
+            ->all();
+
+        $data = $this->decodeResponseData($model->response_data);
+        $existing = $data;
+
+        foreach ($fields as $name => $field) {
+            $type = (int)$field->type;
+
+            if ($type === FormFieldType::TYPE_FILE || $type === FormFieldType::TYPE_PICTURE) {
+                $uploaded = UploadedFile::getInstanceByName("DynamicModel[$name]");
+                $wantsClear = (string)($postData[$name . '_clear'] ?? '0') === '1';
+                $oldId = (int)($existing[$name] ?? 0);
+
+                if ($wantsClear && !$uploaded) {
+                    if ($oldId > 0) {
+                        $this->deleteFileId($oldId);
+                    }
+                    $data[$name] = null;
+                    continue;
+                }
+
+                if (!$uploaded) {
+                    continue;
+                }
+
+                $fileId = $this->storeWithStorage($uploaded, $field->label ?? $uploaded->name);
+                if (!$fileId) {
+                    return ['success' => false, 'error' => 'Upload failed'];
+                }
+
+                if ($oldId > 0 && (int)$fileId !== $oldId) {
+                    $this->deleteFileId($oldId);
+                }
+
+                $data[$name] = (string)$fileId;
+                continue;
+            }
+
+            $value = $postData[$name] ?? null;
+
+            if ($value === '') {
+                $data[$name] = null;
+                continue;
+            }
+
+            switch ($type) {
+                case FormFieldType::TYPE_NUMBER:
+                    $data[$name] = is_numeric($value) ? $value + 0 : null;
+                    break;
+                case FormFieldType::TYPE_CHECKBOX:
+                case FormFieldType::TYPE_MULTIPLE:
+                    $data[$name] = (array)$value;
+                    break;
+                case FormFieldType::TYPE_DATE:
+                case FormFieldType::TYPE_DATETIME:
+                    $ts = strtotime((string)$value);
+                    $data[$name] = $ts ? date('Y-m-d H:i:s', $ts) : null;
+                    break;
+                default:
+                    $data[$name] = $value;
+                    break;
+            }
+        }
+
+        $model->response_data = $data;
+
+        if ($model->save(false)) {
+            return ['success' => true, 'message' => 'Data updated'];
+        }
+
+        return ['success' => false, 'error' => 'Save failed'];
+    }
+    
+    // ====================================================
     // ============== PROTECTED PROCESSOR =================
     // ====================================================
 
