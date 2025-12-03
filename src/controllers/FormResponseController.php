@@ -32,11 +32,12 @@ class FormResponseController extends AuthorizationController
      */
     public function actionIndex()
     {
-        $searchModel = new FormResponse();
-        $dataProvider = $searchModel->search(
-            Yii::$app->request->queryParams,
-            ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]
-        );
+        $searchModel = new FormResponse([
+            'dynamic_form_id' => (int)$this->formDef->id,
+        ]);
+
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->query->andWhere(['dynamic_form_id' => (int)$this->formDef->id]);
 
         return $this->render('index', [
             'searchModel'  => $searchModel,
