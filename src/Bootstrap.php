@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials;
 
+use croacworks\essentials\helpers\MetaHelper;
 use Yii;
 use yii\base\BootstrapInterface;
 
@@ -23,39 +24,29 @@ class Bootstrap implements BootstrapInterface
         $container = Yii::$container;
 
         // Bind StorageInterface -> LocalStorage (can be overridden in app config)
-        if (!$container->has('croacworks\\essentials\\components\\files\\StorageInterface')) {
-            $container->set(
-                'croacworks\\essentials\\components\\files\\StorageInterface',
-                'croacworks\\essentials\\components\\files\\LocalStorage'
-            );
-        }
+        // if (!$container->has('croacworks\\essentials\\components\\files\\StorageInterface')) {
+        //     $container->set(
+        //         'croacworks\\essentials\\components\\files\\StorageInterface',
+        //         'croacworks\\essentials\\components\\files\\LocalStorage'
+        //     );
+        // }
 
         // Ensure default components exist (non-intrusive: only set if missing)
-        $this->ensureDefaultComponent($app, 'authorization', [
-            'class' => \croacworks\essentials\components\authorization\AuthorizationService::class,
-        ]);
+        // $this->ensureDefaultComponent($app, 'authorization', [
+        //     'class' => \croacworks\essentials\components\authorization\AuthorizationService::class,
+        // ]);
 
-        $this->ensureDefaultComponent($app, 'authService', [
-            'class' => \croacworks\essentials\components\auth\AuthService::class,
-        ]);
+        // $this->ensureDefaultComponent($app, 'authService', [
+        //     'class' => \croacworks\essentials\components\auth\AuthService::class,
+        // ]);
 
-        $this->ensureDefaultComponent($app, 'settings', [
-            'class' => \croacworks\essentials\components\config\Settings::class,
-            'cacheTtl' => 300,
-        ]);
-
-        $this->ensureDefaultComponent($app, 'storage', [
-            'class' => \croacworks\essentials\components\files\LocalStorage::class,
-            'basePath' => '@app/runtime/uploads',
-            'baseUrl'  => '/uploads',
-        ]);
-
-        $this->ensureDefaultComponent($app, 'alertManager', [
-            'class' => \croacworks\essentials\components\ui\AlertManager::class,
-        ]);
+        // $this->ensureDefaultComponent($app, 'settings', [
+        //     'class' => \croacworks\essentials\components\config\Settings::class,
+        //     'cacheTtl' => 300,
+        // ]);
 
         $this->ensureDefaultComponent($app, 'metaHelper', [
-            'class' => \croacworks\essentials\components\meta\MetaHelper::class,
+            'class' => MetaHelper::class,
         ]);
 
         // Note: i18n uses category 'app' — host app should configure DbMessageSource for 'app'
