@@ -25,9 +25,11 @@ class PageGroupController extends AuthorizationController
     public function init()
     {
         parent::init();
-        $this->formResponseCtrl = new FormResponseController('form-response', Yii::$app, [
-            'form_name' => $this->form_name
-        ]);
+        if ($this->classFQCN::hasDynamic) {
+            $this->formResponseCtrl = new FormResponseController('form-response', Yii::$app, [
+                'form_name' => $this->form_name
+            ]);
+        }
     }
 
     public function actionIndex()
