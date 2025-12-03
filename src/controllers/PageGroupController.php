@@ -8,18 +8,18 @@ use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\controllers\FormResponseController;
 use croacworks\essentials\models\DynamicForm;
 use croacworks\essentials\models\FormResponse;
-use croacworks\essentials\models\PageGroup;
+use croacworks\essentials\models\Page;
 use croacworks\essentials\traits\CloneActionTrait;
 use yii\db\Transaction;
 use yii\helpers\StringHelper;
 use yii\helpers\Url;
 
-class PageGroupController extends AuthorizationController
+class PageController extends AuthorizationController
 {
     use CloneActionTrait;
 
     public $form_name = 'page_form';
-    public $classFQCN = PageGroup::class;
+    public $classFQCN = Page::class;
     public $formResponseCtrl;
 
     public function init()
@@ -76,7 +76,7 @@ class PageGroupController extends AuthorizationController
 
         try {
             if ($model->load($this->request->post())) {
-                $model->page_section_id = PageGroup::sectionId();
+                $model->page_section_id = Page::sectionId();
                 if ($model->save()) {
                     if ($this->classFQCN::hasDynamic) {
                         $form = $this->getDynamicForm();
@@ -139,7 +139,7 @@ class PageGroupController extends AuthorizationController
             }
 
             if ($model->load($req->post())) {
-                $model->page_section_id = PageGroup::sectionId();
+                $model->page_section_id = Page::sectionId();
                 if ($model->save()) {
                     Yii::$app->session->addFlash('success', Yii::t('app', 'Data updated.'));
                     return $this->redirect(['view', 'id' => $model->id]);
@@ -160,7 +160,7 @@ class PageGroupController extends AuthorizationController
 
     /**
      * Clone workflow using CloneActionTrait.
-     * Includes specific logic for PageGroup metadata handling.
+     * Includes specific logic for Page metadata handling.
      *
      * @param int $id
      * @param string|null $target_lang
@@ -191,7 +191,7 @@ class PageGroupController extends AuthorizationController
 
         if (Yii::$app->request->isPost) {
             if ($clone->load(Yii::$app->request->post())) {
-                $clone->page_section_id = PageGroup::sectionId();
+                $clone->page_section_id = Page::sectionId();
 
                 $newPage = $this->processCloneSave($id, $clone, $this->classFQCN);
 

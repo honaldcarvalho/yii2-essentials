@@ -39,6 +39,11 @@ class Page extends ModelCommon
     /** Enable default group scoping from ModelCommon */
     public $verGroup = true;
 
+    /** Merged from PageGroup */
+    public const SECTION_SLUG = 'page';
+    public const hasDynamic = false;
+    private static $_sectionId = null;
+
     private $_oldSlug;
 
     /** Selected tag IDs (form helper) */
@@ -47,6 +52,49 @@ class Page extends ModelCommon
     public static function tableName()
     {
         return 'pages';
+    }
+
+    /**
+     * Resolve and cache the PageSection id by slug.
+     * Throws a clear exception if not found.
+     */
+    public static function sectionId(): int
+    {
+        if (static::$_sectionId !== null) {
+            return static::$_sectionId;
+        }
+
+        $section = PageSection::find()
+            ->select('id')
+            ->andWhere(['slug' => static::SECTION_SLUG])
+            ->andWhere(['status' => 1])
+            ->one();
+
+        if (!$section) {
+            throw new \RuntimeException(
+                "PageSection with slug '" . static::SECTION_SLUG . "' not found or inactive. " .
+                    "Create it first (page_sections.slug='" . static::SECTION_SLUG . "')."
+            );
+        }
+
+        static::$_sectionId = (int)$section->id;
+        return static::$_sectionId;
+    }
+
+    /**
+     * Auto-assign the Page section on new records if empty.
+     */
+    public function init(): void
+    {
+        parent::init();
+        if ($this->isNewRecord && empty($this->page_section_id)) {
+            // We use a try-catch to avoid breaking scripts if the DB/Table doesn't exist yet (e.g. migrations)
+            try {
+                $this->page_section_id = static::sectionId();
+            } catch (\Exception $e) {
+                // Ignore during init
+            }
+        }
     }
 
     public function rules()
@@ -83,7 +131,7 @@ class Page extends ModelCommon
                 'removeFlagParam' => 'remove',
                 'deleteOldOnReplace' => true,
                 'deleteOnOwnerDelete' => false,
-                'debug' => true, // keep enabled while stabilizing
+                'debug' => true,
             ],
         ]);
     }
@@ -100,6 +148,11 @@ class Page extends ModelCommon
     {
         if (!parent::beforeValidate()) {
             return false;
+        }
+
+        // Ensure the correct section before validation if empty
+        if (empty($this->page_section_id)) {
+            $this->page_section_id = static::sectionId();
         }
 
         // Default group id for new records
