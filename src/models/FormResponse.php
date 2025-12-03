@@ -104,6 +104,17 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
         return true;
     }
 
+    /**
+     * Retrieves the value of a field, used by FormResponseFieldColumn.
+     * * @param string $attribute
+     * @return mixed
+     */
+    public function getFieldValue($attribute)
+    {
+        // Utilizes the __get magic method to retrieve from _dynamicAttributes or standard attributes
+        return $this->$attribute;
+    }
+
     public function __get($name)
     {
         if (parent::hasAttribute($name) || parent::canGetProperty($name)) {
