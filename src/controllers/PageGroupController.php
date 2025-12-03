@@ -292,9 +292,6 @@ class PageGroupController extends AuthorizationController
 
     private function findFormResponseByPageId(int $formId, int $pageId): ?FormResponse
     {
-        return FormResponse::find()
-            ->where(['dynamic_form_id' => $formId])
-            ->andWhere(['JSON_EXTRACT(response_data, "$.page_id")' => (string)$pageId])
-            ->one();
+        return FormResponse::findByPageId($formId, $pageId);
     }
 }
