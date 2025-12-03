@@ -16,6 +16,9 @@ use yii\web\NotFoundHttpException;
 
 class FormResponseController extends AuthorizationController
 {
+    /** @var string Form name to operate on (must match DynamicForm->name) */
+    public string $form_name = '_form';
+    public string $model_name = '_form';
     protected DynamicForm $formDef;
 
     public function init()
