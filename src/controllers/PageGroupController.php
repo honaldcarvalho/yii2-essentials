@@ -14,7 +14,7 @@ use yii\db\Transaction;
 use yii\helpers\StringHelper;
 use yii\helpers\Url;
 
-class PageController extends AuthorizationController
+class PageGroupController extends AuthorizationController
 {
     use CloneActionTrait;
 
