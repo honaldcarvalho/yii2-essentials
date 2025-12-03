@@ -20,7 +20,7 @@ class PageGroupController extends AuthorizationController
 
     public $form_name = 'page_form';
     public $classFQCN = PageGroup::class;
-    private $formResponseCtrl;
+    public $formResponseCtrl;
 
     public function init()
     {
