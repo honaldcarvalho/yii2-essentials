@@ -9,6 +9,7 @@ use yii\data\ActiveDataProvider;
 use croacworks\essentials\helpers\GeminiHelper;
 use croacworks\essentials\helpers\TranslatorHelper;
 use croacworks\essentials\models\DynamicForm;
+use yii\db\ActiveQuery;
 
 /**
  * This is the model class for table "form_responses".
@@ -24,10 +25,13 @@ use croacworks\essentials\models\DynamicForm;
  */
 class FormResponse extends \croacworks\essentials\models\ModelCommon
 {
+
     /**
      * Stores dynamic attributes from JSON in memory.
      */
+    public const FORM_NAME = '';
     protected $_dynamicAttributes = [];
+
 
     public static function tableName()
     {
@@ -87,6 +91,13 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
         }
     }
 
+    public static function find($verGroup = null)
+    {
+        $query = new ActiveQuery(get_called_class());
+        $dynamic_form_id = DynamicForm::find()->where(['name' => static::FORM_NAME])->scalar();
+        return $query->andWhere(['dynamic_form_id' => $dynamic_form_id]);
+    }
+
     public function beforeSave($insert)
     {
         if (!parent::beforeSave($insert)) {
@@ -106,9 +117,10 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
 
     /**
      * Retrieves the value of a field, used by FormResponseFieldColumn.
-     * * @param string $attribute
+     ** @param string $attribute
      * @return mixed
      */
+
     public function getFieldValue($attribute)
     {
         // Utilizes the __get magic method to retrieve from _dynamicAttributes or standard attributes
