@@ -19,7 +19,7 @@ class PageGroupController extends AuthorizationController
     use CloneActionTrait;
 
     public $form_name = 'page_form';
-    public $classFQCN = $this->classFQCN::class;
+    public $classFQCN = Page::class;
     public $formResponseCtrl;
 
     public function init()
