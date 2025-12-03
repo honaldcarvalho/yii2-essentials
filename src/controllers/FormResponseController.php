@@ -12,13 +12,14 @@ use croacworks\essentials\models\FormResponse;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\controllers\rest\StorageController;
 use croacworks\essentials\models\DynamicForm;
+use yii\helpers\StringHelper;
 use yii\web\NotFoundHttpException;
 
 class FormResponseController extends AuthorizationController
 {
     /** @var string Form name to operate on (must match DynamicForm->name) */
     public string $form_name = '_form';
-    public string $model_name = '_form';
+
     protected DynamicForm $formDef;
 
     public function init()
@@ -43,7 +44,7 @@ class FormResponseController extends AuthorizationController
             'searchModel'  => $searchModel,
             'dataProvider' => $dataProvider,
             'formDef'      => $this->formDef,
-            'model_name'   => $this->model_name,
+            'model_name'   => StringHelper::basename($this->classFQCN)
         ]);
     }
 
@@ -69,7 +70,7 @@ class FormResponseController extends AuthorizationController
             }
         }
 
-        return $this->render('create', ['model' => $model, 'formDef' => $this->formDef, 'model_name'   => $this->model_name,]);
+        return $this->render('create', ['model' => $model, 'formDef' => $this->formDef, 'model_name'   => StringHelper::basename($this->classFQCN)]);
     }
     /**
      * Returns the widget form via AJAX.
