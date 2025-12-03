@@ -11,9 +11,19 @@ use croacworks\essentials\enums\FormFieldType;
 use croacworks\essentials\models\FormResponse;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\controllers\rest\StorageController;
+use croacworks\essentials\models\DynamicForm;
+use yii\web\NotFoundHttpException;
 
 class FormResponseController extends AuthorizationController
 {
+    protected DynamicForm $formDef;
+
+    public function init()
+    {
+        parent::init();
+        $this->formDef = $this->findFormByName($this->form_name);
+    }
+
     /**
      * Standard list view.
      */
@@ -25,7 +35,12 @@ class FormResponseController extends AuthorizationController
             ['pageSize' => 10, 'orderBy' => ['id' => SORT_DESC]]
         );
 
-        return $this->render('index', compact('searchModel', 'dataProvider'));
+        return $this->render('index', [
+            'searchModel'  => $searchModel,
+            'dataProvider' => $dataProvider,
+            'formDef'      => $this->formDef,
+            'model_name'   => $this->model_name,
+        ]);
     }
 
     /**
@@ -33,9 +48,25 @@ class FormResponseController extends AuthorizationController
      */
     public function actionView($id)
     {
-        return $this->render('view', ['model' => $this->findModel($id)]);
+        $model = $this->findModel($id);
+        return $this->render('view', ['model' => $model, 'formDef' => $this->formDef, 'model_name'   => $this->model_name]);
     }
 
+    public function actionCreate()
+    {
+        $model = new FormResponse();
+        $model->dynamic_form_id = (int)$this->formDef->id;
+
+        if (Yii::$app->request->isPost || !empty($_FILES)) {
+            $result = $this->actionCreateJson();
+            if ($result !== null  && $result['success']) {
+                Yii::$app->session->addFlash('success', Yii::t('app', 'Saved successfully.'));
+                return $this->redirect(['view', 'id' => $result['id']]);
+            }
+        }
+
+        return $this->render('create', ['model' => $model, 'formDef' => $this->formDef, 'model_name'   => $this->model_name,]);
+    }
     /**
      * Returns the widget form via AJAX.
      */
@@ -249,5 +280,25 @@ class FormResponseController extends AuthorizationController
             Yii::error("removeFile exception for #$fileId: " . $e->getMessage(), __METHOD__);
         }
         return false;
+    }
+
+    protected function findModel($id, $model = null): FormResponse
+    {
+        $m = FormResponse::find()
+            ->where(['id' => $id, 'dynamic_form_id' => (int)$this->formDef->id])
+            ->one();
+        if (!$m) {
+            throw new NotFoundHttpException(Yii::t('app', 'The requested record does not exist.'));
+        }
+        return $m;
+    }
+
+    protected function findFormByName(string $name): DynamicForm
+    {
+        $f = DynamicForm::find()->where(['name' => $name])->one();
+        if (!$f) {
+            throw new NotFoundHttpException(Yii::t('app', 'Dynamic form not found: {name}', ['name' => $name]));
+        }
+        return $f;
     }
 }
