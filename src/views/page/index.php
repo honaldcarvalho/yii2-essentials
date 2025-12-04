@@ -52,7 +52,7 @@ $this->registerJs($js);
 
           <?php Pjax::begin(['timeout' => 8000]); ?>
 
-          <?php echo $this->render('@essentials/views/_parts/filter', ['view' => '@essentials/views/page', 'searchModel' => $searchModel]); ?>
+          <?php echo $this->render('/_parts/filter', ['view' => '/page', 'searchModel' => $searchModel]); ?>
 
           <?= GridView::widget([
             'dataProvider' => $dataProvider,

@@ -60,11 +60,7 @@ class PageGroupController extends AuthorizationController
         $model = $this->findModel($id);
         $resp = $formId = $submitUrl = null;
 
-        if ($this->classFQCN::hasDynamic) {
-            [$resp, $formId, $submitUrl] = $this->preparePageMeta($id);
-        }
-
-        return $this->render('@essentials/views/page/view', [
+        return $this->render('/page/view', [
             'model'         => $model,
             'formResponse'  => $resp,
             'dynamicFormId' => $formId,
@@ -111,6 +107,7 @@ class PageGroupController extends AuthorizationController
                     }
 
                     $tx->commit();
+
                     Yii::$app->session->addFlash('success', Yii::t('app', 'Page created.'));
                     return $this->redirect(['view', 'id' => $model->id]);
                 } else {

@@ -1,5 +1,6 @@
 <?php
 
+use app\widgets\DynamicFormWidget as WidgetsDynamicFormWidget;
 use croacworks\essentials\controllers\AuthorizationController;
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -159,9 +160,9 @@ $inputId = Html::getInputId($model, 'tagIds');
   </div>
 
   <div class="tab-pane fade mt-3" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-    <?= DynamicFormWidget::widget([
+    <?= WidgetsDynamicFormWidget::widget([
       'formId' =>  $dynamicForm->id,
-      'model' => $responseModel,
+      'model' => $formResponse,
       'activeForm' => $form, // <--- Importante: Passa o form pai
       'showSave' => false,
       'ajax' => false

@@ -2,199 +2,221 @@
 
 namespace croacworks\essentials\controllers;
 
-use croacworks\essentials\models\Configuration;
-use croacworks\essentials\models\Language;
-use croacworks\essentials\models\Page;
-use croacworks\essentials\models\PageSection;
-use croacworks\essentials\services\PageCloneService;
-use croacworks\essentials\traits\CloneActionTrait;
 use Yii;
-use yii\web\NotFoundHttpException;
+use croacworks\essentials\controllers\AuthorizationController;
+use croacworks\essentials\models\FormField;
+use croacworks\essentials\models\FormResponse;
+use croacworks\essentials\models\Page;
+use croacworks\essentials\traits\CloneActionTrait;
+use yii\base\DynamicModel;
+use yii\helpers\StringHelper;
 
-/**
- * CRUD for Page model.
- */
 class PageController extends AuthorizationController
 {
     use CloneActionTrait;
 
-    /** Actions that do not require auth */
-    public $free = ['login', 'signup', 'error', 'public'];
+    public $classFQCN = Page::class;
 
-    /** List pages with search scenario */
     public function actionIndex()
     {
-        $searchModel = new Page();
-        $searchModel->scenario = Page::SCENARIO_SEARCH;
+        $searchModel = new $this->classFQCN(['scenario' => $this->classFQCN::SCENARIO_SEARCH]);
+
+        try {
+            $searchModel->page_section_id = $this->classFQCN::sectionId();
+        } catch (\Throwable $e) {
+            Yii::$app->session->addFlash('danger', $e->getMessage());
+        }
+
         $dataProvider = $searchModel->search($this->request->queryParams);
 
-        return $this->render('index', compact('searchModel', 'dataProvider'));
-    }
-
-    /** Show a single page */
-    public function actionView($id)
-    {
-        $model = $this->findModel($id);
-        return $this->render('view', compact('model'));
-    }
-
-    /**
-     * Find active page by composite key (throws 404 if missing/inactive).
-     */
-    protected function findByKey(string $slug, int $groupId, int $languageId, int $sectionId): Page
-    {
-        $model = Page::find()
-            ->andWhere([
-                'slug'        => $slug,
-                'group_id'    => $groupId,
-                'language_id' => $languageId,
-                'section_id'  => $sectionId,
-                'status'      => 1,
-            ])
-            ->one();
-
-        if (!$model) {
-            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
-        }
-        return $model;
-    }
-
-    /**
-     * Public "show" by slug + context (group/language/section).
-     */
-    public function actionShow(
-        string $page,
-        int $language = 2,
-        ?int $section = 1,
-        ?int $group = null,
-        $modal = null
-    ) {
-        if ($modal && (int)$modal === 1) {
-            $this->layout = 'main-blank';
-        }
-
-        $groupId    = $group ?? (self::isGuest() ? 1 : (int) self::userGroup());
-        $sectionId  = (int)($section ?: 1);
-        $languageId = (int)$language;
-
-        $model = $this->findByKey($page, $groupId, $languageId, $sectionId);
-        return $this->render('page', compact('model'));
-    }
-
-    /**
-     * Public page resolver.
-     */
-    public function actionPublic(string $slug, string $section = null, $lang = null, $group = 1, $modal = null)
-    {
-        $language = null;
-
-        if ($modal && (int)$modal === 1) {
-            $this->layout = 'main-blank';
-        }
-
-        $q = Page::find()
-            ->andWhere(['pages.slug' => $slug])
-            ->andWhere(['pages.status' => 1])
-            ->andWhere(['group_id' => (int)$group]);
-
-        $section = PageSection::findOne(['slug' => $section]);
-        if ($section) {
-            $q->andWhere(['page_section_id' => $section->id]);
-        } else {
-            $q->andWhere(['IS', 'page_section_id', null]);
-        }
-
-        if ($lang && ($language = Language::findOne(is_numeric($lang) ? (int)$lang : ['code' => $lang])) !== null) {
-            $q->andWhere(['language_id' => $language->id]);
-        } else {
-            // prefer language_id IS NULL, otherwise default configured language
-            $query = $q;
-            $query->andWhere(['IS', 'language_id', null]);
-            if (!$query->one()) {
-                $lang = Configuration::get()->language;
-                $q->andWhere(['language_id' => $lang->id]);
-            }
-        }
-
-        $model = $q->one();
-        if (!$model) {
-            throw new NotFoundHttpException(Yii::t('app', 'Page not found or inactive.'));
-        }
-
-        return $this->render('page', compact('model'));
-    }
-
-    /** Create page (auto-assign current user group) */
-    public function actionCreate()
-    {
-        $model = new Page();
-
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && ($model->group_id = $this::userGroup()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        } else {
-            $model->loadDefaultValues();
-        }
-
-        return $this->render('create', compact('model'));
-    }
-
-    /** Update page */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', compact('model'));
-    }
-
-    /**
-     * Clone workflow with optional auto-translation.
-     * Uses CloneActionTrait for shared logic.
-     *
-     * @param int $id
-     * @param string|null $target_lang
-     * @param string $provider
-     * @return string|\yii\web\Response
-     */
-    public function actionClone($id, $target_lang = null, $provider = 'default')
-    {
-        // 1. Prepare draft using Trait
-        $clone = $this->prepareCloneDraft($id, Page::class, $target_lang, $provider);
-
-        // 2. Handle POST (Save) using Trait
-        if (Yii::$app->request->isPost && $clone->load(Yii::$app->request->post())) {
-
-            $newPage = $this->processCloneSave($id, $clone, Page::class);
-
-            if ($newPage) {
-                return $this->redirect(['view', 'id' => $newPage->id]);
-            }
-        }
-
-        // 3. Render view (Controller specific)
-        return $this->render('clone', [
-            'model' => $clone,
+        return $this->render('/page/index', [
+            'searchModel'  => $searchModel,
+            'dataProvider' => $dataProvider,
+            'class'        => $this->classFQCN,
+            'model_name'   => StringHelper::basename($this->classFQCN)
         ]);
     }
 
-    /** Delete page via service (handles linked data) */
-    public function actionDelete($id)
+    public function actionView($id)
     {
         $model = $this->findModel($id);
 
-        try {
-            PageCloneService::deletePage($model);
-            Yii::$app->session->addFlash('success', Yii::t('app', 'Page deleted.'));
-        } catch (\Throwable $e) {
-            Yii::error($e->getMessage(), __METHOD__);
-            Yii::$app->session->addFlash('danger', Yii::t('app', 'Failed to delete page.'));
+        return $this->render('/page/view', [
+            'model'         => $model,
+            'dynamicForm'   => $this->classFQCN::getDynamicForm(),
+            'class'         => $this->classFQCN,
+            'hasDynamic'    => $this->classFQCN::hasDynamic,
+            'model_name'    => StringHelper::basename(get_class($model)),
+        ]);
+    }
+
+    /**
+     * Creates a new model.
+     */
+    public function actionCreate()
+    {
+        /** @var \croacworks\essentials\models\ModelCommon $model */
+        $model = new ($this->classFQCN);
+
+        // 1. Get Metadata Form
+        $dynamicForm = $this->classFQCN::getDynamicForm();
+
+        // 2. Build DynamicModel for Validation only (optional UI helper)
+        $responseModel = $this->buildDynamicModel($dynamicForm->id ?? 0);
+
+        if ($this->request->isPost) {
+            $model->load($this->request->post());
+
+            // Load dynamic data for validation check
+            if ($dynamicForm) {
+                $responseModel->load($this->request->post());
+            }
+
+            // Validate Main Model
+            $isValid = $model->validate();
+
+            // Validate Dynamic Fields (if applicable)
+            if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                $isValid = $responseModel->validate() && $isValid;
+            }
+
+            if ($isValid) {
+                $transaction = Yii::$app->db->beginTransaction();
+                try {
+                    // A. Save Main Model
+                    if (!$model->save(false)) {
+                        throw new \Exception(Yii::t('app', 'Error saving record.'));
+                    }
+
+                    // B. Save Metadata
+                    if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                        // Ensure instance exists and delegate logic to model
+                        $formResponse = FormResponse::ensureForPage($dynamicForm->id, $model->id);
+                        $formResponse->saveDynamicData($dynamicForm, $model->id, $this->request->post('DynamicModel', []));
+                    }
+
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    Yii::error($e->getMessage(), __METHOD__);
+                    $model->addError('slug', $e->getMessage());
+                }
+            }
         }
 
-        return $this->redirect(['index']);
+        // View switching logic
+        $viewName = $dynamicForm ? '_form_meta' : '_form';
+
+        return $this->render('/page/create', [
+            'model' => $model,
+            'model_name' => 'Course', // Ou dinâmico se preferir
+            'dynamicForm' => $dynamicForm,
+            'responseModel' => $responseModel, // Passado para preencher o form na view
+            'viewName' => $viewName
+        ]);
+    }
+
+    /**
+     * Updates an existing model.
+     */
+    public function actionUpdate($id)
+    {
+        $model = $this->findModel($id);
+        $dynamicForm = $this->classFQCN::getDynamicForm();
+
+        // 1. Find existing response to populate the form
+        $formResponse = null;
+        if ($dynamicForm) {
+            $formResponse = FormResponse::findByJsonField('page_id', (string)$model->id, $dynamicForm->id);
+        }
+
+        $responseModel = $this->buildDynamicModel($dynamicForm->id ?? 0, $formResponse);
+
+        if ($this->request->isPost) {
+            $model->load($this->request->post());
+
+            if ($dynamicForm) {
+                $responseModel->load($this->request->post());
+            }
+
+            $isValid = $model->validate();
+            if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                $isValid = $responseModel->validate() && $isValid;
+            }
+
+            if ($isValid) {
+                $transaction = Yii::$app->db->beginTransaction();
+                try {
+                    if (!$model->save(false)) {
+                        throw new \Exception(Yii::t('app', 'Error saving record.'));
+                    }
+
+                    if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                        // Ensure instance exists (concurrent safety or if missing)
+                        if (!$formResponse) {
+                            $formResponse = FormResponse::ensureForPage($dynamicForm->id, $model->id);
+                        }
+                        $formResponse->saveDynamicData($dynamicForm, $model->id, $this->request->post('DynamicModel', []));
+                    }
+
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    Yii::error($e->getMessage(), __METHOD__);
+                    $model->addError('slug', $e->getMessage());
+                }
+            }
+        }
+
+        $viewName = $dynamicForm ? '_form_meta' : '_form';
+
+        return $this->render('/page/update', [
+            'model' => $model,
+            'model_name' => 'Course',
+            'dynamicForm' => $dynamicForm,
+            'formResponse' => $formResponse,
+            'viewName' => $viewName
+        ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // HELPERS
+    // -------------------------------------------------------------------------
+
+    protected function buildDynamicModel(int $formId, $existingResponse = null): DynamicModel
+    {
+        $fields = FormField::find()
+            ->where(['dynamic_form_id' => $formId, 'status' => 1])
+            ->orderBy(['order' => SORT_ASC])
+            ->all();
+
+        $attributes = [];
+        $data = [];
+
+        // Decode existing JSON via Magic Method access (since FormResponse handles decoding in afterFind)
+        if ($existingResponse) {
+            // Using getData() legacy helper or direct access if desired
+            $data = $existingResponse->getData();
+        }
+
+        foreach ($fields as $field) {
+            $val = $data[$field->name] ?? $field->default ?? null;
+            $attributes[$field->name] = $val;
+        }
+
+        $dynamicModel = new DynamicModel($attributes);
+
+        foreach ($fields as $field) {
+            $dynamicModel->addRule($field->name, 'safe');
+
+            if ($field->show && isset($field->required) && $field->required) { // Assuming 'required' column exists or logic
+                // Add specific validations if needed
+                $dynamicModel->addRule($field->name, 'required');
+            }
+        }
+
+        return $dynamicModel;
     }
 }

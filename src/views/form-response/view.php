@@ -13,55 +13,55 @@ $this->params['breadcrumbs'][] = ['label' => Yii::t('app', $model_name), 'url' =
 $this->params['breadcrumbs'][] = $this->title;
 
 ?>
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0"><?= Html::encode($this->title) ?></h5>
-    <div class="d-flex gap-2">
-      <?= Html::a(Yii::t('app', 'Update'), ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-      <?= Html::a(Yii::t('app', 'Delete'), ['delete', 'id' => $model->id], [
+<div class="container-fluid">
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><?= Html::encode($this->title) ?></h5>
+      <div class="d-flex gap-2">
+        <?= Html::a(Yii::t('app', 'Update'), ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+        <?= Html::a(Yii::t('app', 'Delete'), ['delete', 'id' => $model->id], [
           'class' => 'btn btn-danger',
           'data' => ['confirm' => Yii::t('app', 'Are you sure you want to delete this item?'), 'method' => 'post'],
-      ]) ?>
+        ]) ?>
+      </div>
     </div>
-  </div>
 
-  <div class="card-body">
-    <?= DetailView::widget([
+    <div class="card-body">
+      <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id',
-            [
-                'label' => Yii::t('app', 'Form'),
-                'value' => $formDef->name,
-            ],
-            [
-                'label' => Yii::t('app', 'Created at'),
-                'value' => Yii::$app->formatter->asDatetime($model->created_at),
-            ],
-            [
-                'label' => Yii::t('app', 'Updated at'),
-                'value' => Yii::$app->formatter->asDatetime($model->updated_at),
-            ],
+          'id',
+          [
+            'label' => Yii::t('app', 'Form'),
+            'value' => $formDef->name,
+          ],
+          [
+            'label' => Yii::t('app', 'Created at'),
+            'value' => Yii::$app->formatter->asDatetime($model->created_at),
+          ],
+          [
+            'label' => Yii::t('app', 'Updated at'),
+            'value' => Yii::$app->formatter->asDatetime($model->updated_at),
+          ],
         ],
-    ]) ?>
+      ]) ?>
 
-    <hr>
-
-    <div class="row g-3">
-      <?php
-      echo FormResponseMetaWidget::widget([
-          'formResponseId' => $model->id,
-          // OR
-          // 'dynamicFormId' => $dynamicFormId,
-          // 'modelClass'    => common\models\Course::class,
-          // 'modelId'       => $model->id,
-          'title'          => Yii::t('app',$model_name),
-          'card'           => true,
-          'viewMode'       => 'list'
-
-          // 'fileUrlCallback' => fn(int $id) => ['/storage/file/view','id'=>$id],
-      ]);
-      ?>
     </div>
   </div>
+
+  <?php
+  echo FormResponseMetaWidget::widget([
+    'formResponseId' => $model->id,
+    // OR
+    // 'dynamicFormId' => $dynamicFormId,
+    // 'modelClass'    => common\models\Course::class,
+    // 'modelId'       => $model->id,
+    'title'          => Yii::t('app', $model_name),
+    'card'           => true,
+    'viewMode'       => 'list'
+
+    // 'fileUrlCallback' => fn(int $id) => ['/storage/file/view','id'=>$id],
+  ]);
+  ?>
+
 </div>

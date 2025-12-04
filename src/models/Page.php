@@ -5,7 +5,14 @@ namespace croacworks\essentials\models;
 use croacworks\essentials\behaviors\AttachFileBehavior;
 use croacworks\essentials\helpers\GeminiHelper;
 use croacworks\essentials\helpers\TranslatorHelper;
+use croacworks\essentials\models\DynamicForm;
+use croacworks\essentials\models\File;
+use croacworks\essentials\models\Group;
 use croacworks\essentials\models\Language;
+use croacworks\essentials\models\ModelCommon;
+use croacworks\essentials\models\PageFile;
+use croacworks\essentials\models\PageSection;
+use croacworks\essentials\models\Tag;
 use Yii;
 use yii\helpers\Inflector;
 
@@ -34,6 +41,7 @@ use yii\helpers\Inflector;
  * @property Group $group
  * @property File $file
  */
+
 class Page extends ModelCommon
 {
     /** Enable default group scoping from ModelCommon */
@@ -41,6 +49,7 @@ class Page extends ModelCommon
 
     /** Merged from PageGroup */
     public const SECTION_SLUG = 'page';
+    public const meta_form = 'page_form';
     public const hasDynamic = false;
     private static $_sectionId = null;
 
@@ -134,6 +143,11 @@ class Page extends ModelCommon
                 'debug' => true,
             ],
         ]);
+    }
+
+    public static function getDynamicForm(): ?DynamicForm
+    {
+        return DynamicForm::findOne(['name' => static::meta_form]);
     }
 
     public function afterFind()
@@ -325,6 +339,16 @@ class Page extends ModelCommon
                 Yii::error("Translation failed for attribute {$attribute}: " . $e->getMessage(), __METHOD__);
             }
         }
+    }
+
+    /**
+     * Scope all queries to the Page section.
+     */
+    public static function find($verGroup = null)
+    {
+        $query = parent::find();
+        // Narrow results to the page section
+        return $query->andWhere([static::tableName() . '.page_section_id' => static::sectionId()]);
     }
 
     /** Relation: Group */

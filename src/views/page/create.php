@@ -15,12 +15,12 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Create');
       <div class="row">
         <div class="col-md-12">
 
-          <?= $this->render($hasDynamic ? '_form_meta' : '_form', [
+          <?= $this->render($viewName, [
             'model'         => $model,
             'model_name'    => $model_name,
             'dynamicForm'   => $dynamicForm,
             'responseModel' => null,
-            'hasDynamic' => $hasDynamic,
+            'hasDynamic' => $model::hasDynamic,
           ]) ?>
 
         </div>

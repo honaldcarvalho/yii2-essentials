@@ -1,6 +1,6 @@
 <?php
 
-namespace croacworks\essentials\widgets;
+namespace croacworks\essentials\models;
 
 use Yii;
 use yii\base\Widget;

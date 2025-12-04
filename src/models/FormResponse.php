@@ -94,8 +94,11 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
     public static function find($verGroup = null)
     {
         $query = new ActiveQuery(get_called_class());
-        $dynamic_form_id = DynamicForm::find()->where(['name' => static::FORM_NAME])->scalar();
-        return $query->andWhere(['dynamic_form_id' => $dynamic_form_id]);
+        if (static::FORM_NAME !== null && !empty(static::FORM_NAME)) {
+            $dynamic_form_id = DynamicForm::find()->where(['name' => static::FORM_NAME])->scalar();
+            return $query->andWhere(['dynamic_form_id' => $dynamic_form_id]);
+        }
+        return $query;
     }
 
     public function beforeSave($insert)

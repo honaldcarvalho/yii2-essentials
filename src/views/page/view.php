@@ -1,6 +1,6 @@
 <?php
 
-use croacworks\essentials\widgets\FormResponseMetaWidget;
+use app\widgets\FormResponseMetaWidget;
 use croacworks\essentials\widgets\ListFiles;
 use croacworks\essentials\widgets\StorageUploadMultiple;
 use yii\helpers\Html;
@@ -55,15 +55,20 @@ $this->params['breadcrumbs'][] = $this->title;
                             'status:boolean',
                         ],
                     ]) ?>
+
                     <?= $hasDynamic ? FormResponseMetaWidget::widget([
-                        'dynamicFormId' => $dynamicFormId,
-                        'modelClass'    => $class,
-                        'modelId'       => (int)$model->id,
-                        'title'         => Yii::t('app','Page metadata'),
+                        'dynamicFormId' => $dynamicForm->id,
+
+                        // Configuração para busca dentro do JSON response_data
+                        'jsonDataKey'   => 'page_id',      // O nome da chave dentro do JSON
+                        'jsonDataValue' => (int)$model->id, // O valor que deve ser igual a chave
+
+                        'title'         => Yii::t('app', 'Page metadata'),
                         'card'          => true,
-                        'fileUrlCallback' => fn(int $id) => ['/storage/file/view','id'=>$id],
+                        'fileUrlCallback' => fn(int $id) => ['/storage/file/view', 'id' => $id],
                     ]) : '';
                     ?>
+
                     <?= StorageUploadMultiple::widget([
                         'attach_model' => [
                             'class_name' => \croacworks\essentials\models\PageFile::class,

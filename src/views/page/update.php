@@ -19,12 +19,12 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
     <div class="card-body">
       <div class="row">
         <div class="col-md-12">
-          <?= $this->render($hasDynamic ? '_form_meta' : '_form', [
+          <?= $this->render($viewName, [
             'model'         => $model,
             'model_name'    => $model_name,
             'dynamicForm'   => $dynamicForm,
-            'responseModel' => $responseModel,
-            'hasDynamic' => $hasDynamic,
+            'formResponse' => $formResponse,
+            'hasDynamic' => $model::hasDynamic,
           ]) ?>
         </div>
       </div>
