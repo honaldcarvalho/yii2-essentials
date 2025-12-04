@@ -3,7 +3,6 @@
 namespace croacworks\essentials\controllers;
 
 use Yii;
-
 use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\controllers\FormResponseController;
 use croacworks\essentials\models\DynamicForm;
@@ -20,12 +19,16 @@ class PageGroupController extends AuthorizationController
 
     public $form_name = 'page_form';
     public $classFQCN = Page::class;
+
+    /** @var FormResponseController|null */
     public $formResponseCtrl;
 
     public function init()
     {
         parent::init();
         if ($this->classFQCN::hasDynamic) {
+            // Instantiate FormResponseController manually to leverage its logic
+            // Using Yii::$app as the module context
             $this->formResponseCtrl = new FormResponseController('form-response', Yii::$app, [
                 'form_name' => $this->form_name
             ]);
@@ -57,8 +60,9 @@ class PageGroupController extends AuthorizationController
         $model = $this->findModel($id);
         $resp = $formId = $submitUrl = null;
 
-        if ($this->classFQCN::hasDynamic)
+        if ($this->classFQCN::hasDynamic) {
             [$resp, $formId, $submitUrl] = $this->preparePageMeta($id);
+        }
 
         return $this->render('@essentials/views/page/view', [
             'model'         => $model,
@@ -74,23 +78,30 @@ class PageGroupController extends AuthorizationController
     public function actionCreate()
     {
         $model = new $this->classFQCN();
+
+        // Start transaction to ensure atomicity between Page and DynamicForm
         $tx = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);
 
         try {
             if ($model->load($this->request->post())) {
                 $model->page_section_id = $this->classFQCN::sectionId();
+
                 if ($model->save()) {
-                    if ($this->classFQCN::hasDynamic) {
+                    // Handle Dynamic Form
+                    if ($this->classFQCN::hasDynamic && $this->formResponseCtrl) {
                         $form = $this->getDynamicForm();
+
                         if ($form) {
                             $req = Yii::$app->request;
                             $post = $req->post('DynamicModel', []);
 
-                            // Inject page_id into metadata POST
+                            // Inject page_id into metadata POST for binding
                             $post['page_id'] = $model->id;
+
+                            // Update request body params so FormResponseController can read it
                             $req->setBodyParams(array_merge($req->bodyParams, ['DynamicModel' => $post]));
 
-                            // Call createJson with form ID (int)
+                            // Call createJson logic directly
                             $result = $this->formResponseCtrl->createJson((int)$form->id);
 
                             if (!$result['success']) {
@@ -98,9 +109,13 @@ class PageGroupController extends AuthorizationController
                             }
                         }
                     }
+
                     $tx->commit();
                     Yii::$app->session->addFlash('success', Yii::t('app', 'Page created.'));
                     return $this->redirect(['view', 'id' => $model->id]);
+                } else {
+                    // If model validation fails, we don't need to rollback DB, just show errors
+                    Yii::$app->session->addFlash('danger', Yii::t('app', 'Failed to save page data.'));
                 }
             }
         } catch (\Throwable $e) {
@@ -112,7 +127,7 @@ class PageGroupController extends AuthorizationController
             'model'        => $model,
             'model_name'   => StringHelper::basename(get_class($model)),
             'dynamicForm'  => $this->getDynamicForm(),
-            'hasDynamic'    => $this->classFQCN::hasDynamic,
+            'hasDynamic'   => $this->classFQCN::hasDynamic,
         ]);
     }
 
@@ -121,31 +136,45 @@ class PageGroupController extends AuthorizationController
         $model = $this->findModel($id);
         $resp = $formId = $submitUrl = null;
 
-        if ($this->classFQCN::hasDynamic)
+        if ($this->classFQCN::hasDynamic) {
             [$resp, $formId, $submitUrl] = $this->preparePageMeta($id);
+        }
 
         if (Yii::$app->request->isPost) {
+            $tx = Yii::$app->db->beginTransaction(Transaction::SERIALIZABLE);
             $req = Yii::$app->request;
 
-            // Update metadata if exists in POST
-            if ($req->post('DynamicModel')) {
-                $post = $req->post('DynamicModel', []);
-                $post['page_id'] = $model->id;
-                $req->setBodyParams(array_merge($req->bodyParams, ['DynamicModel' => $post]));
+            try {
+                // 1. Update Dynamic Metadata (if present)
+                if ($this->classFQCN::hasDynamic && $this->formResponseCtrl && $req->post('DynamicModel')) {
+                    $post = $req->post('DynamicModel', []);
 
-                $result = $this->formResponseCtrl->updateJson($resp);
+                    // Inject page_id to ensure consistency
+                    $post['page_id'] = $model->id;
+                    $req->setBodyParams(array_merge($req->bodyParams, ['DynamicModel' => $post]));
 
-                if (!$result['success']) {
-                    Yii::$app->session->addFlash('danger', $result['error'] ?? 'Metadata update failed.');
+                    // Pass the FormResponse model object to updateJson
+                    $result = $this->formResponseCtrl->updateJson($resp);
+
+                    if (!$result['success']) {
+                        throw new \RuntimeException($result['error'] ?? 'Metadata update failed.');
+                    }
                 }
-            }
 
-            if ($model->load($req->post())) {
-                $model->page_section_id = $this->classFQCN::sectionId();
-                if ($model->save()) {
-                    Yii::$app->session->addFlash('success', Yii::t('app', 'Data updated.'));
-                    return $this->redirect(['view', 'id' => $model->id]);
+                // 2. Update Page Model
+                if ($model->load($req->post())) {
+                    $model->page_section_id = $this->classFQCN::sectionId();
+                    if (!$model->save()) {
+                        throw new \RuntimeException(Yii::t('app', 'Failed to save page data.'));
+                    }
                 }
+
+                $tx->commit();
+                Yii::$app->session->addFlash('success', Yii::t('app', 'Data updated.'));
+                return $this->redirect(['view', 'id' => $model->id]);
+            } catch (\Throwable $e) {
+                if ($tx->isActive) $tx->rollBack();
+                Yii::$app->session->addFlash('danger', $e->getMessage());
             }
         }
 
@@ -198,7 +227,7 @@ class PageGroupController extends AuthorizationController
                 $newPage = $this->processCloneSave($id, $clone, $this->classFQCN);
 
                 if ($newPage) {
-                    if ($hasDynamic && $dynamicForm) {
+                    if ($hasDynamic && $dynamicForm && $this->formResponseCtrl) {
                         $req = Yii::$app->request;
                         $post = $req->post('DynamicModel', []);
 
