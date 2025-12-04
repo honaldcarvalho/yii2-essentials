@@ -110,7 +110,7 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
         }
 
         // Syncs dynamic attributes back to response_data and encodes to JSON
-        $this->response_data = Json::encode($this->_dynamicAttributes);
+        //$this->response_data = Json::encode($this->_dynamicAttributes);
 
         return true;
     }
