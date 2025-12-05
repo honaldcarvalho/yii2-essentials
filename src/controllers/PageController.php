@@ -10,6 +10,7 @@ use croacworks\essentials\models\Page;
 use croacworks\essentials\traits\CloneActionTrait;
 use yii\base\DynamicModel;
 use yii\helpers\StringHelper;
+use yii\helpers\Url;
 
 class PageController extends AuthorizationController
 {
@@ -178,6 +179,70 @@ class PageController extends AuthorizationController
             'dynamicForm' => $dynamicForm,
             'formResponse' => $formResponse,
             'viewName' => $viewName
+        ]);
+    }
+
+    /**
+     * Clone workflow using CloneActionTrait.
+     * Includes specific logic for Page metadata handling.
+     *
+     * @param int $id
+     * @param string|null $target_lang
+     * @param string $provider
+     * @return string|\yii\web\Response
+     */
+    public function actionClone($id, $target_lang = null, $provider = 'default')
+    {
+        $clone = $this->prepareCloneDraft($id, $this->classFQCN, $target_lang, $provider);
+
+        // Load existing metadata
+        [$resp, $formId, $originalUrl] = $this->preparePageMeta($id);
+
+        // Translate metadata content if target_lang is provided
+        if ($target_lang && $resp) {
+            $resp->translateContent($target_lang, $provider);
+        }
+
+        $hasDynamic = $this->classFQCN::hasDynamic ?? false;
+
+        // Force submit to clone action
+        $submitUrl = Url::to(['clone', 'id' => $id]);
+
+        $dynamicForm = $hasDynamic ? $this->getDynamicForm() : null;
+        if (!$formId && $dynamicForm) {
+            $formId = $dynamicForm->id;
+        }
+
+        if (Yii::$app->request->isPost) {
+            if ($clone->load(Yii::$app->request->post())) {
+                $clone->page_section_id = $this->classFQCN::sectionId();
+
+                $newPage = $this->processCloneSave($id, $clone, $this->classFQCN);
+
+                if ($newPage) {
+                    if ($hasDynamic && $dynamicForm && $this->formResponseCtrl) {
+                        $req = Yii::$app->request;
+                        $post = $req->post('DynamicModel', []);
+
+                        $post['page_id'] = $newPage->id;
+                        $req->setBodyParams(array_merge($req->bodyParams, ['DynamicModel' => $post]));
+
+                        $this->formResponseCtrl->createJson((int)$formId);
+                    }
+
+                    return $this->redirect(['view', 'id' => $newPage->id]);
+                }
+            }
+        }
+
+        return $this->render('@essentials/views/page/clone', [
+            'model'         => $clone,
+            'responseModel' => $resp,
+            'dynamicForm'   => $dynamicForm,
+            'model_name'    => StringHelper::basename(get_class($clone)),
+            'dynamicFormId' => $formId,
+            'submitUrl'     => $submitUrl,
+            'hasDynamic'    => $hasDynamic,
         ]);
     }
 
