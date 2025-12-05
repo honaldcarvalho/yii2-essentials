@@ -2,6 +2,7 @@
 
 namespace croacworks\essentials\models;
 
+use croacworks\essentials\enums\FormFieldType;
 use Yii;
 use yii\helpers\Json;
 use yii\db\Expression;
@@ -219,10 +220,36 @@ class FormResponse extends \croacworks\essentials\models\ModelCommon
     {
         $hasChanges = false;
 
+        // 1. Get definitions of fields to know their types
+        // We only want to translate TEXT and TEXTAREA types.
+        $fields = FormField::find()
+            ->select(['name', 'type'])
+            ->where(['dynamic_form_id' => $this->dynamic_form_id])
+            ->asArray()
+            ->all();
+
+        // Map field_name => type
+        $fieldTypes = array_column($fields, 'type', 'name');
+
+        // Allow list (Text and Textarea)
+        $translatableTypes = [
+            FormFieldType::TYPE_TEXT,
+            FormFieldType::TYPE_TEXTAREA,
+        ];
+
         foreach ($this->_dynamicAttributes as $key => $value) {
             // Skips non-string values or empty strings
             if (!is_string($value) || trim($value) === '') {
                 continue;
+            }
+
+            // Check if field exists and is translatable
+            // If the field is not in the form definition (orphaned data) or is not a text type, skip it.
+            if (isset($fieldTypes[$key])) {
+                $type = (int)$fieldTypes[$key];
+                if (!in_array($type, $translatableTypes, true)) {
+                    continue;
+                }
             }
 
             try {
