@@ -3,14 +3,15 @@
 namespace croacworks\essentials\controllers;
 
 use Yii;
+use yii\base\DynamicModel;
+use yii\helpers\StringHelper;
+use yii\helpers\Url;
+
 use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\models\FormField;
 use croacworks\essentials\models\FormResponse;
 use croacworks\essentials\models\Page;
 use croacworks\essentials\traits\CloneActionTrait;
-use yii\base\DynamicModel;
-use yii\helpers\StringHelper;
-use yii\helpers\Url;
 
 class PageController extends AuthorizationController
 {
@@ -193,59 +194,83 @@ class PageController extends AuthorizationController
      */
     public function actionClone($id, $target_lang = null, $provider = 'default')
     {
+        // 1. Prepare Clone Draft (Standard from Trait)
+        /** @var Page $clone */
         $clone = $this->prepareCloneDraft($id, $this->classFQCN, $target_lang, $provider);
 
-        // Load existing metadata
-        [$resp, $formId, $originalUrl] = $this->preparePageMeta($id);
-
-        // Translate metadata content if target_lang is provided
-        if ($target_lang && $resp) {
-            $resp->translateContent($target_lang, $provider);
+        // 2. Translate content if requested (Using Page model logic)
+        if ($target_lang) {
+            $clone->translateContent($target_lang, $provider);
         }
 
-        $hasDynamic = $this->classFQCN::hasDynamic ?? false;
+        // 3. Setup Dynamic Form and Data
+        $dynamicForm = $this->classFQCN::getDynamicForm();
 
-        // Force submit to clone action
-        $submitUrl = Url::to(['clone', 'id' => $id]);
+        // Find existing response from the SOURCE page ($id) to populate the clone form
+        $sourceFormResponse = null;
+        if ($dynamicForm) {
+            $sourceFormResponse = FormResponse::findByJsonField('page_id', (string)$id, $dynamicForm->id);
 
-        $dynamicForm = $hasDynamic ? $this->getDynamicForm() : null;
-        if (!$formId && $dynamicForm) {
-            $formId = $dynamicForm->id;
+            // Translate metadata content if target_lang is provided
+            if ($sourceFormResponse && $target_lang) {
+                $sourceFormResponse->translateContent($target_lang, $provider);
+            }
         }
 
-        if (Yii::$app->request->isPost) {
-            if ($clone->load(Yii::$app->request->post())) {
-                $clone->page_section_id = $this->classFQCN::sectionId();
+        // Build model with source data (translated if applicable)
+        $responseModel = $this->buildDynamicModel($dynamicForm->id ?? 0, $sourceFormResponse);
 
-                $newPage = $this->processCloneSave($id, $clone, $this->classFQCN);
+        $submitUrl = Url::to(['clone', 'id' => $id, 'target_lang' => $target_lang, 'provider' => $provider]);
 
-                if ($newPage) {
-                    if ($hasDynamic && $dynamicForm && $this->formResponseCtrl) {
-                        $req = Yii::$app->request;
-                        $post = $req->post('DynamicModel', []);
+        if ($this->request->isPost) {
+            $clone->load($this->request->post());
 
-                        $post['page_id'] = $newPage->id;
-                        $req->setBodyParams(array_merge($req->bodyParams, ['DynamicModel' => $post]));
+            if ($dynamicForm) {
+                $responseModel->load($this->request->post());
+            }
 
-                        $this->formResponseCtrl->createJson((int)$formId);
+            $isValid = $clone->validate();
+            if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                $isValid = $responseModel->validate() && $isValid;
+            }
+
+            if ($isValid) {
+                $transaction = Yii::$app->db->beginTransaction();
+                try {
+                    // Ensure correct section for the new page
+                    $clone->page_section_id = $this->classFQCN::sectionId();
+
+                    if (!$clone->save(false)) {
+                        throw new \Exception(Yii::t('app', 'Error saving record.'));
                     }
 
-                    return $this->redirect(['view', 'id' => $newPage->id]);
+                    if ($dynamicForm && isset($_POST['DynamicModel'])) {
+                        // Ensure instance exists for the NEW page
+                        $newFormResponse = FormResponse::ensureForPage($dynamicForm->id, $clone->id);
+                        $newFormResponse->saveDynamicData($dynamicForm, $clone->id, $this->request->post('DynamicModel', []));
+                    }
+
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $clone->id]);
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    Yii::error($e->getMessage(), __METHOD__);
+                    $clone->addError('slug', $e->getMessage());
                 }
             }
         }
 
-        return $this->render('@essentials/views/page/clone', [
+        $viewName = $dynamicForm ? '_form_meta' : '_form';
+
+        return $this->render('/page/clone', [
             'model'         => $clone,
-            'responseModel' => $resp,
+            'formResponse'  => $sourceFormResponse,
             'dynamicForm'   => $dynamicForm,
             'model_name'    => StringHelper::basename(get_class($clone)),
-            'dynamicFormId' => $formId,
             'submitUrl'     => $submitUrl,
-            'hasDynamic'    => $hasDynamic,
+            'viewName'      => $viewName,
         ]);
     }
-
     // -------------------------------------------------------------------------
     // HELPERS
     // -------------------------------------------------------------------------

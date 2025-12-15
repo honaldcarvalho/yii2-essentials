@@ -347,7 +347,6 @@ class FormResponseMetaWidget extends Widget
                         return Html::encode((string)$row['label']);
                     }
                     return Html::encode((string)$value);
-
                 } catch (\Throwable $e) {
                     Yii::error("Error resolving SQL field label for {$name}: " . $e->getMessage(), __METHOD__);
                     return Html::encode((string)$value);

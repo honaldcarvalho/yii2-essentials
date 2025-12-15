@@ -31,12 +31,12 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Clone');
                         </div>
                     </div>
 
-                    <?= $this->render($hasDynamic ? '_form_meta' : '_form',  [
+                    <?= $this->render($viewName, [
                         'model'         => $model,
                         'model_name'    => $model_name,
                         'dynamicForm'   => $dynamicForm,
-                        'responseModel' => $responseModel,
-                        'hasDynamic' => $hasDynamic,
+                        'formResponse' => $formResponse,
+                        'hasDynamic' => $model::hasDynamic,
                     ]) ?>
 
                 </div>

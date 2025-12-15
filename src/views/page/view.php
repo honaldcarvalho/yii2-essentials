@@ -26,7 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                     <div class="row mb-2">
                         <div class="col-md-12">
-                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model]) ?>
+                            <?= croacworks\essentials\widgets\DefaultButtons::widget(['model' => $model, 'show' => ['index', 'create', 'update', 'delete', 'clone']]) ?>
                         </div>
                     </div>
 
