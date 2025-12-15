@@ -31,7 +31,7 @@ class PageController extends AuthorizationController
 
         $dataProvider = $searchModel->search($this->request->queryParams);
 
-        return $this->render('/page/index', [
+        return $this->render('@essentials/views/page/index', [
             'searchModel'  => $searchModel,
             'dataProvider' => $dataProvider,
             'class'        => $this->classFQCN,
@@ -43,7 +43,7 @@ class PageController extends AuthorizationController
     {
         $model = $this->findModel($id);
 
-        return $this->render('/page/view', [
+        return $this->render('@essentials/views/page/view', [
             'model'         => $model,
             'dynamicForm'   => $this->classFQCN::getDynamicForm(),
             'class'         => $this->classFQCN,
@@ -110,7 +110,7 @@ class PageController extends AuthorizationController
         // View switching logic
         $viewName = $dynamicForm ? '_form_meta' : '_form';
 
-        return $this->render('/page/create', [
+        return $this->render('@essentials/views/page/create', [
             'model' => $model,
             'model_name' => 'Course', // Ou dinâmico se preferir
             'dynamicForm' => $dynamicForm,
@@ -174,7 +174,7 @@ class PageController extends AuthorizationController
 
         $viewName = $dynamicForm ? '_form_meta' : '_form';
 
-        return $this->render('/page/update', [
+        return $this->render('@essentials/views/page/update', [
             'model' => $model,
             'model_name' => 'Course',
             'dynamicForm' => $dynamicForm,
@@ -260,9 +260,9 @@ class PageController extends AuthorizationController
             }
         }
 
-        $viewName = $dynamicForm ? '/page/_form_meta' : '/page/_form';
+        $viewName = $dynamicForm ? '@essentials/views/page/_form_meta' : '@essentials/views/page/_form';
 
-        return $this->render('/page/clone', [
+        return $this->render('@essentials/views/page/clone', [
             'model'         => $clone,
             'formResponse'  => $sourceFormResponse,
             'dynamicForm'   => $dynamicForm,
