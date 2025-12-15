@@ -194,32 +194,21 @@ class PageController extends AuthorizationController
      */
     public function actionClone($id, $target_lang = null, $provider = 'default')
     {
-        // 1. Prepare Clone Draft (Standard from Trait)
         /** @var Page $clone */
         $clone = $this->prepareCloneDraft($id, $this->classFQCN, $target_lang, $provider);
 
-        // 2. Translate content if requested (Using Page model logic)
-        if ($target_lang) {
-            $clone->translateContent($target_lang, $provider);
-        }
-
-        // 3. Setup Dynamic Form and Data
         $dynamicForm = $this->classFQCN::getDynamicForm();
 
-        // Find existing response from the SOURCE page ($id) to populate the clone form
+        // Prepare dynamic form data
         $sourceFormResponse = null;
         if ($dynamicForm) {
             $sourceFormResponse = FormResponse::findByJsonField('page_id', (string)$id, $dynamicForm->id);
-
-            // Translate metadata content if target_lang is provided
             if ($sourceFormResponse && $target_lang) {
                 $sourceFormResponse->translateContent($target_lang, $provider);
             }
         }
 
-        // Build model with source data (translated if applicable)
         $responseModel = $this->buildDynamicModel($dynamicForm->id ?? 0, $sourceFormResponse);
-
         $submitUrl = Url::to(['clone', 'id' => $id, 'target_lang' => $target_lang, 'provider' => $provider]);
 
         if ($this->request->isPost) {
@@ -235,27 +224,17 @@ class PageController extends AuthorizationController
             }
 
             if ($isValid) {
-                $transaction = Yii::$app->db->beginTransaction();
-                try {
-                    // Ensure correct section for the new page
-                    $clone->page_section_id = $this->classFQCN::sectionId();
+                // Delegate to Service via Trait
+                $newPage = $this->processCloneSave($id, $clone, $this->classFQCN);
 
-                    if (!$clone->save(false)) {
-                        throw new \Exception(Yii::t('app', 'Error saving record.'));
-                    }
-
+                if ($newPage) {
+                    // Save dynamic metadata for the new page
                     if ($dynamicForm && isset($_POST['DynamicModel'])) {
-                        // Ensure instance exists for the NEW page
-                        $newFormResponse = FormResponse::ensureForPage($dynamicForm->id, $clone->id);
-                        $newFormResponse->saveDynamicData($dynamicForm, $clone->id, $this->request->post('DynamicModel', []));
+                        $newFormResponse = FormResponse::ensureForPage($dynamicForm->id, $newPage->id);
+                        $newFormResponse->saveDynamicData($dynamicForm, $newPage->id, $this->request->post('DynamicModel', []));
                     }
 
-                    $transaction->commit();
-                    return $this->redirect(['view', 'id' => $clone->id]);
-                } catch (\Exception $e) {
-                    $transaction->rollBack();
-                    Yii::error($e->getMessage(), __METHOD__);
-                    $clone->addError('slug', $e->getMessage());
+                    return $this->redirect(['view', 'id' => $newPage->id]);
                 }
             }
         }
@@ -265,6 +244,7 @@ class PageController extends AuthorizationController
         return $this->render('@essentials/views/page/clone', [
             'model'         => $clone,
             'formResponse'  => $sourceFormResponse,
+            'responseModel' => $responseModel,
             'dynamicForm'   => $dynamicForm,
             'model_name'    => StringHelper::basename(get_class($clone)),
             'submitUrl'     => $submitUrl,

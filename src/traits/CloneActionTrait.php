@@ -2,22 +2,15 @@
 
 namespace croacworks\essentials\traits;
 
-use croacworks\essentials\models\Language;
 use croacworks\essentials\services\PageCloneService;
+use croacworks\essentials\models\Language;
 use Yii;
 use yii\web\NotFoundHttpException;
 
 trait CloneActionTrait
 {
     /**
-     * Prepares the clone draft, including attributes copy and optional translation.
-     *
-     * @param int $id Original model ID.
-     * @param string $modelClass Full class name of the model (e.g., Page::class).
-     * @param string|null $target_lang Language code to translate to.
-     * @param string $provider Translation provider.
-     * @return \yii\db\ActiveRecord
-     * @throws NotFoundHttpException
+     * Prepares the clone draft object.
      */
     protected function prepareCloneDraft($id, $modelClass, $target_lang = null, $provider = 'default')
     {
@@ -34,12 +27,10 @@ trait CloneActionTrait
         $clone->setIsNewRecord(true);
         $clone->id = null;
 
-        // Copy special property tagIds if exists
         if (property_exists($clone, 'tagIds') && property_exists($original, 'tagIds')) {
             $clone->tagIds = $original->tagIds;
         }
 
-        // Apply translation if requested
         if ($target_lang) {
             $languageModel = Language::findOne(['code' => $target_lang]);
 
@@ -63,45 +54,38 @@ trait CloneActionTrait
     }
 
     /**
-     * Handles the saving logic, logic comparison, and service calls.
-     *
-     * @param int $originalId The ID of the original record.
-     * @param \yii\db\ActiveRecord $clone The populated clone model.
-     * @param string $modelClass The class name to find the original.
-     * @return \yii\db\ActiveRecord|null Returns the new model on success, or null on failure.
+     * Delegates saving logic to PageCloneService.
      */
     protected function processCloneSave($originalId, $clone, $modelClass)
     {
-        $transaction = Yii::$app->db->beginTransaction();
+        $original = $modelClass::findOne($originalId);
+        if (!$original) {
+            throw new NotFoundHttpException(Yii::t('app', 'Original not found.'));
+        }
+
+        $overrides = [];
+
+        if (isset($clone->tagIds)) {
+            $overrides['tagIds'] = $clone->tagIds;
+        }
+
+        $attributesToCompare = $original->attributes();
+        foreach ($attributesToCompare as $key) {
+            if ($key === 'id') continue;
+
+            if (!is_array($clone->$key) && $clone->$key !== $original->$key) {
+                $overrides[$key] = $clone->$key;
+            }
+        }
+
+        // Determine clone type
+        $langAttr = 'language_id';
+        $originalLang = $original->$langAttr ?? null;
+        $newLang = $clone->$langAttr ?? ($overrides[$langAttr] ?? null);
+
+        $isLanguageClone = ($originalLang && $newLang && $originalLang !== $newLang);
 
         try {
-            $original = $modelClass::findOne($originalId);
-
-            // Build overrides
-            $overrides = [];
-
-            // Handle tagIds explicitly if property exists
-            if (isset($clone->tagIds)) {
-                $overrides['tagIds'] = $clone->tagIds;
-            }
-
-            // Detect manual changes
-            $attributesToCompare = $original->attributes();
-            foreach ($attributesToCompare as $key) {
-                if ($key === 'id') continue;
-
-                if (!is_array($clone->$key) && $clone->$key !== $original->$key) {
-                    $overrides[$key] = $clone->$key;
-                }
-            }
-
-            // Determine clone type (Language vs Total)
-            $langAttr = 'language_id';
-            $originalLang = $original->$langAttr ?? null;
-            $newLang = $clone->$langAttr ?? ($overrides[$langAttr] ?? null);
-
-            $isLanguageClone = ($originalLang && $newLang && $originalLang !== $newLang);
-
             if ($isLanguageClone) {
                 $newPage = PageCloneService::cloneLanguage($original, $overrides);
                 Yii::$app->session->addFlash('success', Yii::t('app', 'Language clone created successfully.'));
@@ -110,10 +94,8 @@ trait CloneActionTrait
                 Yii::$app->session->addFlash('success', Yii::t('app', 'Total clone created (new group).'));
             }
 
-            $transaction->commit();
             return $newPage;
         } catch (\Throwable $e) {
-            $transaction->rollBack();
             Yii::error($e->getMessage(), __METHOD__);
             Yii::$app->session->setFlash('danger', Yii::t('app', 'Failed to clone: {msg}', ['msg' => $e->getMessage()]));
             return null;
