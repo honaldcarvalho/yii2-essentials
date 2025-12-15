@@ -260,7 +260,7 @@ class PageController extends AuthorizationController
             }
         }
 
-        $viewName = $dynamicForm ? '_form_meta' : '_form';
+        $viewName = $dynamicForm ? '/page/_form_meta' : '/page/_form';
 
         return $this->render('/page/clone', [
             'model'         => $clone,
