@@ -5,7 +5,7 @@ use yii\helpers\Html;
 use croacworks\essentials\models\Language;
 use croacworks\essentials\models\PageSection;
 use croacworks\essentials\models\Tag;
-use croacworks\essentials\widgets\DynamicFormWidget;
+use croacworks\essentials\controllers\AuthorizationController;
 use croacworks\essentials\widgets\form\ActiveForm;
 use croacworks\essentials\widgets\form\TinyMCE;
 use croacworks\essentials\widgets\UploadImageInstant;
@@ -28,6 +28,8 @@ if (!$model->isNewRecord && !empty($model->tagIds)) {
 }
 
 $inputId = Html::getInputId($model, 'tagIds');
+
+$token = AuthorizationController::User()->access_token;
 
 ?>
 
@@ -293,7 +295,10 @@ langSelect.addEventListener('change', async function () {
     try {
       const res = await fetch(`/rest/util/suggest-translation`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer {$token}`,
+        },
         body: JSON.stringify({ 
           to: encodeURIComponent(source),
           language: encodeURIComponent(targetCode),
