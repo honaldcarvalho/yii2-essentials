@@ -160,7 +160,7 @@ $inputId = Html::getInputId($model, 'tagIds');
   </div>
 
   <div class="tab-pane fade mt-3" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-    <?= WidgetsDynamicFormWidget::widget([
+    <?= DynamicFormWidget::widget([
       'formId' =>  $dynamicForm->id,
       'model' => $formResponse,
       'activeForm' => $form, // <--- Importante: Passa o form pai

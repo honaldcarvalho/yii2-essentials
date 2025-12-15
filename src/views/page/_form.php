@@ -291,7 +291,7 @@ langSelect.addEventListener('change', async function () {
   for (const f of toTranslate) {
     appendStatus(`🔄 \${yii.t('app', 'Translating')} \${f.label.toLowerCase()}...`);
     try {
-      const res = await fetch(`/util/suggest-translation`, {
+      const res = await fetch(`/rest/util/suggest-translation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
